@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration PUBLIC "-//www.mybatis.org//DTD Config 3.0//EN" "http://mybatis.org/dtd/mybatis-3-config.dtd">
+<configuration>
+	<settings>
+		<setting name="cacheEnabled" value="false"/>
+		<setting name="defaultExecutorType" value="REUSE"/>
+	</settings>
+	<typeAliases>
+		<package name="com.dkitec.barocle.admin.login.vo"/>
+		<package name="com.dkitec.barocle.logging.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.daumeditor.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.notice.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.faq.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.opinionboard.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.photogallery.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.survey.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.hikingcourse.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.donor.vo"/>
+		<package name="com.dkitec.barocle.admin.customer.counsel.vo"/>
+		<package name="com.dkitec.barocle.admin.system.appversion.vo"/>
+		<package name="com.dkitec.barocle.admin.system.MenuMgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.system.mainset.vo"/>
+		<package name="com.dkitec.barocle.admin.system.sms.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.center.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.mallpromotion.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.relocationcar.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.suspension.vo"/>
+		<package name="com.dkitec.barocle.admin.system.commonCodeMgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.system.usermgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.system.teammgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.system.diligence.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.deviceMgmt.ap.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.deviceMgmt.bike.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.deviceMgmt.beacon.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.deviceMgmt.terminal.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.deviceMgmt.arm.vo"/>
+		<package name="com.dkitec.barocle.admin.common.vo"/>
+		<package name="com.dkitec.barocle.admin.service.policyMgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.status.rentHistory.vo"/>
+		<package name="com.dkitec.barocle.admin.status.rentStatus.vo"/>
+		<package name="com.dkitec.barocle.admin.status.stationStatus.vo"/>
+		<package name="com.dkitec.barocle.admin.status.relocationBikeStatus.vo"/>
+		<package name="com.dkitec.barocle.admin.service.membermgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.payment.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.overpayment.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.refund.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.refundReq.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.nonpayment.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.failpayment.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.mileage.vo"/>
+		<package name="com.dkitec.barocle.admin.manage.interworkMgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.check.bike.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.check.lock.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.inspect.ap.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.inspect.bike.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.inspect.lock.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.inspect.station.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.repair.ap.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.repair.bike.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.repair.lock.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.repair.division.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.relocation.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.stockMgmt.buy.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.stockMgmt.invent.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.robReport.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.admlogin.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.group.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.join.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.maintain.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.manage.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.rent.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.route.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.use.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.zeropay.vo"/>
+		<package name="com.dkitec.barocle.admin.statistics.reduction.vo"/>
+		<package name="com.dkitec.barocle.util.sms.vo"/>
+		<package name="com.dkitec.barocle.admin.system.savecarbon.vo"/>
+		<package name="com.dkitec.barocle.util.push"/>
+		<package name="com.dkitec.barocle.admin.maintenance.distMgmt.distAction.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.distMgmt.distributionDiary.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.distMgmt.massMove.vo"/>
+		<package name="com.dkitec.barocle.admin.maintenance.distMgmt.vcleMgmt.vo"/>
+		<package name="com.dkitec.barocle.admin.board.distribute.vo"/>
+		<package name="com.dkitec.barocle.admin.service.paymentmgmt.reduction.vo"/>
+		<package name="com.dkitec.barocle.admin.repairBikeMall.transferBike.vo"/>
+		<package name="com.dkitec.barocle.admin.repairBikeMall.repairBike.vo"/>
+		<package name="com.dkitec.barocle.admin.repairBikeMall.manageMall.vo"/>
+		<package name="com.dkitec.barocle.admin.repairMgmt.repairWork.vo"/>
+		<package name="com.dkitec.barocle.admin.repairMgmt.repairPerf.vo"/>
+		<package name="com.dkitec.barocle.admin.repairMgmt.centerStatus.vo"/>
+		<package name="com.dkitec.barocle.admin.repairMgmt.mgmtStat.vo"/>
+		<package name="com.dkitec.barocle.admin.cleansvc.vo"/>
+		<!-- 20210117 -->
+		<package name="com.dkitec.barocle.admin.repairMgmt.repairLight.vo"/>
+		
+		
+		<!-- 20210430 -->
+		<package name="com.dkitec.barocle.admin.service.push.vo"/>
+		
+		<!-- 20210510 -->
+		<package name="com.dkitec.barocle.admin.statistics.dashBoard.vo"/>
+		
+		<package name="com.dkitec.barocle.admin.service.svccouponmgmt.vo"/>
+		<!-- 201109 -->
+		<package name="com.dkitec.barocle.admin.maintenance.repair.beacon.vo"/>
+		
+		
+		<!-- 수사 자료 요청 관련 -->
+		
+		<package name="com.dkitec.barocle.admin.customer.police.vo"/>
+				
+		<!-- 수사 자료 요청 관련 -->
+		
+		
+		
+		
+				
+	</typeAliases>
+	<mappers>
+		<mapper resource="config/mybatis/sql/login/Login_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/logging/Logging_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/MenuMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/AppVersion_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/CommonCode_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/MainSet_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/Sms_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/UserGroupMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/UserMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/TeamMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/Diligence_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/DaumEditor_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/Notice_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/FAQ_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/OpinionBoard_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/Survey_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/PhotoGallery_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/HikingCourse_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/customer/Donor_SQL.xml"/>
+		
+		<!-- 아래 수정 할 것 : 수사협조 자료 관련 부분 -->
+		<mapper resource="config/mybatis/sql/customer/Police_SQL.xml"/>
+		<!-- 수정  : 수사협조 자료 관련 부분 -->
+		
+		<mapper resource="config/mybatis/sql/customer/Counsel_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/Center_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/MallPromotion_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/RelocationCar_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/Suspension_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/APDevice_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/ArmDevice_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/BikeDevice_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/BeaconDevice_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/TerminalDevice_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/StationGroupMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/StationMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/common/CommonPopupManage_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/PolicyMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/status/RentHistory_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/status/RentStatus_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/status/StationStatus_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/status/RelocationBikeStatus_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/MemberMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/Payment_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/OverPayment_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/Refund_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/RefundReq_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/NonPayment_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/FailPayment_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/Mileage_SQL.xml"/>
+		<!-- 20210505 -->
+		<mapper resource="config/mybatis/sql/service/Push_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/manage/InterworkMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/CheckBike_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/CheckLock_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/InspectAp_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/InspectBike_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/InspectLock_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/InspectStation_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/RepairAp_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/RepairBike_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/RepairLock_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/RepairDivision_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/Relocation_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/StockBuy_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/StockInvent_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/RobReport_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/AdmloginStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/GroupStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/JoinStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/MaintainStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/ManageStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/RentStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/RouteStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/UseStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/ZeropayStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/ReductionStatistics_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/statistics/DashBoard_SQL.xml"/> 
+		<!-- 2021-05-10  -->
+		<mapper resource="config/mybatis/sql/util/SmsMessage_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/common/DeviceExcel_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/system/SaveCarbon_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/distMgmt/DistAction_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/distMgmt/DistributionDiary_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/maintenance/distMgmt/VcleMgmt_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/board/Distribute_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/service/Reduction_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairBikeMall/TransferBike_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairBikeMall/RepairTnsBike_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairBikeMall/ManageMall_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairMgmt/repairWork_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairMgmt/repairPerf_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairMgmt/centerStatus_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairMgmt/mgmtStat_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/repairMgmt/repairMgmtComm_SQL.xml"/>
+		<mapper resource="config/mybatis/sql/cleansvc/cleanStatus_SQL.xml"/><!-- solbit-test  -->
+		<mapper resource="config/mybatis/sql/repairMgmt/repairLight_SQL.xml"/><!-- 2021-01-17  -->
+		<mapper resource="config/mybatis/sql/service/SvcCouponMgmt_SQL.xml"/>	
+		
+		<mapper resource="config/mybatis/sql/service/SafetyCert_SQL.xml"/><!-- shoh2999 -->
+		<mapper resource="config/mybatis/sql/maintenance/RepairBeacon_SQL.xml"/> <!-- 2021-10-29 -->
+	</mappers>
+</configuration>

@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+<tiles-definitions>
+	
+	<definition name="systemManageTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	
+	<!--공통코드-->
+	<definition name="/admin/system/commonCode/sys_code_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/commonCode/sys_code_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/system/commonCode/sys_code_detail" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/commonCode/sys_code_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--메뉴관리-->
+	<definition name="/admin/system/menu/sys_menu_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/menu/sys_menu_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!--운영자 그룹관리  -->
+	<definition name="/admin/system/group/*" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/group/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!--운영자관리  -->
+	<definition name="/admin/system/user/*" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/user/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!--팀 관리  -->
+	<definition name="/admin/system/teamMgmt/*" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/team/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!--관리  -->
+	<definition name="/admin/system/saveCarbon/sys_savecarbon_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/saveCarbon/sys_savecarbon_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- sms 관리 -->
+	<definition name="/admin/system/sms/sys_sms_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/system/sms/sys_sms_detail" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/system/sms/sys_sms_admin_detail" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_admin_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/system/sms/sys_sms_admin_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_admin_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/system/sms/sys_sms_admin" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_admin.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+
+	
+	<!-- app version 관리 -->
+	<definition name="/admin/system/appVersion/sys_ver_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/appVersion/sys_ver_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/system/appVersion/sys_ver_detail" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/appVersion/sys_ver_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 주요 설정 항목 관리 -->
+	<definition name="/admin/system/mainSet/sys_set_detail" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/mainSet/sys_set_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- SMS 발송 등록 폼 -->
+	<definition name="/admin/system/sms/sys_sms_send_form" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_send_form.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- SMS 발송 리스트 -->
+	<definition name="/admin/system/sms/sys_long_sms_send_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_long_sms_send_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	<!-- SMS 발송 리스트 -->
+	<definition name="/admin/system/sms/sys_sms_send_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_sms_send_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!--근태 관리  -->
+	<definition name="/admin/system/diligence/*" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/diligence/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+
+
+	<!-- PUSH 발송리스트  -->
+	<definition name="/admin/system/sms/sys_push_send_list" extends="systemManageTemplate" template="/WEB-INF/views/admin/system/sms/sys_push_send_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+
+</tiles-definitions>

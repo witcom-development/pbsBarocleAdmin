@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<entry key="driverClassName">org.mariadb.jdbc.Driver</entry>
+	<entry key="url">jdbc:mariadb://localhost:4306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="username">root</entry>
+    <entry key="password">Bjh052500!</entry>
+
+    <entry key="db2DriverClassName">org.mariadb.jdbc.Driver</entry>
+    <entry key="db2Url">jdbc:mariadb://localhost:4306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="db2Username">root</entry>
+    <entry key="db2Password">Bjh052500!</entry>
+
+
+    <entry key="db3DriverClassName">org.mariadb.jdbc.Driver</entry>
+    <entry key="db3Url">jdbc:mariadb://localhost:4306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="db3Username">root</entry>
+    <entry key="db3Password">Bjh052500!</entry>
+
+
+    <entry key="dbPushDriverClassName">org.mariadb.jdbc.Driver</entry>
+    <entry key="dbPushUrl">jdbc:mariadb://14.63.180.206:6900/push?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="dbPushUsername">spb</entry>
+    <entry key="dbPushPassword">spbdb1234!@#$</entry>
+ 	<!--  통계 DB 추가 -->
+    <entry key="dbStaticsDriverClassName">org.mariadb.jdbc.Driver</entry> 
+    <entry key="dbStaticsUrl">jdbc:mariadb://localhost:4306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="dbStaticsUsername">root</entry>
+    <entry key="dbStaticsPassword">Bjh052500!</entry>
+ 
+ 	<!--  문자 DB 추가 -->
+    <entry key="dbMMSDriverClassName">org.mariadb.jdbc.Driver</entry> 
+    <entry key="dbMMSUrl">jdbc:mariadb://49.247.215.237:3309/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="dbMMSUsername">spb</entry>
+    <entry key="dbMMSPassword">spbdb1234!@#$</entry>
+
+	<!--  개발 DB 추가 -->
+    <entry key="dbDEVDriverClassName">org.mariadb.jdbc.Driver</entry> 
+    <entry key="dbDEVUrl">jdbc:mariadb://localhost:4306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="dbDEVUsername">root</entry>
+    <entry key="dbDEVPassword">Bjh052500!</entry>
+    
+</properties>
+  

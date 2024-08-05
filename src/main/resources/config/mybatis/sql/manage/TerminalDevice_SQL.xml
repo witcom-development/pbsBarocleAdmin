@@ -1,0 +1,483 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.manage.deviceMgmt.terminal.service.TerminalMapper">
+	<select id="getTerminalList" parameterType="terminalVo" resultType="terminalVo">
+	<!-- 
+	<![CDATA[	
+		SELECT D.DEVICE_ID														  AS deviceID
+			 ,(SELECT FIRMWARE_VER
+				 FROM spb.TB_IOT_FIRMWARE
+				WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
+				  AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)							 AS softWareFw 
+			 ,(SELECT FIRMWARE_VER
+				 FROM spb.TB_IOT_FIRMWARE
+				WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
+				  AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)							AS imageFW 
+			  ,(SELECT FIRMWARE_VER
+				  FROM spb.TB_IOT_FIRMWARE
+				 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
+				   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)						   AS voiceFW 
+			  ,D.DEVICE_STUS_CD													 AS deviceStatusCd
+			  ,(SELECT A.MLANG_COM_CD_NAME 
+				  FROM TB_SYS_MLANG_COM_CD  A, TB_SYS_COM_CD B
+				 WHERE A.COM_CD = B.COM_CD 
+				   AND A.COM_CD = D.DEVICE_STUS_CD 
+				   AND B.COM_UP_CD = 'DES'  
+				   AND A.LANG_CLS_CD = #{lang}  )								   AS deviceStatusName
+			  ,DATE_FORMAT(D.REG_DTTM, '%Y-%m-%d')								  AS regDttm
+			  ,D.SERIAL_NO														  AS serialNo
+			  ,(CASE 
+				   WHEN T.LOCATE_CLS_CD = 'C' THEN (SELECT CONCAT('(C)',CENTER_NAME) 
+													  FROM spb.TB_OPR_CENTER 
+													 WHERE CENTER_ID = T.LOCATE_ID)
+				   ELSE CONCAT('(B)',(SELECT BIKE_NO 
+									   FROM spb.TB_OPR_BIKE
+									  WHERE BIKE_ID = T.LOCATE_ID)) 
+				END)																  AS locateId
+			  ,T.LOCATE_CLS_CD														AS locateClsCd
+			  ,DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')							   AS lastChkDttm
+		  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+			ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+		 WHERE DEVICE_MODL_CD ='DM2' 
+		  
+	 ]]>
+		<if test='searchBgnDe != null and searchBgnDe != ""'>
+		<![CDATA[ AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= D.REG_DTTM  ]]>
+		</if>
+		<if test='searchEndDe != null and searchEndDe != ""'>
+		<![CDATA[ AND D.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+		</if>
+		<if test='searchType != null and searchType != ""'>
+		<choose>
+			<when test='searchType == "D"'>
+			AND D.DEVICE_ID LIKE concat(#{searchWord} ,'%')
+			</when>
+			<when test='searchType == "F"'>
+			AND D.FIRMWARE_SEQ LIKE concat(#{searchWord} ,'%')
+			</when>
+			<when test='searchType == "S"'>
+			AND D.SERIAL_NO LIKE concat(#{searchWord} ,'%')
+			</when>
+		</choose>	
+		</if>
+		<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+		  AND D.DEVICE_STUS_CD  = #{deviceStatusCd}
+		</if>
+		ORDER BY D.REG_DTTM DESC, D.DEVICE_ID DESC
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]> 
+		</if>
+	-->
+		<!-- 펌웨어 오류 수정_20161121_cms -->
+		<![CDATA[	
+		SELECT deviceID
+			  ,softWareFw
+			  ,imageFW
+			  ,voiceFW
+			  ,deviceStatusCd
+			  ,deviceStatusName
+			  ,regDttm
+			  ,serialNo
+			  ,locateId
+			  ,locateClsCd
+			  ,lastChkDttm
+			  ,entrpsCd
+			  ,entrpsCdNm
+			  ,batteryStusCd
+			  ,bikeStusCd
+			  ,errStusCd
+			  ,errStusCdName
+		  FROM (
+				SELECT D.DEVICE_ID														  AS deviceID
+					 ,(SELECT FIRMWARE_VER
+						 FROM spb.TB_IOT_FIRMWARE
+						WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
+						  AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)							 AS softWareFw 
+					 ,(SELECT FIRMWARE_VER
+						 FROM spb.TB_IOT_FIRMWARE
+						WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
+						  AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)							AS imageFW 
+					  ,(SELECT FIRMWARE_VER
+						  FROM spb.TB_IOT_FIRMWARE
+						 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
+						   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)						   AS voiceFW 
+					  ,D.DEVICE_STUS_CD													 AS deviceStatusCd
+					  ,(SELECT A.MLANG_COM_CD_NAME 
+						  FROM TB_SYS_MLANG_COM_CD  A, TB_SYS_COM_CD B
+						 WHERE A.COM_CD = B.COM_CD 
+						   AND A.COM_CD = D.DEVICE_STUS_CD 
+						   AND B.COM_UP_CD = 'DES'  
+						   AND A.LANG_CLS_CD = #{lang}  )								   AS deviceStatusName
+					  ,DATE_FORMAT(D.REG_DTTM, '%Y-%m-%d')								  AS regDttm
+					  ,D.SERIAL_NO														  AS serialNo
+					  ,(CASE 
+						   WHEN T.LOCATE_CLS_CD = 'C' THEN (SELECT CONCAT('(C)',CENTER_NAME) 
+															  FROM spb.TB_OPR_CENTER 
+															 WHERE CENTER_ID = T.LOCATE_ID)
+						   ELSE CONCAT('(B)',(SELECT BIKE_NO 
+											   FROM spb.TB_OPR_BIKE
+											  WHERE BIKE_ID = T.LOCATE_ID)) 
+						END)																  AS locateId
+					  ,T.LOCATE_CLS_CD														AS locateClsCd
+					  ,DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')							   AS lastChkDttm
+					  ,D.ENTRPS_CD	  														  AS entrpsCd
+					  ,(SELECT L.MLANG_COM_CD_NAME
+							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							WHERE COM_UP_CD = 'ENT'
+							  AND L.LANG_CLS_CD = 'LAG_001'
+							  AND S.COM_CD = D.ENTRPS_CD) AS entrpsCdNm 
+							  
+					  ,CASE WHEN D.DEVICE_MODL_CD = 'DM2' THEN IFNULL((SELECT BIKE_BATTERY_STUS_CD
+								 FROM spb.TB_OPR_BIKE
+								WHERE BIKE_ID = T.LOCATE_ID )  ,'')
+							WHEN D.DEVICE_MODL_CD = 'DM4' THEN IFNULL((SELECT USE_CNT
+								 FROM spb.TB_OPR_BIKE
+								WHERE BIKE_ID = T.LOCATE_ID )  ,'')	
+						END AS batteryStusCd 
+					   ,IFNULL((SELECT BIKE_STUS_CD
+								 FROM spb.TB_OPR_BIKE
+								WHERE BIKE_ID = T.LOCATE_ID )  ,'')		AS bikeStusCd 
+					   ,(SELECT GROUP_CONCAT(MLANG.COM_CD) FROM TB_MTC_FAULT_INFO INSPECT 
+					   INNER JOIN TB_MTC_FAULT_DETL DETL ON INSPECT.FAULT_SEQ = DETL.FAULT_SEQ AND INSPECT.READ_CLS_CD = 'S'
+					   INNER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE T.LOCATE_ID = INSPECT.EQUIPMENT_ID 
+					   ) AS errStusCd
+					   , (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_INFO INSPECT 
+					   INNER JOIN TB_MTC_FAULT_DETL DETL ON INSPECT.FAULT_SEQ = DETL.FAULT_SEQ AND INSPECT.READ_CLS_CD = 'S'
+					   INNER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE T.LOCATE_ID = INSPECT.EQUIPMENT_ID 
+					   ) AS errStusCdName
+			   
+				  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+					ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+				 WHERE (DEVICE_MODL_CD ='DM2' OR DEVICE_MODL_CD ='DM4')
+				  
+			 ]]>
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				<![CDATA[ AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= D.REG_DTTM  ]]>
+				</if>
+				<if test='searchEndDe != null and searchEndDe != ""'>
+				<![CDATA[ AND D.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+				</if>
+				<if test='searchType != null and searchType != ""'>
+				<choose>
+					<when test='searchType == "D"'>
+					AND D.DEVICE_ID LIKE concat(#{searchWord} ,'%')
+					</when>
+					<when test='searchType == "S"'>
+					AND D.SERIAL_NO LIKE concat(#{searchWord} ,'%')
+					</when>
+				</choose>	
+				</if>
+				<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+				  AND D.DEVICE_STUS_CD  = #{deviceStatusCd}
+				</if>
+				<if test='deviceModlCd != null and deviceModlCd != ""'>
+				  AND D.DEVICE_MODL_CD  = #{deviceModlCd}
+				</if>
+			)A 
+			WHERE 1=1
+			<if test='searchType != null and searchType != ""'>
+				<choose>
+					<when test='searchType == "F"'>
+					AND A.softWareFw LIKE concat(#{searchWord} ,'%')
+					</when>
+				</choose>
+			</if>		   
+			ORDER BY A.regDttm DESC, A.deviceID DESC
+			<if test='pagingYn == "Y"'>
+			<![CDATA[
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			]]> 
+			</if>
+	
+	</select>
+	<select id="getTerminalCount" parameterType="terminalVo" resultType="int">
+		<!-- 
+		SELECT COUNT(D.DEVICE_ID)
+		  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+			ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+		 WHERE DEVICE_MODL_CD ='DM2'  
+		<if test='searchBgnDe != null and searchBgnDe != ""'>
+		<![CDATA[ AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= D.REG_DTTM  ]]>
+		</if>
+		<if test='searchEndDe != null and searchEndDe != ""'>
+		<![CDATA[ AND D.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+		</if>
+		<choose>
+		<when test='searchType == "D"'>
+			AND D.DEVICE_ID LIKE concat(#{searchWord} ,'%')
+		</when>
+		<when test='searchType == "F"'>
+			AND D.FIRMWARE_SEQ LIKE concat(#{searchWord} ,'%')
+		</when>
+		<when test='searchType == "S"'>
+			AND D.SERIAL_NO LIKE concat(#{searchWord} ,'%')
+		</when>
+		</choose> 
+		<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+		   AND D.DEVICE_STUS_CD  = #{deviceStatusCd}
+		</if>
+	 -->
+	 <!-- 펌웨어 오류 수정_20161121_cms -->
+	 <![CDATA[
+		SELECT COUNT(*) AS CNT
+		  FROM (
+			SELECT D.DEVICE_ID														  AS deviceID
+				 ,(SELECT FIRMWARE_VER
+					 FROM spb.TB_IOT_FIRMWARE
+					WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
+					  AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)							 AS softWareFw 
+				 ,(SELECT FIRMWARE_VER
+					 FROM spb.TB_IOT_FIRMWARE
+					WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
+					  AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)							AS imageFW 
+				  ,(SELECT FIRMWARE_VER
+					  FROM spb.TB_IOT_FIRMWARE
+					 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
+					   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)						   AS voiceFW 
+				  ,D.DEVICE_STUS_CD													 AS deviceStatusCd
+				  ,(SELECT A.MLANG_COM_CD_NAME 
+					  FROM TB_SYS_MLANG_COM_CD  A, TB_SYS_COM_CD B
+					 WHERE A.COM_CD = B.COM_CD 
+					   AND A.COM_CD = D.DEVICE_STUS_CD 
+					   AND B.COM_UP_CD = 'DES'  
+					   AND A.LANG_CLS_CD = #{lang}  )								   AS deviceStatusName
+				  ,DATE_FORMAT(D.REG_DTTM, '%Y-%m-%d')								  AS regDttm
+				  ,D.SERIAL_NO														  AS serialNo
+				  ,(CASE 
+					   WHEN T.LOCATE_CLS_CD = 'C' THEN (SELECT CONCAT('(C)',CENTER_NAME) 
+														  FROM spb.TB_OPR_CENTER 
+														 WHERE CENTER_ID = T.LOCATE_ID)
+					   ELSE CONCAT('(B)',(SELECT BIKE_NO 
+										   FROM spb.TB_OPR_BIKE
+										  WHERE BIKE_ID = T.LOCATE_ID)) 
+					END)																  AS locateId
+				  ,T.LOCATE_CLS_CD														AS locateClsCd
+				  ,DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')							   AS lastChkDttm
+			  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+				ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+			 WHERE (DEVICE_MODL_CD ='DM2' OR DEVICE_MODL_CD ='DM4') 
+			  
+		 ]]>
+			<if test='searchBgnDe != null and searchBgnDe != ""'>
+			<![CDATA[ AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= D.REG_DTTM  ]]>
+			</if>
+			<if test='searchEndDe != null and searchEndDe != ""'>
+			<![CDATA[ AND D.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+			</if>
+			<if test='searchType != null and searchType != ""'>
+			<choose>
+				<when test='searchType == "D"'>
+				AND D.DEVICE_ID LIKE concat(#{searchWord} ,'%')
+				</when>
+				<when test='searchType == "S"'>
+				AND D.SERIAL_NO LIKE concat(#{searchWord} ,'%')
+				</when>
+			</choose>	
+			</if>
+			<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+			  AND D.DEVICE_STUS_CD  = #{deviceStatusCd}
+			</if>
+			<if test='deviceModlCd != null and deviceModlCd != ""'>
+			  AND D.DEVICE_MODL_CD  = #{deviceModlCd}
+			</if>
+		)A 
+		WHERE 1=1
+		<if test='searchType != null and searchType != ""'>
+			<choose>
+				<when test='searchType == "F"'>
+				AND A.softWareFw LIKE concat(#{searchWord} ,'%')
+				</when>
+			</choose>
+		</if> 
+		 
+	</select>
+	<select id="getTerminalInfo" parameterType="terminalVo" resultType="terminalVo">
+	<![CDATA[	
+		SELECT D.DEVICE_ID										AS deviceID
+			  ,(SELECT FIRMWARE_VER
+				   FROM TB_IOT_FIRMWARE
+				  WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
+					AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)		  AS imageFW  
+			  ,(SELECT FIRMWARE_VER
+				  FROM TB_IOT_FIRMWARE
+				 WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
+				   AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)		  AS voiceFW  
+			  ,(SELECT FIRMWARE_VER
+				  FROM TB_IOT_FIRMWARE
+				 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
+				   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)		  AS softWareFw  
+			  ,D.SERIAL_NO										 AS serialNo
+			  ,D.DEVICE_STUS_CD									AS deviceStatusCd
+			  ,T.LOCATE_CLS_CD									 AS locateClsCd
+			  ,T.LOCATE_ID										 AS locateId
+			  ,IFNULL((SELECT BIKE_NO
+						 FROM spb.TB_OPR_BIKE
+						WHERE BIKE_ID = T.LOCATE_ID )  ,'')		AS bikeNo
+			  ,D.ENTRPS_CD	  									   AS entrpsCd
+			  ,DATE_FORMAT(D.REG_DTTM, '%Y-%m-%d')				 AS regDttm 
+			  ,D.DEVICE_MODL_CD										AS deviceModlCd
+			  
+			  ,CASE WHEN D.DEVICE_MODL_CD = 'DM2' THEN IFNULL((SELECT BIKE_BATTERY_STUS_CD
+				  			FROM spb.TB_OPR_BIKE
+				  			WHERE BIKE_ID = T.LOCATE_ID )  ,'')
+			  			WHEN D.DEVICE_MODL_CD = 'DM4' THEN IFNULL((SELECT USE_CNT
+			  				FROM spb.TB_OPR_BIKE
+			  				WHERE BIKE_ID = T.LOCATE_ID )  ,'')
+			  	END AS batteryStusCd
+			  ,IFNULL((SELECT BIKE_STUS_CD
+					  		FROM spb.TB_OPR_BIKE
+					  		WHERE BIKE_ID = T.LOCATE_ID )  ,'')		AS bikeStusCd
+			  ,(SELECT GROUP_CONCAT(MLANG.COM_CD) FROM TB_MTC_FAULT_INFO INSPECT
+			   INNER JOIN TB_MTC_FAULT_DETL DETL ON INSPECT.FAULT_SEQ = DETL.FAULT_SEQ AND INSPECT.READ_CLS_CD = 'S'
+			   INNER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE T.LOCATE_ID = INSPECT.EQUIPMENT_ID 
+			   ) AS errStusCd
+			   , (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_INFO INSPECT 
+			   INNER JOIN TB_MTC_FAULT_DETL DETL ON INSPECT.FAULT_SEQ = DETL.FAULT_SEQ AND INSPECT.READ_CLS_CD = 'S'
+			   INNER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE T.LOCATE_ID = INSPECT.EQUIPMENT_ID 
+			   ) AS errStusCdName
+			  
+		  FROM spb.TB_IOT_DEVICE D  INNER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
+			ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+		  WHERE D.DEVICE_ID = #{deviceId}
+	 ]]>
+	</select>
+	
+	<select id="isChkIdDup" parameterType="terminalVo" resultType="int">
+		SELECT COUNT(DEVICE_ID)
+		  FROM TB_IOT_DEVICE
+		 <where>
+		  <choose>
+			  <when test='chkType == "serial"'>
+			  SERIAL_NO = #{chkId}  
+			  </when>
+			  <otherwise>
+			  DEVICE_ID = #{chkId}  
+			  </otherwise>		
+		  </choose>		
+		  </where>
+	</select>
+	
+	<insert id="insertDeviceReg" parameterType="terminalVo">
+		INSERT INTO TB_IOT_DEVICE (
+				 DEVICE_ID
+				,DEVICE_MODL_CD
+				,SERIAL_NO
+				,DEVICE_STUS_CD
+				,REG_DTTM
+				,LAST_CHK_DTTM
+				,ENTRPS_CD
+		) VALUES (
+				#{deviceId}
+			   ,#{deviceModlCd}
+			   ,#{serialNo}
+			   ,#{deviceStatusCd}
+			   ,now()
+			   ,now()
+			   ,#{entrpsCd}
+		)
+	</insert>
+	<select id="getFirmwareSeq" parameterType="terminalVo" resultType="String">
+		SELECT CAST(FIRMWARE_SEQ AS BINARY)	
+		  FROM TB_IOT_FIRMWARE 
+		 WHERE FIRMWARE_CLS_CD = #{firmwareClsCd} 
+		   AND FIRMWARE_VER	= #{firmwareVersion} 
+	</select >	
+	<insert id="addTerminalLocateHist" parameterType="terminalVo">
+		INSERT INTO TB_IOT_TERMINAL_LOCATE_INFO (
+				 DEVICE_ID
+				,LOCATE_STR_DTTM
+				,LOCATE_END_DTTM
+				,LOCATE_CLS_CD
+				,LOCATE_ID
+				,LOCATE_ADMIN_ID
+		) VALUES (
+				#{deviceId}
+			   ,date_add(now() ,interval 1 second)
+			   ,STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+			   ,#{locateClsCd}
+			   ,#{locateId}
+			   ,#{locateAdminId}
+		)
+	</insert>
+	<update id="setTerminalLocateInfo" parameterType="terminalVo"> 
+		UPDATE TB_IOT_TERMINAL_LOCATE_INFO
+		   SET LOCATE_END_DTTM	 = now()
+			  ,LOCATE_END_ADMIN_ID = #{locateAdminId}
+		 WHERE DEVICE_ID	   = #{deviceId}
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+	</update>
+	<update id="setTerminalData" parameterType="terminalVo">
+	<![CDATA[	
+		UPDATE TB_IOT_DEVICE
+	]]>
+		<trim prefix="SET" prefixOverrides=",">
+			<if test='serialNo != null and serialNo != ""'>
+			 SERIAL_NO = #{serialNo} 
+			</if>
+			<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+			 ,DEVICE_STUS_CD = #{deviceStatusCd} 
+			</if>
+		</trim>
+		 WHERE DEVICE_ID = #{deviceId}	  
+	</update>
+	
+	<update id="setTRemoveFromBike" parameterType="terminalVo">
+		UPDATE TB_OPR_BIKE 
+		   SET TERMINAL_ID = null
+		 WHERE BIKE_ID =  #{bikeId} 
+		 <!--
+		 (SELECT BIKE_ID
+			FROM spb.TB_OPR_BIKE
+			WHERE BIKE_NO =  #{bikeNo})-->
+		 
+	</update>
+   
+	<select id="getTerminalLocateHistory" parameterType="terminalVo" resultType="terminalVo" >
+	<![CDATA[
+		SELECT (SELECT BIKE_NO
+				  FROM spb.TB_OPR_BIKE 
+				 WHERE BIKE_ID = LOCATE_ID)				   AS bikeNo,
+			   DATE_FORMAT(LOCATE_STR_DTTM ,'%Y-%m-%d %H:%i') AS locateStrDttm,
+			   LOCATE_ADMIN_ID								AS locateAdminId,
+			   DATE_FORMAT(LOCATE_END_DTTM ,'%Y-%m-%d %H:%i') AS locateEndDttm,
+			   LOCATE_END_ADMIN_ID							AS locateEndAdminId
+		  FROM TB_IOT_TERMINAL_LOCATE_INFO
+		 WHERE DEVICE_ID = #{deviceId}
+		   AND LOCATE_CLS_CD = 'B' 
+		   #AND LOCATE_END_DTTM <> STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+	]]>
+		   <if test='searchStartDate != null and searchStartDate != ""'>
+		   <![CDATA[ AND DATE_FORMAT(LOCATE_STR_DTTM,'%Y-%m-%d') <= STR_TO_DATE(#{searchStartDate} ,'%Y-%m-%d') ]]>
+		   </if>
+		   <if test='searchEndDate != null and searchEndDate != ""'>
+		   <![CDATA[ AND DATE_FORMAT(LOCATE_END_DTTM,'%Y-%m-%d') >= STR_TO_DATE(#{searchEndDate} ,'%Y-%m-%d') ]]> 
+		   </if>  
+		   ORDER BY LOCATE_ID
+	</select>
+	<select id="getTerminalAndBikeHistoryCount" parameterType="terminalVo" resultType="int" >
+	<![CDATA[
+		SELECT COUNT(A.DEVICE_ID)
+		  FROM TB_IOT_TERMINAL_LOCATE_INFO
+		 WHERE DEVICE_ID = #{deviceId}
+		   AND LOCATE_CLS_CD = 'B'
+		   #AND LOCATE_END_DTTM <> STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+	]]>
+		 <if test='searchStartDate != null and searchStartDate != ""'>
+		 <![CDATA[ AND DATE_FORMAT(LOCATE_STR_DTTM,'%Y-%m-%d') <= STR_TO_DATE(#{searchStartDate} ,'%Y-%m-%d') ]]>
+		 </if>
+		 <if test='searchEndDate != null and searchEndDate != ""'>
+		 <![CDATA[ AND DATE_FORMAT(LOCATE_END_DTTM,'%Y-%m-%d') >= STR_TO_DATE(#{searchEndDate} ,'%Y-%m-%d') ]]> 
+		 </if>  
+	</select>
+	<select id="getOldTerminalInfo" parameterType="String" resultType="terminalVo">
+		 SELECT LOCATE_ID		   AS centerSeq 
+			  , LOCATE_CLS_CD	   AS locateClsCd
+			  , DEVICE_ID		   AS deviceId		
+		   FROM TB_IOT_TERMINAL_LOCATE_INFO 
+		  WHERE DEVICE_ID = #{deviceId}
+			AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+	</select>
+</mapper>

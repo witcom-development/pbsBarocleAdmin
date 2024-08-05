@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.inspect.bike.service.InspectBikeMapper">
+	<select id="getInspectBikeList" parameterType="InspectBikeVO" resultType="InspectBikeVO">
+	<![CDATA[
+	   SELECT FAULT_SEQ								  AS faultSeq
+	   		 ,BIKE_ID								 AS bikeId
+			 ,BIKE_NO								 AS bikeNo
+			 ,TERMINAL_ID							 AS terminalId
+			 ,TOT_MOVE_DIST						   AS totMoveDist
+			 ,LOST_YN								 AS lostYn			  
+			 ,DATE_FORMAT(LOST_DATE, '%Y-%m-%d %H:%i')	  AS lostDate
+			 ,CONCAT(CENTER_NAME, STATION_NAME)	   AS stationName
+			 ,CONCAT(STATION_EQUIP_ORD, IS_CASCADE) AS stationEquipOrder
+			 ,COM_CD										 AS bikeStatusComCd
+			 ,MLANG_COM_CD_NAME					   AS bikeStatusName
+			 ,(SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END FROM TB_MTC_FAULT_DETL DETL WHERE DETL.FAULT_SEQ = FAULT_SEQ AND DETL.FAULT_CLS_CD = 'ERB_002') AS reportYn
+			 ,REPAIR_CMPT_YN				  		  AS repairCmptYn
+			 ,REPAIR_SEQ						  	  AS repairSeq 
+			 ,DATE_FORMAT(REG_DTTM, '%Y-%m-%d %H:%i')	   AS regDttm
+			 ,DATE_FORMAT(LAST_CHK_DTTM, '%Y-%m-%d %H:%i')  AS lastChkDttm
+			 ,MOD_DTTM								AS modDttm
+			 ,TEAM_SEQ								AS teamSeq
+		FROM 
+		(
+			SELECT 
+				INSPECT.FAULT_SEQ,
+				BIKE.BIKE_ID, 
+				BIKE.BIKE_NO,
+				BIKE.TERMINAL_ID,
+				BIKE.TOT_MOVE_DIST,
+				BIKE.LAST_CHK_DTTM,
+				BIKE.LOST_YN,
+				BIKE.LOST_DATE,
+				IF(CEN.CENTER_NAME IS NULL, '', CONCAT('(C)', CEN.CENTER_NAME)) CENTER_NAME,
+				IF(ST.STATION_NAME IS NULL, '', CONCAT('(S)', ST.STATION_NAME)) STATION_NAME,
+				RACK.STATION_EQUIP_ORD,
+				IF(PARK.CASCADE_YN = 'Y', '(C)', '') IS_CASCADE,
+				PARK.CASCADE_YN,
+				(SELECT GROUP_CONCAT(MLANG.COM_CD) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE FAULT_SEQ = INSPECT.FAULT_SEQ) AS COM_CD,
+				(SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = INSPECT.FAULT_SEQ) AS MLANG_COM_CD_NAME,
+				REPINFO.REPAIR_CMPT_YN,
+				REPINFO.REPAIR_SEQ,
+				INSPECT.REG_DTTM,
+				INSPECT.MOD_DTTM,
+				(SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA, TB_SYS_TEAM_INFO A
+						WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.TEAM_ID AND A.TEAM_SEQ=INSPECT.TEAM_SEQ AND LA.LANG_CLS_CD = #{lang}) AS TEAM_SEQ
+			FROM TB_MTC_FAULT_INFO INSPECT
+			JOIN TB_OPR_BIKE BIKE ON BIKE.BIKE_ID = INSPECT.EQUIPMENT_ID
+			LEFT OUTER JOIN TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+			LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ 
+			LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON RACK.LOCATE_ID = ST.STATION_ID
+			]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				INSPECT.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				INSPECT.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchVal !=null and searchVal != ""'>
+			  	AND BIKE.BIKE_NO LIKE CONCAT('%',#{searchVal},'')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+			  	AND ST.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+			  	AND ST.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND INSPECT.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND INSPECT.READ_CLS_CD = 'H'
+				</if>
+		   </trim>	  
+		   ) A
+		   ORDER BY REG_DTTM DESC, FAULT_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if> 
+	</select>
+	<select id="getInspectBikeListCount" parameterType="InspectBikeVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_MTC_FAULT_INFO INSPECT
+			JOIN TB_OPR_BIKE BIKE ON BIKE.BIKE_ID = INSPECT.EQUIPMENT_ID
+			LEFT OUTER JOIN TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+			LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ  
+			LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}  ) ST ON RACK.LOCATE_ID = ST.STATION_ID
+		  ]]>
+		  <trim prefix ="WHERE" prefixOverrides="AND"> 
+		  		<if test='searchBgnDe != null and searchBgnDe != ""'>
+			  	INSPECT.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			  	</if>
+			  	<if test='searchBgnDe == null or searchBgnDe == ""'>
+				INSPECT.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchVal !=null and searchVal != ""'>
+				AND BIKE.BIKE_NO LIKE CONCAT('%',#{searchVal},'')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND ST.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND ST.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND INSPECT.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND INSPECT.READ_CLS_CD = 'H'
+				</if>
+		  </trim> 
+	</select>
+	
+	<select id="getObstacleCnt" resultType="int">
+	  <![CDATA[
+		  SELECT COUNT(*)
+			FROM TB_MTC_FAULT_INFO	INSPECT
+				 JOIN TB_OPR_BIKE BIKE ON BIKE.BIKE_ID = INSPECT.EQUIPMENT_ID
+				 LEFT OUTER JOIN TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+				 LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO
+					ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ
+				 LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK
+					ON BIKE.BIKE_ID = PARK.BIKE_ID
+				 LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO RACK
+					ON	 PARK.RACK_ID = RACK.RACK_ID
+					   AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM
+					   AND RACK.LOCATE_CLS_CD = 'S'
+				 LEFT OUTER JOIN
+				 (SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+				  FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+				  WHERE ST.STATION_ID = MST.STATION_ID AND MST.LANG_CLS_CD = 'LAG_001') ST
+					ON RACK.LOCATE_ID = ST.STATION_ID
+			  WHERE 1=1
+				AND INSPECT.READ_CLS_CD = 'S'
+		  ]]>
+	</select>
+	
+	<select id="getObstacleList"  parameterType="InspectBikeVO"  resultType="InspectBikeVO">
+	 <![CDATA[
+	   SELECT FAULT_SEQ								  AS faultSeq
+	   		 ,BIKE_ID								 AS bikeId
+			 ,BIKE_NO								 AS bikeNo
+			 ,TERMINAL_ID							 AS terminalId
+			 ,TOT_MOVE_DIST						   AS totMoveDist
+			 ,LOST_YN								 AS lostYn			  
+			 ,DATE_FORMAT(LOST_DATE, '%Y-%m-%d %H:%i')	  AS lostDate
+			 ,CONCAT(CENTER_NAME, STATION_NAME)	   AS stationName
+			 ,CONCAT(STATION_EQUIP_ORD, IS_CASCADE) AS stationEquipOrder
+			 ,MLANG_COM_CD_NAME					   AS bikeStatusName
+			 ,(SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END FROM TB_MTC_FAULT_DETL DETL WHERE DETL.FAULT_SEQ = FAULT_SEQ AND DETL.FAULT_CLS_CD = 'ERB_002') AS reportYn
+			 ,REPAIR_CMPT_YN				  		  AS repairCmptYn
+			 ,REPAIR_SEQ						  	  AS repairSeq 
+			 ,DATE_FORMAT(REG_DTTM, '%Y-%m-%d %H:%i')	   AS regDttm
+			 ,DATE_FORMAT(LAST_CHK_DTTM, '%Y-%m-%d %H:%i')  AS lastChkDttm
+			 ,MOD_DTTM								AS modDttm
+		FROM 
+		(
+			SELECT 
+				INSPECT.FAULT_SEQ,
+				BIKE.BIKE_ID, 
+				BIKE.BIKE_NO,
+				BIKE.TERMINAL_ID,
+				BIKE.TOT_MOVE_DIST,
+				BIKE.LAST_CHK_DTTM,
+				BIKE.LOST_YN,
+				BIKE.LOST_DATE,
+				IF(CEN.CENTER_NAME IS NULL, '', CONCAT('(C)', CEN.CENTER_NAME)) CENTER_NAME,
+				IF(ST.STATION_NAME IS NULL, '', CONCAT('(S)', ST.STATION_NAME)) STATION_NAME,
+				RACK.STATION_EQUIP_ORD,
+				IF(PARK.CASCADE_YN = 'Y', '(C)', '') IS_CASCADE,
+				PARK.CASCADE_YN,
+				(SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE FAULT_SEQ = INSPECT.FAULT_SEQ) AS MLANG_COM_CD_NAME,
+				REPINFO.REPAIR_CMPT_YN,
+				REPINFO.REPAIR_SEQ,
+				INSPECT.REG_DTTM,
+				INSPECT.MOD_DTTM
+			FROM TB_MTC_FAULT_INFO INSPECT
+			JOIN TB_OPR_BIKE BIKE ON BIKE.BIKE_ID = INSPECT.EQUIPMENT_ID
+			LEFT OUTER JOIN TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+			LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ 
+			LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = 'LAG_001'				   
+							 ) ST ON RACK.LOCATE_ID = ST.STATION_ID
+			WHERE 1=1
+				AND INSPECT.READ_CLS_CD = 'S'	 
+		   ) A
+		   ORDER BY REG_DTTM DESC, FAULT_SEQ DESC
+		   ]]>
+		   <if test='pagingYn == "Y"'>
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if> 
+	</select>
+	
+	
+	<select id="getObstacleTime"  resultType="CategoryVO">
+	 <![CDATA[
+		   SELECT ADD_VAL1 AS addVal1
+			 FROM TB_SYS_COM_CD 
+			WHERE COM_CD = 'MSI_024'
+ 		]]>
+	</select>
+	
+	<update id="insertTeamInfo" parameterType="InspectBikeVO">
+		UPDATE
+			TB_MTC_FAULT_INFO
+		SET
+			TEAM_SEQ = #{teamSeq}
+		WHERE
+			FAULT_SEQ = #{faultSeq}
+	</update>
+</mapper>

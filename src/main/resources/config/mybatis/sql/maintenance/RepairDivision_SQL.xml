@@ -1,0 +1,281 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.repair.division.service.RepairDivisionMapper">
+	
+	<select id="getCodeListCnt" parameterType="RepairDivisionVO" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*) AS CNT
+			FROM TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+			  WHERE 1=1
+				AND B.LANG_CLS_CD = 'LAG_001'
+		]]>
+			  <if test='comUpCd == null or comUpCd == ""'>
+			  	AND A.COM_UP_CD = 'REB'
+			  </if>
+			  <if test='comUpCd != null and comUpCd != ""'>
+			  	AND A.COM_UP_CD = #{comUpCd}
+			  </if>
+				
+	</select>
+	
+	<select id="getCodeList" parameterType="RepairDivisionVO" resultType="RepairDivisionVO">
+		<![CDATA[
+		  SELECT A.COM_CD							AS comCd
+				,A.COM_UP_CD						 AS comUpCd
+				,A.USE_YN							AS useYn
+				,DATE_FORMAT(A.REG_DTTM, '%Y-%m-%d') AS regDttm
+				,A.REG_ID							AS regId
+				,B.MLANG_COM_CD_NAME				 AS mlangComCdName
+			FROM TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+			  WHERE 1=1
+				AND B.LANG_CLS_CD = 'LAG_001'
+		]]>
+			  <if test='comUpCd == null or comUpCd == ""'>
+			  	AND A.COM_UP_CD = 'REB'
+			  </if>
+			  <if test='comUpCd != null and comUpCd != ""'>
+			  	AND A.COM_UP_CD = #{comUpCd}
+			  </if>
+			  ORDER BY REG_DTTM DESC
+			  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="getDivisionUdtList" parameterType="RepairDivisionVO" resultType="RepairDivisionVO">
+		<![CDATA[
+			SELECT A.DSP_ORD AS dspOrd
+				  ,MAX(CASE WHEN B.LANG_CLS_CD = 'LAG_001' THEN B.MLANG_COM_CD_NAME END) AS codeNm1
+				  ,MAX(CASE WHEN B.LANG_CLS_CD = 'LAG_002' THEN B.MLANG_COM_CD_NAME END) AS codeNm2
+				  ,MAX(CASE WHEN B.LANG_CLS_CD = 'LAG_003' THEN B.MLANG_COM_CD_NAME END) AS codeNm3
+				  ,MAX(CASE WHEN B.LANG_CLS_CD = 'LAG_004' THEN B.MLANG_COM_CD_NAME END) AS codeNm4
+				  ,A.CD_DESC1 AS cdDesc1
+				  ,A.ADD_VAL1 AS addVal1
+				  ,A.ADD_VAL2 AS addVal2
+				  ,A.ADD_VAL3 AS addVal3
+				  ,A.USE_YN   AS useYn
+				  ,A.COM_CD   AS comCd
+				  ,A.COM_UP_CD AS comUpCd
+			FROM TB_SYS_COM_CD	A
+				 LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B ON A.COM_CD = B.COM_CD
+			WHERE 1 = 1 
+			]]>
+			  <if test='comUpCd == null or comUpCd == ""'>
+			  	AND A.COM_UP_CD = 'REB'
+			  </if>
+			  <if test='comUpCd != null and comUpCd != ""'>
+			  	AND A.COM_UP_CD = #{comUpCd}
+			  </if>
+			  AND A.COM_CD = #{comCd}
+			  <![CDATA[
+			  GROUP BY   A.DSP_ORD
+						,A.CD_DESC1
+						,A.ADD_VAL1
+						,A.ADD_VAL2
+						,A.ADD_VAL3
+						,A.USE_YN
+			  ]]>
+	</select>
+	
+	
+	<select id="getDivisionCodeNmCnt" parameterType="RepairDivisionVO" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*) AS CNT FROM  TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+			  WHERE A.COM_UP_CD = #{comUpCd}
+				AND B.LANG_CLS_CD = 'LAG_001'
+				AND A.CD_DESC1 = #{chgCodeNm}
+		]]>		
+	</select>
+	
+	<!-- 코드명(한글) 등록 -->
+	<insert id="getDivisionAdd" parameterType="RepairDivisionVO" >
+		INSERT INTO TB_SYS_MLANG_COM_CD
+		  (COM_CD
+		  ,LANG_CLS_CD
+		  ,MLANG_COM_CD_NAME
+		  )
+		  VALUES 
+		  (
+		   #{comCd}
+		  ,'LAG_001'
+		  ,#{chgCodeNm}
+		  )
+	</insert>
+	
+	
+	<!-- 수리구분 등록 -->
+	<insert id="getDivisionAdd2" parameterType="RepairDivisionVO" >
+		INSERT INTO  TB_SYS_COM_CD(
+					 COM_CD
+					,COM_UP_CD
+					,CD_DESC1
+					,USE_YN
+					,DSP_ORD
+					,REG_ID
+					,REG_DTTM
+					,ADD_VAL1
+					,ADD_VAL2
+					,ADD_VAL3
+		) VALUES (
+					 #{comCd}
+					,#{comUpCd}
+					,#{chgCodeNm}
+					,#{useYn}
+					,#{dspOrd}
+					,#{adminId}
+					,NOW()
+					,#{addVal1}
+					,#{addVal2}
+					,#{addVal3}
+		)
+	</insert>
+	
+	<!-- 코드명(영문) 등록 -->
+	<insert id="getDivisionCode2Add" parameterType="RepairDivisionVO" >
+		INSERT INTO TB_SYS_MLANG_COM_CD
+		  (COM_CD
+		  ,LANG_CLS_CD
+		  ,MLANG_COM_CD_NAME
+		  )
+		  VALUES 
+		  (
+		   #{comCd}
+		  ,'LAG_002'
+		  ,#{codeNm2}
+		  )
+	</insert>
+	
+	<!-- 코드명(일어) 등록 -->
+	<insert id="getDivisionCode3Add" parameterType="RepairDivisionVO" >
+		INSERT INTO TB_SYS_MLANG_COM_CD
+		  (COM_CD
+		  ,LANG_CLS_CD
+		  ,MLANG_COM_CD_NAME
+		  )
+		  VALUES 
+		  (
+		   #{comCd}
+		  ,'LAG_003'
+		  ,#{codeNm3}
+		  )
+	</insert>
+	
+	<!-- 코드명(중국어) 등록 -->
+	<insert id="getDivisionCode4Add" parameterType="RepairDivisionVO" >
+		INSERT INTO TB_SYS_MLANG_COM_CD
+		  (COM_CD
+		  ,LANG_CLS_CD
+		  ,MLANG_COM_CD_NAME
+		  )
+		  VALUES 
+		  (
+		   #{comCd}
+		  ,'LAG_004'
+		  ,#{codeNm4}
+		  )
+	</insert>
+	
+	<!-- 코드명(영문) 수정 -->
+	<update id="getDivisionCode2Udt" parameterType="RepairDivisionVO" >
+		 UPDATE TB_SYS_MLANG_COM_CD
+			SET
+			   MLANG_COM_CD_NAME = #{codeNm2}
+			WHERE COM_CD = #{comCd}
+			  AND LANG_CLS_CD = 'LAG_002'
+	</update>
+	
+	<!-- 코드명(일어) 수정 -->
+	<update id="getDivisionCode3Udt" parameterType="RepairDivisionVO" >
+		 UPDATE TB_SYS_MLANG_COM_CD
+			SET
+			   MLANG_COM_CD_NAME = #{codeNm3}
+			WHERE COM_CD = #{comCd}
+			  AND LANG_CLS_CD = 'LAG_003'
+	</update>
+	
+	<!-- 코드명(중국어) 수정 -->
+	<update id="getDivisionCode4Udt" parameterType="RepairDivisionVO" >
+		 UPDATE TB_SYS_MLANG_COM_CD
+			SET
+			   MLANG_COM_CD_NAME = #{codeNm4}
+			WHERE COM_CD = #{comCd}
+			  AND LANG_CLS_CD = 'LAG_004'
+	</update>
+	
+	
+	
+	<!-- 코드명(한글) 수정 -->
+	<update id="getDivisionUdt" parameterType="RepairDivisionVO" >
+		 UPDATE TB_SYS_COM_CD
+			SET
+			   CD_DESC1 = #{chgDesc}
+			  ,USE_YN = #{useYn}
+			  ,DSP_ORD = #{dspOrd} 
+			  ,REG_ID = #{adminId}
+			  ,REG_DTTM = NOW()
+			  ,ADD_VAL1 = #{addVal1}
+			  ,ADD_VAL2 = #{addVal2}
+			  ,ADD_VAL3 = #{addVal3}
+			WHERE COM_CD = #{comCd}
+			  AND COM_UP_CD = #{comUpCd}
+	</update>
+	
+	<!-- 코드명(한글) 수정 -->
+	<update id="getDivisionUdt2" parameterType="RepairDivisionVO" >
+		 UPDATE TB_SYS_MLANG_COM_CD
+			SET
+			   MLANG_COM_CD_NAME = #{chgCodeNm}
+			WHERE COM_CD = #{comCd}
+			  AND LANG_CLS_CD = 'LAG_001'
+	</update>
+	
+	
+	<select id="getDivisionCodeCnt" parameterType="RepairDivisionVO" resultType="RepairDivisionVO">
+		<![CDATA[
+		SELECT MAX(CASE WHEN LANG_CLS_CD = 'LAG_002' THEN 'Y' ELSE '' END) AS CNT1,
+			   MAX(CASE WHEN LANG_CLS_CD = 'LAG_003' THEN 'Y' ELSE '' END) AS CNT2,
+			   MAX(CASE WHEN LANG_CLS_CD = 'LAG_004' THEN 'Y' ELSE '' END) AS CNT3 
+		  FROM TB_SYS_MLANG_COM_CD 
+		 WHERE COM_CD = #{comCd}
+		]]>		
+	</select>
+	
+	<select id="getDivisionSeqNo" parameterType="RepairDivisionVO" resultType="java.lang.String">
+		<![CDATA[   
+			SELECT CASE WHEN CAST(MAX(SEQ_COM) AS UNSIGNED) < 10
+	  					THEN CONCAT(MAX(SEQ_NM), '00', MAX(SEQ_COM)) 
+	  					WHEN CAST(MAX(SEQ_COM) AS UNSIGNED) > 9 AND CAST(MAX(SEQ_COM) AS UNSIGNED) < 100 
+	  					THEN CONCAT(MAX(SEQ_NM), '0', MAX(SEQ_COM)) 
+					END AS SEQ_COM
+			  FROM (	
+					SELECT MAX(SUBSTR(A.COM_CD,5,100))+1 AS SEQ_COM, 
+								MAX(SUBSTR(A.COM_CD,1,4)) AS SEQ_NM, 
+								A.COM_CD 
+						   FROM TB_SYS_COM_CD A
+					   WHERE 1=1
+						 AND COM_UP_CD = #{comUpCd}
+					UNION ALL
+					SELECT MAX(SUBSTR(B.COM_CD,5,100))+1 ,'',''
+						   FROM TB_SYS_MLANG_COM_CD B
+							   WHERE B.COM_CD LIKE  CONCAT('%',#{comUpCd},'%') 
+				   )A		
+		]]>		
+	</select>
+	
+   <delete id="getDivisionDel" parameterType="RepairDivisionVO">
+		<![CDATA[
+		   DELETE FROM TB_SYS_COM_CD 
+			WHERE COM_CD = #{comCd}
+		]]>		
+	</delete>
+	
+	<delete id="getDivisionDel2" parameterType="RepairDivisionVO">
+		<![CDATA[
+		  DELETE FROM TB_SYS_MLANG_COM_CD 
+		   WHERE COM_CD = #{comCd}
+		]]>		
+	</delete>
+	
+</mapper>

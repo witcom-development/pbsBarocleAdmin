@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+
+<tiles-definitions>
+	
+	<!-- 정비관리 공통 -->
+	<definition name="repairMgmtTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- solbit test S -->	
+	<definition name="/admin/repairMgmt/repairWork/repair_work_list" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/repairMgmt/repairWork/repair_work_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 정비원 근태 조회 페이지 -->
+	</definition>
+		
+	<definition name="/admin/repairMgmt/repairPerf/repair_perf_list" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/repairMgmt/repairPerf/repair_perf_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 정비원 실적 조회 페이지 -->
+	</definition> 
+	   
+	<definition name="/admin/repairMgmt/centerStatus/center_status_list" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/repairMgmt/centerStatus/center_status_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 사업소 현황 조회 페이지 -->
+	</definition> 
+	   
+	<definition name="/admin/repairMgmt/mgmtStat/mgmt_stat_list" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/repairMgmt/mgmtStat/mgmt_stat_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 관리팀 통계 조회 페이지 -->
+	</definition>
+	
+	<definition name="/admin/repairMgmt/mgmtStat/mgmt_stat_list_mail_pop" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/repairMgmt/mgmtStat/mgmt_stat_list_mail_pop.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 관리팀 통계 조회 메일 팝업용 페이지 -->
+	</definition>
+	
+	<definition name="/admin/repairMgmt/repairWork/rep_bik_detail_mgmt" extends="maintenanceTemplate" template="/WEB-INF/views/admin/repairMgmt/repairWork/rep_bik_detail_mgmt.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 자전거 수리상세 페이지:수정본  -->
+	</definition>
+		
+	<definition name="/admin/repairMgmt/repairWork/rep_bik_list_mgmt" extends="maintenanceTemplate" template="/WEB-INF/views/admin/repairMgmt/repairWork/rep_bik_list_mgmt.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 자전거 수리조회 페이지:수정본  -->
+	</definition>	
+	<!-- solbit test E -->
+	
+	<!-- 20210117 분배원 경정비 실적조회 -->
+	<definition name="/admin/repairMgmt/repairLight/rep_bike_light_member" extends="maintenanceTemplate" template="/WEB-INF/views/admin/repairMgmt/repairLight/rep_bike_light_member.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 자전거 수리조회 페이지:수정본  -->
+	</definition>	
+	
+</tiles-definitions>

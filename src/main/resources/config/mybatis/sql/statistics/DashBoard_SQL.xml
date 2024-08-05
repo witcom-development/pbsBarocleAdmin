@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.statistics.dashBoard.service.DashBoardMapper"> 
+	<select id="getDashBoardMain" resultType="DashBoardVO" parameterType="DashBoardVO">
+	   SELECT FORMAT(label01_01, 0 ) as label01_01   
+			, FORMAT(label01_02, 0 ) as label01_02
+			, FORMAT(label01_03, 0 ) as label01_03
+			, FORMAT(label01_04, 0 ) as label01_04
+			, FORMAT(label01_05, 0 ) as label01_05
+			,		label01_06	  as label01_06
+			,		label01_07	  as label01_07
+			, FORMAT(label02_01, 0 ) as label02_01   
+			, FORMAT(label02_02, 0 ) as label02_02
+			, FORMAT(label02_03, 0 ) as label02_03
+			, FORMAT(label02_04, 0 ) as label02_04
+			, FORMAT(label02_05, 0 ) as label02_05
+			, FORMAT(label02_06, 0 ) as label02_06
+			, label02_07			 as label02_07
+			, FORMAT(label02_08, 0 ) as label02_08
+			
+			, FORMAT(label03_01, 0 ) as label03_01   
+			, FORMAT(label03_02, 0 ) as label03_02
+			, FORMAT(label03_03, 0 ) as label03_03
+			, FORMAT(label03_04, 0 ) as label03_04
+			, FORMAT(label03_05, 0 ) as label03_05
+			, FORMAT(label03_06, 0 ) as label03_06
+			, FORMAT(label03_07, 0 ) as label03_07
+			, FORMAT(label03_08, 0 ) as label03_08
+			, FORMAT(label03_09, 0 ) as label03_09
+			, FORMAT(label03_10, 0 ) as label03_10
+			, FORMAT(label03_11, 0 ) as label03_11   
+			, FORMAT(label03_12, 0 ) as label03_12
+			, FORMAT(label03_13, 0 ) as label03_13
+			, FORMAT(label03_14, 0 ) as label03_14
+			, FORMAT(label03_15, 0 ) as label03_15
+			, FORMAT(label03_16, 0 ) as label03_16
+			
+			, FORMAT(label04_01, 0 ) as label04_01   
+			, FORMAT(label04_02, 0 ) as label04_02
+			, FORMAT(label04_03, 0 ) as label04_03
+			, FORMAT(label04_04, 0 ) as label04_04
+			, FORMAT(label04_05, 0 ) as label04_05
+			, FORMAT(label04_06, 0 ) as label04_06
+			, FORMAT(label04_07, 0 ) as label04_07
+			, FORMAT(label04_08, 0 ) as label04_08
+			, FORMAT(label04_09, 0 ) as label04_09
+			, FORMAT(label04_10, 0 ) as label04_10
+			, FORMAT(label04_11, 0 ) as label04_11   
+			, FORMAT(label04_12, 0 ) as label04_12
+			, CONCAT('\'' , SUBSTR(label04_90,3,2 ) , '.' , SUBSTR( label04_90, 6,2   ), '월' ) AS label04_90
+			, CONCAT('\'' , SUBSTR(label04_91,3,2 ) , '.' , SUBSTR( label04_91, 6,2   ), '월' ) AS label04_91
+	
+			, ROUND(label05_01, 2 ) as label05_01   
+			, ROUND(label05_02, 2 ) as label05_02
+			, ROUND(label05_03, 2 ) as label05_03
+			, ROUND(label05_04, 2 ) as label05_04	
+			
+			, ROUND(label05_11, 2 ) as label05_11   
+			, ROUND(label05_12, 2 ) as label05_12
+			, ROUND(label05_13, 2 ) as label05_13
+			, ROUND(label05_14, 2 ) as label05_14
+			
+			, REPLACE(label06_01, ',','' ) as label06_01   
+			, REPLACE(label06_02, ',','' ) as label06_02
+			, REPLACE(label06_03, ',','' ) as label06_03
+			, REPLACE(label06_04, ',','' ) as label06_04
+			, REPLACE(label06_05, ',','' ) as label06_05
+			
+			, REPLACE(label06_11, ',','' ) as label06_11   
+			, REPLACE(label06_12, ',','' ) as label06_12
+			, REPLACE(label06_13, ',','' ) as label06_13
+			, REPLACE(label06_14, ',','' ) as label06_14
+			, REPLACE(label06_15, ',','' ) as label06_15
+		   
+			, label06_91			 as label06_91
+			, label06_92			 as label06_92
+			, label06_93			 as label06_93
+			, label06_94			 as label06_94
+			, label06_95			 as label06_95
+			, label06_99			 as label06_99
+			
+	   FROM PROC_ADMIN.dashBoard A
+	</select> 
+	
+	<update id="updateDashBoardMain" parameterType="DashBoardVO"> 
+	   UPDATE PROC_ADMIN.dashBoard A
+		  SET <if test='regType == "1"'>
+			  label01_01 = IFNULL(replace(#{label01_01},',',''),label01_01)
+			, label01_02 = IFNULL(replace(#{label01_02},',',''),label01_02)
+			, label01_03 = IFNULL(replace(#{label01_03},',',''),label01_03)
+			, label01_07 = IFNULL(replace(#{label01_07},',',''),label01_07)
+			, label02_08 = IFNULL(replace(#{label02_08},',',''),label02_08)		-- QR자전거부착대기
+			, label02_05 = IFNULL(replace(#{label01_01},',',''),label01_01) - ( IFNULL(replace(#{label01_02},',',''),label01_02 ) + IFNULL(replace(#{label01_03},',',''),label01_03) + IFNULL(replace(#{label02_08},',',''),label02_08) )
+			   -- 실자전거수량(D)
+			, label02_07 = ROUND( ( A.label02_01 + A.label02_02 + A.label02_03 + A.label02_03 ) / 
+				(  IFNULL(replace(#{label01_01},',',''),label01_01) - ( IFNULL(replace(#{label01_02},',',''),label01_02) + IFNULL(replace(#{label01_03},',',''),label01_03) ) ) 
+				* 100, 2)  
+			  </if>
+			  <if test='regType == "2"'>
+			  label01_04 = IFNULL(replace(#{label01_04},',',''),label01_04)
+			, label01_05 = IFNULL(replace(#{label01_05},',',''),label01_05)
+			, label01_06 = IFNULL(replace(#{label01_06},',',''),label01_06)
+			  </if>
+				
+		WHERE 1=1
+   </update> 
+   
+   <update id="insertDashBoardMainHist" parameterType="DashBoardVO"> 
+	  INSERT INTO PROC_ADMIN.dashBoardHist
+	  ( COL_NAME, BF_CONTENT, AF_CONTENT, REG_ID )
+	  SELECT COL_NAME, BF_CONTENT, AF_CONTENT, #{regId} AS REG_ID
+	  FROM
+	  (  
+	  <if test='regType == "1"'>
+	   SELECT 'label01_01' AS COL_NAME, label01_01 AS BF_CONTENT, replace(#{label01_01},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_01 != replace(#{label01_01},',','')
+		UNION ALL
+	   SELECT 'label01_02' AS COL_NAME, label01_02 AS BF_CONTENT, replace(#{label01_02},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_02 != replace(#{label01_02},',','')
+		UNION ALL
+	   SELECT 'label01_03' AS COL_NAME, label01_03 AS BF_CONTENT, replace(#{label01_03},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_03 != replace(#{label01_03},',','')
+	   UNION ALL
+	   SELECT 'label01_07' AS COL_NAME, label01_07 AS BF_CONTENT, replace(#{label01_07},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_07 != replace(#{label01_07},',','')
+	   UNION ALL
+	   SELECT 'label02_08' AS COL_NAME, label02_08 AS BF_CONTENT, replace(#{label02_08},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label02_08 != replace(#{label02_08},',','')
+	  </if>
+	  <if test='regType == "2"'>
+	   SELECT 'label01_04' AS COL_NAME, label01_04 AS BF_CONTENT, replace(#{label01_04},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_04 != replace(#{label01_04},',','')
+		UNION ALL
+	   SELECT 'label01_05' AS COL_NAME, label01_05 AS BF_CONTENT, replace(#{label01_05},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_05 != replace(#{label01_05},',','')
+		UNION ALL
+	   SELECT 'label01_06' AS COL_NAME, label01_06 AS BF_CONTENT, replace(#{label01_06},',','') AS AF_CONTENT FROM PROC_ADMIN.dashBoard WHERE label01_06 != replace(#{label01_06},',','')
+	  </if> 
+	  ) A
+   </update> 
+   
+	  
+</mapper>

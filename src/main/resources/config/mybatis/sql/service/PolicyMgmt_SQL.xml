@@ -1,0 +1,718 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.policyMgmt.service.PolicyMgmtMapper">
+	<!-- 정기권 요금정책 수정_20160614_JJH_START -->
+	<select id="listRentChargePolicy" resultType="chargePolicyMgmtVO">
+		SELECT   A.RENT_FEE_SEQ AS rentFeeSeq,
+				 A.PAYMENT_CLS_CD AS paymentClsCd,
+				 A.RENT_FEE AS rentFee,
+		 		 IFNULL((SELECT MLANG_COM_CD_NAME
+		 				 FROM TB_SYS_MLANG_COM_CD
+		 				 WHERE 1=1
+		 				 AND COM_CD = B.COM_CD
+		 				 AND LANG_CLS_CD = 'LAG_001'), B.CD_DESC1) AS cdDesc,
+		 		 A.MILEAGE_USE_YN AS mileageUseYn,
+		 		 B.ADD_VAL1 AS addVal1,
+		 		 B.ADD_VAL2 AS addVal2,
+		 		 B.ADD_VAL3 AS addVal3,
+		 		 A.DISCOUNT_FEE AS discountFee, 
+				 A.ZERO_PAY_DISCOUNT_FEE AS zeroPayDiscountFee,
+				 A.MERITER_FEE		   AS meriterFee,
+				 A.BSC_LIV_FEE		   AS bscLivFee,
+				 A.SINGLE_PARENT_FEE	 AS singleParentFee,
+				 A.YOUTH_FEE			 AS youthFee,
+				 C.DIS_RATE					AS disRate
+		FROM TB_SVC_RENT_FEE A LEFT JOIN TB_SYS_COM_CD B ON A.PAYMENT_CLS_CD = B.COM_CD
+			LEFT JOIN TB_SVC_SFT_CERT_DISCOUNT C ON A.PAYMENT_CLS_CD = C.COM_CD
+		WHERE 1=1
+		AND B.COM_UP_CD = 'BIL'
+		AND B.USE_YN = 'Y'
+		<!-- AND B.ADD_VAL1 NOT LIKE 'PREMIUM%'  -->
+		ORDER BY A.PAYMENT_CLS_CD DESC
+	</select> 
+	<!-- 정기권 요금정책 수정_20160614_JJH_END -->
+	
+	<!-- 프리미엄 요금 정책 리스트_20160614_JJH_START -->
+	<select id="listPremiumRentChargePolicy" resultType="chargePolicyMgmtVO">
+		SELECT   A.RENT_FEE_SEQ AS rentFeeSeq,
+				 A.PAYMENT_CLS_CD AS paymentClsCd,
+				 A.RENT_FEE AS rentFee,
+		 		 IFNULL((SELECT MLANG_COM_CD_NAME
+		 				 FROM TB_SYS_MLANG_COM_CD
+		 				 WHERE 1=1
+		 				 AND COM_CD = B.COM_CD
+		 				 AND LANG_CLS_CD = 'LAG_001'), B.CD_DESC1) AS cdDesc,
+		 		 A.MILEAGE_USE_YN AS mileageUseYn
+		FROM TB_SVC_RENT_FEE A LEFT JOIN TB_SYS_COM_CD B ON A.PAYMENT_CLS_CD = B.COM_CD
+		WHERE 1=1
+		AND B.COM_UP_CD = 'BIL'
+		AND B.ADD_VAL1 LIKE 'PREMIUM%'
+		ORDER BY A.RENT_FEE DESC
+	</select> 
+	<!-- 프리미엄 요금 정책 리스트_20160614_JJH_END -->
+
+	<select id="listAddChargePolicy" resultType="chargePolicyMgmtVO">
+		SELECT	ADD_FEE_SEQ								AS addFeeSeq
+			   ,OVER_STR_MI								AS overStrMi
+			   ,OVER_END_MI								AS overEndMi
+			   ,ADD_FEE_INTER_MI						AS addFeeInterMi
+			   ,ADD_FEE									AS addFee
+			   ,ADD_FEE_CLS								AS addFeeCls
+		FROM	TB_SVC_ADD_FEE
+		ORDER BY OVER_STR_MI
+	</select>
+	
+	<!-- 프리미엄 추가 요금 정책 리스트_20160614_JJH_START -->
+	<select id="listAddPremiumChargePolicy" resultType="chargePolicyMgmtVO">
+		SELECT	ADD_FEE_SEQ								AS addFeeSeq
+			   ,OVER_STR_MI								AS overStrMi
+			   ,OVER_END_MI								AS overEndMi
+			   ,ADD_FEE_INTER_MI						AS addFeeInterMi
+			   ,ADD_FEE									AS addFee
+			   ,ADD_FEE_CLS								AS addFeeCls
+		FROM	TB_SVC_ADD_FEE
+		WHERE 1=1
+		AND ADD_FEE_CLS = 'P'
+		ORDER BY OVER_STR_MI
+	</select>
+	<!-- 프리미엄 추가 요금 정책 리스트_20160614_JJH_END -->
+
+	<select id="listSpecialChargePolicy" parameterType="String" resultType="chargePolicyMgmtVO">
+		SELECT	SPECIAL_FEE_SEQ							AS specialFeeSeq
+			   ,A.RENT_FEE_SEQ							AS rentFeeSeq
+			   ,SPECIAL_FEE_CLS_CD						AS specialFeeClsCd
+			   ,SPECIAL_DAY								AS specialDay
+			   ,SPECIAL_MM								AS specialMM
+			   ,APPLY_STR_HH							AS applyStrHH
+			   ,APPLY_END_HH							AS applyEndHH
+			   ,SPECIAL_FEE								AS specialFee
+		FROM	TB_SVC_SPECIAL_FEE A, TB_SVC_RENT_FEE B
+		WHERE	A.RENT_FEE_SEQ = B.RENT_FEE_SEQ
+		AND		PAYMENT_CLS_CD = #{paymentClsCd}
+		ORDER BY APPLY_STR_HH, SPECIAL_DAY, CAST(SPECIAL_MM AS UNSIGNED)
+	</select>
+
+	<select id="listRentMM" resultType="chargePolicyMgmtVO">
+		SELECT	COM_CD									AS comCd
+			   ,ADD_VAL1								AS addVal1
+		FROM	TB_SYS_COM_CD
+		WHERE	COM_CD IN ('MSI_011', 'MSI_012')
+	</select>
+	
+	<!-- 프리미엄 요금제 자전거 정책_20160614_JJH_START -->
+	<select id="PremiumlistRentMM" resultType="chargePolicyMgmtVO">
+		SELECT	COM_CD									AS comCd
+			   ,ADD_VAL1								AS addVal1
+		FROM	TB_SYS_COM_CD
+		WHERE	COM_CD IN ('MSI_022', 'MSI_023')
+	</select>
+	
+	<update id="updatePremiumSeasonUseYn" parameterType="chargePolicyMgmtVO"> <!-- 프리미엄 요금제 자전거 정책(90일 요금제 제외)_20160620_JJH -->
+		UPDATE TB_SYS_COM_CD
+		SET USE_YN = #{premiumSeason}
+		WHERE 1=1
+		AND COM_UP_CD = 'BIL'
+		AND ADD_VAL1 = 'PREMIUM_SEASON'
+		AND COM_CD != 'BIL_013'
+	</update>
+	
+	<update id="updatePremiumMdayUseYn" parameterType="chargePolicyMgmtVO">	<!-- 프리미엄 요금제(일일권) 자전거 정책(회원 제외)_20160620_JJH -->
+		UPDATE TB_SYS_COM_CD
+		SET USE_YN = #{premiumMday}
+		WHERE 1=1
+		AND COM_UP_CD = 'BIL'
+		AND ADD_VAL1 = 'PREMIUM_MDAY'
+	</update>
+	<!-- 프리미엄 요금제 자전거 정책_20160614_JJH_END -->
+
+	<!-- 마일리지 사용 여부 설정 추가 20180207 dustjm -->
+	<update id="modRentChargePolicy" parameterType="chargePolicyMgmtVO">
+		UPDATE	TB_SVC_RENT_FEE
+		SET		RENT_FEE = #{rentFee},
+				MILEAGE_USE_YN = #{mileageUseYn},
+				DISCOUNT_FEE = #{discountFee}, 
+				ZERO_PAY_DISCOUNT_FEE =#{zeroPayDiscountFee},
+				MERITER_FEE		   =#{meriterFee},
+				BSC_LIV_FEE		   =#{bscLivFee},
+				SINGLE_PARENT_FEE	 =#{singleParentFee},
+				YOUTH_FEE			 =#{youthFee} 
+		WHERE	RENT_FEE_SEQ = #{rentFeeSeq}
+	</update>
+
+	<update id="modAddChargePolicy" parameterType="chargePolicyMgmtVO">
+		UPDATE	TB_SVC_ADD_FEE
+		SET		ADD_FEE = #{addFee}
+			   ,OVER_STR_MI = #{overStrMi}
+		<if test='overEndMi != null and overEndMi != ""'>
+			   ,OVER_END_MI = #{overEndMi}
+		</if>
+		<!-- 추가요금 간격 분 추가 20180207 dustjm  -->
+		<if test='addFeeInterMi != null and addFeeInterMi != ""'>
+			   ,ADD_FEE_INTER_MI = #{addFeeInterMi}
+		</if>
+   		WHERE	ADD_FEE_SEQ = #{addFeeSeq}
+	</update>
+
+	<update id="modSpecialChargePolicy" parameterType="chargePolicyMgmtVO">
+		UPDATE	TB_SVC_SPECIAL_FEE
+		SET		SPECIAL_FEE = #{specialFee}
+		<if test='applyStrHH != null and applyStrHH != ""'>
+			   ,APPLY_STR_HH = #{applyStrHH}
+		</if>
+		<if test='applyEndHH != null and applyEndHH != ""'>	   
+			   ,APPLY_END_HH = #{applyEndHH}
+		</if>	   
+		WHERE	SPECIAL_FEE_SEQ = #{specialFeeSeq}
+	</update>
+
+	<insert id="insertSpecialTimeChargePolicy" parameterType="chargePolicyMgmtVO">
+		INSERT INTO	TB_SVC_SPECIAL_FEE (
+			RENT_FEE_SEQ
+		   ,SPECIAL_FEE_CLS_CD
+		   ,APPLY_STR_HH
+		   ,APPLY_END_HH
+		   ,SPECIAL_FEE
+		) VALUES (
+			(SELECT RENT_FEE_SEQ FROM TB_SVC_RENT_FEE WHERE PAYMENT_CLS_CD = #{paymentClsCd})
+		   ,'SDV_001'
+		   ,#{applyStrHH}
+		   ,#{applyEndHH}
+		   ,#{specialFee}
+		)
+	</insert>
+	
+	<delete id="delSpecialTimeChargePolicy" parameterType="chargePolicyMgmtVO">
+		DELETE FROM	TB_SVC_SPECIAL_FEE
+		WHERE		SPECIAL_FEE_SEQ = #{specialFeeSeq}
+	</delete>
+
+	<select id="listPenaltyPolicy" parameterType="penaltyPolicyMgmtVO" resultType="penaltyPolicyMgmtVO">
+		SELECT	PENALTY_CD				AS penaltyCd			
+			   ,PENALTY_NAME			AS penaltyName
+			   ,PENALTY_POINT			AS penaltyPoint
+			   ,USE_YN					AS useYn
+			   ,MOD_DTTM				AS modDttm
+			   ,MOD_ID					AS modId
+			   ,PENALTY_CONTENT			AS penaltyContent
+		FROM	TB_SVC_PENALTY_CD
+		WHERE	1=1
+		<if test='penaltyCd != null and penaltyCd != ""'>
+			AND PENALTY_CD = #{penaltyCd}
+		</if>
+		<if test='penaltyName != null and penaltyName != ""'>
+			AND PENALTY_NAME LIKE CONCAT(#{penaltyName}, '%')
+		</if>
+		 ORDER BY MOD_DTTM DESC
+		 <if test='penaltyCd == null or penaltyCd == ""'>
+		 	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		 </if>
+	</select>
+	
+	<select id="listPenaltyPolicyCount" parameterType="penaltyPolicyMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_SVC_PENALTY_CD
+		WHERE	1=1
+		<if test='penaltyCd != null and penaltyCd != ""'>
+			AND PENALTY_CD = #{penaltyCd}
+		</if>
+		<if test='penaltyName != null and penaltyName != ""'>
+			AND PENALTY_NAME LIKE CONCAT(#{penaltyName}, '%')
+		</if>
+	</select>
+	
+	<select id="isPenaltyCdDupl" parameterType="String" resultType="int">
+		SELECT	COUNT(PENALTY_CD)
+		FROM	TB_SVC_PENALTY_CD
+		WHERE	PENALTY_CD = CONCAT('PEN_', #{penaltyCd})
+	</select>
+	
+	<insert id="insertPenaltyPolicy" parameterType="penaltyPolicyMgmtVO">
+		INSERT INTO TB_SVC_PENALTY_CD (
+				PENALTY_CD
+			   ,PENALTY_NAME
+			   ,PENALTY_POINT
+			   ,USE_YN
+			   ,REG_DTTM
+			   ,REG_ID
+			   ,MOD_DTTM
+			   ,MOD_ID
+			   ,PENALTY_CONTENT
+		) VALUES (
+				CONCAT('PEN_', #{penaltyCd})
+			   ,#{penaltyName}
+			   ,#{penaltyPoint}
+			   ,'Y'
+			   ,NOW()
+			   ,#{regId}
+			   ,NOW()
+			   ,#{modId}
+			   ,#{penaltyContent}
+		)
+	</insert>
+	
+	<update id="modPenaltyPolicy" parameterType="penaltyPolicyMgmtVO">
+		UPDATE	TB_SVC_PENALTY_CD 
+		SET		PENALTY_NAME 		= #{penaltyName}
+			   ,PENALTY_POINT 		= #{penaltyPoint}
+			   ,MOD_DTTM 			= NOW()
+			   ,MOD_ID 				= #{modId}
+			   ,PENALTY_CONTENT 		= #{penaltyContent}
+		WHERE	PENALTY_CD = #{penaltyCd}
+	</update>
+	
+	<select id="isPenaltyApply" parameterType="String" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_SVC_PENALTY_CD A, TB_SVC_PENALTY B
+		WHERE	A.PENALTY_CD = B.PENALTY_CD
+		AND		A.PENALTY_CD = #{penaltyCd}
+	</select>
+	
+	<delete id="delPenaltyPolicy" parameterType="penaltyPolicyMgmtVO">
+		DELETE FROM	TB_SVC_PENALTY_CD
+		WHERE		PENALTY_CD = #{penaltyCd}
+	</delete>
+	
+	<select id="listTransferPolicy" parameterType="transferPolicyMgmtVO" resultType="transferPolicyMgmtVO">
+		SELECT	TRANSFER_POLICY_SEQ			AS transferPolicySeq
+			   ,APPLY_END_DATE				AS applyEndDate
+			   ,APPLY_STR_DATE				AS applyStrDate
+			   ,DD_MAX_ACC_MILEAGE			AS ddMaxAccMileage
+			   ,MM_MAX_ACC_MILEAGE			AS mmMaxAccMileage
+			   ,YY_MAX_ACC_MILEAGE			AS yyMaxAccMileage
+			   ,TMS_ACC_MILEAGE				AS tmsAccMileage
+			   ,TRANSFER_RANGE_MI			AS transferRangeMi
+			   ,DD_MAX_ACC_CNT				AS ddMaxAccCnt
+			   ,MIN_USE_MILEAGE				AS minUseMileage
+			   ,MAX_USE_MILEAGE				AS maxUseMileage
+			   ,MILEAGE_STANDARD			AS mileageStandard
+		FROM	TB_SVC_TRANSFER_POLICY
+		WHERE	1=1
+		<if test='transferPolicySeq != null and transferPolicySeq != ""'>
+			AND TRANSFER_POLICY_SEQ = #{transferPolicySeq}
+		</if>
+		<if test='applyStrDate != null and applyStrDate != ""'>
+			AND (
+					STR_TO_DATE(#{applyStrDate}, '%Y-%m-%d') BETWEEN APPLY_STR_DATE AND APPLY_END_DATE OR 
+					STR_TO_DATE(#{applyEndDate}, '%Y-%m-%d') BETWEEN APPLY_STR_DATE AND APPLY_END_DATE 
+				)
+		</if>
+		ORDER BY APPLY_END_DATE DESC
+		<if test='transferPolicySeq == null or transferPolicySeq == ""'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+
+	<select id="listTransferPolicyCount" parameterType="transferPolicyMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_SVC_TRANSFER_POLICY
+		WHERE	1=1
+		<if test='transferPolicySeq != null and transferPolicySeq != ""'>
+			AND TRANSFER_POLICY_SEQ = #{transferPolicySeq}
+		</if>
+		<if test='applyStrDate != null and applyStrDate != ""'>
+			AND (
+					APPLY_STR_DATE BETWEEN STR_TO_DATE(#{applyStrDate}, '%Y-%m-%d') AND STR_TO_DATE(#{applyEndDate}, '%Y-%m-%d') OR 
+					APPLY_END_DATE BETWEEN STR_TO_DATE(#{applyStrDate}, '%Y-%m-%d') AND STR_TO_DATE(#{applyEndDate}, '%Y-%m-%d')
+				)
+		</if>
+	</select>
+	
+	<select id="isTransferDateDupl" parameterType="transferPolicyMgmtVO" resultType="int">
+		<![CDATA[
+		SELECT	COUNT(*)
+		FROM	TB_SVC_TRANSFER_POLICY
+		WHERE	APPLY_STR_DATE >= STR_TO_DATE(#{applyStrDate}, '%Y-%m-%d') 
+		]]>
+		<if test='transferPolicySeq != null and transferPolicySeq != ""'>		
+			AND		TRANSFER_POLICY_SEQ != #{transferPolicySeq}
+		</if>
+	</select>
+	
+	<insert id="insertTransferPolicy" parameterType="transferPolicyMgmtVO">
+		INSERT INTO TB_SVC_TRANSFER_POLICY (
+				 TRANSFER_POLICY_SEQ
+				,APPLY_END_DATE
+				,APPLY_STR_DATE
+				,DD_MAX_ACC_MILEAGE
+				,MM_MAX_ACC_MILEAGE
+				,YY_MAX_ACC_MILEAGE
+				,TMS_ACC_MILEAGE
+				,TRANSFER_RANGE_MI
+				,DD_MAX_ACC_CNT
+				,MIN_USE_MILEAGE
+				,MAX_USE_MILEAGE
+				,MILEAGE_STANDARD
+		) VALUES (
+				 #{transferPolicySeq}
+				,#{applyEndDate}
+				,#{applyStrDate}
+				,#{ddMaxAccMileage}
+				,#{mmMaxAccMileage}
+				,#{yyMaxAccMileage}
+				,#{tmsAccMileage}
+				,#{transferRangeMi}
+				,#{ddMaxAccCnt}
+				,#{minUseMileage}
+				,#{maxUseMileage}
+				,#{mileageStandard}
+		)
+	</insert>
+	
+	<update id="modTransferPolicy" parameterType="transferPolicyMgmtVO">
+		UPDATE	TB_SVC_TRANSFER_POLICY 
+		SET		APPLY_END_DATE			= #{applyEndDate}
+			   ,APPLY_STR_DATE			= #{applyStrDate}
+			   ,DD_MAX_ACC_MILEAGE		= #{ddMaxAccMileage}
+			   ,MM_MAX_ACC_MILEAGE		= #{mmMaxAccMileage}
+			   ,YY_MAX_ACC_MILEAGE		= #{yyMaxAccMileage}
+			   ,TMS_ACC_MILEAGE			= #{tmsAccMileage}
+			   ,TRANSFER_RANGE_MI		= #{transferRangeMi}
+			   ,DD_MAX_ACC_CNT			= #{ddMaxAccCnt}
+			   ,MIN_USE_MILEAGE			= #{minUseMileage}
+			   ,MAX_USE_MILEAGE			= #{maxUseMileage}
+			   ,MILEAGE_STANDARD		= #{mileageStandard}
+		WHERE	TRANSFER_POLICY_SEQ = #{transferPolicySeq}
+	</update>
+	
+	<update id="modRecentTransferPolicy" parameterType="transferPolicyMgmtVO">
+		UPDATE	TB_SVC_TRANSFER_POLICY
+		SET		APPLY_END_DATE	= DATE_SUB(#{applyStrDate}, INTERVAL 1 DAY)
+		WHERE	APPLY_END_DATE	= '9999-12-31'			   
+	</update>
+	
+	<delete id="delTransferPolicy" parameterType="transferPolicyMgmtVO">
+		DELETE FROM	TB_SVC_TRANSFER_POLICY
+		WHERE		TRANSFER_POLICY_SEQ = #{transferPolicySeq}
+	</delete>
+	
+	<!-- 프리미엄 요금제 사용여부(회원에게 서비스 할 경우 쿼리수정 불가피)_20160614_JJH_START -->
+	<select id="premiumUseYnList" resultType="java.util.HashMap">
+		SELECT  ADD_VAL3 AS gubun,
+		 		USE_YN AS use_Yn
+		FROM TB_SYS_COM_CD
+		WHERE 1=1
+		AND COM_UP_CD = 'BIL'
+		AND ADD_VAL1 LIKE 'PREMIUM%'
+		GROUP BY ADD_VAL1;
+	</select>
+	
+	<!-- sms 전송 리스트_카운트 _cms_20161216 -->
+	<!-- <select id="smsSendListCnt" parameterType="memberMgmtVO" resultType="int">
+		  SELECT COUNT(*) AS CNT
+		   FROM (
+				   SELECT CONCAT(SUBSTRING(SMH.DEST_NO,1,3),'-',SUBSTRING(SMH.DEST_NO,4,4),'-',SUBSTRING(SMH.DEST_NO,8,4)) AS VIEW_TEL,
+						  SMH.SEND_ADMIN_ID,
+						  DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d ( %H:%i %p )') AS SEND_DT,
+						  MSG,
+						  (
+							  SELECT COUNT(*) 
+								FROM SOMQ_LOG SL
+							   WHERE SL.DESTNO = SMH.DEST_NO
+								 AND SL.REQDTTM &gt;= DATE_FORMAT(DATE_ADD(SMH.REG_DTTM, INTERVAL -10 MINUTE),'%Y-%m-%d %H:%i:%s')
+								 AND SL.REQDTTM &lt;= DATE_FORMAT(DATE_ADD(SMH.REG_DTTM, INTERVAL +10 MINUTE),'%Y-%m-%d %H:%i:%s')
+						  ) AS SEND_CALL_CNT,
+						  (
+							  SELECT COUNT(*) 
+								FROM SOMQ SQ
+							   WHERE SQ.DESTNO = SMH.DEST_NO
+						  ) AS SEND_STAND_CNT
+					 FROM SOMQ_MANUAL_HISTORY SMH
+					 WHERE 1=1
+					 <if test='searchStartDate != null and searchStartDate != ""'>	
+					  AND DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+					  </if>
+					  <if test='searchStartDate != null and searchStartDate != ""'>	
+					  AND DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d') &lt;= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+					  </if>
+					  <if test='searchParameter == "1"'>	
+					  AND SMH.DEST_NO LIKE CONCAT('%',#{searchValue}, '%')
+					  </if>
+					  <if test='searchParameter == "2"'>	
+					  AND SMH.SEND_ADMIN_ID LIKE CONCAT('%',#{searchValue}, '%')
+					  </if>
+			   )A
+	</select> -->
+	
+	<!-- sms 전송 리스트 _cms_20161216 -->
+<!-- 	<select id="smsSendList"  parameterType="memberMgmtVO" resultType="memberMgmtVO">
+			 SELECT VIEW_TEL AS viewTel,
+					SEND_ADMIN_ID AS sendAdminId,
+					SEND_DT AS sendDt, 
+					MSG,
+					(
+					CASE WHEN SEND_CALL_CNT > 0 AND ( SEND_STAND_CNT + SEND_CALL_CNT ) > 0
+						 THEN '전송 완료'
+						 WHEN SEND_CALL_CNT = 0 AND SEND_STAND_CNT > 0
+						 THEN '전송 대기(예약)'
+						 ELSE '전송 오류'
+						 END 
+					 ) AS  stateChk  
+			   FROM (
+					   SELECT CONCAT(SUBSTRING(SMH.DEST_NO,1,3),'-',SUBSTRING(SMH.DEST_NO,4,4),'-',SUBSTRING(SMH.DEST_NO,8,4)) AS VIEW_TEL,
+							  SMH.SEND_ADMIN_ID,
+							  DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d ( %H:%i %p )') AS SEND_DT,
+							  MSG,
+							  (
+								  SELECT COUNT(*) 
+									FROM SOMQ_LOG SL
+								   WHERE SL.DESTNO = SMH.DEST_NO
+									 AND SL.REQDTTM &gt;= DATE_FORMAT(DATE_ADD(SMH.REG_DTTM, INTERVAL -10 MINUTE),'%Y-%m-%d %H:%i:%s')
+									 AND SL.REQDTTM &lt;= DATE_FORMAT(DATE_ADD(SMH.REG_DTTM, INTERVAL +10 MINUTE),'%Y-%m-%d %H:%i:%s')
+							  ) AS SEND_CALL_CNT,
+							  (
+								  SELECT COUNT(*) 
+									FROM SOMQ SQ
+								   WHERE SQ.DESTNO = SMH.DEST_NO
+							  ) AS SEND_STAND_CNT
+						 FROM SOMQ_MANUAL_HISTORY SMH
+						 WHERE 1=1
+						   <if test='searchStartDate != null and searchStartDate != ""'>	
+						   AND DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+						   </if>
+						   <if test='searchStartDate != null and searchStartDate != ""'>	
+						   AND DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d') &lt;= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+						   </if>
+						   <if test='searchParameter == "1"'>	
+						   AND SMH.DEST_NO LIKE CONCAT('%',#{searchValue}, '%')
+						   </if>
+						   <if test='searchParameter == "2"'>	
+						   AND SMH.SEND_ADMIN_ID LIKE CONCAT('%',#{searchValue}, '%')
+						   </if>
+				   )A
+				   ORDER BY SEND_DT DESC
+				   LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select> -->
+	<!-- sms 전송 리스트 _cms_20180911 -->
+<!-- 	<select id="smsSendList"  parameterType="memberMgmtVO" resultType="memberMgmtVO">
+	SELECT RECEIVE_MOBILE_NO AS viewTel, 
+	REGISTER_BY AS sendAdminId, 
+	DATE_FORMAT(REGISTER_DATE,'%Y-%m-%d ( %H:%i %p )') AS sendDt, 
+	SEND_MESSAGE AS MSG,
+	(
+	CASE WHEN SEND_RESULT_CODE1 = 'OK'
+		THEN '전송완료'
+		WHEN SEND_RESULT_CODE1 LIKE 'KKO%'
+		THEN '전송불가(문자대치)'
+		WHEN SEND_RESULT_CODE1 = 'NT_1'
+		THEN '사용자네트워크오류'
+		ELSE '전송오류'
+		END
+	) AS stateChk,
+	(
+	CASE WHEN GW_CODE = 'KKO'
+		THEN '카카오'
+		ELSE CONCAT('문자(', GW_CODE,')')
+		END
+	) AS gwCode
+	FROM TSMS_AGENT_MESSAGE_LOG
+	WHERE 1=1
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		AND DATE_FORMAT(REGISTER_DATE,'%Y-%m-%d') &gt;= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		</if>
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		AND DATE_FORMAT(REGISTER_DATE,'%Y-%m-%d') &lt;= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		</if>
+		<if test='searchStartDate == null or searchStartDate == ""'>	
+		AND REGISTER_DATE &gt;=  NOW()  - INTERVAL 1 DAY  
+		</if>
+		<if test='searchParameter == "1"'>	
+		AND RECEIVE_MOBILE_NO LIKE CONCAT('%',#{searchValue}, '%')
+		</if>
+		<if test='searchParameter == "2"'>	
+		AND REGISTER_BY LIKE CONCAT('%',#{searchValue}, '%')
+		</if>
+	ORDER BY SEND_DATE DESC
+	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	sms 전송 리스트_카운트 _cms_20180911
+	<select id="smsSendListCnt" parameterType="memberMgmtVO" resultType="int">
+	SELECT COUNT(*) AS CNT FROM TSMS_AGENT_MESSAGE_LOG
+	WHERE 1=1
+	<if test='searchStartDate != null and searchStartDate != ""'>	
+	AND DATE_FORMAT(REGISTER_DATE,'%Y-%m-%d') &gt;= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+	</if>
+	<if test='searchStartDate != null and searchStartDate != ""'>	
+	AND DATE_FORMAT(REGISTER_DATE,'%Y-%m-%d') &lt;= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+	</if>
+	<if test='searchStartDate == null or searchStartDate == ""'>	
+	AND REGISTER_DATE &gt;=  NOW()  - INTERVAL 1 DAY  
+	</if>
+	<if test='searchParameter == "1"'>	
+	AND RECEIVE_MOBILE_NO LIKE CONCAT('%',#{searchValue}, '%')
+	</if>
+	<if test='searchParameter == "2"'>	
+	AND REGISTER_BY LIKE CONCAT('%',#{searchValue}, '%')
+	</if>
+	</select> -->
+	
+	<select id="smsSendListCnt" parameterType="memberMgmtVO" resultType="int">
+		
+		
+	SELECT COUNT(1)
+	  FROM TSMS_AGENT_MESSAGE_LOG A
+	 WHERE 1=1 
+	 <if test='searchStartDate != null and searchStartDate != ""'>	
+	   AND SEND_DATE BETWEEN DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+						  AND DATE_ADD( DATE_FORMAT( #{searchEndDate},'%Y-%m-%d') , INTERVAL 1 DAY )
+	 </if>
+	 <if test='searchParameter == null'>	
+	   AND 1=2
+	 </if>
+	 <if test='searchParameter == "1"'>	
+		  AND RECEIVE_MOBILE_NO =  REPLACE( #{searchValue}, '-','')
+	 </if>
+	 <!-- <if test='searchParameter == "2"'>	
+		AND SMH.SEND_ADMIN_ID LIKE CONCAT('%',#{searchValue}, '%')
+	 </if>  -->
+		   
+			   
+	</select>
+	<select id="smsSendList"  parameterType="memberMgmtVO" resultType="memberMgmtVO">
+	SELECT CONCAT(SUBSTRING(RECEIVE_MOBILE_NO,1,3),'-',SUBSTRING(RECEIVE_MOBILE_NO,4,4),'-',SUBSTRING(RECEIVE_MOBILE_NO,8,4)) AS viewTel
+		 , SEND_DATE AS sendDt
+		 , SEND_MESSAGE AS MSG
+		 , CASE WHEN A.SEND_RESULT_CODE2 = 'OK' THEN '문자발송'
+				WHEN A.SEND_RESULT_CODE1 = 'OK' THEN '알림톡발송'	 
+				ELSE CONCAT( '발송중' , A.SEND_RESULT_CODE1 , '/', A.SEND_RESULT_CODE2 ) 
+		   END AS stateChk
+		 , A.SUBJECT  AS sendAdminId
+	  FROM TSMS_AGENT_MESSAGE_LOG A
+	 WHERE 1=1 
+	 <if test='searchStartDate != null and searchStartDate != ""'>	
+	   AND SEND_DATE BETWEEN DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+						 AND DATE_ADD( DATE_FORMAT( #{searchEndDate},'%Y-%m-%d') , INTERVAL 1 DAY )
+	 </if>
+	 <if test='searchParameter == null'>	
+	   AND 1=2
+	 </if>
+	 <if test='searchParameter == "1"'>	
+		AND RECEIVE_MOBILE_NO =  REPLACE( #{searchValue}, '-','')
+		ORDER BY A.SEND_DATE DESC
+	 </if>
+ 
+	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	
+	
+		   <!--   SELECT VIEW_TEL AS viewTel,
+					SEND_ADMIN_ID AS sendAdminId,
+					SEND_DT AS sendDt, 
+					MSG,
+					(
+					CASE WHEN SEND_CALL_CNT > 0 AND ( SEND_STAND_CNT + SEND_CALL_CNT ) > 0
+						 THEN '전송 완료'
+						 WHEN SEND_CALL_CNT = 0 AND SEND_STAND_CNT > 0
+						 THEN '전송 대기(예약)'
+						 ELSE '전송 오류'
+						 END 
+					 ) AS  stateChk  
+			   FROM (
+					   SELECT CONCAT(SUBSTRING(SMH.DEST_NO,1,3),'-',SUBSTRING(SMH.DEST_NO,4,4),'-',SUBSTRING(SMH.DEST_NO,8,4)) AS VIEW_TEL,
+							  SMH.SEND_ADMIN_ID,
+							  DATE_FORMAT(SMH.REG_DTTM,'%Y-%m-%d ( %H:%i %p )') AS SEND_DT,
+							  MSG,
+							  (
+								  SELECT COUNT(*) 
+								  FROM TSMS_AGENT_MESSAGE_LOG SL
+								  WHERE SL.RECEIVE_MOBILE_NO = SMH.DEST_NO
+								  	AND SL.SEND_DATE &gt;= DATE_FORMAT(DATE_ADD(SMH.REG_DTTM, INTERVAL -10 MINUTE),'%Y-%m-%d %H:%i:%s')
+								  	AND SL.SEND_DATE &lt;= DATE_FORMAT(DATE_ADD(SMH.REG_DTTM, INTERVAL +10 MINUTE),'%Y-%m-%d %H:%i:%s')
+							  ) AS SEND_CALL_CNT,
+							  (
+								  SELECT COUNT(*) 
+									FROM TSMS_AGENT_MESSAGE SQ
+								   WHERE SQ.RECEIVE_MOBILE_NO = SMH.DEST_NO
+							  ) AS SEND_STAND_CNT
+						 FROM SOMQ_MANUAL_HISTORY SMH
+						 WHERE 1=1
+						   <if test='searchStartDate != null and searchStartDate != ""'>	
+							AND SMH.REG_DTTM BETWEEN DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+										   AND DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+						   </if>
+						   
+						   <if test='searchParameter == null'>	
+						  AND 1=2
+						   </if>
+						   
+						   <if test='searchParameter == "1"'>	
+						   AND SMH.DEST_NO LIKE CONCAT('%', REPLACE( #{searchValue}, '-',''), '%')
+						   </if>
+						   <if test='searchParameter == "2"'>	
+						   AND SMH.SEND_ADMIN_ID LIKE CONCAT('%',#{searchValue}, '%')
+						   </if>
+				   )A
+				   ORDER BY SEND_DT DESC
+				   LIMIT #{firstRecordIndex}, #{recordCountPerPage} -->
+	</select>
+	
+	<select id="smsLongSendListCnt"  parameterType="memberMgmtVO" resultType="int">
+		 SELECT COUNT(1)  AS CNT
+		   FROM SMS.SDK_MMS_REPORT A
+		  WHERE 1=1
+			AND SUBJECT = '대여시간 초과 안내'
+			AND SEND_DATE BETWEEN REPLACE(#{searchStartDate},'-', '') AND  REPLACE( DATE_ADD( #{searchEndDate}  , INTERVAL 1 DAY ),'-', '')   
+		   <if test='searchStartDate == null or searchStartDate == ""'>	
+			 AND 1=2
+		   </if>
+		   <if test='searchValue == null or searchValue == ""'>	
+			 AND 1=2
+		   </if>			 
+		   AND A.DEST_INFO = CONCAT( '^', #{searchValue})
+	</select>	
+	
+	<select id="smsLongSendList"  parameterType="memberMgmtVO" resultType="memberMgmtVO">
+		 SELECT 'SYSTEM'	 AS sendAdminId
+			  , DATE_FORMAT( A.SEND_DATE , '%Y-%m-%d %T' )  AS sendDt
+			  , A.SUCC_COUNT	AS stateChk
+			  , A.SUBJECT	   AS gwCode
+			  , A.MMS_MSG	   AS attachNm
+			 FROM SMS.SDK_MMS_REPORT A
+		  WHERE 1=1
+			AND SUBJECT = '대여시간 초과 안내'
+			AND SEND_DATE BETWEEN REPLACE(#{searchStartDate},'-', '') AND REPLACE( DATE_ADD( #{searchEndDate}  , INTERVAL 1 DAY ),'-', '')   
+		   <if test='searchStartDate == null or searchStartDate == ""'>	
+			 AND 1=2
+		   </if>
+		   <if test='searchValue == null or searchValue == ""'>	
+			 AND 1=2
+		   </if>		   
+		   AND A.DEST_INFO = CONCAT( '^', #{searchValue})
+		 ORDER BY A.SEND_DATE DESC
+		 LIMIT #{firstRecordIndex}, #{recordCountPerPage}  
+	</select>	
+	
+	
+	
+	<select id="pushSendListCnt"  parameterType="memberMgmtVO" resultType="int">
+		 SELECT  COUNT(1)
+		   FROM T_PUSH_USER_INFO A
+		  WHERE 1=1
+			AND A.APPID ='com.dki.barocle_android'
+			<if test='searchValue != null and searchValue != ""'>		
+		   		AND  A.CUID  =   #{searchValue} 
+		   	</if>
+		   	<if test='searchValue == null or searchValue == ""'>		
+		   		AND 1=2
+		   	</if> 
+	</select>	
+	
+	<select id="pushSendList"  parameterType="memberMgmtVO" resultType="memberMgmtVO">
+		 SELECT  A.PNSID	   AS viewTel
+			  , A.OS_VER	   AS gwCode
+			  , A.DEVICE_MD	AS sendDt
+			  , A.APP_VER	  AS stateChk
+			  , A.MODDATE	  AS sendAdminId
+			  , ''			 AS usr_seq
+		   FROM T_PUSH_USER_INFO A
+		  WHERE 1=1
+			AND A.APPID ='com.dki.barocle_android'
+			<if test='searchValue != null and searchValue != ""'>		
+		   		AND  A.CUID  =   #{searchValue} 
+		   	</if>
+		   	<if test='searchValue == null or searchValue == ""'>		
+		   		AND 1=2
+		   	</if>
+		  
+		   LIMIT 10
+	</select>	
+	
+</mapper>

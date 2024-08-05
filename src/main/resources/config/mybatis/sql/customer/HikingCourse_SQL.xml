@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.hikingcourse.service.HikingCourseMapper">
+	
+	<resultMap id="resultHikingCourseVO" type="com.dkitec.barocle.admin.customer.hikingcourse.vo.HikingCourseVO">
+		<result column="HIKING_COURSE_SEQ" property="hikingCourseSeq" />
+		<result column="CATE_CD" property="cateCD" />
+		<result column="HIKING_COURSE_NO" property="hikingCourseNO" />
+		<result column="HIKING_COURSE_TITLE" property="hikingCourseTitle" />
+		<result column="HIKING_COURSE_TEXT_CONTENT" property="hikingCourseTextContent" />
+		<result column="HIKING_COURSE_HTML_CONTENT" property="hikingCourseHTMLContent" />
+		<result column="DISTRICT_CD" property="districtCD" />
+		<result column="COURSE_DIST" property="courseDist" />
+		<result column="READ_CNT" property="readCnt" />
+		<result column="USE_YN" property="useYN" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="CD_DESC1" property="cdDesc1" />
+		<result column="CD_DESC2" property="cdDesc2" />
+	</resultMap>
+	
+	<resultMap id="daumEditorVO" type="com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO">
+		<result column="IMG_PATH" property="imgPath" />
+		<result column="IMG_URL" property="imgURL" />
+		<result column="IMG_NAME" property="imgName" />
+		<result column="IMG_SIZE" property="imgSize" />
+		<result column="THUMBNAIL_IMG_PATH" property="thumbnailImgPath" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgURL" />
+		<result column="THUMBNAIL_IMG_NAME" property="thumbnailImgName" />
+		<result column="THUMBNAIL_IMG_SIZE" property="thumbnailImgSize" />
+	</resultMap>
+	
+	<select id="listHikingCourseCount" parameterType="hikingCourseVO" resultType="int">
+		SELECT	COUNT(HIKING_COURSE_SEQ) AS hikingCourseSeq
+		FROM	TB_COM_HIKING_COURSE
+		WHERE	USE_YN = 'Y'
+				<if test="districtCD!='' and districtCD!=null">
+					AND DISTRICT_CD = #{districtCD}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND HIKING_COURSE_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+	</select>
+	
+	<select id="listHikingCourse" parameterType="hikingCourseVO" resultMap="resultHikingCourseVO">
+		SELECT	A.
+				HIKING_COURSE_SEQ,
+				CATE_CD,
+				HIKING_COURSE_NO,
+				HIKING_COURSE_TITLE,
+				DISTRICT_CD,
+				COURSE_DIST,
+				READ_CNT,
+				USE_YN,
+				REG_DTTM,
+				REG_ID,
+				MOD_DTTM,
+				MOD_ID,
+				CD_DESC1,
+				CD_DESC2
+		FROM
+				(
+					SELECT 
+							IA.HIKING_COURSE_SEQ,
+							IA.CATE_CD,
+							IA.HIKING_COURSE_NO,
+							IA.HIKING_COURSE_TITLE,
+							IA.DISTRICT_CD,
+							IA.COURSE_DIST,
+							IA.READ_CNT,
+							IA.USE_YN,
+							IA.REG_DTTM,
+							IA.REG_ID,
+							IA.MOD_DTTM,
+							IA.MOD_ID,
+							IB.CD_DESC1,
+							IB.CD_DESC2
+					FROM	TB_COM_HIKING_COURSE IA LEFT OUTER JOIN TB_SYS_COM_CD IB ON IA.DISTRICT_CD=IB.COM_CD
+					WHERE	IA.USE_YN = 'Y'
+							<if test="districtCD!='' and districtCD!=null">
+								AND IA.DISTRICT_CD = #{districtCD}
+							</if>
+							<if test="searchValue!='' and searchValue!=null">
+								AND IA.HIKING_COURSE_TITLE LIKE CONCAT('%',#{searchValue},'%')
+							</if>
+				) A
+		ORDER BY
+				HIKING_COURSE_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewHikingCourse" parameterType="hikingCourseVO" resultMap="resultHikingCourseVO">
+		SELECT	
+				HIKING_COURSE_SEQ,
+				CATE_CD,
+				HIKING_COURSE_NO,
+				HIKING_COURSE_TITLE,
+				HIKING_COURSE_TEXT_CONTENT,
+				HIKING_COURSE_HTML_CONTENT,
+				DISTRICT_CD,
+				COURSE_DIST,
+				READ_CNT,
+				USE_YN,
+				REG_DTTM,
+				REG_ID,
+				MOD_DTTM,
+				MOD_ID
+		FROM
+				TB_COM_HIKING_COURSE
+		WHERE
+				USE_YN = 'Y' AND HIKING_COURSE_SEQ = #{hikingCourseSeq}
+	</select>
+	
+	<select id="getDaumEditorImage" parameterType="hikingCourseVO" resultMap="daumEditorVO">
+		SELECT	
+				IMG_PATH,
+				IMG_URL,
+				IMG_NAME,
+				IMG_SIZE,
+				THUMBNAIL_IMG_PATH,
+				THUMBNAIL_IMG_URL,
+				THUMBNAIL_IMG_NAME,
+				THUMBNAIL_IMG_SIZE
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{hikingCourseSeq} AND BBS_CLS_CD = #{currentMenu}
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevHikingCourse" parameterType="hikingCourseVO" resultMap="resultHikingCourseVO">
+		SELECT	HIKING_COURSE_SEQ, HIKING_COURSE_TITLE
+		FROM	TB_COM_HIKING_COURSE
+		WHERE	USE_YN = 'Y' AND HIKING_COURSE_SEQ &lt; #{hikingCourseSeq}
+				<if test="districtCD!='' and districtCD!=null">
+					AND IA.DISTRICT_CD = #{districtCD}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND IA.HIKING_COURSE_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY HIKING_COURSE_SEQ DESC
+		LIMIT	1
+	</select>
+	
+	<select id="nextHikingCourse" parameterType="hikingCourseVO" resultMap="resultHikingCourseVO">
+		SELECT	HIKING_COURSE_SEQ, HIKING_COURSE_TITLE
+		FROM	TB_COM_HIKING_COURSE
+		WHERE	USE_YN = 'Y' AND HIKING_COURSE_SEQ &gt; #{hikingCourseSeq}
+				<if test="districtCD!='' and districtCD!=null">
+					AND IA.DISTRICT_CD = #{districtCD}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND IA.HIKING_COURSE_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY HIKING_COURSE_SEQ ASC
+		LIMIT	1
+	</select>
+	
+	<insert id="insertHikingCourse" parameterType="hikingCourseVO" useGeneratedKeys="true" keyProperty="hikingCourseSeq">
+		INSERT INTO TB_COM_HIKING_COURSE
+			(
+				CATE_CD, HIKING_COURSE_NO,
+				HIKING_COURSE_TITLE, HIKING_COURSE_TEXT_CONTENT, HIKING_COURSE_HTML_CONTENT,
+				DISTRICT_CD, COURSE_DIST, READ_CNT, USE_YN, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+			)
+		VALUES
+			(
+				#{districtCD}, (SELECT IFNULL(MAX(T1.HIKING_COURSE_NO)+1,1) AS hikingCourseNO FROM TB_COM_HIKING_COURSE T1) ,
+				#{hikingCourseTitle}, #{hikingCourseTextContent}, #{hikingCourseHTMLContent},
+				#{districtCD}, #{courseDist}, #{readCnt}, #{useYN}, NOW(), #{regID}, NOW(), #{regID}
+			)
+	</insert>
+	
+	<update id="updateHikingCourse" parameterType="hikingCourseVO">
+		UPDATE 
+			TB_COM_HIKING_COURSE
+		SET
+			CATE_CD = #{districtCD},
+			HIKING_COURSE_NO = #{hikingCourseNO},
+			HIKING_COURSE_TITLE = #{hikingCourseTitle},
+			HIKING_COURSE_TEXT_CONTENT = #{hikingCourseTextContent},
+			HIKING_COURSE_HTML_CONTENT = #{hikingCourseHTMLContent},
+			DISTRICT_CD = #{districtCD},
+			COURSE_DIST = #{courseDist},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+		WHERE
+			USE_YN = 'Y' AND HIKING_COURSE_SEQ = #{hikingCourseSeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="hikingCourseVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = 0
+		WHERE
+			BBS_SEQ = #{hikingCourseSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="hikingCourseVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = #{hikingCourseSeq}
+		WHERE
+			BBS_CLS_CD = #{currentMenu} AND IMG_NAME IN
+			<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+	</update>
+	
+	<update id="deleteHikingCourse" parameterType="hikingCourseVO">
+		UPDATE 
+			TB_COM_HIKING_COURSE
+		SET
+			USE_YN = #{useYN}, MOD_DTTM = NOW(), MOD_ID = #{modID}
+		WHERE
+			HIKING_COURSE_SEQ = #{hikingCourseSeq}
+	</update>
+	
+</mapper>

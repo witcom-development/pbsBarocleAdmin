@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.diligence.service.DiligenceMapper">
+	
+	<select id="getDiligenceList" parameterType="com.dkitec.barocle.admin.system.diligence.vo.DiligenceVO" resultType="com.dkitec.barocle.admin.system.diligence.vo.DiligenceVO">
+		
+	   SELECT DCLZ_SEQ as dclzSeq
+			, DCLZ_CD as dclzCd
+			, DCLZ_STR_DT as dclzStrDt
+			, DCLZ_END_DT as dclzEndDt
+			, PRVONSH as prvonsh 
+			, CONFM_CD as confmCd 
+			, REG_ID as regId
+			, DATE_FORMAT(REG_DTTM, '%Y-%m-%d') AS regDttm 
+		FROM TB_SYS_ADMIN_DCLZ	
+	</select>
+	
+	<select id="getDiligenceListCnt" parameterType="com.dkitec.barocle.admin.system.diligence.vo.DiligenceVO" resultType="int">
+		
+		SELECT COUNT(*)
+		FROM TB_SYS_ADMIN_DCLZ	
+	</select>
+
+	<insert id="insertDiligence" parameterType="com.dkitec.barocle.admin.system.diligence.vo.DiligenceVO">
+		INSERT INTO TB_SYS_ADMIN_DCLZ
+		(
+			DCLZ_CD, DCLZ_STR_DT, DCLZ_END_DT, PRVONSH, CONFM_CD
+			, REG_ID, REG_DTTM
+		)
+		VALUES (#{dclzCd}, #{dclzStrDt}, #{dclzEndDt}, #{prvonsh}, #{confmCd}
+			, #{regId}, NOW()
+		)
+		
+	</insert>	
+
+</mapper>

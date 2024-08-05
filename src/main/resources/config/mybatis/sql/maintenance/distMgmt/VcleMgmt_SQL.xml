@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.distMgmt.vcleMgmt.service.VcleMgmtMapper">
+
+	<delete id="deleteDispatchDtl" parameterType="VcleMgmtVO">
+		DELETE FROM TB_MTC_VCLE_DISPATCH_DTL 
+		 WHERE VCLE_SEQ	= #{vcleSeq}
+	</delete> 
+ 
+	
+	<insert id="insertVcleDispatchDtl" parameterType="VcleMgmtVO">
+		INSERT INTO TB_MTC_VCLE_DISPATCH_DTL
+				(   
+					 VCLE_SEQ 
+		   		   , ADMIN_ID
+		   		   , VCLE_NO
+		   		   , DRIVER_TYPE  
+		   		   , START_TIME
+		   		   , END_TIME
+		   		   , BF_MILEAGE 					 
+				   , AF_MILEAGE 
+				   , NOTICE					 
+		   		   , REG_DTTM
+		   		   , REG_ID
+		) VALUES (   
+					 
+					 #{vcleSeq}
+		   		   , #{adminId}
+		   		   , #{vcleNo}
+		   		   , #{driverType}
+		 		   , #{startTime}
+		 			<if test='endTime != null and endTime != ""'> ,#{endTime} </if>
+			   		<if test='endTime == null or endTime == ""'>  ,0			</if>
+					<if test='bfMileage != null and bfMileage != ""'> ,#{bfMileage} </if>
+			   		<if test='bfMileage == null or bfMileage == ""'>  ,0			</if>
+			   		<if test='afMileage != null and afMileage != ""'> ,#{afMileage} </if>
+			   		<if test='afMileage == null or afMileage == ""'>  ,0			</if>
+			   		, #{notice}
+		  		   , now()
+		 		   , #{regId}
+		)
+	</insert>
+	
+	
+	<delete id="deleteDispatch" parameterType="VcleMgmtVO">
+		DELETE FROM TB_MTC_VCLE_DISPATCH 
+		 WHERE VCLE_DATE = CURDATE()
+		   AND ADMIN_ID  = #{regId}
+	</delete>
+	
+	
+	<select id="getTodayDistVcle" parameterType="VcleMgmtVO" resultType="VcleMgmtVO">
+
+					SELECT  /* 분배원 당일 차량 정보 조회  */
+							D.admin_id 							AS adminId
+						  , D.admin_name 						AS adminName
+						  , date_format(A.VCLE_DATE,'%Y-%m-%d')	AS vcleDate
+						  , A.VCLE_SEQ 							AS vcleSeq
+					   	  , C.VCLE_STUS_CD						AS vcleStusCd
+
+					   	  , B.DRIVER_TYPE					   AS driverType
+						  , C.VCLE_NO_SEQ						AS vcleNoSeq
+						  , C.VCLE_NO							AS vcleNo
+					   	  , B.START_TIME						AS startTime
+					   	  , B.END_TIME						  AS endTime
+						  , B.BF_MILEAGE 						AS bfMileage
+						  , B.AF_MILEAGE 						AS afMileage
+						  , B.NOTICE							AS notice
+			 		   FROM TB_MTC_VCLE_DISPATCH		  A 
+			 	 INNER JOIN TB_MTC_VCLE_DISPATCH_DTL	  B		 ON A.VCLE_SEQ  = B.VCLE_SEQ	   
+				 INNER JOIN TB_SYS_VCLE_INFO			  C			ON B.VCLE_NO   = C.VCLE_NO_SEQ 
+				 INNER JOIN TB_SYS_ADMIN 				  D 		ON A.ADMIN_ID = D.ADMIN_ID
+		 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					and A.VCLE_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					and A.VCLE_DATE BETWEEN (STR_TO_DATE(NOW(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(NOW(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='adminId != null and adminId != ""'>
+					and D.ADMIN_ID = #{adminId}
+				</if>
+				 
+			</trim>  
+				ORDER BY  B.START_TIME   
+	</select>
+	
+	<insert id="insertVcleDispatch" parameterType="VcleMgmtVO" useGeneratedKeys="true" keyProperty="vcleSeq">
+		INSERT INTO TB_MTC_VCLE_DISPATCH
+				(   
+		   			 VCLE_DATE
+		   		   , ADMIN_ID
+	   ) VALUES (
+		   			 IFNULL( #{vcleDate} , CURDATE() ) 
+		   		   , #{adminId}
+	   )
+	   ON DUPLICATE KEY UPDATE
+		   			MOD_DTTM	   =	now()										
+	</insert>
+	
+	<update id="updateVcleDispatchDtl" parameterType="VcleMgmtVO">
+		UPDATE TB_MTC_VCLE_DISPATCH_DTL 
+		   SET 
+			   DRIVER_TYPE   = #{driverType}
+			  ,mod_dttm 	 = now()
+			  ,mod_id   	 = #{modId}
+			  ,NOTICE   	 = #{notice}
+		 where VCLE_SEQ 	 = #{vcleSeq}
+		   and ADMIN_ID 	 = #{adminId}
+		   
+	</update>
+	
+	<update id="updateVcleDispatch" parameterType="VcleMgmtVO">
+		UPDATE TB_MTC_VCLE_DISPATCH 
+		   SET 1=1
+		   <if test='bfMileage != null and bfMileage != ""'>	   
+  	   	   	 , BF_MILEAGE  = #{bfMileage}
+		   </if>
+		   <if test='afMileage != null and afMileage != ""'>
+		   	 , AF_MILEAGE   = #{afMileage}
+		   </if>	   
+		   
+		 where VCLE_SEQ  = #{vcleSeq}
+	</update>
+	
+	<update id="updateVcleStusCd" parameterType="VcleMgmtVO">
+		UPDATE TB_SYS_VCLE_DETL
+		   SET VCLE_STUS_CD = #{vcleStusCd}
+		 WHERE VCLE_NO_SEQ = #{vcleNoSeq}
+	</update>
+	
+	<select id="getCenterIdByTeamSeq" parameterType="String" resultType="String">
+	
+		SELECT CENTER_ID		AS centerId
+		  FROM TB_SYS_TEAM_INFO
+		 WHERE TEAM_SEQ = #{value} 
+	
+	</select>
+	
+	<select id="getShiftWorkCdList" resultType="VcleMgmtVO">
+	
+		SELECT A.COM_CD					AS shiftWorkCd
+			 , B.MLANG_COM_CD_NAME		AS shiftWorkCdName
+		  FROM TB_SYS_COM_CD		A
+	INNER JOIN TB_SYS_MLANG_COM_CD 	B 	ON A.COM_CD = B.COM_CD AND B.LANG_CLS_CD = 'LAG_001'
+		 WHERE A.COM_UP_CD = 'SWK'
+		  
+	</select>
+	
+	<select id="getVcleInfoList" parameterType="VcleMgmtVO" resultType="VcleMgmtVO">
+		SELECT A.*
+			 , B.AF_MILEAGE  AS afMileage
+			 , B.NOTICE	  AS notice
+		FROM
+		(	 
+			SELECT  /* 차량 현황 정보 조회 */
+					A.VCLE_NO_SEQ		AS vcleNoSeq
+				  , A.VCLE_NO			AS vcleNo
+				  , A.VCLE_TYPE			AS vcleType
+				  , A.MODEL_YEAL		AS modelYeal
+				  , A.ETC				AS etc
+				  , A.USE_YN			AS useYn
+				  , A.CENTER_ID			AS centerId
+				  , A.VCLE_STUS_CD		AS vcleStusCd
+				  , MAX( C.DTL_SEQ ) AS DTL_SEQ		 
+			  FROM TB_SYS_VCLE_INFO A
+			 LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL	C  ON  ( A.VCLE_NO_SEQ = C.VCLE_NO  )	 
+			 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+					<if test='centerId != null and centerId != ""'>
+						and A.CENTER_ID = #{centerId}
+					</if>
+					<if test='vcleNo != null and vcleNo != ""'>
+						and A.VCLE_NO LIKE CONCAT( '%', #{vcleNo} , '%')
+					</if>
+				</trim>			  
+			GROUP BY A.VCLE_NO
+		) A
+		LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL B ON ( A.DTL_SEQ = B.DTL_SEQ ) 
+		ORDER BY A.vcleNo
+	  	   
+	</select>
+	
+ 	<select id="checkVcleDispatch" parameterType="VcleMgmtVO" resultType="String">
+			SELECT /* 차량 등록 되어있는지 확인 */
+			   	   VCLE_SEQ		AS vcleSeq
+			  FROM TB_MTC_VCLE_DISPATCH 
+			 WHERE VCLE_NO = #{vcleNo}
+			   AND VCLE_DATE = #{vcleDate}  
+	</select>
+	
+ 	<select id="checkVcleDispatchDtl" parameterType="VcleMgmtVO" resultType="VcleMgmtVO">
+			SELECT /* 차량 탑승 등록 되어있는지 확인 */
+			   	   A.VCLE_SEQ		AS vcleSeq
+			   	  ,B.ADMIN_ID		AS adminId 
+			  FROM TB_MTC_VCLE_DISPATCH 		A
+		 LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL		B ON A.VCLE_SEQ = B.VCLE_SEQ AND B.ADMIN_ID = #{adminId}
+			 WHERE VCLE_NO = #{vcleNo}
+			   AND VCLE_DATE = #{vcleDate}  
+	</select>
+	
+	
+	<select id="getDistVcleListCnt" parameterType="VcleMgmtVO" resultType="int">
+	  SELECT COUNT(1)
+		FROM(
+					SELECT  /* 분배원 차량 정보 건수 조회  */
+							A.VCLE_SEQ
+			 		   FROM TB_MTC_VCLE_DISPATCH		  A 
+				 INNER JOIN TB_MTC_VCLE_DISPATCH_DTL	  B 		ON A.VCLE_SEQ 		= B.VCLE_SEQ 
+				 INNER JOIN TB_SYS_VCLE_INFO			  C			ON B.VCLE_NO  		= C.VCLE_NO_SEQ
+				 INNER JOIN TB_SYS_ADMIN 				  D 		ON B.ADMIN_ID 		= D.ADMIN_ID
+				 LEFT  JOIN TB_SYS_TEAM_INFO			  E		 ON D.TEAM_SEQ  = E.TEAM_SEQ
+			WHERE ADMIN_GRP_SEQ IN ( 5, 11 ) 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					and A.VCLE_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					and A.VCLE_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+			 	<if test='searchAdmin != null and searchAdmin != ""'>
+			 		and B.VCLE_SEQ = (  SELECT  VCLE_SEQ  
+			 							  FROM  TB_MTC_VCLE_DISPATCH_DTL  VDD
+			 						INNER JOIN  TB_SYS_ADMIN 			  ADMIN		ON   VDD.ADMIN_ID = ADMIN.ADMIN_ID  
+			 							 WHERE  VDD.VCLE_SEQ  =  A.VCLE_SEQ  
+			 							   AND  ADMIN.ADMIN_NAME  =  #{searchAdmin}  
+			 						 )
+			 	</if>
+				<if test='searchVcleNo != null and searchVcleNo != ""'>
+					and B.VCLE_NO = #{searchVcleNo}
+				</if>
+				<if test='centerId != null and centerId != ""'>
+					and E.CENTER_ID = #{centerId}
+				</if>
+			GROUP BY B.VCLE_NO, A.VCLE_SEQ
+			
+		   ) A
+			
+	</select>
+	
+	<select id="getDistVcleList" parameterType="VcleMgmtVO" resultType="VcleMgmtVO">
+					SELECT  /* 분배원 차량 정보 조회  */
+							C.VCLE_NO_SEQ													AS vcleNoSeq
+						  , C.VCLE_NO 														AS vcleNo 
+						  , DATE_FORMAT(A.VCLE_DATE,'%Y-%m-%d')								AS vcleDate
+						  , IF(B.DRIVER_TYPE = 'A' , D.admin_name, null )					AS driverName
+						  , GROUP_CONCAT( IF(B.DRIVER_TYPE = 'B' , D.ADMIN_NAME, NULL) ) 	AS adminNames
+						  
+						  , START_TIME													  AS startTime
+						  , END_TIME														AS endTime
+						  
+						  , B.BF_MILEAGE 													AS bfMileage
+						  , B.AF_MILEAGE 													AS afMileage
+						  , B.NOTICE														AS notice
+			 		   FROM TB_MTC_VCLE_DISPATCH		  A 
+				 INNER JOIN TB_MTC_VCLE_DISPATCH_DTL	  B 		ON A.VCLE_SEQ	   = B.VCLE_SEQ  
+				 INNER JOIN TB_SYS_VCLE_INFO			  C			ON B.VCLE_NO  		= C.VCLE_NO_SEQ
+				 INNER JOIN TB_SYS_ADMIN 				  D 		ON B.ADMIN_ID 		= D.ADMIN_ID
+				  LEFT  JOIN TB_SYS_TEAM_INFO			  E		 ON D.TEAM_SEQ  = E.TEAM_SEQ
+			WHERE ADMIN_GRP_SEQ IN ( 5, 11 )	 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					and A.VCLE_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					and A.VCLE_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+			 	<if test='searchAdmin != null and searchAdmin != ""'>
+			 		and B.VCLE_SEQ = (  SELECT  VCLE_SEQ  
+			 							  FROM  TB_MTC_VCLE_DISPATCH_DTL  VDD
+			 						INNER JOIN  TB_SYS_ADMIN 			  ADMIN		ON   VDD.ADMIN_ID = ADMIN.ADMIN_ID  
+			 							 WHERE  VDD.VCLE_SEQ  =  A.VCLE_SEQ  
+			 							   AND  ADMIN.ADMIN_NAME  =  #{searchAdmin}  
+			 						 )
+			 	</if>
+				<if test='searchVcleNo != null and searchVcleNo != ""'>
+					and B.VCLE_NO = #{searchVcleNo}
+				</if>
+				<if test='centerId != null and centerId != ""'>
+					and E.CENTER_ID = #{centerId}
+				</if>
+			GROUP BY B.VCLE_NO, A.VCLE_SEQ
+			ORDER BY A.VCLE_SEQ DESC
+			
+		  	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="getRoundVcleListCnt" parameterType="VcleMgmtVO" resultType="int">
+	  SELECT COUNT(1)
+		FROM(
+					SELECT  /* 분배원 차량 정보 건수 조회  */
+							A.VCLE_SEQ
+			 		   FROM TB_MTC_VCLE_DISPATCH		  A 
+				 INNER JOIN TB_MTC_VCLE_DISPATCH_DTL	  B 		ON A.VCLE_SEQ 		= B.VCLE_SEQ 
+				 INNER JOIN TB_SYS_VCLE_INFO			  C			ON B.VCLE_NO  		= C.VCLE_NO_SEQ
+				 INNER JOIN TB_SYS_ADMIN 				  D 		ON B.ADMIN_ID 		= D.ADMIN_ID
+		 		WHERE ADMIN_GRP_SEQ IN ( 27, 28 )
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					and A.VCLE_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					and A.VCLE_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+			 	<if test='searchAdmin != null and searchAdmin != ""'>
+			 		and B.VCLE_SEQ = (  SELECT  VCLE_SEQ  
+			 							  FROM  TB_MTC_VCLE_DISPATCH_DTL  VDD
+			 						INNER JOIN  TB_SYS_ADMIN 			  ADMIN		ON   VDD.ADMIN_ID = ADMIN.ADMIN_ID  
+			 							 WHERE  VDD.VCLE_SEQ  =  A.VCLE_SEQ  
+			 							   AND  ADMIN.ADMIN_NAME  =  #{searchAdmin}  
+			 						 )
+			 	</if>
+				<if test='searchVcleNo != null and searchVcleNo != ""'>
+					and B.VCLE_NO = #{searchVcleNo}
+				</if>
+			GROUP BY B.VCLE_NO, A.VCLE_SEQ
+			
+		   ) A
+			
+	</select>
+	
+	<select id="getRoundVcleList" parameterType="VcleMgmtVO" resultType="VcleMgmtVO">
+					SELECT  /* 분배원 차량 정보 조회  */
+							C.VCLE_NO_SEQ													AS vcleNoSeq
+						  , C.VCLE_NO 														AS vcleNo 
+						  , DATE_FORMAT(A.VCLE_DATE,'%Y-%m-%d')								AS vcleDate
+						  , IF(B.DRIVER_TYPE = 'A' , D.admin_name, null )					AS driverName
+						  , GROUP_CONCAT( IF(B.DRIVER_TYPE = 'B' , D.ADMIN_NAME, NULL) ) 	AS adminNames
+						  
+						  , START_TIME													  AS startTime
+						  , END_TIME														AS endTime
+						  
+						  , B.BF_MILEAGE 													AS bfMileage
+						  , B.AF_MILEAGE 													AS afMileage
+			 		   FROM TB_MTC_VCLE_DISPATCH		  A 
+				 INNER JOIN TB_MTC_VCLE_DISPATCH_DTL	  B 		ON A.VCLE_SEQ	   = B.VCLE_SEQ  
+				 INNER JOIN TB_SYS_VCLE_INFO			  C			ON B.VCLE_NO  		= C.VCLE_NO_SEQ
+				 INNER JOIN TB_SYS_ADMIN 				  D 		ON B.ADMIN_ID 		= D.ADMIN_ID
+				 
+		 	WHERE ADMIN_GRP_SEQ IN ( 27, 28  )
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					and A.VCLE_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					and A.VCLE_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+			 	<if test='searchAdmin != null and searchAdmin != ""'>
+			 		and B.VCLE_SEQ = (  SELECT  VCLE_SEQ  
+			 							  FROM  TB_MTC_VCLE_DISPATCH_DTL  VDD
+			 						INNER JOIN  TB_SYS_ADMIN 			  ADMIN		ON   VDD.ADMIN_ID = ADMIN.ADMIN_ID  
+			 							 WHERE  VDD.VCLE_SEQ  =  A.VCLE_SEQ  
+			 							   AND  ADMIN.ADMIN_NAME  =  #{searchAdmin}  
+			 						 )
+			 	</if>
+				<if test='searchVcleNo != null and searchVcleNo != ""'>
+					and B.VCLE_NO = #{searchVcleNo}
+				</if>
+			GROUP BY B.VCLE_NO, A.VCLE_SEQ
+			ORDER BY A.VCLE_SEQ DESC
+			
+		  	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	 
+	
+	
+	
+	
+	
+	
+</mapper>

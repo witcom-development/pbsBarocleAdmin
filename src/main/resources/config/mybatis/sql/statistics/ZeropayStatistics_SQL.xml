@@ -1,0 +1,402 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.zeropay.service.ZeropayStatisticsMapper">
+	
+	<select id="getTicketListCnt"  parameterType="zeropayStatisticsVo" resultType="int">
+		<![CDATA[
+		SELECT COUNT(1) AS totCnt
+		FROM (
+			SELECT		  PAYMENT_DTTM			AS ticketDate
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE   PAYMENT_METHOD_CD = '제로페이'
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')  
+			 GROUP BY ticketDate
+			UNION ALL
+			  SELECT  '총계'																				  AS ticketDate  
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE   PAYMENT_METHOD_CD = '제로페이'
+			  	AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			 GROUP BY ticketDate
+		 ) A
+		 ]]>	 
+	</select>
+	
+	<select id="getTicketList" parameterType="zeropayStatisticsVo" resultType="zeropayStatisticsVo">
+		<![CDATA[
+		  SELECT *
+		  FROM (
+			SELECT		  PAYMENT_DTTM			AS ticketDate
+						  , SUM(PAY_CNT)																	  AS ticketCnt
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간' ) THEN PAY_CNT ELSE 0 END) AS ticket_1day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간','7일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_7day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간','30일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_30day			  
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간','180일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_180day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간','365일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_365day		
+						  , SUM(TOT_AMT)																	  AS totPmtPrice
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간' ) THEN TOT_AMT END) AS ticketPmt_1day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간','7일2시간') THEN TOT_AMT END)		   AS ticketPmt_7day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간','30일2시간') THEN TOT_AMT END)		   AS ticketPmt_30day	  
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간','180일2시간') THEN TOT_AMT END)		   AS ticketPmt_180day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간','365일2시간') THEN TOT_AMT END)		   AS ticketPmt_365day
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE   PAYMENT_METHOD_CD = '제로페이'
+			   AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')
+			 GROUP BY ticketDate
+			UNION ALL
+			  SELECT  '총계'																				  AS ticketDate  
+						  , SUM(PAY_CNT)																	  AS ticketCnt
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간' ) THEN PAY_CNT ELSE 0 END) AS ticket_1day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간','7일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_7day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간','30일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_30day			 
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간','180일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_180day 
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간','365일2시간') THEN PAY_CNT ELSE 0 END)	AS ticket_365day		 
+						  , SUM(TOT_AMT)																	  AS totPmtPrice
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간' ) THEN TOT_AMT END) AS ticketPmt_1day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간','7일2시간') THEN TOT_AMT END)		   AS ticketPmt_7day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간','30일2시간') THEN TOT_AMT END)		   AS ticketPmt_30day	   
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간','180일2시간') THEN TOT_AMT END)		   AS ticketPmt_180day
+						  , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간','365일2시간') THEN TOT_AMT END)		   AS ticketPmt_365day
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE   PAYMENT_METHOD_CD = '제로페이'
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			 GROUP BY ticketDate
+			 ) A
+		 ]]>	 
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	
+	<select id="getPaymentTypeListCnt"  parameterType="zeropayStatisticsVo" resultType="int">
+		<![CDATA[
+		SELECT COUNT(1) AS totCnt
+		FROM (
+			  SELECT  /* com.dkitec.barocle.admin.statistics.zeropay.service.ZeropayStatisticsMapper.getPaymentTypeList */	
+			  		PAYMENT_DTTM																			 AS pmtDate
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  ]]>
+			  WHERE 1=1
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')
+			<if test='chkDailyTicket =="D"' >
+				AND PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간', '외국인종일권' )
+			</if>	   
+			<if test='chkDailyTicket =="S"' >
+			   AND PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간' )
+			</if>  
+			 GROUP BY pmtDate
+			 
+			UNION ALL
+			<![CDATA[
+			  SELECT  
+			  		  '총계'																				   AS pmtDate 
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			]]>
+			  WHERE 1=1
+			  AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')
+	
+				 
+			<if test='chkDailyTicket =="D"' >
+				AND PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간', '외국인종일권' )
+			</if>	   
+			<if test='chkDailyTicket =="S"' >
+			   AND PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간' )
+			</if>  
+			 GROUP BY pmtDate
+		 ) A
+	</select>
+	
+	
+	<select id="getPaymentTypeList" parameterType="zeropayStatisticsVo" resultType="zeropayStatisticsVo">
+		<![CDATA[
+		SELECT * 
+		FROM(
+		  SELECT  /* com.dkitec.barocle.admin.statistics.zeropay.service.ZeropayStatisticsMapper.getPaymentTypeList */	
+		  		PAYMENT_DTTM																			 AS pmtDate
+		
+				,  CASE DAYOFWEEK(SUBSTR(PAYMENT_DTTM,3,8)) 
+					WHEN '1' THEN '일'
+					WHEN '2' THEN '월'
+					WHEN '3' THEN '화'
+					WHEN '4' THEN '수'
+					WHEN '5' THEN '목'
+					WHEN '6' THEN '금'
+					WHEN '7' THEN '토'
+					END pmtWeek
+				,	   SUM(PAY_CNT)																	   AS totPmtCnt
+				,	   SUM(TOT_AMT)																	   AS totPmtPrice
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN TOT_AMT END)					 AS zeropayPmt_price 
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN TOT_AMT END)/SUM(TOT_AMT)*100,2) AS zeropayPmt_priceRatio 
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN PAY_CNT ELSE 0	   END)		AS zeropayPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS zeropayPmt_ratio  
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카드'	 THEN PAY_CNT ELSE 0	   END)		AS creditPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '카드'	 THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS creditPmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '휴대폰'   THEN PAY_CNT ELSE 0	   END)		AS phonePmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '휴대폰'   THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS phonePmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카카오'   THEN PAY_CNT ELSE 0	   END)		AS kakaoPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '카카오'   THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS kakaoPmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '페이코'   THEN PAY_CNT ELSE 0	   END)		AS paycoPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '페이코'   THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS paycoPmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카드'	 THEN TOT_AMT END)					 AS creditPmt_price
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '휴대폰'   THEN TOT_AMT END)					 AS phonePmt_price
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카카오'   THEN TOT_AMT END)					 AS kakaoPmt_price
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '페이코'   THEN TOT_AMT END)					 AS paycoPmt_price
+		  FROM	ZERO_PAY.TB_STA_ZEROPAY
+		  ]]>
+		  WHERE 1=1
+			AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')
+		<if test='chkDailyTicket =="D"' >
+			AND PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간', '외국인종일권' )
+		</if>	   
+		<if test='chkDailyTicket =="S"' >
+		   AND PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간' )
+		</if>  
+		 GROUP BY pmtDate
+		 
+		UNION ALL
+		<![CDATA[
+		  SELECT  
+		  		  '총계'																				   AS pmtDate 
+		  		, null as pmtWeek
+					 
+				,	   SUM(PAY_CNT)																	   AS totPmtCnt
+				,	   SUM(TOT_AMT)																	   AS totPmtPrice
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN TOT_AMT END)					 AS zeropayPmt_price 
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN TOT_AMT END)/SUM(TOT_AMT)*100,2) AS zeropayPmt_priceRatio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN PAY_CNT ELSE 0	   END)		AS zeropayPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '제로페이' THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS zeropayPmt_ratio 
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카드'	 THEN PAY_CNT ELSE 0	   END)		AS creditPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '카드'	 THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS creditPmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '휴대폰'   THEN PAY_CNT ELSE 0	   END)		AS phonePmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '휴대폰'   THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS phonePmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카카오'   THEN PAY_CNT ELSE 0	   END)		AS kakaoPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '카카오'   THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS kakaoPmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '페이코'   THEN PAY_CNT ELSE 0	   END)		AS paycoPmt_cnt
+				, ROUND(SUM(CASE WHEN PAYMENT_METHOD_CD = '페이코'   THEN PAY_CNT END)/SUM(PAY_CNT)*100,2) AS paycoPmt_ratio
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카드'	 THEN TOT_AMT END)					 AS creditPmt_price
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '휴대폰'   THEN TOT_AMT END)					 AS phonePmt_price
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '카카오'   THEN TOT_AMT END)					 AS kakaoPmt_price
+				,	   SUM(CASE WHEN PAYMENT_METHOD_CD = '페이코'   THEN TOT_AMT END)					 AS paycoPmt_price
+		  FROM	ZERO_PAY.TB_STA_ZEROPAY
+		]]>
+		  WHERE 1=1
+			AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')
+		<if test='chkDailyTicket =="D"' >
+			AND PAYMENT_CLS_CD IN ('회원1시간','비회원1시간','회원2시간','비회원2시간', '외국인종일권' )
+		</if>	   
+		<if test='chkDailyTicket =="S"' >
+		   AND PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간' )
+		</if>  
+		 GROUP BY pmtDate
+		) A
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	
+	
+	
+	<select id="getDailyTicketPmtListCnt"  parameterType="zeropayStatisticsVo" resultType="int">
+		<![CDATA[
+		SELECT /* com.dkitec.barocle.admin.statistics.zeropay.service.ZeropayStatisticsMapper.getDailyTicketPmtListCnt */
+			COUNT(1) AS totCnt
+			FROM (
+			  SELECT  
+			  		PAYMENT_DTTM																			 AS pmtDate
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE 1=1
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			 GROUP BY pmtDate
+			UNION ALL
+			  SELECT  
+			  		  '총계'																				   AS pmtDate 
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE 1=1
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			 GROUP BY pmtDate
+		 ) A
+		 ]]>	 
+	</select>
+	
+	<select id="getDailyTicketPmtList" parameterType="zeropayStatisticsVo" resultType="zeropayStatisticsVo">
+		
+		SELECT *
+		FROM (
+			SELECT		  PAYMENT_DTTM	AS ticketDate
+						   , SUM(PAY_CNT)															  AS ticketCnt
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간') THEN PAY_CNT ELSE 0 END) 'member_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원2시간') THEN PAY_CNT ELSE 0 END) 'member_2h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원1시간') THEN PAY_CNT ELSE 0 END) 'nonMember_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원2시간') THEN PAY_CNT ELSE 0 END) 'nonMember_2h'	 
+						   		  
+						   , SUM(TOT_AMT)															   AS totPmtPrice
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간') THEN TOT_AMT END) 'memberPmt_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원2시간') THEN TOT_AMT END) 'memberPmt_2h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원1시간') THEN TOT_AMT END) 'nonMemberPmt_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원2시간') THEN TOT_AMT END) 'nonMemberPmt_2h' 
+						   
+						  <if test='chkTicket =="Y"' >
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('외국인종일권') THEN PAY_CNT ELSE 0 END) 'foreigner_24h'				  	   
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('외국인종일권') THEN TOT_AMT END) 'foreignerPmt_24h'
+						  </if>
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE   1=1
+			  <if test='chkTicket =="Y"' >
+			  	AND   PAYMENT_METHOD_CD <![CDATA[<>]]>	 '제로페이'
+				AND   PAYMENT_CLS_CD IN ('회원1시간', '비회원1시간', '회원2시간', '비회원2시간', '외국인종일권')  
+			  </if>
+			  <if test='chkTicket !="Y"' >
+			  	AND   PAYMENT_METHOD_CD = '제로페이'
+				AND   PAYMENT_CLS_CD IN ('회원1시간', '비회원1시간', '회원2시간', '비회원2시간')	
+			  </if>
+			  
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+				GROUP BY ticketDate	
+			UNION ALL
+			
+			  SELECT  '총계'  AS ticketDate	
+						  , SUM(PAY_CNT)															  AS ticketCnt
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간') THEN PAY_CNT ELSE 0 END) 'member_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원2시간') THEN PAY_CNT ELSE 0 END) 'member_2h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원1시간') THEN PAY_CNT ELSE 0 END) 'nonMember_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원2시간') THEN PAY_CNT ELSE 0 END) 'nonMember_2h'	  
+						   , SUM(TOT_AMT)															   AS totPmtPrice
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원1시간') THEN TOT_AMT END) 'memberPmt_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('회원2시간') THEN TOT_AMT END) 'memberPmt_2h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원1시간') THEN TOT_AMT END) 'nonMemberPmt_1h'
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('비회원2시간') THEN TOT_AMT END) 'nonMemberPmt_2h' 
+						   
+						  <if test='chkTicket =="Y"' >
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('외국인종일권') THEN PAY_CNT ELSE 0 END) 'foreigner_24h'				  	   
+						   , SUM(CASE WHEN PAYMENT_CLS_CD IN ('외국인종일권') THEN TOT_AMT END) 'foreignerPmt_24h'
+						  </if>				  	   
+			  FROM	ZERO_PAY.TB_STA_ZEROPAY
+			  WHERE 1=1   
+			  <if test='chkTicket =="Y"' >
+			  	AND   PAYMENT_METHOD_CD <![CDATA[<>]]>	 '제로페이'
+				AND   PAYMENT_CLS_CD IN ('회원1시간', '비회원1시간', '회원2시간', '비회원2시간', '외국인종일권')  
+			  </if>
+			  <if test='chkTicket !="Y"' >
+			  	AND   PAYMENT_METHOD_CD = '제로페이'
+				AND   PAYMENT_CLS_CD IN ('회원1시간', '비회원1시간', '회원2시간', '비회원2시간')	
+			  </if>
+				AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959')   
+			  GROUP BY ticketDate
+		) A
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	
+	<select id="getSeasonTicketPmtListCnt"  parameterType="zeropayStatisticsVo" resultType="int">
+		SELECT
+			COUNT(1) AS totCnt
+		FROM (
+			SELECT	
+				  PAYMENT_DTTM AS ticketDate
+		  FROM	ZERO_PAY.TB_STA_ZEROPAY
+		  WHERE   1=1
+		   <if test='chkTicket =="Y"' >
+		  	AND   PAYMENT_METHOD_CD <![CDATA[<>]]> '제로페이'
+		   </if>
+		   <if test='chkTicket !="Y"' >
+		   	AND	  PAYMENT_METHOD_CD = '제로페이'
+		   </if>
+			AND   PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간')
+			AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			GROUP BY ticketDate
+		UNION ALL
+		  SELECT  '총계'  AS ticketDate
+
+		  FROM	ZERO_PAY.TB_STA_ZEROPAY
+		  WHERE   1=1
+		   <if test='chkTicket =="Y"' >
+		  	AND   PAYMENT_METHOD_CD <![CDATA[<>]]> '제로페이'
+		   </if>
+		   <if test='chkTicket !="Y"' >
+		   	AND	  PAYMENT_METHOD_CD = '제로페이'
+		   </if>
+			AND   PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간')
+			AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			GROUP BY ticketDate 
+		) A
+	</select>
+	
+	<select id="getSeasonTicketPmtList" parameterType="zeropayStatisticsVo" resultType="zeropayStatisticsVo">
+		SELECT *
+		FROM (
+			SELECT	
+				  PAYMENT_DTTM AS ticketDate
+				 , SUM(PAY_CNT) AS ticketCnt
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간' ) THEN PAY_CNT ELSE 0 END) 'ticket_7day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일2시간') THEN PAY_CNT ELSE 0 END)  'ticket_7day_2h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간') THEN PAY_CNT ELSE 0 END) 'ticket_30day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일2시간') THEN PAY_CNT ELSE 0 END) 'ticket_30day_2h'	   
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간') THEN PAY_CNT ELSE 0 END) 'ticket_180day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일2시간') THEN PAY_CNT ELSE 0 END) 'ticket_180day_2h'  
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간') THEN PAY_CNT ELSE 0 END) 'ticket_365day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일2시간') THEN PAY_CNT ELSE 0 END) 'ticket_365day_2h'  		  		 
+				 , SUM(TOT_AMT) AS totPmtPrice
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간' ) THEN TOT_AMT END) 'ticketPmt_7day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일2시간') THEN TOT_AMT END)  'ticketPmt_7day_2h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간' ) THEN TOT_AMT END) 'ticketPmt_30day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일2시간') THEN TOT_AMT END)  'ticketPmt_30day_2h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간' ) THEN TOT_AMT END) 'ticketPmt_180day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일2시간') THEN TOT_AMT END)  'ticketPmt_180day_2h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간' ) THEN TOT_AMT END) 'ticketPmt_365day_1h'
+				 ,SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일2시간') THEN TOT_AMT END)  'ticketPmt_365day_2h'		  		  		 
+					  		   
+		  FROM	ZERO_PAY.TB_STA_ZEROPAY
+		  WHERE   1=1
+		   <if test='chkTicket =="Y"' >
+		  	AND   PAYMENT_METHOD_CD <![CDATA[<>]]> '제로페이'
+		   </if>
+		   <if test='chkTicket !="Y"' >
+		   	AND	  PAYMENT_METHOD_CD = '제로페이'
+		   </if>
+			AND   PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간')
+			AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			GROUP BY ticketDate
+		UNION ALL
+		  SELECT  '총계'  AS ticketDate
+				 , SUM(PAY_CNT) AS ticketCnt
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간' ) THEN PAY_CNT ELSE 0 END) 'ticket_7day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일2시간') THEN PAY_CNT ELSE 0 END)  'ticket_7day_2h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간') THEN PAY_CNT ELSE 0 END) 'ticket_30day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일2시간') THEN PAY_CNT ELSE 0 END) 'ticket_30day_2h'	   
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간') THEN PAY_CNT ELSE 0 END) 'ticket_180day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일2시간') THEN PAY_CNT ELSE 0 END) 'ticket_180day_2h'  
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간') THEN PAY_CNT ELSE 0 END) 'ticket_365day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일2시간') THEN PAY_CNT ELSE 0 END) 'ticket_365day_2h'  		  		 
+				 , SUM(TOT_AMT) AS totPmtPrice
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일1시간' ) THEN TOT_AMT END) 'ticketPmt_7day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('7일2시간') THEN TOT_AMT END)  'ticketPmt_7day_2h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일1시간' ) THEN TOT_AMT END) 'ticketPmt_30day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('30일2시간') THEN TOT_AMT END)  'ticketPmt_30day_2h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일1시간' ) THEN TOT_AMT END) 'ticketPmt_180day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('180일2시간') THEN TOT_AMT END)  'ticketPmt_180day_2h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일1시간' ) THEN TOT_AMT END) 'ticketPmt_365day_1h'
+				 , SUM(CASE WHEN PAYMENT_CLS_CD IN ('365일2시간') THEN TOT_AMT END)  'ticketPmt_365day_2h'		  		  		 
+					  		   
+		  FROM	ZERO_PAY.TB_STA_ZEROPAY
+		  WHERE   1=1
+		   <if test='chkTicket =="Y"' >
+		  	AND   PAYMENT_METHOD_CD <![CDATA[<>]]> '제로페이'
+		   </if>
+		   <if test='chkTicket !="Y"' >
+		   	AND	  PAYMENT_METHOD_CD = '제로페이'
+		   </if>
+			AND   PAYMENT_CLS_CD IN ('7일1시간','30일1시간','180일1시간','365일1시간','7일2시간','30일2시간','180일2시간','365일2시간')
+			AND DATE(PAYMENT_DTTM) BETWEEN CONCAT(REPLACE(#{searchBgnDe},'-',''),'000000') AND CONCAT(REPLACE(#{searchEndDe},'-',''),'235959') 
+			GROUP BY ticketDate 
+		) A
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	
+</mapper>

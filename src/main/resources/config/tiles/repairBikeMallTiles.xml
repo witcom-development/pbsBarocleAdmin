@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+
+<tiles-definitions>
+	
+	<!-- 바로클포 공통 -->
+	<definition name="repairBikeMallTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 자전거 수리요청 등록현황 -->
+	<definition name="/admin/repairBikeMall/transferBike/trans_bik_mall_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/transferBike/trans_bik_mall_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 자전거 수리요청 등록 상세페이지 -->
+	<definition name="/admin/repairBikeMall/transferBike/trans_bik_mall_detail" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/transferBike/trans_bik_mall_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 자전거 수리요청 현황 목록페이지 -->
+	<definition name="/admin/repairBikeMall/checkTransfer/chk_trans_bik_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/checkTransfer/chk_trans_bik_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 자전거 수리내역 증빙 목록페이지 -->
+	<definition name="/admin/repairBikeMall/repairBike/repair_bik_mall_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/repairBike/repair_bik_mall_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 점포별 월 정비 보고서 목록페이지 -->
+	<definition name="/admin/repairBikeMall/repairBike/bik_mall_rep_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/repairBike/bik_mall_rep_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="admin/repairBikeMall/manageMall/bik_mall_rep_list_excel" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/manageMall/bik_mall_rep_list_excel.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 바로클포 정보 관리 목록페이지 -->
+	<definition name="/admin/repairBikeMall/manageMall/opr_cen_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/manageMall/opr_cen_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 바로클포 정보 관리 상세페이지 -->
+	<definition name="/admin/repairBikeMall/manageMall/opr_cen_detail" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/manageMall/opr_cen_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 바로클포 수리단가관리 목록페이지 -->
+	<definition name="/admin/repairBikeMall/repairPart/rep_part_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/repairPart/rep_part_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 바로클포 수리단가관리 등록페이지 -->
+	<definition name="/admin/repairBikeMall/repairPart/rep_part_detail" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/repairPart/rep_part_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 바로클포 자전거 검수 현황 목록페이지 -->
+	<definition name="/admin/repairBikeMall/checkTransfer/chk_repair_bik_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/checkTransfer/chk_repair_bik_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	 <!-- 관리자용 월 정비 보고서 목록페이지 -->
+	<definition name="/admin/repairBikeMall/manageMall/bik_mall_rep_admin_list" extends="repairBikeMallTemplate" template="/WEB-INF/views/admin/repairBikeMall/manageMall/bik_mall_rep_admin_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+</tiles-definitions>

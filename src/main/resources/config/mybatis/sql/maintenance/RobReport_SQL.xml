@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.maintenance.robReport.service.RobReportMapper">
+	
+	<select id="getRobReportList" parameterType="robReportVo" resultType="robReportVo">
+		SELECT 
+			BIKE.BIKE_NO AS bikeNo,
+			BRI.REG_DTTM AS regDttm,
+			BRI.LOCK_STATE AS lockState,
+			BRI.LATITUDE AS latitude,
+			BRI.LONGITUDE AS longitude,
+			MLANG.STATION_NAME AS stationName,
+			RACK.NOW_STATION_EQUIP_ORD AS stationEquipOrd
+		FROM TB_OPR_ROB_BRI BRI 
+		LEFT OUTER JOIN TB_OPR_BIKE BIKE ON BRI.BIKE_ID = BIKE.BIKE_ID
+		LEFT OUTER JOIN TB_OPR_RACK RACK ON BRI.RACK_ID = RACK.RACK_ID
+		LEFT OUTER JOIN TB_OPR_MLANG_STATION MLANG ON RACK.NOW_LOCATE_ID = MLANG.STATION_ID AND MLANG.LANG_CLS_CD = #{lang}
+		<trim prefix='WHERE' prefixOverrides="AND">
+			  <if test='searchBgnDe != null and searchBgnDe != ""'>
+			  BRI.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			  </if>
+			  <if test='searchBgnDe == null or searchBgnDe == ""'>
+			  BRI.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			  </if>  
+			  <if test='lockState != null and lockState != "" and lockState == "03"'>
+			  AND BRI.LOCK_STATE NOT IN ('01', '02')
+			  </if>   
+			  <if test='lockState != null and lockState != "" and lockState != "03"'>
+			  AND BRI.LOCK_STATE = #{lockState}
+			  </if>	
+			  <if test='searchWord != null and searchWord != ""'>
+			  AND BIKE.BIKE_NO LIKE CONCAT('%',#{searchWord},'')
+			  </if>
+		</trim>
+		ORDER BY
+		<if test='sortType == null or sortType == ""'>
+			BRI.REG_DTTM DESC, BIKE.BIKE_NO DESC
+		</if>
+		<if test='sortType != null and sortType == "bikeNo"'>
+			<if test='sortValue == null or sortValue == ""'>
+				BIKE.BIKE_NO ASC, BRI.REG_DTTM DESC
+			</if>
+			<if test='sortValue != null and sortValue == "ASC"'>
+				BIKE.BIKE_NO ASC, BRI.REG_DTTM DESC
+	   		</if>	
+			<if test='sortValue != null and sortValue == "DESC"'>
+				BIKE.BIKE_NO DESC, BRI.REG_DTTM DESC
+	   		</if>
+		</if>
+		<if test='sortType != null and sortType == "regDttm"'>
+			<if test='sortValue == null or sortValue == ""'>
+				BRI.REG_DTTM DESC, BIKE.BIKE_NO DESC
+			</if>
+			<if test='sortValue != null and sortValue == "ASC"'>
+				BRI.REG_DTTM ASC, BIKE.BIKE_NO DESC
+	   		</if>	
+			<if test='sortValue != null and sortValue == "DESC"'>
+				BRI.REG_DTTM DESC, BIKE.BIKE_NO DESC
+	   		</if>
+		</if>
+		
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>
+	</select>
+	<select id="getRobReportListCount" parameterType="robReportVo" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM TB_OPR_ROB_BRI BRI 
+		LEFT OUTER JOIN TB_OPR_BIKE BIKE ON BRI.BIKE_ID = BIKE.BIKE_ID
+		LEFT OUTER JOIN TB_OPR_RACK RACK ON BRI.RACK_ID = RACK.RACK_ID
+		LEFT OUTER JOIN TB_OPR_MLANG_STATION MLANG ON RACK.NOW_LOCATE_ID = MLANG.STATION_ID AND MLANG.LANG_CLS_CD = #{lang}
+		<trim prefix='WHERE' prefixOverrides="AND">
+			 <if test='searchBgnDe != null and searchBgnDe != ""'>
+			  BRI.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			  </if>
+			  <if test='searchBgnDe == null or searchBgnDe == ""'>
+			  BRI.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			  </if>  
+			  <if test='lockState != null and lockState != "" and lockState == "03"'>
+			  AND BRI.LOCK_STATE NOT IN ('01', '02')
+			  </if>   
+			  <if test='lockState != null and lockState != "" and lockState != "03"'>
+			  AND BRI.LOCK_STATE = #{lockState}
+			  </if>	 
+			  <if test='searchWord != null and searchWord != ""'>
+			  AND BIKE.BIKE_NO LIKE CONCAT('%',#{searchWord},'')
+			  </if>	   
+		</trim>
+	</select>
+</mapper>

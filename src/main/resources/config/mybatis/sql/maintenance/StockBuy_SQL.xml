@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.maintenance.stockMgmt.buy.service.StockBuyMapper">
+	
+	<select id="getBuyPartsList" parameterType="partsBuyVo" resultType="partsBuyVo">
+		SELECT PART_BUY_SEQ					   AS partBuySeq
+			  ,BUYER_NAME						 AS buyerName
+			  ,STR_TO_DATE(BUY_DATE, '%Y-%m-%d')  AS buyDate
+			  ,BUY_CMPY_NAME					  AS buyCmpyName
+			  ,CMPY_BUSINESS_NO				   AS cmpyBusinessNo
+			  ,FORMAT(TOT_BUY_PRCE,0,2)		   AS totBuyPrce
+		  FROM spb.TB_MTC_PART_BUY
+		<trim prefix='WHERE' prefixOverrides="AND | OR">
+			 <if test='searchStartDate != null and searchStartDate != ""'>
+			  <![CDATA[STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d') <= BUY_DATE]]>   
+			 </if>   
+			 <if test='searchEndDate != null and searchEndDate != ""'>
+			  <![CDATA[AND BUY_DATE <=  STR_TO_DATE( #{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>   
+			 </if>		 
+		</trim>
+		ORDER BY BUY_DATE DESC
+	</select>
+	<select id="getStockBuyListCount" parameterType="partsBuyVo" resultType="int">
+		SELECT COUNT(PART_BUY_SEQ)
+		  FROM spb.TB_MTC_PART_BUY
+		<trim prefix='WHERE' prefixOverrides="AND | OR">
+			 <if test='searchStartDate != null and searchStartDate != ""'>
+			  <![CDATA[ STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d') <= BUY_DATE ]]>   
+			 </if>   
+			 <if test='searchEndDate != null and searchEndDate != ""'>
+			  <![CDATA[ AND BUY_DATE <=  STR_TO_DATE( #{searchEndDate}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>   
+			 </if>		 
+		</trim>
+	</select>
+	<select id="getStockBuyDetailInfo" parameterType="partsBuyVo" resultType="partsBuyVo">
+		SELECT BUYER_NAME						  AS buyerName
+			  <!-- ,dg_decrypt('TB_MTC_PART_BUY', 'BUYER_MPN_NO  ', BUYER_MPN_NO ) AS buyerMpnNo -->
+			  <!-- ,BUYER_MPN_NO AS buyerMpnNo -->
+			  ,CAST(AES_DECRYPT(UNHEX(BUYER_MPN_NO),'BRC') as CHAR) AS buyerMpnNo
+			  ,DATE_FORMAT(BUY_DATE, '%Y-%m-%d')   AS buyDate
+			  ,BUY_CMPY_NAME					   AS buyCmpyName
+			  ,CMPY_BUSINESS_NO					AS cmpyBusinessNo
+			  <!-- ,dg_decrypt('TB_MTC_PART_BUY', 'CMPY_TEL_NO', CMPY_TEL_NO) AS cmpyTelNo -->
+			  <!-- ,CMPY_TEL_NO AS cmpyTelNo -->
+			  ,CAST(AES_DECRYPT(UNHEX(CMPY_TEL_NO),'BRC') as CHAR) AS cmpyTelNo
+			  ,FORMAT(TOT_BUY_PRCE,0,2)			AS totBuyPrce
+			  ,PART_BUY_DESC					   AS pratBuyDesc
+		  FROM spb.TB_MTC_PART_BUY
+		 WHERE PART_BUY_SEQ = #{partBuySeq}
+	</select>
+	<select id="getStockBuyPartList" parameterType="partsBuyVo" resultType="partsBuyVo">
+		SELECT PART_BUY_SEQ			  AS partBuySeq
+			  ,PART_CD				   AS partCd
+			  ,IFNULL(BUY_QUNT ,0)	   AS buyQunt
+			  ,IFNULL(PART_UNIT_PRCE,0)  AS partUnitPrce
+			  ,(select MLANG_COM_CD_NAME from TB_SYS_MLANG_COM_CD  WHERE COM_CD = PART_CD AND LANG_CLS_CD = 'LAG_001') AS partCdName
+		  FROM  spb.TB_MTC_PART_BUY_HIST_DETL
+		 WHERE PART_BUY_SEQ = #{partBuySeq}  
+	</select>	
+	<delete id="delStockBuyData" parameterType="partsBuyVo">
+		DELETE FROM TB_MTC_PART_BUY WHERE PART_BUY_SEQ = #{partBuySeq}
+	</delete>	
+	<delete id="delStockBuyPartList" parameterType="partsBuyVo">
+		DELETE FROM TB_MTC_PART_BUY_HIST_DETL
+		WHERE PART_BUY_SEQ = #{partBuySeq}
+		<if test='partCd != null and partCd != ""'>
+		  AND PART_CD =  #{partCd}	 
+		</if>
+	</delete>  
+	
+	<insert id="addStockBuyData" parameterType="partsBuyVo">
+		INSERT INTO spb.TB_MTC_PART_BUY(
+			 BUYER_NAME
+			,BUYER_MPN_NO
+			,BUY_DATE
+			,BUY_CMPY_NAME
+			,CMPY_BUSINESS_NO
+			,CMPY_TEL_NO
+			,TOT_BUY_PRCE
+			,PART_BUY_DESC
+		) VALUES (
+			 #{buyerName}
+			<!-- ,dg_encrypt('TB_MTC_PART_BUY', 'BUYER_MPN_NO', #{buyerMpnNo}) -->
+			,HEX(AES_ENCRYPT(#{buyerMpnNo},'BRC'))
+			,STR_TO_DATE(#{buyDate},'%Y-%m-%d')
+			,#{buyCmpyName}
+			,#{cmpyBusinessNo}
+			<!-- ,dg_encrypt('TB_MTC_PART_BUY', 'CMPY_TEL_NO', #{cmpyTelNo}) -->
+			,HEX(AES_ENCRYPT(#{cmpyTelNo},'BRC'))
+			,#{totBuyPrce}
+			,#{partBuyDesc}
+		)
+		
+	</insert>	
+	<select id="getCurrentSeq" resultType="int">
+		SELECT MAX(PART_BUY_SEQ) AS partBuySeq
+		  FROM spb.TB_MTC_PART_BUY
+	</select>
+	<insert id="addStockBuyPartList" parameterType="partsBuyVo">  
+		INSERT INTO spb.TB_MTC_PART_BUY_HIST_DETL(
+			 PART_BUY_SEQ
+			,PART_CD
+			,BUY_QUNT
+			,PART_UNIT_PRCE
+		) VALUES (
+			 #{partBuySeq}
+			,#{partCd}
+			,#{buyQunt}
+			,#{partUnitPrce}
+		)
+	</insert>	
+	
+	<update id="setStockBuyData" parameterType="partsBuyVo">  
+		UPDATE spb.TB_MTC_PART_BUY
+		  SET BUYER_NAME		 = #{buyerName}
+			 <!-- ,BUYER_MPN_NO	   = dg_encrypt('TB_MTC_PART_BUY', 'BUYER_MPN_NO', #{buyerMpnNo}) -->
+			 <!-- ,BUYER_MPN_NO	   = #{buyerMpnNo} -->
+			 ,BUYER_MPN_NO	   = HEX(AES_ENCRYPT(#{buyerMpnNo},'BRC'))
+			 ,BUY_DATE		   = STR_TO_DATE(#{buyDate},'%Y-%m-%d')
+			 ,BUY_CMPY_NAME	  = #{buyCmpyName}
+			 ,CMPY_BUSINESS_NO   = #{cmpyBusinessNo} 
+			 <!-- ,CMPY_TEL_NO		= dg_encrypt('TB_MTC_PART_BUY', 'CMPY_TEL_NO', #{cmpyTelNo}) -->
+			 <!-- ,CMPY_TEL_NO		= #{cmpyTelNo} -->
+			 ,CMPY_TEL_NO		= HEX(AES_ENCRYPT(#{cmpyTelNo},'BRC'))
+			 ,TOT_BUY_PRCE	   = #{totBuyPrce}
+			 ,PART_BUY_DESC	  = #{partBuyDesc}
+		WHERE PART_BUY_SEQ = #{partBuySeq}	  
+	</update>	
+	
+	<update id="setStockBuyPartList" parameterType="partsBuyVo">  
+		UPDATE spb.TB_MTC_PART_BUY_HIST_DETL
+		   SET BUY_QUNT = #{buyQunt}
+			  ,PART_UNIT_PRCE = #{partUnitPrce}		  
+		 WHERE PART_CD = #{partCd}
+		   AND PART_BUY_SEQ = #{partBuySeq} 
+	</update>	
+</mapper>

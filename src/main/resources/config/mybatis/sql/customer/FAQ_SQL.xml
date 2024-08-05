@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.faq.service.FaqMapper">
+	
+	<resultMap id="resultFaqVO" type="com.dkitec.barocle.admin.customer.faq.vo.FaqVO">
+		<result column="FAQ_SEQ" property="faqSeq" />
+		<result column="CATE_CD" property="cateCD" />
+		<result column="TEMP_CATE_CD" property="tempCateCD" />
+		<result column="QESTN_ORD" property="qestnOrd" />
+		<result column="QESTN_TITLE" property="qestnTitle" />
+		<result column="QESTN_CONTENT" property="qestnContent" />
+		<result column="ANSWER_TEXT_CONTENT" property="answerTextContent" />
+		<result column="ANSWER_HTML_CONTENT" property="answerHTMLContent" />
+		<result column="READ_CNT" property="readCnt" />
+		<result column="USE_YN" property="useYN" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="ATCH_FILE_ID" property="atchFileID" />
+		<result column="CD_DESC1" property="cdDesc1" />
+		<result column="CD_DESC2" property="cdDesc2" />
+	</resultMap>
+	
+	<resultMap id="resultCategoryVO" type="com.dkitec.barocle.admin.customer.faq.vo.CategoryVO">
+		<result column="COM_CD" property="comCD" />
+		<result column="COM_UP_CD" property="comUpCD" />
+		<result column="CD_DESC1" property="cdDesc1" />
+		<result column="CD_DESC2" property="cdDesc2" />
+		<result column="DSP_ORD" property="dspOrd" />
+		<result column="ADD_VAL1" property="addVal1" />
+		<result column="ADD_VAL2" property="addVal2" />
+		<result column="ADD_VAL3" property="addVal3" />
+		<result column="REG_ID" property="regID" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="NEW_REG_DTTM" property="newRegDttm" />
+		<result column="LANG_CLS_CD" property="langClsCD" />
+		<result column="MLANG_COM_CD_NAME" property="mLangComCDName" />
+	</resultMap>
+	
+	<resultMap id="daumEditorVO" type="com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO">
+		<result column="IMG_PATH" property="imgPath" />
+		<result column="IMG_URL" property="imgURL" />
+		<result column="IMG_NAME" property="imgName" />
+		<result column="IMG_SIZE" property="imgSize" />
+		<result column="THUMBNAIL_IMG_PATH" property="thumbnailImgPath" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgURL" />
+		<result column="THUMBNAIL_IMG_NAME" property="thumbnailImgName" />
+		<result column="THUMBNAIL_IMG_SIZE" property="thumbnailImgSize" />
+	</resultMap>
+	
+	
+	<select id="listFaqCount" parameterType="faqVO" resultType="int">
+		SELECT	COUNT(FAQ_SEQ) AS faqSeq
+		FROM	TB_COM_FAQ_INFO
+		WHERE	USE_YN = 'Y'
+			<if test="cateCD!='' and cateCD!=null">
+				AND CATE_CD = #{cateCD}
+			</if>
+			<if test="searchValue!='' and searchValue!=null">
+				AND QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+			</if>
+	</select>
+	
+	<select id="listFaq" parameterType="faqVO" resultMap="resultFaqVO">
+		SELECT	A.
+				FAQ_SEQ,
+				CATE_CD,
+				QESTN_ORD,
+				QESTN_TITLE,
+				READ_CNT,
+				USE_YN,
+				REG_DTTM,
+				REG_ID,
+				MOD_DTTM,
+				MOD_ID,
+				CD_DESC1,
+				CD_DESC2
+		FROM
+				(
+					SELECT	
+							IA.FAQ_SEQ,
+							IA.CATE_CD,
+							IA.QESTN_ORD,
+							IA.QESTN_TITLE,
+							IA.READ_CNT,
+							IA.USE_YN,
+							IA.REG_DTTM,
+							IA.REG_ID,
+							IA.MOD_DTTM,
+							IA.MOD_ID,
+							IB.CD_DESC1,
+							IB.CD_DESC2
+					FROM	TB_COM_FAQ_INFO IA LEFT OUTER JOIN TB_SYS_COM_CD IB ON IA.CATE_CD=IB.COM_CD 
+					WHERE	IA.USE_YN = 'Y'
+							<if test="cateCD!='' and cateCD!=null">
+								AND IA.CATE_CD = #{cateCD}
+							</if>
+							<if test="searchValue!='' and searchValue!=null">
+								AND IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+							</if>
+				) A
+		ORDER BY
+				A.QESTN_ORD ASC, A.CATE_CD, A.FAQ_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewFaq" parameterType="faqVO" resultMap="resultFaqVO">
+		SELECT	
+				IA.FAQ_SEQ,
+				IA.CATE_CD,
+				IA.CATE_CD AS TEMP_CATE_CD,
+				IA.QESTN_ORD,
+				IA.QESTN_TITLE,
+				IA.QESTN_CONTENT,
+				IA.ANSWER_TEXT_CONTENT,
+				IA.ANSWER_HTML_CONTENT,
+				IA.READ_CNT,
+				IA.REG_DTTM,
+				IA.REG_ID,
+				IA.MOD_DTTM,
+				IA.MOD_ID,
+				IA.USE_YN,
+				IB.CD_DESC1,
+				IB.CD_DESC2
+		FROM	TB_COM_FAQ_INFO IA LEFT OUTER JOIN TB_SYS_COM_CD IB ON IA.CATE_CD=IB.COM_CD
+		WHERE	IA.USE_YN = 'Y' AND IA.FAQ_SEQ = #{faqSeq}
+	</select>
+	
+	<select id="getDaumEditorImage" parameterType="faqVO" resultMap="daumEditorVO">
+		SELECT	
+				IMG_PATH,
+				IMG_URL,
+				IMG_NAME,
+				IMG_SIZE,
+				THUMBNAIL_IMG_PATH,
+				THUMBNAIL_IMG_URL,
+				THUMBNAIL_IMG_NAME,
+				THUMBNAIL_IMG_SIZE
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{faqSeq} AND BBS_CLS_CD = #{currentMenu}
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevFaq" parameterType="faqVO" resultMap="resultFaqVO">
+		SELECT	IA.FAQ_SEQ, IA.QESTN_ORD, IA.QESTN_TITLE
+		FROM	TB_COM_FAQ_INFO IA LEFT OUTER JOIN TB_SYS_COM_CD IB ON IA.CATE_CD=IB.COM_CD			
+		WHERE	IA.USE_YN = 'Y' AND IA.FAQ_SEQ &gt; #{faqSeq}
+				<if test="cateCD!='' and cateCD!=null">
+					AND IA.CATE_CD = #{cateCD}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY IA.QESTN_ORD ASC, IA.FAQ_SEQ DESC
+		LIMIT	1
+	</select>
+	
+	<select id="nextFaq" parameterType="faqVO" resultMap="resultFaqVO">
+		SELECT	IA.FAQ_SEQ, IA.QESTN_ORD, IA.QESTN_TITLE
+		FROM	TB_COM_FAQ_INFO IA LEFT OUTER JOIN TB_SYS_COM_CD IB ON IA.CATE_CD=IB.COM_CD	
+		WHERE	IA.USE_YN = 'Y' AND IA.FAQ_SEQ &gt; #{faqSeq}
+				<if test="cateCD!='' and cateCD!=null">
+					AND IA.CATE_CD = #{cateCD}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY IA.QESTN_ORD DESC, IA.FAQ_SEQ ASC
+		LIMIT	1
+	</select>
+	
+	<insert id="insertFaq" parameterType="faqVO" useGeneratedKeys="true" keyProperty="faqSeq">
+		INSERT INTO TB_COM_FAQ_INFO
+			(
+				CATE_CD, QESTN_ORD, QESTN_TITLE, QESTN_CONTENT, ANSWER_TEXT_CONTENT,
+				ANSWER_HTML_CONTENT, USE_YN, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+			)
+		VALUES
+			(
+				#{cateCD}, #{qestnOrd}, #{qestnTitle}, #{qestnContent}, #{answerTextContent},
+				#{answerHTMLContent}, #{useYN}, NOW(), #{regID}, NOW(), #{regID}
+			)
+	</insert>
+	
+	<update id="updateFaq" parameterType="faqVO">
+		UPDATE
+			TB_COM_FAQ_INFO
+		SET
+			CATE_CD = #{cateCD},
+			QESTN_ORD = #{qestnOrd},
+			QESTN_TITLE = #{qestnTitle},
+			QESTN_CONTENT = #{qestnContent},
+			ANSWER_TEXT_CONTENT = #{answerTextContent},
+			ANSWER_HTML_CONTENT = #{answerHTMLContent},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+		WHERE
+			USE_YN = 'Y' AND FAQ_SEQ = #{faqSeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="faqVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = 0
+		WHERE
+			BBS_SEQ = #{faqSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="faqVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = #{faqSeq}
+		WHERE
+			BBS_CLS_CD = #{currentMenu} AND IMG_NAME IN
+			<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+	</update>
+	
+	<update id="deleteFaq" parameterType="faqVO">
+		UPDATE
+			TB_COM_FAQ_INFO
+		SET
+			USE_YN = 'N', QESTN_ORD = 0, MOD_DTTM = NOW(), MOD_ID = #{modID}
+		WHERE
+			FAQ_SEQ = #{faqSeq}
+	</update>
+	
+	<select id="listCategory" parameterType="categoryVO" resultMap="resultCategoryVO">
+		SELECT
+			COM_CD, COM_UP_CD, CD_DESC1, CD_DESC2, DSP_ORD, DSP_ORD, ADD_VAL1, ADD_VAL2, ADD_VAL3
+		FROM
+			TB_SYS_COM_CD
+		WHERE
+			USE_YN = 'Y' AND COM_UP_CD = #{comCD}
+		ORDER BY
+			DSP_ORD ASC
+	</select>
+	
+	<select id="getFaqCategoryInfo" parameterType="java.lang.String" resultType="java.util.Map">
+		SELECT	COUNT(CATE_CD) AS totalCount, IFNULL(MAX(QESTN_ORD),0) AS nextCount
+		FROM	TB_COM_FAQ_INFO
+		WHERE	CATE_CD = #{cateCD} AND QESTN_ORD IS NOT NULL AND USE_YN = 'Y'
+	</select>
+	
+	<select id="getRearrangeList" parameterType="faqVO" resultMap="resultFaqVO">
+		SELECT	FAQ_SEQ, CATE_CD, QESTN_ORD
+		FROM	TB_COM_FAQ_INFO
+		WHERE	CATE_CD = #{cateCD} AND FAQ_SEQ != #{faqSeq} AND QESTN_ORD IS NOT NULL AND USE_YN = 'Y'
+		ORDER BY
+			QESTN_ORD ASC
+	</select>
+	
+	<select id="getRearrangeOtherList" parameterType="faqVO" resultMap="resultFaqVO">
+		SELECT	FAQ_SEQ, CATE_CD, QESTN_ORD
+		FROM	TB_COM_FAQ_INFO
+		WHERE	CATE_CD = #{tempCateCD} AND QESTN_ORD IS NOT NULL AND USE_YN = 'Y'
+		ORDER BY
+			QESTN_ORD ASC
+	</select>
+	
+	<update id="setRearrangeList" parameterType="faqVO">
+		UPDATE
+			TB_COM_FAQ_INFO
+		SET
+			QESTN_ORD = #{qestnOrd}
+		WHERE
+			FAQ_SEQ = #{faqSeq} AND CATE_CD = #{cateCD}
+	</update>
+	
+	<select id="getCategorySelectionList" parameterType="categoryVO" resultMap="resultCategoryVO">
+		SELECT
+				A.COM_CD, A.COM_UP_CD,
+				A.DSP_ORD, A.USE_YN,
+				A.CD_DESC1, A.CD_DESC2,
+				A.ADD_VAL1, A.ADD_VAL2, A.ADD_VAL3,
+				A.REG_DTTM, A.REG_ID,
+				B.MLANG_COM_CD_NAME
+		FROM	TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B ON A.COM_CD = B.COM_CD AND B.LANG_CLS_CD = #{langClsCD}
+		WHERE	(A.COM_UP_CD IS NULL OR A.COM_UP_CD = '') AND A.USE_YN = 'Y'
+		ORDER BY
+				A.COM_CD ASC
+	</select>
+	
+	<select id="getCategorySelectedList" parameterType="categoryVO" resultMap="resultCategoryVO">
+		SELECT
+				A.COM_CD, A.COM_UP_CD,
+				A.DSP_ORD, A.USE_YN,
+				A.CD_DESC1, A.CD_DESC2,
+				A.ADD_VAL1, A.ADD_VAL2, A.ADD_VAL3,
+				A.REG_DTTM, A.REG_ID,
+				DATE_FORMAT(A.REG_DTTM, '%Y.%m.%d') AS NEW_REG_DTTM,
+				B.MLANG_COM_CD_NAME
+		FROM	TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B ON A.COM_CD = B.COM_CD AND B.LANG_CLS_CD = #{langClsCD}
+		WHERE	(A.COM_UP_CD IS NOT NULL OR A.COM_UP_CD != '') AND A.USE_YN = 'Y' AND A.COM_UP_CD = #{comUpCD}
+		ORDER BY
+				A.COM_CD ASC
+	</select>
+	
+	<select id="getNextCategorySeq" parameterType="categoryVO" resultType="java.lang.String">
+		SELECT MAX(COM_CD) AS COM_CD FROM TB_SYS_COM_CD WHERE COM_UP_CD = #{comUpCD}
+	</select>
+	
+	<insert id="insertCategory" parameterType="categoryVO">
+		INSERT INTO TB_SYS_COM_CD
+			( COM_CD, COM_UP_CD, CD_DESC1, USE_YN, DSP_ORD, REG_ID, REG_DTTM )
+		VALUES
+			( #{comCD}, #{comUpCD}, #{cdDesc1}, #{useYN}, #{dspOrd}, #{regID}, NOW() )
+	</insert>
+	
+	<insert id="insertCategoryMLang" parameterType="categoryVO">
+		INSERT INTO TB_SYS_MLANG_COM_CD
+			( COM_CD, LANG_CLS_CD, MLANG_COM_CD_NAME )
+		VALUES
+			( #{comCD}, #{langClsCD}, #{mLangComCDName} )
+	</insert>
+	
+	<update id="updateCategory" parameterType="categoryVO">
+		UPDATE	TB_SYS_COM_CD
+		SET		CD_DESC1 = #{mLangComCDName}
+		WHERE	COM_CD = #{comCD}
+	</update>
+	
+	<update id="updateCategoryMLang" parameterType="categoryVO">
+		UPDATE	TB_SYS_MLANG_COM_CD
+		SET		MLANG_COM_CD_NAME = #{mLangComCDName}
+		WHERE	COM_CD = #{comCD} AND LANG_CLS_CD = #{langClsCD}
+	</update>
+	
+</mapper>

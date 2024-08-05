@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.opinionboard.service.OpinionBoardMapper">
+	
+	<resultMap id="resultOpinionBoardVO" type="com.dkitec.barocle.admin.customer.opinionboard.vo.OpinionBoardVO">
+		<result column="QNA_SEQ" property="qnaSeq" />
+		<result column="CATE_CD" property="cateCD" />
+		<result column="QESTN_TITLE" property="qestnTitle" />
+		<result column="QESTN_TEXT_CONTENT" property="qestnTextContent" />
+		<result column="QESTN_HTML_CONTENT" property="qestnHTMLContent" />
+		<result column="QESTN_ATCH_FILE_ID" property="qestnAtchFileID" />
+		<result column="READ_CNT" property="readCnt" />
+		<result column="EMAIL_ADDR" property="emailAddr" />
+		<result column="USR_REG_DTTM" property="usr_regDttm" />
+		<result column="USR_REG_ID" property="usr_regID" />
+		<result column="USR_MOD_DTTM" property="usr_modDttm" />
+		<result column="USR_MOD_ID" property="usr_modID" />
+		<result column="QNA_PROCESS_STUS_CD" property="qnaProcessStusCD" />
+		<result column="WRTER_NAME" property="wrterName" />
+		<result column="OPEN_YN" property="openYN" />
+		<result column="QNA_ANSWER_SEQ" property="qnaAnswerSeq" />
+		<result column="WRTER_ID" property="wrterID" />
+		<result column="QNA_ANSWER_PASSWD" property="qnaAnswerPassWD" />
+		<result column="ANSWER_TEXT_CONTENT" property="answerTextContent" />
+		<result column="ANSWER_HTML_CONTENT" property="answerHTMLContent" />
+		<result column="USE_YN" property="useYN" />
+		<result column="ANSWER_ATCH_FILE_ID" property="answerAtchFileId" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="CD_NM" property="cdNm" />
+		<result column="OPEN_NM" property="openNm" />
+		<result column="SECRET_YN" property="secretYn" />
+		<result column="ADMIN_ID" property="adminId" />
+		<result column="DEADLINE" property="deadline" />
+		<result column="DEADLINE_DATE" property="deadline_Date" />
+	</resultMap>
+	
+	<resultMap id="daumEditorVO" type="com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO">
+		<result column="IMG_PATH" property="imgPath" />
+		<result column="IMG_URL" property="imgURL" />
+		<result column="IMG_NAME" property="imgName" />
+		<result column="IMG_SIZE" property="imgSize" />
+		<result column="THUMBNAIL_IMG_PATH" property="thumbnailImgPath" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgURL" />
+		<result column="THUMBNAIL_IMG_NAME" property="thumbnailImgName" />
+		<result column="THUMBNAIL_IMG_SIZE" property="thumbnailImgSize" />
+	</resultMap>
+	
+	<select id="listOpinionBoardCount" parameterType="opinionBoardVO" resultType="int">
+		 SELECT COUNT(IA.QNA_SEQ) AS qnaSeq
+		   FROM TB_COM_QNA_INFO IA 
+LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
+			 ON IA.QNA_SEQ=IB.QNA_SEQ
+		  WHERE IA.OPEN_YN = 'Y'
+				<!-- 시민의견수렴_등록일로만 조회 _cms_20161214-->
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					<!-- AND (DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate} OR DATE_FORMAT(IB.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}) -->
+					AND DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					<!-- AND (DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate} OR DATE_FORMAT(IB.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}) -->
+					AND DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND  (  IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+							   OR
+							IA.REG_ID	  LIKE CONCAT('%',replace(#{searchValue},' ',''),'%')
+						 )
+				</if>
+				<if test="qnaProcessStusCD=='D'.toString()">
+					AND IA.QNA_PROCESS_STUS_CD = 'D'
+				</if>
+				<if test="qnaProcessStusCD=='P'.toString()">
+					AND IA.QNA_PROCESS_STUS_CD IS NULL
+				</if>
+				<if test="comCd!='' and comCd!=null">
+					AND ( IA.ADMIN_ID = #{comCd}
+						  OR
+						  IA.CATE_CD  = #{comCd}
+						)  
+				</if>
+	</select>
+	
+	<select id="listOpinionBoard" parameterType="opinionBoardVO" resultMap="resultOpinionBoardVO">
+		SELECT	B.USR_SEQ AS WRTER_ID,
+				QNA_SEQ,
+				QESTN_TITLE,
+				READ_CNT,
+				<!-- dg_decrypt('TB_COM_QNA_INFO', 'EMAIL_ADDR', EMAIL_ADDR) AS EMAIL_ADDR, -->
+				<!-- EMAIL_ADDR AS EMAIL_ADDR, -->
+				CAST(AES_DECRYPT(UNHEX(EMAIL_ADDR),'BRC') as CHAR) AS EMAIL_ADDR,
+				USR_REG_DTTM,
+				USR_REG_ID,
+				USR_MOD_DTTM,
+				USR_MOD_ID,
+				QNA_PROCESS_STUS_CD,
+				OPEN_YN,
+				USE_YN,
+				SECRET_YN,
+				REG_DTTM,
+				REG_ID,
+				MOD_DTTM,
+				MOD_ID,
+				ADMIN_ID,
+				DEADLINE,
+				DEADLINE_DATE
+			   <!-- DATE_ADD(USR_REG_DTTM, INTERVAL 7 DAY) AS DEADLINE_DATE -->
+		FROM
+				(
+					SELECT  IA.QNA_SEQ,
+							IA.QESTN_TITLE,
+							IA.READ_CNT,
+							IA.EMAIL_ADDR,
+							IA.REG_DTTM AS USR_REG_DTTM,
+							IA.REG_ID AS USR_REG_ID,
+							IA.MOD_DTTM AS USR_MOD_DTTM, 
+							IA.MOD_ID AS USR_MOD_ID,
+							IA.QNA_PROCESS_STUS_CD,
+							IA.OPEN_YN,
+							IA.SECRET_YN,
+							IB.USE_YN,
+							IB.REG_DTTM,
+							IB.REG_ID,
+							IB.MOD_DTTM,
+							IB.MOD_ID,
+							<!-- 공통코드 사용으로 인한 조회 변경 2019.04.16-->
+							(SELECT MLANG_COM_CD_NAME 
+							   FROM TB_SYS_MLANG_COM_CD ML 
+							  WHERE ML.LANG_CLS_CD = 'LAG_001' 
+								AND ML.COM_CD = IA.ADMIN_ID
+							 )   AS ADMIN_ID,
+							IA.DEADLINE,
+							IA.DEADLINE_DATE
+					   FROM TB_COM_QNA_INFO IA 
+			LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
+				  		 ON IA.QNA_SEQ = IB.QNA_SEQ
+					  WHERE IA.OPEN_YN = 'Y'
+							<!-- 시민의견수렴_등록일로만 조회 _cms_20161214-->
+							<if test="searchStartDate!='' and searchStartDate!=null">
+								<!-- AND (DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate} OR DATE_FORMAT(IB.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}) -->
+								AND DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+							</if>
+							<if test="searchEndDate!='' and searchEndDate!=null">
+								<!-- AND (DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate} OR DATE_FORMAT(IB.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}) -->
+								AND DATE_FORMAT(IA.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+							</if>
+							<if test="searchValue!='' and searchValue!=null">
+								AND (  IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+									   OR
+									   IA.REG_ID	  LIKE CONCAT('%',replace(#{searchValue},' ',''),'%')
+									)	
+							</if>
+							<if test="qnaProcessStusCD=='D'.toString()">
+								AND IA.QNA_PROCESS_STUS_CD = 'D'
+							</if>
+							<if test="qnaProcessStusCD=='P'.toString()">
+								AND IA.QNA_PROCESS_STUS_CD IS NULL
+							</if>
+							<if test="comCd!='' and comCd!=null">
+								AND ( IA.ADMIN_ID = #{comCd}
+									  OR
+									  IA.CATE_CD  = #{comCd}
+									)
+							</if>
+				) A
+				, TB_SVC_MB B
+			WHERE A.USR_REG_ID = B.MB_ID
+			ORDER BY A.QNA_SEQ DESC
+			LIMIT #{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	 
+	 <select id="viewOpinionBoard" parameterType="opinionBoardVO" resultMap="resultOpinionBoardVO">
+		SELECT  IA.QNA_SEQ,
+				IA.CATE_CD,
+				IA.QESTN_TITLE,
+				IA.QESTN_TEXT_CONTENT,
+				IA.QESTN_HTML_CONTENT,
+				IA.QESTN_ATCH_FILE_ID,
+				IA.READ_CNT,
+				<!-- dg_decrypt('TB_COM_QNA_INFO', 'EMAIL_ADDR', IA.EMAIL_ADDR) AS EMAIL_ADDR, -->
+				<!-- IA.EMAIL_ADDR AS EMAIL_ADDR, -->
+				CAST(AES_DECRYPT(UNHEX(IA.EMAIL_ADDR),'BRC') as CHAR) AS EMAIL_ADDR
+				IA.REG_DTTM AS USR_REG_DTTM,
+				IA.REG_ID AS USR_REG_ID,
+				IA.MOD_DTTM AS USR_MOD_DTTM,
+				IA.MOD_ID AS USR_MOD_ID,
+				IA.QNA_PROCESS_STUS_CD,
+				IA.OPEN_YN,
+				IB.QNA_ANSWER_SEQ,
+				IB.WRTER_ID,
+				IB.QNA_ANSWER_PASSWD,
+				IB.ANSWER_TEXT_CONTENT,
+				IB.ANSWER_HTML_CONTENT,
+				IB.USE_YN,
+				IB.ANSWER_ATCH_FILE_ID,
+				IB.REG_DTTM,
+				IB.REG_ID,
+				IB.MOD_DTTM,
+				IB.MOD_ID,
+				<!-- 구분, 공개여부 추가 _cms_20161121 -->
+				(
+					SELECT CD_DESC1 
+					  FROM TB_SYS_COM_CD
+					 WHERE COM_CD = IA.CATE_CD
+				) AS CD_NM,
+				CASE WHEN IA.SECRET_YN = 'Y' THEN '비공개' ELSE '공개' END AS OPEN_NM,
+				IA.DEADLINE,
+				<!-- DATE_ADD(IA.REG_DTTM, INTERVAL 7 DAY) AS DEADLINE_DATE -->
+				IA.DEADLINE_DATE
+		   FROM TB_COM_QNA_INFO IA 
+LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
+			 ON IA.QNA_SEQ = IB.QNA_SEQ
+		  WHERE IA.OPEN_YN = 'Y' AND IA.QNA_SEQ = #{qnaSeq}
+	</select>
+	
+	<select id="getDaumEditorImage" parameterType="opinionBoardVO" resultMap="daumEditorVO">
+		SELECT	
+				IMG_PATH,
+				IMG_URL,
+				IMG_NAME,
+				IMG_SIZE,
+				THUMBNAIL_IMG_PATH,
+				THUMBNAIL_IMG_URL,
+				THUMBNAIL_IMG_NAME,
+				THUMBNAIL_IMG_SIZE
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{qnaSeq} AND BBS_CLS_CD = #{currentMenu}
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevOpinionBoard" parameterType="opinionBoardVO" resultMap="resultOpinionBoardVO">
+		 SELECT IA.QNA_SEQ
+			  , IA.QESTN_TITLE
+			  , IB.REG_ID
+		   FROM TB_COM_QNA_INFO IA 
+LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
+			 ON IA.QNA_SEQ = IB.QNA_SEQ
+		  WHERE IA.OPEN_YN = 'Y' 
+			AND IA.QNA_SEQ &lt; #{qnaSeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(IB.MOD_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(IB.MOD_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+				<if test="qnaProcessStusCD=='D'.toString()">
+					AND IA.QNA_PROCESS_STUS_CD = 'D'
+				</if>
+				<if test="qnaProcessStusCD=='P'.toString()">
+					AND IA.QNA_PROCESS_STUS_CD IS NULL
+				</if>
+		ORDER BY QNA_SEQ DESC
+		LIMIT 1
+	</select>
+	
+	<select id="nextOpinionBoard" parameterType="opinionBoardVO" resultMap="resultOpinionBoardVO">
+		 SELECT IA.QNA_SEQ
+			  , IA.QESTN_TITLE
+			  , IB.REG_ID
+		   FROM TB_COM_QNA_INFO IA  
+LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
+			 ON IA.QNA_SEQ = IB.QNA_SEQ
+		  WHERE IA.OPEN_YN = 'Y' 
+			AND IA.QNA_SEQ &gt; #{qnaSeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(IB.MOD_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(IB.MOD_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND IA.QESTN_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+				<if test="qnaProcessStusCD=='D'.toString()">
+					AND IA.QNA_PROCESS_STUS_CD = 'D'
+				</if>
+				<if test="qnaProcessStusCD=='P'.toString()">
+					AND IA.QNA_PROCESS_STUS_CD IS NULL
+				</if>
+		ORDER BY QNA_SEQ ASC
+		LIMIT 1
+	</select>
+	
+	<select id="getOpinionBoardReply" parameterType="opinionBoardVO" resultType="int">
+		SELECT IFNULL(QNA_ANSWER_SEQ,COUNT(QNA_ANSWER_SEQ)) 
+		  FROM TB_COM_QNA_INFO_REPLY 
+		 WHERE USE_YN = 'Y' 
+		   AND QNA_SEQ = #{qnaSeq}
+	</select>
+	
+	<update id="setQnaProcessStusCD" parameterType="opinionBoardVO">
+		UPDATE TB_COM_QNA_INFO
+		   SET QNA_PROCESS_STUS_CD = #{qnaProcessStusCD}
+			<!-- ,CATE_CD = #{comCd} --><!-- com_cd가 null값이 들어가는 경우가 있으므로 수정 불가능 하게 변경 2020.06.01 -->
+		 WHERE OPEN_YN = 'Y' AND QNA_SEQ = #{qnaSeq}
+	</update>
+	
+	<insert id="insertOpinionBoard" parameterType="opinionBoardVO">
+		INSERT INTO TB_COM_QNA_INFO_REPLY
+			( QNA_SEQ, ANSWER_TEXT_CONTENT, ANSWER_HTML_CONTENT, USE_YN, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID )
+		VALUES
+			( #{qnaSeq}, #{answerTextContent}, #{answerHTMLContent}, #{useYN}, NOW(), #{regID}, NOW(), #{regID} )
+	</insert>
+	
+	<update id="updateOpinionBoard" parameterType="opinionBoardVO">
+	 UPDATE TB_COM_QNA_INFO_REPLY
+		SET ANSWER_TEXT_CONTENT = #{answerTextContent},
+			ANSWER_HTML_CONTENT = #{answerHTMLContent},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+	  WHERE USE_YN = 'Y' AND QNA_SEQ = #{qnaSeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="opinionBoardVO">
+		UPDATE TB_COM_EDITOR_IMG
+		   SET BBS_SEQ = 0
+		 WHERE BBS_SEQ = #{qnaSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="opinionBoardVO">
+		UPDATE TB_COM_EDITOR_IMG
+		   SET BBS_SEQ = #{qnaSeq}
+		 WHERE BBS_CLS_CD = #{currentMenu} 
+		   AND IMG_NAME IN
+		<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+	</update>
+	
+	<update id="deleteOpinionBoard" parameterType="opinionBoardVO">
+		UPDATE TB_COM_QNA_INFO
+		   SET OPEN_YN = #{openYN}
+		 WHERE QNA_SEQ = #{qnaSeq}
+	</update>
+	
+	<select id="gubunList" resultType="OpinionBoardVO">
+		SELECT CD_DESC1 AS cdDesc1
+			 , COM_CD AS comCd 
+		  FROM TB_SYS_COM_CD
+		 WHERE COM_UP_CD IN ( 'QIA' , 'OPI' )
+	  ORDER BY COM_UP_CD
+			 , DSP_ORD
+	</select>
+	
+	<update id="insertAdminInfo" parameterType="opinionBoardVO">
+		UPDATE TB_COM_QNA_INFO
+		   SET ADMIN_ID = #{adminId}
+		 WHERE OPEN_YN = 'Y' 
+		   AND QNA_SEQ = #{qnaSeq}
+	</update>
+	
+	<update id="insertDeadline" parameterType="opinionBoardVO">
+	 UPDATE TB_COM_QNA_INFO
+		SET DEADLINE_DATE = PROC_ADMIN.getAnswerDate(REG_DTTM, 14)
+		  , DEADLINE = #{deadline}
+		 <!--  , EXTEND_CNT = #{extendCnt}+'1' -->
+	  WHERE OPEN_YN = 'Y'
+		AND QNA_SEQ = #{qnaSeq}
+	</update>
+
+</mapper>

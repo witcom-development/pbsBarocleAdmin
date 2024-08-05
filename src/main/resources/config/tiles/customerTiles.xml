@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+
+<tiles-definitions>
+
+	<!-- 고객센터 공통 -->
+	<definition name="customerTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="daum_editor" value="/WEB-INF/views/admin/layout/daum_editor.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+		<!-- 공지사항 -->
+		<put-attribute name="notice_daum_editor" value="/WEB-INF/views/admin/layout/notice_daum_editor.jsp" />
+		<!-- 관리직 게시판 : 현재 notice 참고, 필요시 새 파일 생성-->
+		<put-attribute name="dist_daum_editor" value="/WEB-INF/views/admin/layout/notice_daum_editor.jsp" />
+	</definition>
+	
+	<!-- 공지사항 목록 페이지 -->
+	<definition name="/admin/customer/notice/bor_not_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/notice/bor_not_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 공지사항 등록/수정 페이지 -->
+	<definition name="/admin/customer/notice/bor_not_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/notice/bor_not_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/faq/bor_faq_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/faq/bor_faq_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/faq/bor_faq_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/faq/bor_faq_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/opinionBoard/bor_opi_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/opinionBoard/bor_opi_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/opinionBoard/bor_opi_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/opinionBoard/bor_opi_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/photoGallery/bor_pho_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/photoGallery/bor_pho_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/photoGallery/bor_pho_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/photoGallery/bor_pho_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/survey/bor_sur_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/survey/bor_sur_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/survey/bor_sur_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/survey/bor_sur_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/hikingCourse/bor_hik_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/hikingCourse/bor_hik_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/hikingCourse/bor_hik_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/hikingCourse/bor_hik_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/donor/bor_don_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/donor/bor_don_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/donor/bor_don_detail" extends="customerTemplate" template="/WEB-INF/views/admin/customer/donor/bor_don_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	
+	
+	<!-- 여기 아래 부분 : 수사 협조 자료 페이지 관련 -->
+	
+	<definition name="/admin/customer/police/police_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/police/police_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/customer/police/police_list_write" extends="customerTemplate" template="/WEB-INF/views/admin/customer/police/police_list_write.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>	
+	
+	
+	<!-- 여기 위 부분 : 수사 협조 자료 페이지 관련 -->
+	
+	
+	
+	
+	
+	
+	<!-- 관리직 게시판 -->
+	<!-- 전체 게시판 -->
+	<definition name="/admin/board/distribute/bor_dist_list" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_dist_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 전체 게시판 등록/수정 -->
+	<definition name="/admin/board/distribute/bor_dist_detail" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_dist_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 분배원 게시판 -->
+	<definition name="/admin/board/distribute/bor_bun_list" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_bun_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 분배원 게시판 등록/수정 -->
+	<definition name="/admin/board/distribute/bor_bun_detail" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_bun_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 상담원 게시판 -->
+	<definition name="/admin/board/distribute/bor_sang_list" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_sang_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 상담원 게시판 등록/수정 -->
+	<definition name="/admin/board/distribute/bor_sang_detail" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_sang_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 정비원 게시판 -->
+	<definition name="/admin/board/distribute/bor_jeng_list" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_jeng_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 정비원 게시판 등록/수정 -->
+	<definition name="/admin/board/distribute/bor_jeng_detail" extends="customerTemplate" template="/WEB-INF/views/admin/board/distribute/bor_jeng_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 티머니GO상담이력 -->
+	<definition name="/admin/customer/counsel/bor_cou_list" extends="customerTemplate" template="/WEB-INF/views/admin/customer/counsel/bor_cou_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+</tiles-definitions>

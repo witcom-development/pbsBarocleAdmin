@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.logging.service.LoggingMapper">
+	
+	<resultMap id="resultMenuCdVO" type="com.dkitec.barocle.logging.vo.MenuCdVO">
+		<result column="MENU_CD" property="menuCD" />
+		<result column="MENU_NAME" property="menuName" />
+		<result column="UP_MENU" property="upMenu" />
+		<result column="MENU_LEVEL" property="menuLevel" />
+		<result column="MENU_DETAIL_CD" property="menuDetailCD" />
+		<result column="LINK_IMG" property="linkImg" />
+		<result column="MENU_IMG" property="menuImg" />
+		<result column="SRC_LINK" property="srcLink" />
+		<result column="MENU_ORD" property="menuOrd" />
+		<result column="MENU_DESC" property="menuDesc" />
+		<result column="HIDDEN_YN" property="HiddenYN" />
+		<result column="REG_ID" property="regID" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="MENU_URL_SEQ" property="menuURLSeq" />
+		<result column="MENU_URL" property="menuURL" />
+		<result column="MENU_CRUD" property="menuCRUD" />
+	</resultMap>
+	
+	<select id="getMenuDesc" parameterType="menuCdVO" resultMap="resultMenuCdVO">
+		SELECT	T1.MENU_NAME, T2.MENU_URL
+		FROM	TB_SYS_MENU_CD T1 LEFT OUTER JOIN TB_SYS_MENU_URL_INFO T2 ON T1.MENU_CD=T2.MENU_CD
+		WHERE	T2.MENU_URL = #{menuURL}
+		ORDER BY
+				T1.MENU_LEVEL DESC
+		LIMIT 1
+	</select>
+	
+</mapper>

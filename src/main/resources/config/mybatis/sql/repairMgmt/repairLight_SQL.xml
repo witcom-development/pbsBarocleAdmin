@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.repairMgmt.repairLight.service.RepairLightMapper">
+		
+	<select id="getRepairLightCmptCnt" parameterType="repairLightVO"  resultType="repairLightVO">
+	SELECT /* repairLight_SQL.getRepairLightCmptCnt */
+			COUNT(1)		 
+	  FROM TB_MTC_REPAIR_INFO		  REPINFO
+	 INNER JOIN TB_SYS_ADMIN			   	ADMIN 	 			ON REPINFO.MAINTC_ADMIN_ID		= ADMIN.ADMIN_ID
+	 INNER JOIN TB_SYS_GRP_CD				GRP					ON ADMIN.ADMIN_GRP_SEQ			  = GRP.ADMIN_GRP_SEQ   AND GRP.ADMIN_GRP_SEQ IN (5,11)
+	  LEFT JOIN TB_MTC_REPAIR_DETL			DTL					ON REPINFO.REPAIR_SEQ			  = DTL.REPAIR_SEQ
+	  LEFT JOIN TB_SYS_COM_CD				DTLCD				ON DTL.REPAIR_CLS_CD			  = DTLCD.COM_CD
+	  LEFT JOIN TB_SYS_COM_CD				UPCD				ON DTLCD.ADD_VAL1			 	  = UPCD.COM_CD			AND UPCD.ADD_VAL1 = 'BIKE'
+	  LEFT JOIN TB_SYS_TEAM_INFO		TEAM		   ON ADMIN.TEAM_SEQ = TEAM.TEAM_SEQ
+	 WHERE 1=1
+	 	<if test='searchBgnDe != null and searchBgnDe != ""'>
+		   	AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   	AND REPINFO.REPAIR_CMPT_DTTM > STR_TO_DATE(NOW(), '%Y-%m-%d')
+		</if>
+		<if test='searchBgnDe == null or searchBgnDe == ""'>
+		   	AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+ 		<if test='searchAdmin != null and searchAdmin != ""'>
+ 			AND ADMIN.ADMIN_NAME = #{searchAdmin}
+ 		</if>
+	  AND DTL.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' )
+	UNION ALL
+	SELECT TEAM.OFFICE_NAME
+		 , TEAM.TEAM_NAME
+		 , ADMIN.ADMIN_NAME
+		 , REB_009
+		 , REB_018
+		 , REB_024
+		 , REB_057
+		 , TOT_CNT
+		 , BIKE_CNT
+	  FROM TB_STA_REPAIR_LIGHT_DD A
+	 INNER JOIN TB_SYS_ADMIN   ADMIN 	 			ON A.ADMIN_ID		= ADMIN.ADMIN_ID
+	  LEFT JOIN TB_SYS_TEAM_INFO		TEAM		   ON ADMIN.TEAM_SEQ = TEAM.TEAM_SEQ	 
+	 WHERE 1=1 
+	 	<if test='searchBgnDe != null and searchBgnDe != ""'>
+		   	AND A.STAT_DD BETWEEN #{searchBgnDe} AND #{searchEndDe}
+		</if>
+		<if test='searchBgnDe == null or searchBgnDe == ""'>
+		   	AND A.STAT_DD = DATE_FORMAT(now(), '%Y-%m-%d') 
+		</if>
+	GROUP BY MAINTC_ADMIN_ID 
+	</select>
+   
+	<select id="getMaintenWrkerLight" parameterType="repairLightVO" resultType="repairLightVO">
+	
+	SELECT A.*
+		 , B.ADMIN_NAME AS repairAdminName
+	FROM
+	(
+				SELECT /* repairLight_SQL.getMaintenWrkerLight */
+						   IFNULL( OFFICE_NAME	  , '합계')			AS repairCenterName
+						 , IFNULL( TEAM_NAME	, ( CASE WHEN OFFICE_NAME IS NOT NULL THEN '합계' ELSE '' END ) )		AS repairTeamName
+						 , IFNULL( ADMIN_ID	 , ( CASE WHEN TEAM_NAME IS NOT NULL THEN '합계' ELSE '' END ) )		AS repairAdminId
+						 , SUM(REB_009) AS REB_009
+						 , SUM(REB_018) AS REB_018
+						 , SUM(REB_024) AS REB_024		 
+						 , SUM(REB_057) AS REB_057	  
+						 , SUM(totCnt)		  AS repairTotCnt
+						 , SUM(bikeCnt )		AS repairBikeCnt
+				 FROM
+				 (		  
+					SELECT TEAM.OFFICE_NAME
+						 , TEAM.TEAM_NAME
+						 , ADMIN.ADMIN_ID
+						 , SUM(CASE WHEN DTL.REPAIR_CLS_CD = 'REB_009' THEN 1	ELSE 0 END) AS REB_009
+						 , SUM(CASE WHEN DTL.REPAIR_CLS_CD = 'REB_018' THEN 1	ELSE 0 END) AS REB_018
+						 , SUM(CASE WHEN DTL.REPAIR_CLS_CD = 'REB_024' THEN 1	ELSE 0 END) AS REB_024		 
+						 , SUM(CASE WHEN DTL.REPAIR_CLS_CD = 'REB_057' THEN 1	ELSE 0 END) AS REB_057	  
+						 , COUNT(REPINFO.REPAIR_SEQ)										AS totCnt	 
+						 , 0																AS bikeCnt
+					  FROM TB_MTC_REPAIR_INFO		  REPINFO
+					 INNER JOIN TB_SYS_ADMIN			   	ADMIN 	 			ON REPINFO.MAINTC_ADMIN_ID		= ADMIN.ADMIN_ID
+					 INNER JOIN TB_SYS_GRP_CD				GRP					ON ADMIN.ADMIN_GRP_SEQ			  = GRP.ADMIN_GRP_SEQ   AND GRP.ADMIN_GRP_SEQ IN (5,11)
+					  LEFT JOIN TB_MTC_REPAIR_DETL			DTL					ON REPINFO.REPAIR_SEQ			  = DTL.REPAIR_SEQ
+					  LEFT JOIN TB_SYS_COM_CD				DTLCD				ON DTL.REPAIR_CLS_CD			  = DTLCD.COM_CD
+					  LEFT JOIN TB_SYS_COM_CD				UPCD				ON DTLCD.ADD_VAL1			 	  = UPCD.COM_CD			AND UPCD.ADD_VAL1 = 'BIKE'
+					  LEFT JOIN TB_SYS_TEAM_INFO		TEAM		   ON ADMIN.TEAM_SEQ = TEAM.TEAM_SEQ
+					 WHERE  1=1
+					 	<if test='searchBgnDe != null and searchBgnDe != ""'>
+						   	AND REPINFO.REPAIR_CMPT_DTTM BETWEEN ( STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						   	AND REPINFO.REPAIR_CMPT_DTTM > STR_TO_DATE(NOW(), '%Y-%m-%d')
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+						   	AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+				 		<if test='searchAdmin != null and searchAdmin != ""'>
+				 			AND ADMIN.ADMIN_NAME = #{searchAdmin}
+				 		</if>
+				 		<if test='searchCenter != null and searchCenter != ""'>
+				 			AND TEAM.CENTER_ID = #{searchCenter}
+				 		</if>
+				 		<if test='searchOffice != null and searchOffice != ""'>
+				 			AND TEAM.OFFICE_NAME = #{searchOffice}
+				 		</if>	
+				 		
+					  AND DTL.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' )
+					  GROUP BY TEAM.OFFICE_NAME
+						 , TEAM.TEAM_NAME
+						 , ADMIN.ADMIN_ID	 
+						  
+					UNION ALL
+					SELECT TEAM.OFFICE_NAME
+						 , TEAM.TEAM_NAME
+						 , A.ADMIN_ID
+						 , SUM(REB_009)
+						 , SUM(REB_018)
+						 , SUM(REB_024)
+						 , SUM(REB_057)
+						 , SUM(TOT_CNT)
+						 , SUM(BIKE_CNT)
+					  FROM TB_STA_REPAIR_LIGHT_DD A
+					 INNER JOIN TB_SYS_ADMIN   ADMIN 	 			ON A.ADMIN_ID		= ADMIN.ADMIN_ID
+					  LEFT JOIN TB_SYS_TEAM_INFO		TEAM		   ON ADMIN.TEAM_SEQ = TEAM.TEAM_SEQ	 
+					 WHERE 1=1	
+					 	<if test='searchBgnDe != null and searchBgnDe != ""'>
+						   	AND A.STAT_DD BETWEEN #{searchBgnDe} AND #{searchEndDe}
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+						   	AND A.STAT_DD = DATE_FORMAT(now(), '%Y-%m-%d') 
+						</if>	
+				 		<if test='searchAdmin != null and searchAdmin != ""'>
+				 			AND ADMIN.ADMIN_NAME = #{searchAdmin}
+				 		</if>			
+				 		<if test='searchCenter != null and searchCenter != ""'>
+				 			AND TEAM.CENTER_ID = #{searchCenter}
+				 		</if>	   
+				 		<if test='searchOffice != null and searchOffice != ""'>
+				 			AND TEAM.OFFICE_NAME = #{searchOffice}
+				 		</if>	
+				 			 
+						
+					  	  GROUP BY TEAM.OFFICE_NAME
+						 , TEAM.TEAM_NAME
+						 , ADMIN.ADMIN_ID  
+				   ) A	   
+				  
+				GROUP BY 
+				<if test='@com.dkitec.barocle.util.webutil.StringUtil@isEmpty(searchCenter)'>
+						 OFFICE_NAME		 
+					   , 		 
+				</if>	 
+						 TEAM_NAME 
+					   , ADMIN_ID	  
+					  WITH ROLLUP
+	   ) A  LEFT JOIN TB_SYS_ADMIN B ON (  B.ADMIN_ID =  A.repairAdminId ) 
+	</select>
+	
+</mapper>

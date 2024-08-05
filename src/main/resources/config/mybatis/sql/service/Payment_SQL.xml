@@ -1,0 +1,675 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.paymentmgmt.payment.service.PaymentMapper">
+ 
+ 	<select id="getRefundTempAmt" parameterType="refundVO" resultType="int">
+		SELECT /* com.dkitec.barocle.admin.service.paymentmgmt.payment.service.PaymentMapper.getRefundTempAmt */
+			   IFNULL(MAX(refundAmt),0) AS refundAmt
+		  FROM VT_REFND_PAYMENT G 
+		WHERE G.PAYMENT_SEQ = #{paymentSeq} 
+	</select>
+ 
+	  <insert id="insertAccount" parameterType="refundVO">
+		/* com.dkitec.barocle.admin.service.paymentmgmt.payment.service.PaymentMapper.insertAccount */
+		REPLACE INTO TB_SVC_USR_ACNUT
+		(USR_SEQ, ACNUT_BANK, ACNUT_NO, REG_DTTM, ACNUT_USR_NAME)
+		VALUES (#{usrSeq}, #{acnutBank}, #{acnutNo}, NOW(),#{acnutNm})
+	</insert>
+ 
+ 
+	<!-- 변경_20170517_JHN : 비회원 대여 이용 개선의 따른 비회원 조회 방법 추가 (대여일련번호) -->
+	<select id="getPaymentList" parameterType="paymentVO" resultType="paymentVO">
+		SELECT /* Payment_SQL.getPaymentList */
+				A.PAYMENT_SEQ AS paymentSeq,
+			  (
+				CASE
+			  	 WHEN TRIM(C.MB_ID) IS NOT NULL 
+				 THEN C.MB_ID
+				 ELSE  
+				  <!-- DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) --><!-- 20170517 대여일련번호 -->
+				 		( IFNULL((   SELECT  SERIALNO.SERIAL_NO FROM TB_SVC_SERIAL_NO_HIST SERIALNO 
+									  WHERE A.USR_SEQ = SERIALNO.USR_SEQ 
+										AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ 
+										AND B.USR_CLS_CD IN ( 'USR_002',  'USR_003' )
+								  )
+							, DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) 
+								)
+						) 
+			   END
+			   ) AS usrMainId
+			 , C.MB_ID AS mbId
+			 , A.USR_SEQ AS usrSeq
+			 , A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			 , A.PAYMENT_STUS_CD AS paymentStusCd
+			 , A.PAYMENT_SEQ AS paymentSeq
+			 , A.PAYMENT_DTTM AS paymentDttm
+			 , (SELECT MLANG_COM_CD_NAME	FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_STUS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentStusCdName
+			 , A.TOT_AMT AS totAmt
+			 /* 페이코 자동결게 취소 관련 화면 조회 표출 */
+			 , CASE WHEN A.PAYMENT_METHOD_CD = 'BIM_007' THEN A.MB_SERIAL_NO ELSE A.PAYMENT_CONFM_NO END AS paymentConfmNo
+			 , A.PAYMENT_METHOD_CD AS paymentMethodCd<!-- 2017.06.09_계좌이체 결제 취소 방지를 위해_JHN -->
+			 , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001') AS paymentMethodCdName
+			 <!-- , ( SELECT  dg_decrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CARD_NO )  -->
+			 , ( SELECT  CARD_NO 
+				   FROM TB_SVC_PAYMENT_METHOD D WHERE  A.USR_SEQ = D.USR_SEQ  AND PAYMENT_METHOD_CD ='BIM_008' 
+				 )  AS   mbCardNo
+	   FROM TB_SVC_PAYMENT A 	
+	  <if test='usrSearchType == null and usrSearchType == ""'> 			
+	   			/*! USE INDEX (PRIMARY) */  
+	  </if> 			
+	  INNER JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
+	  <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
+			 	<!-- AND B.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
+			 	AND B.USR_MPN_NO = #{usrSearchKey}
+	  </if>
+	  <if test='usrClsCd != null and usrClsCd != "" '><!-- 20180914 -->
+				AND B.USR_CLS_CD = #{usrClsCd}
+	   </if>
+	   LEFT JOIN TB_SVC_MB C ON A.USR_SEQ = C.USR_SEQ
+	  <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="MB_ID"'>
+	  INNER JOIN TB_SVC_MB Z ON A.USR_SEQ = Z.USR_SEQ
+		AND Z.MB_ID LIKE CONCAT(#{usrSearchKey}, '%')
+	  </if>
+	  
+	   <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="EMAIL"'> <!-- 2021-07-02 이메일 선택시에만 조회 -->
+			  INNER JOIN TB_SVC_USR_NONMB_EMAIL EMAIL ON ( A.USR_SEQ = EMAIL.USR_SEQ AND EMAIL.NONMB_EMAIL_NAME = #{usrSearchKey} )
+		</if>
+	  
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="SERIAL_NO"'><!-- 20170517 대여일련번호 -->
+	   INNER JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON A.USR_SEQ = SERIALNO.USR_SEQ 
+										AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ 
+										AND B.USR_CLS_CD IN ( 'USR_002',  'USR_003' )
+										AND SERIALNO.SERIAL_NO = #{usrSearchKey}
+		</if>
+		<if test='@com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) == 10'>
+		  INNER JOIN TB_SVC_PAYMENT_METHOD D ON  A.USR_SEQ = D.USR_SEQ
+		   <![CDATA[
+							 
+				   AND   B.USR_CLS_CD = 'USR_002'
+				   <!-- AND   D.CARD_NO = dg_encrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))) -->
+				   AND   D.CARD_NO = CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))
+			]]>																													
+  		</if>
+	  WHERE 1=1
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+		AND A.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00') AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 00:00:00') AND CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='paymentStusCd != null and paymentStusCd != ""'>
+		AND A.PAYMENT_STUS_CD = #{paymentStusCd}
+		</if>
+		
+		<if test='paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != "" and @com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) != 10 '>
+				AND A.PAYMENT_CONFM_NO = #{paymentConfmNoSeacrhKey}
+		</if>	   
+				
+	   	ORDER BY A.PAYMENT_SEQ DESC 
+		<if test='pagingYn == "Y"'>
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+
+	<select id="getPaymentListCount" parameterType="paymentVO" resultType="int">
+		   SELECT /* Payment_SQL.getPaymentListCount */
+				  COUNT(*)
+			 FROM TB_SVC_PAYMENT A 
+		<if test='( usrSearchType != null and usrSearchType != "" ) or (paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != "") or ( usrClsCd != null and usrClsCd != "" )'>   
+			INNER JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
+		 </if>   
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
+			 	<!-- AND B.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
+			 	AND B.USR_MPN_NO  = #{usrSearchKey}
+	 	</if>
+	 	<if test='usrClsCd != null and usrClsCd != "" '><!-- 20180914 -->
+			   AND B.USR_CLS_CD = #{usrClsCd}
+	   	</if>   
+			 <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="MB_ID"'>
+				  INNER JOIN TB_SVC_MB C ON B.USR_SEQ = C.USR_SEQ  AND C.MB_ID = #{usrSearchKey}
+	   	</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="SERIAL_NO"'> <!-- 2020-03-07 대여일련번호가 존재할 때에만 조회 -->
+				  INNER JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON A.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ
+			   AND SERIALNO.SERIAL_NO = #{usrSearchKey}
+		</if>
+		
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="EMAIL"'> <!-- 2021-07-02 이메일 선택시에만 조회 -->
+			  INNER JOIN TB_SVC_USR_NONMB_EMAIL EMAIL ON ( A.USR_SEQ = EMAIL.USR_SEQ AND EMAIL.NONMB_EMAIL_NAME = #{usrSearchKey} )
+		</if>
+		
+		
+		<if test='@com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) == 10'>
+				  INNER JOIN TB_SVC_PAYMENT_METHOD D ON  A.USR_SEQ = D.USR_SEQ
+					 AND (
+						 <![CDATA[
+								B.USR_CLS_CD = 'USR_002'	
+						   <!-- AND  D.CARD_NO = dg_encrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))) -->
+							 AND  D.CARD_NO = CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))
+							 ]]>																													
+						 )
+					
+		  
+	 	</if>
+	 	
+				WHERE 1=1
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+				AND A.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00')
+									   AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+				AND A.PAYMENT_DTTM BETWEEN CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 00:00:00')
+									   AND CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+				AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+				AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='paymentStusCd != null and paymentStusCd != ""'>
+				AND A.PAYMENT_STUS_CD = #{paymentStusCd}
+		</if>
+	 
+		<if test='paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != "" and @com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) != 10 '>
+				AND A.PAYMENT_CONFM_NO = #{paymentConfmNoSeacrhKey}
+		</if>   
+	</select>
+	  
+	<select id="getLatestSms" parameterType="paymentVO" resultType="String">
+		SELECT SEND_MESSAGE msg
+		FROM TSMS_AGENT_MESSAGE_LOG, TB_SVC_SERIAL_NO_HIST SERIALNO LEFT JOIN TB_SVC_USR USR ON USR.USR_SEQ = SERIALNO.USR_SEQ
+																						 AND SERIALNO.SERIAL_NO= #{paymentSeq}
+		<!-- WHERE TSMS_AGENT_MESSAGE_LOG.RECEIVE_MOBILE_NO IN (REPLACE(dg_decrypt('TB_SVC_USR','USR_MPN_NO',USR.USR_MPN_NO),'-',''), -->
+		WHERE TSMS_AGENT_MESSAGE_LOG.RECEIVE_MOBILE_NO IN (REPLACE(USR.USR_MPN_NO,'-',''),
+														   <!-- dg_decrypt('TB_SVC_USR','USR_MPN_NO',USR.USR_MPN_NO)) -->
+														   USR.USR_MPN_NO)
+		  <![CDATA[
+		  AND SEND_DATE >= ( SELECT DATE_FORMAT(DATE_ADD(PAYMENT_DTTM, INTERVAL -1 MINUTE),'%Y-%m-%d %H:%i:%s')
+						 FROM TB_SVC_PAYMENT
+						WHERE PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ)
+		  AND SEND_DATE <= ( SELECT DATE_FORMAT(DATE_ADD(PAYMENT_DTTM, INTERVAL +1 MINUTE),'%Y-%m-%d %H:%i:%s')
+						 FROM TB_SVC_PAYMENT
+						WHERE PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ)
+		  ]]>
+		LIMIT 1
+	</select>
+	
+	<select id="getPaymentStatistics_row" parameterType="paymentVO" resultType="paymentVO">
+		
+		SELECT A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_CLS_CD   
+				   AND LANG_CLS_CD = #{lang}) AS paymentClsCdName
+			 , SUM(A.TOT_AMT) as totAmt
+			 , (SELECT CASE WHEN MLANG_COM_CD_NAME like '정기%' THEN 'REG' ELSE 'ETC' END
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_CLS_CD   
+				   AND LANG_CLS_CD = #{lang}) AS paymentClsCdType
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
+			 LEFT JOIN TB_SVC_MB C ON B.USR_SEQ = C.USR_SEQ
+			 LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON A.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ <!-- 20170517 대여일련번호 -->
+		WHERE 1=1
+		<![CDATA[
+		AND A.PAYMENT_STUS_CD <> 'BIS_003'
+		]]>
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+		AND A.PAYMENT_DTTM &gt;= CONCAT(#{startPaymentDttm}, ' 00:00:00')
+		AND A.PAYMENT_DTTM &lt;= CONCAT(#{endPaymentDttm}, ' 23:59:59')
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM &gt;= CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d') - INTERVAL 30 DAY, ' 00:00:00')
+		AND A.PAYMENT_DTTM &lt;= CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='paymentStusCd != null and paymentStusCd != ""'>
+		AND A.PAYMENT_STUS_CD = #{paymentStusCd}
+		</if>
+		<if test='paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != ""'>
+		AND A.PAYMENT_CONFM_NO LIKE CONCAT(#{paymentConfmNoSeacrhKey}, '%')
+		</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
+		<!-- AND B.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
+		AND B.USR_MPN_NO  = #{usrSearchKey}
+		</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="MB_ID"'>
+		AND C.MB_ID LIKE CONCAT(#{usrSearchKey}, '%')
+		</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="SERIAL_NO"'> <!-- 20170517 대여일련번호 -->
+		AND SERIALNO.SERIAL_NO = #{usrSearchKey}
+		</if>
+		<![CDATA[
+		GROUP BY A.PAYMENT_CLS_CD
+		]]>
+	</select>
+	
+	<select id="getCancelPaymentStatistics_col" parameterType="paymentVO" resultType="paymentStatVO">
+	 
+		SELECT  FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD NOT IN ('BIL_901') THEN A.TOT_AMT ELSE 0 END)/1000,1) as totAmtCancel
+			 , FORMAT(SUM(A.MILEAGE_PAYMENT_AMT)/1000 ,1) as totAmtCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD NOT IN ('BIL_009') THEN A.RENT_OVER_FEE_SUM ELSE 0 END)/1000,1) as totAmtCancelOverFee
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001', 'BIL_011') THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil001TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001', 'BIL_011') THEN A.MILEAGE_PAYMENT_AMT ELSE 0 END) /1000,1)as bil001TotCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001', 'BIL_011') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil001TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001', 'BIL_011') THEN 1 ELSE 0 END)as bil001TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_002', 'BIL_012') THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil002TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_002', 'BIL_012') THEN A.MILEAGE_PAYMENT_AMT ELSE 0 END) /1000,1)as bil002TotCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_002', 'BIL_012') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil002TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_002', 'BIL_012') THEN 1 ELSE 0 END)as bil002TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_003', 'BIL_013') THEN A.TOT_AMT ELSE 0 END) /1000,1) as bil003TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_003', 'BIL_013') THEN A.MILEAGE_PAYMENT_AMT ELSE 0 END) /1000,1) as bil003TotCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_003', 'BIL_013') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1) as bil003TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_003', 'BIL_013') THEN 1 ELSE 0 END) as bil003TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_004', 'BIL_014') THEN A.TOT_AMT ELSE 0 END) /1000,1) as bil004TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_004', 'BIL_014') THEN A.MILEAGE_PAYMENT_AMT ELSE 0 END) /1000,1) as bil004TotCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_004', 'BIL_014') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1) as bil004TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_004', 'BIL_014') THEN 1 ELSE 0 END)  as bil004TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_005', 'BIL_015') THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil005TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_005', 'BIL_015') THEN A.MILEAGE_PAYMENT_AMT ELSE 0 END) /1000,1) as bil005TotCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_005', 'BIL_015') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1) as bil005TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_005', 'BIL_015') THEN 1 ELSE 0 END) as bil005TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001','BIL_002','BIL_003','BIL_004','BIL_005','BIL_011','BIL_012','BIL_013','BIL_014','BIL_015') THEN A.TOT_AMT ELSE 0 END) /1000,1)as regularTotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001','BIL_002','BIL_003','BIL_004','BIL_005','BIL_011','BIL_012','BIL_013','BIL_014','BIL_015') THEN A.MILEAGE_PAYMENT_AMT ELSE 0 END) /1000,1)as regularTotCancelMileage
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_001','BIL_002','BIL_003','BIL_004','BIL_005','BIL_011','BIL_012','BIL_013','BIL_014','BIL_015') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as regularTotCancelOverFee
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006', 'BIL_016') THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil006TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006', 'BIL_016') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil006TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006', 'BIL_016') THEN 1 ELSE 0 END) as bil006TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006', 'BIL_016','BIL_007','BIL_017') THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil007TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006', 'BIL_016','BIL_007','BIL_017') THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil007TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006', 'BIL_016','BIL_007','BIL_017') THEN 1 ELSE 0 END) as bil007TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_008' THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil008TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_008' THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil008TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_008' THEN 1 ELSE 0 END) as bil008TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_009' THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil009TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_009' THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil009TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_009' THEN 1 ELSE 0 END) as bil009TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_010' THEN A.TOT_AMT ELSE 0 END) /1000,1)as bil010TotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_010' THEN A.RENT_OVER_FEE_SUM ELSE 0 END) /1000,1)as bil010TotCancelOverFee
+			 , SUM(CASE WHEN A.PAYMENT_CLS_CD = 'BIL_010' THEN 1 ELSE 0 END) as bil010TotCancelCnt
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006','BIL_007','BIL_008','BIL_009','BIL_010','BIL_016','BIL_017') THEN A.TOT_AMT ELSE 0 END)/1000,1) as etcTotCancel
+			 , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ('BIL_006','BIL_007','BIL_008','BIL_010','BIL_016','BIL_017') THEN A.RENT_OVER_FEE_SUM ELSE 0 END)/1000,1) as etcTotCancelOverFee
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
+			 LEFT JOIN TB_SVC_MB C ON B.USR_SEQ = C.USR_SEQ
+			 LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON A.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ <!-- 20170517 대여일련번호 -->
+		WHERE 1=1
+		AND A.PAYMENT_STUS_CD = 'BIS_003'
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+		AND A.PAYMENT_DTTM &gt;= CONCAT(#{startPaymentDttm}, ' 00:00:00') 
+		AND A.PAYMENT_DTTM &lt;= CONCAT(#{endPaymentDttm}, ' 23:59:59')
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM &gt;= CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d') - INTERVAL 30 DAY, ' 00:00:00')
+		AND A.PAYMENT_DTTM &lt;= CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='paymentStusCd != null and paymentStusCd != ""'>
+		AND A.PAYMENT_STUS_CD = #{paymentStusCd}
+		</if>
+		<if test='paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != ""'>
+		AND A.PAYMENT_CONFM_NO LIKE CONCAT(#{paymentConfmNoSeacrhKey}, '%')
+		</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
+		<!-- AND B.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
+		AND B.USR_MPN_NO  = #{usrSearchKey}
+		</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="MB_ID"'>
+		AND C.MB_ID LIKE CONCAT(#{usrSearchKey}, '%')
+		</if>
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="SERIAL_NO"'> <!-- 20170517 대여일련번호 -->
+		AND SERIALNO.SERIAL_NO = #{usrSearchKey}
+		</if>
+	</select>
+	
+	<select id="getPaymentStatistics_col" parameterType="paymentVO" resultType="paymentStatVO">
+	
+		SELECT FORMAT(SUM( CASE WHEN A.STAT_DATE = #{endPaymentDttm} THEN A.PAYMENT_AMT ELSE 0 END) /1000 , 1 ) AS totAmt  
+			 , FORMAT(SUM(A.PAYMENT_AMT) /1000 , 1 ) AS totAmtMileage
+		FROM TB_STA_PAYMENT_DD A 
+		WHERE 1=1	 
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+		  AND A.STAT_DATE BETWEEN CONCAT( SUBSTR( #{endPaymentDttm},1, 4) , '-01-01') AND #{endPaymentDttm}
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+			AND 1=2
+		</if>
+	</select>
+	
+	<select id="getRefundInfo" parameterType="refundVO" resultType="refundVO">
+		
+		SELECT A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_CLS_CD   
+				   AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			 , A.PAYMENT_STUS_CD AS paymentStusCd
+			 , A.PAYMENT_CONFM_NO AS paymentConfmNo
+			 <!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO)  AS usrMpnNo -->
+			 , C.USR_MPN_NO  AS usrMpnNo
+			 , D.MB_ID AS mbId
+			 , (CASE WHEN D.MB_ID IS NOT NULL 
+					 THEN D.MB_ID
+					  ELSE 
+					  		(CASE	WHEN C.USR_CLS_CD = 'USR_003'
+					 				THEN (CASE 	WHEN SERIALNO.SERIAL_NO IS NULL
+								 				<!-- THEN dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO) -->
+								 				THEN C.USR_MPN_NO
+												ELSE SERIALNO.SERIAL_NO
+												END)
+									 <!-- ELSE dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO) -->
+									 ELSE C.USR_MPN_NO
+									 END)
+					  END) AS usrMainId
+			 , B.REFUND_HIST_SEQ AS refundHistSeq
+			 , B.PAYMENT_SEQ AS paymentSeq
+			 , B.PAYMENT_DTTM AS paymentDttm
+			 , B.REFUND_DTTM AS refundDttm
+			 , B.REFUND_AMT AS refundAmt
+			 , B.REFUND_COMSSN_AMT AS refundComssnAmt
+			 ,  (B.REFUND_AMT + B.REFUND_COMSSN_AMT) AS totAmt
+			 , B.REFUND_REASON AS refundReason
+			 , B.REFUND_ID AS refundAdminId
+			 , (SELECT ADMIN_NAME
+				  FROM TB_SYS_ADMIN
+				 WHERE ADMIN_ID = B.REFUND_ID) AS refundAdminName,
+			  A.REFND_AMT AS refndAmt,
+			  A.MILEAGE_PAYMENT_AMT AS mileagePaymentAmt
+			  , (SELECT ACNUT_BANK FROM TB_SVC_USR_ACNUT WHERE USR_SEQ= A.USR_SEQ LIMIT 1) AS acnutBank	
+			, (SELECT ACNUT_NO FROM TB_SVC_USR_ACNUT WHERE USR_SEQ= A.USR_SEQ LIMIT 1) AS acnutNo
+			 , (SELECT ACNUT_USR_NAME FROM TB_SVC_USR_ACNUT WHERE USR_SEQ= A.USR_SEQ LIMIT 1) AS acnutNm
+			, A.USR_SEQ AS usrSeq   
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_REFUND_HIST B ON A.PAYMENT_SEQ = B.PAYMENT_SEQ
+							  LEFT JOIN TB_SVC_USR C ON A.USR_SEQ = C.USR_SEQ
+							  LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ
+							  LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON C.USR_SEQ = SERIALNO.USR_SEQ AND B.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ 
+							  LEFT JOIN VT_REFND_PAYMENT VT ON A.PAYMENT_SEQ = VT.PAYMENT_SEQ   					  
+		WHERE 1=1
+		AND A.PAYMENT_SEQ = B.PAYMENT_SEQ
+		AND A.PAYMENT_DTTM = B.PAYMENT_DTTM
+		AND A.PAYMENT_STUS_CD IN ( 'BIS_002' ,  'BIS_004' )
+		AND A.USR_SEQ = C.USR_SEQ
+		
+		<if test='paymentSeq != null and paymentSeq != ""'>
+		AND B.PAYMENT_SEQ = #{paymentSeq} 
+		</if>
+		<if test='paymentDttm != null and paymentDttm != ""'>
+		AND B.PAYMENT_DTTM = #{paymentDttm}
+		</if>
+	</select>
+	
+	<insert id="addRefund" parameterType="refundVO"> 
+		INSERT INTO TB_SVC_REFUND_HIST (
+					PAYMENT_SEQ
+				, PAYMENT_DTTM
+				, REFUND_DTTM
+				, REFUND_AMT
+				, REFUND_COMSSN_AMT
+				, REFUND_REASON
+				, REFUND_ID
+				<!-- 20200118 -->
+				, ACNUTNO
+				, ACNTR
+				, BANK_NM
+				
+		) VALUES (
+				 #{paymentSeq}
+			   , DATE_FORMAT(#{paymentDttm},'%Y-%m-%d %H:%i:%S')
+			   , CONCAT(DATE_FORMAT(#{refundDttm},'%Y-%m-%d'),' ',DATE_FORMAT(NOW(),'%H:%i:%S'))
+			   , #{refundAmt}
+			   , #{refundComssnAmt}
+			   , #{refundReason}
+			   , #{refundAdminId}
+			   <!-- 20200118 -->
+			   , #{acnutNo}
+			   , #{acnutNm}
+			   , #{acnutBank}
+			   )
+	</insert>
+	
+	<update id="updateRefund" parameterType="refundVO">
+		UPDATE TB_SVC_REFUND_HIST
+		   SET REFUND_DTTM	   = CONCAT(DATE_FORMAT(#{refundDttm},'%Y-%m-%d'),' ',DATE_FORMAT(NOW(),'%H:%i:%S'))
+			 , REFUND_AMT		=  #{refundAmt}
+			 , REFUND_COMSSN_AMT = #{refundComssnAmt}
+			 , REFUND_REASON	 = #{refundReason}
+			 , REFUND_ID		 = #{refundAdminId}
+			 , ACNUTNO		   = #{acnutNo}
+			 , ACNTR			 = #{acnutNm}
+			 , BANK_NM		   = #{acnutBank}
+		 WHERE PAYMENT_SEQ	   = #{paymentSeq}
+		 <!-- 결제일 비교 삭제 DWYOON   AND PAYMENT_DTTM = DATE_FORMAT(#{paymentDttm},'%Y-%m-%d %H:%i:%S') -->
+	</update>
+	
+	
+	<update id="setRefundStus" parameterType="refundVO">
+		UPDATE TB_SVC_PAYMENT
+			<!-- 2020-01-28 BIS_004로 변경 -->
+		   SET PAYMENT_STUS_CD = IFNULL ( #{paymentStusCd} , 'BIS_002' ) 
+		   <!-- 추가 JHN -->
+		   		, CANCEL_REASON_DESC = #{refundReason}
+			 	, CANCEL_ADMIN_ID = #{refundAdminId}
+			<!-- 끝 JHN_2017.07.02 -->
+			<!--  -->
+				, REFND_AMT  =  #{refundAmt}
+				, REFND_ADMIN_ID = #{refundAdminId}
+				, REFND_DTTM = now()
+				, REFND_REASON_DESC = #{refundReason}
+		 WHERE PAYMENT_SEQ = #{paymentSeq}
+		 <!-- 결제일 비교 삭제 DWYOON   AND PAYMENT_DTTM = DATE_FORMAT(#{paymentDttm},'%Y-%m-%d %H:%i:%S') -->
+	</update>
+	
+	<select id="getCancelInfo" parameterType="paymentVO" resultType="paymentVO">
+		
+		SELECT A.PAYMENT_SEQ AS paymentSeq
+			 , A.PAYMENT_DTTM AS paymentDttm
+			 , A.USR_SEQ AS usrSeq
+			 , A.PAYMENT_CLS_CD AS paymentClsCd
+			 ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD
+				WHERE COM_CD = A.PAYMENT_CLS_CD   
+				  AND LANG_CLS_CD = #{lang}) AS paymentClsCdName
+			 , A.PAYMENT_METHOD_CD AS paymentMethodCd
+			 ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD
+				WHERE COM_CD = A.PAYMENT_METHOD_CD   
+				  AND LANG_CLS_CD = #{lang}) AS paymentMethodCdName
+			 , A.PAYMENT_STUS_CD AS paymentStusCd
+			 ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD
+				WHERE COM_CD = A.PAYMENT_STUS_CD   
+				  AND LANG_CLS_CD = #{lang}) AS paymentStusCdName
+			 , A.PAYMENT_CONFM_NO AS paymentConfmNo
+			 , A.PAYMENT_CONFM_DTTM AS paymentConfmDttm
+			 , A.PAYMENT_REQ_DTTM AS paymentReqDttm
+			 , A.TOT_AMT AS totAmt
+			 , A.MILEAGE_PAYMENT_AMT AS mileagePaymentAmt
+			 , A.RENT_OVER_FEE_SUM AS rentOverFeeSum
+			 , A.CANCEL_DTTM AS cancelDttm
+			 , A.CANCEL_REASON_DESC AS cancelReasonDesc
+			 , A.CANCEL_ADMIN_ID AS cancelAdminId
+			 <!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO)			   AS usrMpnNo -->
+			 , B.USR_MPN_NO			   AS usrMpnNo
+			 , C.MB_ID AS mbId
+			 , (CASE WHEN C.MB_ID IS NOT NULL THEN C.MB_ID 
+			 		 ELSE <!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) --> <!-- 20170517 대여일련번호 --> 
+			 				(CASE	WHEN B.USR_CLS_CD = 'USR_003'
+					 				THEN (CASE 	WHEN SERIALNO.SERIAL_NO IS NULL
+								 				<!-- THEN dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) -->
+								 				THEN B.USR_MPN_NO
+												ELSE SERIALNO.SERIAL_NO
+												END)
+									 <!-- ELSE dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) -->
+									 ELSE B.USR_MPN_NO
+									 END)
+			 		 END) AS usrMainId
+		FROM TB_SVC_PAYMENT A
+		   , TB_SVC_USR B
+		LEFT JOIN TB_SVC_MB C ON B.USR_SEQ = C.USR_SEQ
+		LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON B.USR_SEQ = SERIALNO.USR_SEQ AND SERIALNO.PAYMENT_SEQ = #{paymentSeq}<!-- 20170517 대여일련번호 --> 
+		WHERE 1=1
+		AND A.PAYMENT_STUS_CD = 'BIS_003'
+		AND A.USR_SEQ = B.USR_SEQ
+		<if test='paymentSeq != null and paymentSeq != ""'>
+		AND A.PAYMENT_SEQ = #{paymentSeq} 
+		</if>
+		<if test='paymentDttm != null and paymentDttm != ""'>
+		AND A.PAYMENT_DTTM = #{paymentDttm}
+		</if>
+	</select>
+	
+	<update id="setPaymentCancel" parameterType="paymentVO">
+		UPDATE TB_SVC_PAYMENT
+		   SET PAYMENT_STUS_CD = 'BIS_003'
+			 , CANCEL_DTTM = NOW()
+			 , CANCEL_REASON_DESC = #{cancelReasonDesc}
+			 , CANCEL_ADMIN_ID = #{cancelAdminId}
+		 WHERE PAYMENT_SEQ = #{paymentSeq}
+		   AND PAYMENT_DTTM = DATE_FORMAT(#{paymentDttm},'%Y-%m-%d %H:%i:%S')<!-- 2017.06.09_오류발생 : STR_TO_DATE -> DATE_FORMAT 변경_JHN -->
+	</update>
+	<select id="chkVoucherStatus" parameterType="paymentVO" resultType="String">
+		SELECT VOUCHER_SEQ 
+		  FROM TB_SVC_VOUCHER
+		 WHERE PAYMENT_SEQ = #{paymentSeq}
+		<!--	AND VOUCHER_STR_DTTM IS NOT NULL
+		   AND VOUCHER_END_DTTM IS NOT NULL -->
+	</select>	
+	<select id="chkRentHistStatus" parameterType="String" resultType="int">
+		SELECT COUNT(*) 
+		  FROM TB_SVC_RENT_HIST
+		 WHERE VOUCHER_SEQ = #{voucherSeq}
+		   AND USE_MI > 3
+	</select>  
+	<delete id="delVoucherInfo" parameterType="paymentVO">
+		DELETE FROM TB_SVC_VOUCHER
+		 WHERE PAYMENT_SEQ = #{paymentSeq}
+	</delete>	
+	
+	<!-- Paygate 결제취소 정보 가져오기_20160812_JJH -->
+	<select id="getPaymentCancelInfo" parameterType="paymentVO" resultType="HashMap">
+		SELECT PAY.PAYMENT_CONFM_NO AS tId,
+			   CASE
+					WHEN LEFT(PAY.PAYMENT_CONFM_NO, 5) = 'bikeF'
+					THEN 'bikeForeign2'
+					WHEN LEFT(PAY.PAYMENT_CONFM_NO, 5) = 'bikeS'
+					THEN 'bikeSeoul'
+					ELSE 'bike_seoul'
+					END AS m_id,
+				IF(PAY.PAYMENT_METHOD_CD = 'BIM_002',<!-- IF(SUBSTR(PAY.PAYMENT_CONFM_NO,1,15) = 'seoulbikeustest','USR_003','USR_002') -->'USR_002',USR.USR_CLS_CD) AS usr_cls_cd,
+				PAY.PAYMENT_METHOD_CD AS paymentMethodCd,
+				PAY.TOT_AMT AS totAmt,
+				PAY.ORDER_CERTIFY_KEY AS orderCertifyKey,
+				PAY.PAYMENT_CLS_CD AS paymentClsCd,
+				PAY.USR_SEQ AS usrSeq
+		FROM TB_SVC_PAYMENT PAY LEFT JOIN TB_SVC_USR USR ON PAY.USR_SEQ = USR.USR_SEQ
+		WHERE 1=1
+		AND PAYMENT_SEQ = #{paymentSeq}
+		 
+	</select>
+	
+	<!-- 환불 시 이용권정보 만료_20161026_JJH 이용권 만료일만 수정20181108 YDW -->
+	<update id="updateVoucherInfo" parameterType="refundVO">
+		UPDATE TB_SVC_VOUCHER
+		SET 
+			VOUCHER_END_DTTM = NOW(),
+			VOUCHER_USE_YN = 'Y'
+		WHERE 1=1
+		AND PAYMENT_SEQ = #{paymentSeq}
+	</update>
+	
+	<!-- 받은 선물 존재시 사용안했다면 delete_20161115_cms -->
+	<delete id="delSendCoupon" parameterType="paymentVO">
+		DELETE A.* FROM   TB_SVC_SEND_COUPON A  INNER JOIN TB_SVC_PAYMENT	 B ON ( A.PAYMENT_SEQ = B.PAYMENT_SEQ )
+		WHERE B.PAYMENT_SEQ =  #{paymentSeq} 
+	</delete>  
+	<!-- 받은 선물 존재시 사용안했다면 delete_20161115_cms -->
+	<delete id="delRecvCoupon" parameterType="paymentVO">
+		DELETE C.* FROM TB_SVC_RECV_COUPON C  INNER JOIN TB_SVC_SEND_COUPON A ON ( A.COUPON_NO	= C.COUPON_NO ) 
+											  INNER JOIN TB_SVC_PAYMENT	 B ON ( A.PAYMENT_SEQ = B.PAYMENT_SEQ )
+		 WHERE B.PAYMENT_SEQ = #{paymentSeq}
+	</delete> 
+	
+	<update id="udtCoupon" parameterType="refundVO">
+		UPDATE TB_SVC_RECV_COUPON
+		SET 
+			USE_YN = 'Y'
+		WHERE COUPON_NO = #{couponNo}
+	</update>
+	
+	<select id="getCouponYnChk" parameterType="paymentVO" resultType="paymentVO">
+	   SELECT CASE   WHEN (USE_YN IS NULL OR USE_YN = 'Y') AND VOUCHER_USE_YN = 'Y'
+		  					THEN 'Y'
+		  					ELSE 'N'
+		  					END AS useYn,
+		  			   couponNo 
+			   FROM (	  
+					   SELECT 
+					   (
+							  SELECT VOUCHER_USE_YN
+								FROM TB_SVC_VOUCHER
+								WHERE 1=1
+								  AND VOUCHER_SEQ = (
+													  SELECT MAX(VOUCHER_SEQ) AS VOUCHER_SEQ
+								  							FROM TB_SVC_VOUCHER TSV
+														  WHERE TSV.PAYMENT_SEQ = #{paymentSeq}
+													  )
+							) AS VOUCHER_USE_YN,
+							(
+							SELECT MAX( TSRC.USE_YN ) AS USE_YN
+							  FROM TB_SVC_SEND_COUPON	  TSSC,
+								   TB_SVC_RECV_COUPON	  TSRC
+							 WHERE	 1 = 1
+								   AND TSSC.COUPON_NO = TSRC.COUPON_NO
+								   AND TSSC.PAYMENT_SEQ = #{paymentSeq}
+							) AS USE_YN,
+						   (SELECT MAX(  TSRC.COUPON_NO )  AS COUPON_NO
+							FROM TB_SVC_SEND_COUPON TSSC, TB_SVC_RECV_COUPON TSRC
+							WHERE	 1 = 1
+								  AND TSSC.COUPON_NO = TSRC.COUPON_NO
+								  AND TSSC.PAYMENT_SEQ =#{paymentSeq})
+							  AS couponNo	   
+					 )A
+	</select>
+	
+	<select id="getAddPayMethod" parameterType="paymentVO" resultType="paymentVO">
+		<![CDATA[
+			  SELECT MAX(usrSeq) AS usrSeq
+				   , MAX(paymentMethodCd) AS paymentMethodCd
+				   , MAX(billingKey) AS billingKey
+				   , MAX(billingCertifyKey) AS billingCertifyKey
+			  FROM
+			  (  SELECT A.USR_SEQ AS usrSeq
+					 , A.PAYMENT_METHOD_CD AS paymentMethodCd
+
+					 , A.BILLING_KEY AS billingKey
+					 , A.BILLING_CERTIFY_KEY AS billingCertifyKey
+				 FROM TB_SVC_PAYMENT_METHOD A
+				WHERE A.USR_SEQ = #{usrSeq}
+				UNION ALL
+				SELECT 1,1,1,1
+			 ) A
+		]]> 
+	</select>	
+	
+	<select id="getMileChk" parameterType="paymentVO" resultType="paymentVO">
+	SELECT USR_SEQ AS usrSeq, MILEAGE_PAYMENT_AMT AS mileagePaymentAmt
+	FROM TB_SVC_PAYMENT
+	WHERE 1=1
+	AND PAYMENT_SEQ = #{paymentSeq}
+	</select>
+ </mapper>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.paymentmgmt.reduction.service.ReductionMapper">
+	
+	<select id="getReductionList" parameterType="reductionVO" resultType="reductionVO">
+		SELECT 
+			REDUCTION_HIST_SEQ AS reductionHistSeq
+			, TRANSACTION_UNIQUE_ID AS transactionUniqueId
+			, REDUCTION_TYPE AS reductionType
+			, USR_SEQ AS usrSeq
+			, TGTR_RRN AS tgtrRrn
+			, TGTR_NM AS tgtrNm
+			, FCT_YN AS fctYn
+			, OPRN_YN AS oprnYn
+			, CNT AS cnt
+			, RESULT_YN AS resultYn
+			, REG_DTTM AS regDttm
+		FROM TB_REDUCTION_HIST								   
+		WHERE 1=1
+		<if test='reductionType != null and reductionType != ""'>
+		AND REDUCTION_TYPE = #{reductionType}
+		</if>
+		<if test='startReductionDttm != null and startReductionDttm != "" and endReductionDttm != null and endReductionDttm != ""'>
+		  AND REG_DTTM  BETWEEN STR_TO_DATE(#{startReductionDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endReductionDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startReductionDttm == null or startReductionDttm == ""'>
+		  AND REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 7 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<choose>
+			<when test='usrSearchType == "1"'>
+			AND TGTR_NM LIKE CONCAT('%',#{usrSearchKey},'%')
+			</when>
+		</choose>
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>
+	</select>
+	
+	<select id="getReductionListCount" parameterType="reductionVO" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_REDUCTION_HIST								   
+		WHERE 1=1
+		<if test='reductionType != null and reductionType != ""'>
+		AND REDUCTION_TYPE = #{reductionType}
+		</if>
+		<if test='startReductionDttm != null and startReductionDttm != "" and endReductionDttm != null and endReductionDttm != ""'>
+		  AND REG_DTTM  BETWEEN STR_TO_DATE(#{startReductionDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endReductionDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startReductionDttm == null or startReductionDttm == ""'>
+		  AND REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 7 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<choose>
+			<when test='usrSearchType == "1"'>
+			AND TGTR_NM LIKE CONCAT('%',#{usrSearchKey},'%')
+			</when>
+		</choose>
+		<if test='reductionType != null and reductionType != ""'>
+		AND REDUCTION_TYPE = #{reductionType}
+		</if>
+	</select>
+	
+</mapper>

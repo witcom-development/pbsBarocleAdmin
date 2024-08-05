@@ -1,0 +1,228 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.repair.lock.service.RepairLockMapper">
+	<select id="getRepairLockList" parameterType="RepairLockVO" resultType="RepairLockVO">
+	<![CDATA[
+		SELECT REPINFO.REPAIR_SEQ AS repairSeq 
+			, RACK.RACK_ID AS rackId
+			, REPINFO.MAINTC_ADMIN_ID AS adminId
+			, REPINFO.REPAIR_CMPT_YN AS repairCmptYn
+			, REPINFO.REPAIR_CENTER_ID AS centerId
+			, REPINFO.REG_DTTM AS repDttm
+			, REPINFO.REPAIR_CMPT_DTTM AS cmptDttm
+			, REPINFO.BIKE_REPORT AS lockReport
+		FROM TB_MTC_REPAIR_INFO REPINFO 
+		JOIN TB_OPR_RACK RACK ON REPINFO.EQUIPMENT_ID = RACK.RACK_ID AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_004'
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='repairCmptYn != null and repairCmptYn != ""'>
+			  	AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+				</if>
+				<if test='division != null and division == "rackId" and divisionValue != null and divisionValue != ""'>
+			  	AND RACK.RACK_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+				<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+				AND REPINFO.MAINTC_ADMIN_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+		   </trim>	  
+		   ORDER BY REPINFO.REG_DTTM DESC, REPINFO.REPAIR_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if>
+	</select>
+	<select id="getRepairLockListCount" parameterType="RepairLockVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		FROM TB_MTC_REPAIR_INFO REPINFO 
+		JOIN TB_OPR_RACK RACK ON REPINFO.EQUIPMENT_ID = RACK.RACK_ID AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_004'
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='repairCmptYn !=null and repairCmptYn != ""'>
+			  	AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+				</if>
+				<if test='division != null and repairCmptYn != ""'>
+			  	AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+				</if>
+			   <if test='division != null and division == "rackId" and divisionValue != null and divisionValue != ""'>
+			  	AND RACK.RACK_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+				<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+				AND REPINFO.MAINTC_ADMIN_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+		   </trim> 
+	</select>
+	<select id="getRepairLockInfo" parameterType="RepairLockVO" resultType="RepairLockVO">
+		<![CDATA[
+			SELECT REPINFO.REPAIR_SEQ AS repairSeq 
+			, RACK.RACK_ID AS rackId
+			, REPINFO.MAINTC_ADMIN_ID AS adminId
+			, REPINFO.REPAIR_CENTER_ID AS centerId
+			, (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = REPINFO.FAULT_SEQ) AS rackStatusName
+			, REPINFO.REPAIR_CMPT_YN AS repairCmptYn
+			, REPINFO.REG_DTTM AS repDttm
+			, REPINFO.REPAIR_CMPT_DTTM AS cmptDttm
+			, REPINFO.BIKE_REPORT AS lockReport
+			, REPINFO.REPAIR_REPORT AS repairReport
+			, RACK.NOW_LOCATE_CLS_CD   AS locateClsCd
+			,IF(RACK.NOW_LOCATE_CLS_CD  ='S',CONCAT('(S)',(SELECT STATION_NAME
+														  FROM TB_OPR_MLANG_STATION
+														  WHERE STATION_ID = RACK.NOW_LOCATE_ID
+														   AND LANG_CLS_CD = 'LAG_001' )), '')	AS stationName
+			,IF(RACK.NOW_LOCATE_CLS_CD  ='C', CONCAT('(C)',(SELECT CENTER_NAME
+														  FROM TB_OPR_CENTER
+														  WHERE CENTER_ID = RACK.NOW_LOCATE_ID)) ,'')  AS centerName
+			FROM TB_MTC_REPAIR_INFO REPINFO 
+			JOIN TB_OPR_RACK RACK ON REPINFO.EQUIPMENT_ID = RACK.RACK_ID
+			WHERE REPINFO.REPAIR_SEQ = #{repairSeq} AND RACK.RACK_ID = #{rackId} AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_004'
+		]]>
+	</select>
+	
+	<select id="getRepairCodeList" parameterType="String" resultType="String">
+		<![CDATA[
+			SELECT REPAIR_CLS_CD FROM TB_MTC_REPAIR_DETL
+			WHERE REPAIR_SEQ = #{repairSeq}
+		]]>
+	</select>
+	
+	<update id="updateLockStatus" parameterType="repairLockVo">
+		UPDATE TB_OPR_RACK SET 
+		<if test='repairCmptYn == "Y"'>
+			RACK_STUS_CD = 'RAS_003'
+		</if>	
+		<if test='repairCmptYn == "N"'>
+			RACK_STUS_CD = 'RAS_005'
+		</if>
+		<if test='centerId != null and centerId !=""'>
+			, NOW_LOCATE_CLS_CD = 'C'
+			, NOW_LOCATE_ID = #{centerId}
+		</if>
+		WHERE RACK_ID = #{rackId}
+	</update>
+	
+	<select id="getLockMoveYn" parameterType="repairLockVo" resultType="String">
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'N' ELSE 'Y' END moveYn FROM TB_OPR_RACK
+		WHERE RACK_ID = #{rackId}
+		AND NOW_LOCATE_ID = #{centerId}
+	</select>
+	
+	<insert id="insertLockMoveHistory" parameterType="repairLockVo">
+		INSERT INTO TB_OPR_RACK_LOCATE_INFO(RACK_ID, LOCATE_CLS_CD, LOCATE_ID, LOCATE_STR_DTTM, LOCATE_END_DTTM, STATION_EQUIP_ORD)
+		VALUES (#{rackId}, 'C', #{centerId}, DATE_ADD(now() ,interval 1 second), STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S'), 0)
+	</insert>
+	
+	<select id="getRemainBikeYn" parameterType="repairLockVo">
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END AS remainYn FROM TB_OPR_BIKE_PARKING WHERE RACK_ID = #{rackId}
+	</select>
+	
+	<update id="updateLockMoveHistory" parameterType="repairLockVo">
+		<selectKey resultType="string" keyProperty="histSeq" order="BEFORE">
+			SELECT LOCATE_HIST_SEQ FROM TB_OPR_RACK_LOCATE_INFO WHERE RACK_ID = #{rackId} ORDER BY LOCATE_STR_DTTM DESC LIMIT 1
+		</selectKey>
+		UPDATE TB_OPR_RACK_LOCATE_INFO 
+		SET	LOCATE_END_DTTM = STR_TO_DATE(now(),'%Y-%m-%d %H:%i:%S')
+		WHERE LOCATE_HIST_SEQ = #{histSeq}
+	</update>
+	
+	<update id="updateFaultLock" parameterType="repairLockVo">
+ 		UPDATE TB_MTC_FAULT_INFO SET READ_CLS_CD = 'H' WHERE FAULT_SEQ = #{faultSeq}
+	</update>
+	
+	<insert id="insertRepairLock" parameterType="repairLockVo">
+		INSERT INTO TB_MTC_REPAIR_INFO(
+		<if test='faultSeq != null and faultSeq !=""'>
+			FAULT_SEQ,
+		</if>
+			EQUIPMENT_CLS_CD, 
+			EQUIPMENT_ID, 
+			MAINTC_ADMIN_ID, 
+			REPAIR_CMPT_YN, 
+		<if test='repairCmptYn == "Y"'>
+			REPAIR_CMPT_DTTM,
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			REPAIR_CENTER_ID, 
+		</if>
+			REG_DTTM, 
+			MOD_DTTM,
+			BIKE_REPORT,
+			REPAIR_REPORT
+			)
+		VALUES(
+		<if test='faultSeq != null and faultSeq !=""'>
+			#{faultSeq},
+		</if>	
+			'DEV_004', 
+			#{rackId}, 
+			#{adminId}, 
+			#{repairCmptYn}, 
+		<if test='repairCmptYn == "Y"'>
+			NOW(),
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			#{centerId}, 
+		</if>	
+			NOW(), 
+			NOW(),
+			#{lockReport},
+			#{repairReport}
+		)
+		<selectKey keyProperty="repairSeq" resultType="String">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+	</insert>   
+	
+	<update id="updateRepairLock" parameterType="repairLockVo">
+		UPDATE TB_MTC_REPAIR_INFO SET 
+		EQUIPMENT_ID = #{rackId},
+		MAINTC_ADMIN_ID = #{adminId},
+		REPAIR_CMPT_YN = #{repairCmptYn},
+		BIKE_REPORT = #{lockReport},
+		REPAIR_REPORT = #{repairReport},
+		 <if test='repairCmptYn == "Y"'>
+			REPAIR_CMPT_DTTM = NOW(),
+		</if>	
+		<if test='repairCmptYn == "N"'>
+			REPAIR_CMPT_DTTM = NULL,
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			REPAIR_CENTER_ID = #{centerId}, 
+		</if>	
+		MOD_DTTM = NOW()
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</update>
+	
+	
+	<delete id="deleteRepairLock" parameterType="repairLockVo">
+		DELETE FROM TB_MTC_REPAIR_INFO
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>
+	
+	<insert id="insertRepairLockDetail" parameterType="repairLockVo">
+		INSERT INTO TB_MTC_REPAIR_DETL (
+		   	REPAIR_SEQ, REPAIR_CLS_CD
+			) VALUES (
+			  #{repairSeq}
+			 ,#{repairCode}
+			)
+	</insert>
+	
+	<delete id="deleteRepairLockDetail" parameterType="repairLockVo">
+		DELETE FROM TB_MTC_REPAIR_DETL
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>
+</mapper>

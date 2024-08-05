@@ -1,0 +1,704 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.membermgmt.service.SafetyCertMapper">
+	
+	<select id="getCertYn" parameterType="String" resultType="String">
+	<![CDATA[
+		SELECT if(COUNT(*)=0,'N','Y') AS CERT_USR_SEQ  
+		FROM TB_SVC_USR A
+			 INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ
+			 INNER JOIN TB_SVC_SFT_CERT_USR C ON A.USR_MPN_NO = C.USR_MPN_NO AND B.MB_ID = C.MB_ID
+		WHERE 1=1 
+			AND A.USR_SEQ = #{usrSeq};
+	]]>		
+	</select> 
+	
+	<select id="getCertInfo" parameterType="safetyCertInfoVO" resultType="safetyCertInfoVO">
+	<![CDATA[
+		SELECT C.CERT_USR_SEQ  as certUsrSeq, 
+				C.USR_NAME as  			usrName,  
+				C.USR_MPN_NO as	 usrMpnNo,  
+				C.USR_PRV_CD as	 usrPrvCd,  
+				C.CERT_DATE as	 certDate,  
+				C.CERT_CLS as  			certCls,  
+				C.CERT_ORG as  			certOrg,  
+				C.USR_USR_SEQ as	 usrUsrSeq,  
+				C.MB_YN as  			mbYn,  
+				C.MB_ID as  			mbId,  
+				C.REG_DTTM as  			regDttm,  
+				C.MOD_DTTM as  			modDttm,  
+				C.CERT_ED_DATE as	 certEdDate,  
+				C.DIS_S_DTTM as	 disSDttm,  
+				C.DIS_E_DTTM as	disEDttm,
+				D.DIS_RATE as  disRate,			
+				D.COM_CD as comCd
+		FROM TB_SVC_USR A
+			 INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ
+			 INNER JOIN TB_SVC_SFT_CERT_USR C ON A.USR_MPN_NO = C.USR_MPN_NO AND B.MB_ID = C.MB_ID
+			 LEFT OUTER JOIN TB_SVC_SFT_CERT_DISCOUNT D ON D.COM_CD = #{comCd} 
+		WHERE 1=1 
+			AND A.USR_SEQ = #{usrUsrSeq}
+			AND NOW() BETWEEN C.DIS_S_DTTM AND C.DIS_E_DTTM 
+	]]>		
+	</select> 
+	
+	<select id="getCertDis" parameterType="safetyCertInfoVO" resultType="safetyCertInfoVO">
+	<![CDATA[
+		SELECT C.CERT_USR_SEQ  as certUsrSeq, 
+				C.USR_NAME as  			usrName,  
+				C.USR_MPN_NO as	 usrMpnNo,  
+				C.USR_PRV_CD as	 usrPrvCd,  
+				C.CERT_DATE as	 certDate,  
+				C.CERT_CLS as  			certCls,  
+				C.CERT_ORG as  			certOrg,  
+				C.USR_USR_SEQ as	 usrUsrSeq,  
+				C.MB_YN as  			mbYn,  
+				C.MB_ID as  			mbId,  
+				C.REG_DTTM as  			regDttm,  
+				C.MOD_DTTM as  			modDttm,  
+				C.CERT_ED_DATE as	 certEdDate,  
+				C.DIS_S_DTTM as	 disSDttm,  
+				C.DIS_E_DTTM as	disEDttm,
+				D.DIS_RATE as  disRate,			
+				D.COM_CD as comCd
+		FROM TB_SVC_USR A
+			 INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ
+			 INNER JOIN TB_SVC_SFT_CERT_USR C ON A.USR_MPN_NO = C.USR_MPN_NO AND B.MB_ID = C.MB_ID
+			 LEFT OUTER JOIN TB_SVC_SFT_CERT_DISCOUNT D ON D.COM_CD = #{comCd} 
+		WHERE 1=1 
+			AND A.USR_SEQ = #{usrUsrSeq}
+			AND NOW() BETWEEN C.DIS_S_DTTM AND C.DIS_E_DTTM 
+	]]>		
+	</select> 
+	
+	<select id="getSafetyCertDiscount" parameterType="SafetyCertDiscountVO" resultType="SafetyCertDiscountVO">  
+		SELECT 
+				CERT_DISCOUNT_SEQ   as certDiscountSeq,
+				DIS_RATE					   as disRate,
+				COM_CD						as comCd ,
+				ADMIN_ID					  as adminId ,
+				MEMO							as memo ,
+				REG_DTTM					 as regDttm,  
+				MOD_DTTM					as modDttm
+			FROM TB_SVC_SFT_CERT_DISCOUNT
+		WHERE 1=1
+			<if test='certDiscountSeq != null and certDiscountSeq != ""'>
+		   		 AND CERT_DISCOUNT_SEQ  = #{certDiscountSeq}
+			</if>
+			<if test='comCd != null and comCd != ""'>
+		   		 AND COM_CD  = #{comCd}
+			</if>
+	</select>
+	
+	<insert id="addCertPayment" parameterType="safetyCertPaymentVO" useGeneratedKeys="true" keyProperty="certPaymentSeq">
+	<![CDATA[
+		INSERT INTO TB_SVC_SFT_CERT_PAYMENT
+		(
+			`PAYMENT_SEQ`,
+			`DIS_AMT`,
+			`DIS_RATE`,
+			`REG_DTTM`
+		)
+		VALUES
+		(
+			#{paymentSeq},
+			#{disAmt},
+			#{disRate},
+			now()
+		 )  
+	]]>		
+	</insert>
+	
+	<insert id="addCertUsr" parameterType="safetyCertUserVO" useGeneratedKeys="true" keyProperty="certUsrSeq">
+	<![CDATA[
+		INSERT INTO TB_SVC_SFT_CERT_USR
+		( 
+			`CERT_NUM`, 
+			`USR_NAME`, 
+			`USR_MPN_NO`, 
+			`USR_PRV_CD`, 
+			`CERT_DATE`, 
+			`CERT_CLS`, 
+			`CERT_ORG`, 
+			`USR_USR_SEQ`, 
+			`MB_YN`, 
+			`MB_ID`, 
+			`REG_DTTM`,  
+			`CERT_ED_DATE`, 
+			`DIS_S_DTTM`, 
+			`DIS_E_DTTM`
+		)
+		VALUES
+		( 
+			#{certNum}, 
+			#{usrName}, 
+			#{usrMpnNo}, 
+			#{usrPrvCd}, 
+			#{certDate}, 
+			#{certCls}, 
+			#{certOrg}, 
+			#{usrUsrSeq}, 
+			#{mbYn}, 
+			#{mbId}, 
+			now(),  
+			#{certEdDate}, 
+			#{disSDttm}, 
+			#{disEDttm}
+		 )  
+	]]>		
+	</insert>  
+	
+	<!-- admin -->
+	
+	<insert id="addCertUsrFromExcel" parameterType="HashMap">
+	<![CDATA[
+		INSERT INTO TB_SVC_SFT_CERT_USR
+		( 
+			`CERT_NUM`, 
+			`USR_NAME`, 
+			`USR_MPN_NO`, 
+			`USR_PRV_CD`, 
+			`CERT_DATE`, 
+			`CERT_CLS`, 
+			`CERT_ORG`, 
+			`USR_USR_SEQ`, 
+			`MB_YN`, 
+			`MB_ID`, 
+			`REG_DTTM`,  
+			`CERT_ED_DATE`, 
+			`DIS_S_DTTM`, 
+			`DIS_E_DTTM`
+		)
+		VALUES
+		( 
+			#{certNum}, 
+			#{usrName}, 
+			<!-- dg_encrypt('TB_SVC_USR', 'USR_MPN_NO',#{usrMpnNo}),  -->
+			#{usrMpnNo}, 
+			#{usrPrvCd}, 
+			#{certDate}, 
+			#{certCls}, 
+			#{certOrg}, 
+			#{usrUsrSeq}, 
+			#{mbYn}, 
+			#{mbId}, 
+			now(),  
+			#{certEdDate}, 
+			#{disSDttm}, 
+			#{disEDttm}
+		 )  
+	]]>		
+	</insert> 
+	
+	<select id="safetyCertUserListCnt" parameterType="safetyCertUserVO"	resultType="int">
+		  SELECT 
+				  COUNT(1)
+		  	FROM spb.TB_SVC_SFT_CERT_USR 
+		   	WHERE 1=1
+				AND CERT_ED_DATE BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			<if test="mbYn != null and mbYn != ''">
+				AND MB_YN = #{mbYn}
+			</if>
+			<if test="searchValue != null and searchValue != '' ">
+				<if test="searchParameter != null and searchParameter.equals('ID')">
+					AND MB_ID LIKE  CONCAT( #{searchValue}, '%')
+				</if>
+				<if test="searchParameter != null and searchParameter.equals('PHONE')">
+					<!-- AND USR_MPN_NO  = dg_encrypt('TB_SVC_SFT_CERT_USR', 'USR_MPN_NO', #{searchValue}) -->
+					AND USR_MPN_NO  = #{searchValue}
+				</if>
+				<if test="searchParameter != null and searchParameter.equals('NAME')">
+					AND USR_NAME  LIKE  CONCAT( #{searchValue}, '%')
+				</if>
+			</if>
+	</select>
+	
+	<select id="safetyCertUserList"	parameterType="safetyCertUserVO"	resultType="safetyCertUserVO">
+			SELECT 
+				`CERT_USR_SEQ`  as certUsrSeq,			  
+				`CERT_NUM`	  as certNum,			  
+				`USR_NAME`	  as usrName,				   
+				<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) as usrMpnNo, -->		
+				USR_MPN_NO as usrMpnNo,
+				`USR_PRV_CD`	as usrPrvCd,			  
+				`CERT_DATE`	 as certDate,			  
+				`CERT_CLS`	  as certCls,			  
+				`CERT_ORG`	  as certOrg,			  
+				`USR_USR_SEQ`   as usrUsrSeq,			  
+				`MB_YN`		 as mbYn,			  
+				`MB_ID`		 as mbId,			  
+				`REG_DTTM`	  as regDttm,			  
+				`MOD_DTTM`	  as modDttm,			  
+				`CERT_ED_DATE`  as certEdDate,			  
+				`DIS_S_DTTM`	as disSDttm,			  
+				`DIS_E_DTTM`	as disEDttm
+			FROM spb.TB_SVC_SFT_CERT_USR 
+		   	WHERE 1=1
+				AND CERT_ED_DATE BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			<if test="mbYn != null and mbYn != ''">
+				AND MB_YN = #{mbYn}
+			</if>
+			<if test="searchValue != null and searchValue != '' ">
+				<if test="searchParameter != null and searchParameter.equals('ID')">
+					AND MB_ID LIKE  CONCAT( #{searchValue}, '%')
+				</if>
+				<if test="searchParameter != null and searchParameter.equals('PHONE')">
+					<!-- AND USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+					AND USR_MPN_NO  = #{searchValue}
+				</if>
+				<if test="searchParameter != null and searchParameter.equals('NAME')">
+					AND USR_NAME  LIKE  CONCAT( #{searchValue}, '%')
+				</if>
+			</if>
+			ORDER BY CERT_USR_SEQ DESC
+			<if test="excel == null or excel == ''">
+				LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			</if>
+	</select>
+	
+	<select id="chkCertNum" parameterType="HashMap" resultType="int">
+		SELECT COUNT(*)
+		  FROM spb.TB_SVC_SFT_CERT_USR
+		 WHERE CERT_NUM = #{certNum}
+	</select> 
+	
+	<select id="chkUsrMpnNo" parameterType="HashMap" resultType="int">
+		SELECT COUNT(*)
+		  FROM spb.TB_SVC_SFT_CERT_USR
+		 <!-- WHERE USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO',#{usrMpnNo}) -->
+		 WHERE USR_MPN_NO = #{usrMpnNo}
+	</select> 
+	
+	 <select id="chkMbId" parameterType="HashMap" resultType="int">
+		SELECT COUNT(*)
+		  FROM spb.TB_SVC_SFT_CERT_USR
+		 WHERE MB_ID = #{mbId}
+	</select>
+	
+	<select id="getCertInfoWithMpnNo" parameterType="String" resultType="SafetyCertUserVO">
+	<![CDATA[
+		SELECT 	A.USR_SEQ as	 usrUsrSeq,	
+				B.MB_ID as  			mbId
+		FROM TB_SVC_USR A
+			 INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+		WHERE 1=1 
+			<!-- AND A.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO',#{usrMpnNo}) -->
+			AND A.USR_MPN_NO = #{usrMpnNo}
+	]]>		
+	</select>  
+	
+	<select id="getSafetyCertUserInfo" parameterType="SafetyCertUserVO" resultType="SafetyCertUserVO">
+	<![CDATA[
+		SELECT 	
+			`CERT_USR_SEQ`  as certUsrSeq,			  
+			`CERT_NUM`	  as certNum,			  
+			`USR_NAME`	  as usrName,				   
+			<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) as usrMpnNo, -->
+			USR_MPN_NO as usrMpnNo,
+			`USR_PRV_CD`	as usrPrvCd,			  
+			`CERT_DATE`	 as certDate,			  
+			`CERT_CLS`	  as certCls,			  
+			`CERT_ORG`	  as certOrg,			  
+			`USR_USR_SEQ`   as usrUsrSeq,			  
+			`MB_YN`		 as mbYn,			  
+			`MB_ID`		 as mbId,			  
+			`REG_DTTM`	  as regDttm,			  
+			`MOD_DTTM`	  as modDttm,			  
+			`CERT_ED_DATE`  as certEdDate,			  
+			`DIS_S_DTTM`	as disSDttm,			  
+			`DIS_E_DTTM`	as disEDttm
+		FROM TB_SVC_SFT_CERT_USR 
+		WHERE 1=1 
+			AND CERT_USR_SEQ = #{certUsrSeq}
+	]]>		
+	</select>  
+	
+	<update id="setSafetyCertUser" parameterType="SafetyCertUserVO">
+		UPDATE TB_SVC_SFT_CERT_USR
+		   SET 
+		   		MOD_DTTM		= now()
+			<if test='certNum	!=null and  certNum	!=""'> , CERT_NUM		= #{certNum} </if>			  
+			<if test='usrName	!=null and  usrName	!=""'> , USR_NAME		= #{usrName} </if>				   
+			<if test='usrPrvCd   !=null and  usrPrvCd   !=""'> , USR_PRV_CD	  = #{usrPrvCd} </if>			  
+			<if test='certDate   !=null and  certDate   !=""'> , CERT_DATE	   = #{certDate} </if>			  
+			<if test='certCls	!=null and  certCls	!=""'> , CERT_CLS		= #{certCls} </if>			  
+			<if test='certOrg	!=null and  certOrg	!=""'> , CERT_ORG		= #{certOrg} </if>			  
+			<if test='usrUsrSeq  !=null and  usrUsrSeq  !=""'> , USR_USR_SEQ	 = #{usrUsrSeq} </if>
+			<if test='mbYn	   !=null and  mbYn	   !=""'> , MB_YN		   = #{mbYn} </if>
+			<if test='mbId	   !=null and  mbId	   !=""'> , MB_ID		   = #{mbId} </if>										 
+			<if test='certEdDate !=null and  certEdDate !=""'> , CERT_ED_DATE	= #{certEdDate} </if>
+			<if test='disSDttm   != null and disSDttm   !=""'> , DIS_S_DTTM	  = #{disSDttm} </if>
+			<if test='disEDttm   != null and disEDttm   !=""'> , DIS_E_DTTM	  = #{disEDttm} </if>
+			<if test='usrMpnNo   != null and usrMpnNo   !=""'> 
+				<!-- , USR_MPN_NO	  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO',#{usrMpnNo}) -->
+				, USR_MPN_NO	  = #{usrMpnNo}
+			</if>   
+		 WHERE  1=1 
+			AND CERT_USR_SEQ = #{certUsrSeq}
+	</update>
+	
+	<delete id="delSafetyCertUser" parameterType="SafetyCertUserVO">
+		DELETE FROM TB_SVC_SFT_CERT_USR
+		 WHERE CERT_USR_SEQ = #{certUsrSeq}
+	</delete>	
+	
+	 
+	<update id="setSafetyCertDiscount" parameterType="SafetyCertDiscountVO">
+		UPDATE TB_SVC_SFT_CERT_DISCOUNT
+			SET
+				MOD_DTTM		= now()
+				<if test='   disRate		 !=null and  disRate		  !=""'> ,DIS_RATE		  = #{ disRate}</if>
+				<if test='   adminId		 !=null and  adminId		  !=""'> ,ADMIN_ID		  = #{ adminId }</if>
+				<if test='   memo			!=null and  memo			 !=""'> ,MEMO			  = #{ memo }</if>
+		WHERE  1=1 
+			<if test='certDiscountSeq != null and certDiscountSeq != ""'>
+		   		 AND CERT_DISCOUNT_SEQ  = #{certDiscountSeq}
+			</if>
+			<if test='comCd != null and comCd != ""'>
+		   		 AND COM_CD  = #{comCd}
+			</if>
+			<if test='certDiscountSeq != null and certDiscountSeq != "" and comCd != null and comCd != ""'>
+		   		 AND CERT_DISCOUNT_SEQ  = -1
+			</if>
+	</update>
+	
+	<!-- statics -->
+	
+	<select id="safetyCertPaymentInfoListMemberCnt" parameterType="memberPaymentVO"	resultType="int">
+		  SELECT 
+				  count(DISTINCT B.MB_ID)
+		  	FROM TB_SVC_SFT_CERT_PAYMENT CP 
+				LEFT JOIN TB_SVC_PAYMENT A ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+				LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+				LEFT JOIN TB_SVC_SFT_CERT_USR CU ON ( CU.USR_USR_SEQ = B.USR_SEQ )
+			WHERE 1=1 
+			<choose>
+				<when test="searchParameter != null and searchParameter.equals('PAYMENT')">
+					<if test = "searchStartDate!='' and searchStartDate!=null">
+						AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+						 ]]>
+					</if>
+				</when>
+				<otherwise>
+					<if test = "searchStartDate!='' and searchStartDate!=null">
+						AND DIS_S_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND DIS_E_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+						 ]]>
+					</if> 
+				</otherwise>
+			</choose>	
+	</select>
+	
+	<select id="safetyCertPaymentInfoListDisAmtSum" parameterType="memberPaymentVO"	resultType="int">
+		  SELECT 
+				SUM(CP.DIS_AMT)
+		  	FROM TB_SVC_SFT_CERT_PAYMENT CP 
+				LEFT JOIN TB_SVC_PAYMENT A ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+				LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+				LEFT JOIN TB_SVC_SFT_CERT_USR CU ON ( CU.USR_USR_SEQ = B.USR_SEQ )
+			WHERE 1=1 
+			<choose>
+				<when test="searchParameter != null and searchParameter.equals('PAYMENT')">
+					<if test = "searchStartDate!='' and searchStartDate!=null">
+						AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+						 ]]>
+					</if>
+				</when>
+				<otherwise>
+					<if test = "searchStartDate!='' and searchStartDate!=null">
+						AND DIS_S_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND DIS_E_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+						 ]]>
+					</if> 
+				</otherwise>
+			</choose>	
+	</select>
+	
+	<select id="safetyCertPaymentInfoListCnt" parameterType="memberPaymentVO"	resultType="int">
+		  SELECT 
+				  COUNT(1)
+		  	FROM TB_SVC_SFT_CERT_PAYMENT CP 
+				LEFT JOIN TB_SVC_PAYMENT A ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+				LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+				LEFT JOIN TB_SVC_SFT_CERT_USR CU ON ( CU.USR_USR_SEQ = B.USR_SEQ )
+			WHERE 1=1 
+			<choose>
+				<when test="searchParameter != null and searchParameter.equals('PAYMENT')">
+					<if test = "searchStartDate!='' and searchStartDate!=null">
+						AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+						 ]]>
+					</if>
+				</when>
+				<otherwise>
+					<if test = "searchStartDate!='' and searchStartDate!=null">
+						AND DIS_S_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND DIS_E_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+						 ]]>
+					</if> 
+				</otherwise>
+			</choose>	
+	</select>
+	
+	<select id="getSafetyCertPaymentInfoList"		parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+		SELECT * 
+		FROM 
+		(
+			SELECT 
+					A.PAYMENT_SEQ, A.USR_SEQ, 	PAYMENT_DTTM,
+					PAYMENT_CLS_CD,
+					(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) CLS_CD,
+					PAYMENT_METHOD_CD,
+					(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001' ) METHOD_CD, 
+					PAYMENT_STUS_CD,
+					IF(ISNULL(CP.PAYMENT_SEQ)  ,'N','Y') as certDisYn,
+					<![CDATA[
+					CASE WHEN A.PAYMENT_STUS_CD = 'BIS_001'
+						 THEN CONCAT(
+								 	   	( SELECT  MLANG_COM_CD_NAME  FROM   TB_SYS_MLANG_COM_CD   WHERE   COM_CD = A.PAYMENT_STUS_CD   AND   LANG_CLS_CD = 'LAG_001' ) 
+								 	  ,
+										( CASE WHEN A.REFND_REASON_DESC IS NOT NULL 
+											   THEN '<br/>(환불진행중)' ELSE '' END 
+										)
+							  )
+						 ELSE ( SELECT  MLANG_COM_CD_NAME   FROM  TB_SYS_MLANG_COM_CD  WHERE  COM_CD = A.PAYMENT_STUS_CD   AND  LANG_CLS_CD = 'LAG_001')
+						  END  STUS_CD,  
+					PAYMENT_CONFM_NO, 	PAYMENT_CONFM_DTTM,
+					PAYMENT_REQ_DTTM, 	TOT_AMT,
+					MILEAGE_PAYMENT_AMT, 	RENT_OVER_FEE_SUM,
+					CANCEL_DTTM, 	CANCEL_REASON_DESC, 	CANCEL_ADMIN_ID,
+					B.MB_ID,
+					CP.DIS_AMT AS disAmt
+				]]>
+				FROM TB_SVC_SFT_CERT_PAYMENT CP 
+				LEFT JOIN TB_SVC_PAYMENT A ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+				LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+				LEFT JOIN TB_SVC_SFT_CERT_USR CU ON ( CU.USR_USR_SEQ = B.USR_SEQ )
+				WHERE 1=1 
+				<choose>
+					<when test="searchParameter != null and searchParameter.equals('PAYMENT')">
+						<if test = "searchStartDate!='' and searchStartDate!=null">
+							AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							 ]]>
+						</if>
+					</when>
+					<otherwise>
+						<if test = "searchStartDate!='' and searchStartDate!=null">
+							AND DIS_S_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND DIS_E_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							 ]]>
+						</if> 
+					</otherwise>
+				</choose>	
+		) T
+		ORDER BY T.PAYMENT_DTTM DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}	
+	</select>
+	
+	<!-- real statistics -->
+	
+	<select id="safetyCertPaymentStatisticsCnt" parameterType="memberPaymentVO"	resultType="int">
+		SELECT 
+			COUNT(1)
+		FROM 
+		(
+			SELECT
+				<choose>
+					<when test="searchValue != null and searchValue.equals('MONTH')"> 
+						DATE_FORMAT(A.PAYMENT_DTTM,'%Y-%m') PAYMENTDTTM			 	,
+					</when>
+					<otherwise>
+						DATE_FORMAT(A.PAYMENT_DTTM,'%Y') PAYMENTDTTM			 	,
+					</otherwise>
+				</choose>	
+					PAYMENT_CLS_CD,
+					sum(TOT_AMT) AS TOT_AMT,
+					sum(CP.DIS_AMT) AS disAmt,
+					COUNT(1)
+				FROM TB_SVC_SFT_CERT_PAYMENT CP 
+				LEFT JOIN TB_SVC_PAYMENT A ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+				LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+				LEFT JOIN TB_SVC_SFT_CERT_USR CU ON ( CU.USR_USR_SEQ = B.USR_SEQ )
+				WHERE 1=1 
+				<choose>
+					<when test="searchParameter != null and searchParameter.equals('PAYMENT')">
+						<if test = "searchStartDate!='' and searchStartDate!=null">
+							AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							 ]]>
+						</if>
+					</when>
+					<otherwise>
+						<if test = "searchStartDate!='' and searchStartDate!=null">
+							AND DIS_S_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND DIS_E_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							 ]]>
+						</if> 
+					</otherwise>
+				</choose>	
+				GROUP BY PAYMENTDTTM, PAYMENT_CLS_CD
+		) T	
+	</select>
+				
+	<select id="getSafetyCertPaymentStatistics"		parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+		SELECT 
+					PAYMENTDTTM AS PAYMENT_DTTM
+			 		,CLS_CD
+			 		,TOT_AMT
+			 		,disAmt 
+		FROM 
+		(
+			SELECT
+				<choose>
+					<when test="searchValue != null and searchValue.equals('MONTH')"> 
+						DATE_FORMAT(A.PAYMENT_DTTM,'%Y-%m') PAYMENTDTTM			 	,
+					</when>
+					<otherwise>
+						DATE_FORMAT(A.PAYMENT_DTTM,'%Y') PAYMENTDTTM			 	,
+					</otherwise>
+				</choose>	
+					(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) CLS_CD,
+					sum(TOT_AMT) AS TOT_AMT,
+					sum(CP.DIS_AMT) AS disAmt,
+					COUNT(1)
+				FROM TB_SVC_SFT_CERT_PAYMENT CP 
+				LEFT JOIN TB_SVC_PAYMENT A ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+				LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+				LEFT JOIN TB_SVC_SFT_CERT_USR CU ON ( CU.USR_USR_SEQ = B.USR_SEQ )
+				WHERE 1=1 
+				<choose>
+					<when test="searchParameter != null and searchParameter.equals('PAYMENT')">
+						<if test = "searchStartDate!='' and searchStartDate!=null">
+							AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							 ]]>
+						</if>
+					</when>
+					<otherwise>
+						<if test = "searchStartDate!='' and searchStartDate!=null">
+							AND DIS_S_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND DIS_E_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							 ]]>
+						</if> 
+					</otherwise>
+				</choose>	
+				GROUP BY PAYMENTDTTM, PAYMENT_CLS_CD
+		) T
+		ORDER BY T.PAYMENTDTTM DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}	
+	</select>
+	
+	
+	<select id="safetyCertEndUserList"	parameterType="safetyCertUserVO"	resultType="safetyCertUserVO">
+			SELECT 
+				`CERT_USR_SEQ`  as certUsrSeq,			  
+				`CERT_NUM`	  as certNum,			  
+				`USR_NAME`	  as usrName,				   
+				<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) as usrMpnNo, -->		
+				USR_MPN_NO as usrMpnNo,		
+				`USR_PRV_CD`	as usrPrvCd,			  
+				`CERT_DATE`	 as certDate,			  
+				`CERT_CLS`	  as certCls,			  
+				`CERT_ORG`	  as certOrg,			  
+				`USR_USR_SEQ`   as usrUsrSeq,			  
+				`MB_YN`		 as mbYn,			  
+				`MB_ID`		 as mbId,			  
+				`REG_DTTM`	  as regDttm,			  
+				`MOD_DTTM`	  as modDttm,			  
+				`CERT_ED_DATE`  as certEdDate,			  
+				`DIS_S_DTTM`	as disSDttm,			  
+				`DIS_E_DTTM`	as disEDttm
+			FROM spb.TB_SVC_SFT_CERT_USR 
+		   	WHERE 1=1
+				AND DIS_E_DTTM = (STR_TO_DATE(DATE_FORMAT(now(),'%Y-%m-%d'), '%Y-%m-%d')  + INTERVAL 2 DAY - INTERVAL 1 SECOND)
+	</select>
+	
+	<!-- sms -->
+	
+	<select id="smsSendListCnt" parameterType="memberMgmtVO" resultType="int">
+	SELECT COUNT(1)
+	  FROM TSMS_AGENT_MESSAGE_LOG_T A
+	 WHERE 1=1 
+	   AND SUBJECT IN ('인증제감면자격 개시','인증제감면자격 종료')
+	 <if test='searchStartDate != null and searchStartDate != ""'>	
+	   AND SEND_DATE BETWEEN DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+						  AND DATE_ADD( DATE_FORMAT( #{searchEndDate},'%Y-%m-%d') , INTERVAL 1 DAY )
+	 </if>
+	 <if test='searchParameter == null'>	
+	   AND 1=2
+	 </if>
+	 <if test='searchParameter == "1"'>	
+		  AND RECEIVE_MOBILE_NO =  REPLACE( #{searchValue}, '-','')
+	 </if>
+	 <!-- <if test='searchParameter == "2"'>	
+		AND SMH.SEND_ADMIN_ID LIKE CONCAT('%',#{searchValue}, '%')
+	 </if>  -->
+	</select>
+	
+	<select id="smsSendList"  parameterType="memberMgmtVO" resultType="memberMgmtVO">
+		SELECT CONCAT(SUBSTRING(RECEIVE_MOBILE_NO,1,3),'-',SUBSTRING(RECEIVE_MOBILE_NO,4,4),'-',SUBSTRING(RECEIVE_MOBILE_NO,8,4)) AS viewTel
+			 , SEND_DATE AS sendDt
+			 , SEND_MESSAGE AS MSG
+			 , CASE WHEN A.SEND_RESULT_CODE2 = 'OK' THEN '문자발송'
+					WHEN A.SEND_RESULT_CODE1 = 'OK' THEN '알림톡발송'	 
+					ELSE CONCAT( '발송중' , A.SEND_RESULT_CODE1 , '/', A.SEND_RESULT_CODE2 ) 
+			   END AS stateChk
+			 , A.SUBJECT  AS sendAdminId
+		  FROM TSMS_AGENT_MESSAGE_LOG_T A
+		WHERE 1=1
+		  AND SUBJECT IN ('인증제감면자격 개시','인증제감면자격 종료') 
+		 <if test='searchStartDate != null and searchStartDate != ""'>	
+		   AND SEND_DATE BETWEEN DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+							 AND DATE_ADD( DATE_FORMAT( #{searchEndDate},'%Y-%m-%d') , INTERVAL 1 DAY )
+		 </if>
+		 <if test='searchParameter == null'>	
+		   AND 1=2
+		 </if>
+		 <if test='searchParameter == "1"'>	
+			AND RECEIVE_MOBILE_NO =  REPLACE( #{searchValue}, '-','')
+			ORDER BY A.SEND_DATE DESC
+		 </if>
+	 
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+</mapper>

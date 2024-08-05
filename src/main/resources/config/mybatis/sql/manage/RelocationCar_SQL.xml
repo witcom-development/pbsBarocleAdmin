@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.relocationcar.service.RelocationCarMapper">
+	
+	<resultMap id="resultRelocationCarVO" type="com.dkitec.barocle.admin.manage.relocationcar.vo.RelocationCarVO">
+		<result column="RELOCATE_CAR_ID" property="relocateCarID" />
+		<result column="ASSIGN_CENTER_ID" property="assignCenterID" />
+		<result column="CAR_MODL_NAME" property="carModlName" />
+		<result column="CAR_NO" property="carNO" />
+		<result column="CAR_MODLYY_YYMM" property="carModlyyYYMM" />
+		<result column="CAR_MODLYY_YYMM_1" property="carModlyyYYMM1" />
+		<result column="CAR_MODLYY_YYMM_2" property="carModlyyYYMM2" />
+		<result column="CAR_USE_YN" property="carUseYN" />
+		<result column="RACK_CNT" property="rackCnt" />
+		<result column="NOW_LOC_LATITUDE" property="nowLocLatitude" />
+		<result column="NOW_LOC_LONGITUDE" property="nowLocLongitude" />
+		<result column="GPS_TERMINAL_SERIAL_NO" property="gPSTerminalSerialNO" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="LOC_INFO_MOD_DTTM" property="locInfoModDttm" />
+		<result column="CAR_DESC" property="carDesc" />
+		<result column="CENTER_SEQ" property="centerSeq" />
+		<result column="CENTER_ID" property="centerID" />
+		<result column="CENTER_CLS_CD" property="centerClsCD" />
+		<result column="DISTRICT_CD" property="districtCD" />
+		<result column="CENTER_NAME" property="centerName" />
+		<result column="OPR_STR_TIME" property="oprStrTime" />
+		<result column="OPR_END_TIME" property="oprEndTime" />
+		<result column="CHARGER_NAME" property="chargerName" />
+		<result column="CENTER_POST_NO" property="centerPostNO" />
+		<result column="CENTER_ADDR1" property="centerAddr1" />
+		<result column="CENTER_ADDR2" property="centerAddr2" />
+		<result column="CENTER_LATITUDE" property="centerLatitude" />
+		<result column="CENTER_LONGITUDE" property="centerLongitude" />
+		<result column="CENTER_DESC" property="centerDesc" />
+	</resultMap>
+	
+	<select id="getCenterList" parameterType="String" resultType="java.util.HashMap">
+		SELECT	CENTER_ID AS centerID, CENTER_NAME AS centerName
+		FROM	TB_OPR_CENTER
+		WHERE	CENTER_CLS_CD = #{centerClsCD}
+		ORDER BY
+				CENTER_ID ASC
+	</select>
+	
+	<select id="getTeamList" parameterType="String" resultType="java.util.HashMap">
+		SELECT
+			A.TEAM_SEQ as teamSeq  
+			,A.CENTER_ID as centerId
+			, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.CENTER_ID AND LA.LANG_CLS_CD = 'LAG_001') as centerNm
+			, A.TEAM_ID as teamId
+			, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.TEAM_ID AND LA.LANG_CLS_CD = 'LAG_001') as teamNm
+		FROM TB_SYS_TEAM_INFO A
+		ORDER BY 
+			TEAM_ID, CENTER_ID
+	</select>
+	
+	<!-- 관리자 등록 시 재배치 차량정보 가져오기_20160714_JJH_START -->
+	<select id="getRelocateCarList" resultType="java.util.HashMap">
+		SELECT RELOCATE_CAR_ID,
+			   CAR_NO,
+			   ASSIGN_CENTER_ID
+		FROM TB_OPR_RELOCATE_CAR
+		WHERE 1=1
+		AND CAR_USE_YN = 'Y'
+	</select>
+	<!-- 관리자 등록 시 재배치 차량정보 가져오기_20160714_JJH_END -->
+	
+	<select id="listRelocationCarCount" parameterType="relocationCarVO" resultType="int">
+		SELECT 
+				COUNT(T1.RELOCATE_CAR_ID) AS relocateCarID
+		FROM	TB_OPR_RELOCATE_CAR T1 LEFT OUTER JOIN TB_OPR_CENTER T2 on T1.ASSIGN_CENTER_ID=T2.CENTER_ID
+		WHERE	1=1
+				<if test="assignCenterID!='' and assignCenterID!=null">AND T1.ASSIGN_CENTER_ID = #{assignCenterID}</if>
+				<if test="searchValue!='' and searchValue!=null">AND T1.CAR_NO LIKE CONCAT('%',#{searchValue},'%')</if>
+		ORDER BY
+				CAR_NO ASC
+	</select>
+	
+	<select id="listRelocationCar" parameterType="relocationCarVO" resultMap="resultRelocationCarVO">
+		SELECT 
+				T1.RELOCATE_CAR_ID,
+				T1.ASSIGN_CENTER_ID,
+				T1.CAR_MODL_NAME,
+				T1.CAR_NO,
+				T1.CAR_MODLYY_YYMM,
+				T1.CAR_USE_YN,
+				T1.RACK_CNT,
+				T1.NOW_LOC_LATITUDE,
+				T1.NOW_LOC_LONGITUDE,
+				T1.GPS_TERMINAL_SERIAL_NO,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID,
+				T1.CAR_DESC,
+				T2.CENTER_ID,
+				T2.CENTER_CLS_CD,
+				T2.DISTRICT_CD,
+				T2.CENTER_NAME
+		FROM	TB_OPR_RELOCATE_CAR T1 LEFT OUTER JOIN TB_OPR_CENTER T2 on T1.ASSIGN_CENTER_ID=T2.CENTER_ID
+		WHERE	1=1
+				<if test="assignCenterID!='' and assignCenterID!=null">AND T1.ASSIGN_CENTER_ID = #{assignCenterID}</if>
+				<if test="searchValue!='' and searchValue!=null">AND T1.CAR_NO LIKE CONCAT('%',#{searchValue},'%')</if>
+		ORDER BY
+				CAR_NO ASC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewRelocationCar" parameterType="relocationCarVO" resultMap="resultRelocationCarVO">
+		SELECT 
+				RELOCATE_CAR_ID,
+				ASSIGN_CENTER_ID,
+				CAR_MODL_NAME,
+				CAR_NO,
+				CAR_MODLYY_YYMM,
+				IFNULL(SUBSTRING(CAR_MODLYY_YYMM,1,4),NULL) AS CAR_MODLYY_YYMM_1,
+				IFNULL(SUBSTRING(CAR_MODLYY_YYMM,5,2),NULL) AS CAR_MODLYY_YYMM_2,
+				CAR_USE_YN,
+				RACK_CNT,
+				NOW_LOC_LATITUDE,
+				NOW_LOC_LONGITUDE,
+				GPS_TERMINAL_SERIAL_NO,
+				REG_DTTM,
+				REG_ID,
+				MOD_DTTM,
+				MOD_ID,
+				CAR_DESC,
+				TEAM_SEQ AS teamSeq
+		FROM	TB_OPR_RELOCATE_CAR
+		WHERE	RELOCATE_CAR_ID = #{relocateCarID}
+	</select>
+	
+	<select id="getNextRelocateCarID" resultType="java.lang.String">
+		SELECT IFNULL(MAX(RELOCATE_CAR_ID),NULL) AS relocateCarID FROM TB_OPR_RELOCATE_CAR
+	</select>
+	
+	<insert id="insertRelocationCar" parameterType="relocationCarVO">
+		INSERT INTO TB_OPR_RELOCATE_CAR
+			(
+				RELOCATE_CAR_ID, ASSIGN_CENTER_ID,
+				CAR_MODL_NAME, CAR_NO, CAR_MODLYY_YYMM, CAR_USE_YN,
+				RACK_CNT, NOW_LOC_LATITUDE, NOW_LOC_LONGITUDE, GPS_TERMINAL_SERIAL_NO,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, LOC_INFO_MOD_DTTM,
+				CAR_DESC, TEAM_SEQ
+			)
+		VALUES
+			(
+				#{relocateCarID}, #{assignCenterID},
+				#{carModlName}, #{carNO}, #{carModlyyYYMM}, #{carUseYN},
+				#{rackCnt}, #{nowLocLatitude}, #{nowLocLongitude}, #{gPSTerminalSerialNO},
+				NOW(), #{regID}, NOW(), #{modID}, NOW(),
+				#{carDesc}, #{teamSeq}
+			)
+	</insert>
+	
+	<update id="updateRelocationCar" parameterType="relocationCarVO">
+		UPDATE	TB_OPR_RELOCATE_CAR
+		SET
+				ASSIGN_CENTER_ID = #{assignCenterID},
+				CAR_MODL_NAME = #{carModlName},
+				CAR_NO = #{carNO},
+				CAR_MODLYY_YYMM = #{carModlyyYYMM},
+				CAR_USE_YN = #{carUseYN},
+				GPS_TERMINAL_SERIAL_NO = #{gPSTerminalSerialNO},
+				RACK_CNT = #{rackCnt},
+				MOD_DTTM = NOW(),
+				MOD_ID  = #{modID},
+				CAR_DESC = #{carDesc},
+				TEAM_SEQ = #{teamSeq}
+		WHERE	RELOCATE_CAR_ID = #{relocateCarID}
+	</update>
+	
+	<insert id="insertRelocationCarTeamHist" parameterType="relocationCarVO">
+		INSERT INTO TB_OPR_RELOCATE_CAR_TEAM_HIST
+			(
+				RELOCATE_CAR_ID,
+				BEGIN_DTTM,
+				REG_ID,
+				TEAM_SEQ
+			)
+		VALUES
+			(
+				#{relocateCarID},
+				NOW(),
+				#{regID},
+				#{teamSeq}
+			)
+	</insert>
+	
+	<update id="updateRelocationCarTeamHist" parameterType="relocationCarVO">
+		UPDATE TB_OPR_RELOCATE_CAR_TEAM_HIST
+		SET
+			END_DTTM = NOW()
+		WHERE
+			RELOCATE_CAR_ID = #{relocateCarID}
+			AND END_DTTM IS NULL 
+	</update>
+	
+	<delete id="deleteRelocationCar" parameterType="relocationCarVO">
+		DELETE FROM TB_OPR_RELOCATE_CAR WHERE RELOCATE_CAR_ID = #{relocateCarID}
+	</delete>
+	
+	<select id="countGPSDuplication" parameterType="relocationCarVO" resultType="int">
+		SELECT COUNT(RELOCATE_CAR_ID) FROM TB_OPR_RELOCATE_CAR WHERE GPS_TERMINAL_SERIAL_NO = #{gPSTerminalSerialNO}
+	</select>
+
+</mapper>

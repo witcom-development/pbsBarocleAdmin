@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.group.service.GroupStatisticsMapper">
+	<select id="getGroupMoveDayCnt" parameterType="groupStatisticsVo" resultType="int">
+		SELECT COUNT(*) FROM (
+			SELECT 
+				B.STATION_GRP_NAME AS rentStationGrpName, 
+				C.STATION_GRP_NAME AS returnStationGrpName, 
+				A.STAT_DATE AS rentDttm,
+				SUM(A.GRP_MOVE_CNT) moveCnt
+			 FROM TB_STA_STATION_GRP_MOVE_DD A LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B ON  A.RENT_STATION_GRP_SEQ = B.STATION_GRP_SEQ
+			LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) C ON  A.RETURN_STATION_GRP_SEQ = C.STATION_GRP_SEQ
+			WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='rentStationGrp != "" and rentStationGrp != null'>
+				AND A.RENT_STATION_GRP_SEQ = #{rentStationGrp}
+			</if>
+			<if test='returnStationGrp != "" and returnStationGrp != null'>
+				AND A.RETURN_STATION_GRP_SEQ = #{returnStationGrp}
+			</if>
+			GROUP BY A.RENT_STATION_GRP_SEQ, A.RETURN_STATION_GRP_SEQ
+		) A
+	</select>
+	
+	<select id="getGroupMoveDayList" parameterType="groupStatisticsVo" resultType="groupStatisticsVo">
+		 SELECT 
+			B.STATION_GRP_NAME AS rentStationGrpName, 
+			IFNULL(C.STATION_GRP_NAME,'그룹명없음') AS returnStationGrpName, 
+			A.STAT_DATE AS rentDttm,
+			SUM(A.GRP_MOVE_CNT) moveCnt
+		FROM TB_STA_STATION_GRP_MOVE_DD A LEFT OUTER JOIN
+		(
+			SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+			FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+			WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+			AND B.LANG_CLS_CD = 'LAG_001'
+		) B ON  A.RENT_STATION_GRP_SEQ = B.STATION_GRP_SEQ
+		LEFT OUTER JOIN
+		(
+			SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+			FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+			WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+			AND B.LANG_CLS_CD = 'LAG_001'
+		) C ON  A.RETURN_STATION_GRP_SEQ = C.STATION_GRP_SEQ
+		WHERE 1 = 1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='rentStationGrp != "" and rentStationGrp != null'>
+			AND A.RENT_STATION_GRP_SEQ = #{rentStationGrp}
+		</if>
+		<if test='returnStationGrp != "" and returnStationGrp != null'>
+			AND A.RETURN_STATION_GRP_SEQ = #{returnStationGrp}
+		</if>
+		GROUP BY A.RENT_STATION_GRP_SEQ, A.RETURN_STATION_GRP_SEQ
+		ORDER BY A.STAT_DATE DESC, A.RENT_STATION_GRP_SEQ, A.RETURN_STATION_GRP_SEQ
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getGroupMoveMonthCnt" parameterType="groupStatisticsVo" resultType="int">
+		SELECT COUNT(*) FROM (
+			SELECT 
+				B.STATION_GRP_NAME AS rentStationGrpName, 
+				C.STATION_GRP_NAME AS returnStationGrpName, 
+				A.STAT_MM AS rentDttm,
+				SUM(A.GRP_MOVE_CNT) moveCnt
+			FROM TB_STA_STATION_GRP_MOVE_MM A LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B ON A.RENT_STATION_GRP_SEQ = B.STATION_GRP_SEQ
+			LEFT OUTER JOIN 
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) C ON A.RETURN_STATION_GRP_SEQ = C.STATION_GRP_SEQ
+			WHERE 1 = 1
+			<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+			<if test='rentStationGrp != "" and rentStationGrp != null'>
+				AND A.RENT_STATION_GRP_SEQ = #{rentStationGrp}
+			</if>
+			<if test='returnStationGrp != "" and returnStationGrp != null'>
+				AND A.RETURN_STATION_GRP_SEQ = #{returnStationGrp}
+			</if>
+			GROUP BY A.RENT_STATION_GRP_SEQ, A.RETURN_STATION_GRP_SEQ
+		) A
+	</select>
+	
+	<select id="getGroupMoveMonthList" parameterType="groupStatisticsVo" resultType="groupStatisticsVo">
+		SELECT 
+			B.STATION_GRP_NAME					  AS rentStationGrpName, 
+			IFNULL(C.STATION_GRP_NAME,'그룹명없음') AS returnStationGrpName, 
+			A.STAT_MM AS rentDttm,
+			SUM(A.GRP_MOVE_CNT) moveCnt
+		FROM TB_STA_STATION_GRP_MOVE_MM A LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B ON A.RENT_STATION_GRP_SEQ = B.STATION_GRP_SEQ
+			LEFT OUTER JOIN 
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) C ON A.RETURN_STATION_GRP_SEQ = C.STATION_GRP_SEQ
+		WHERE 1 = 1
+		<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+			AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		</if>
+		<if test='rentStationGrp != "" and rentStationGrp != null'>
+			AND A.RENT_STATION_GRP_SEQ = #{rentStationGrp}
+		</if>
+		<if test='returnStationGrp != "" and returnStationGrp != null'>
+			AND A.RETURN_STATION_GRP_SEQ = #{returnStationGrp}
+		</if>
+		GROUP BY A.RENT_STATION_GRP_SEQ, A.RETURN_STATION_GRP_SEQ
+		ORDER BY A.STAT_MM DESC, A.RENT_STATION_GRP_SEQ, A.RETURN_STATION_GRP_SEQ
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+</mapper>

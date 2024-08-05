@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+	   					   http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+						   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd">
+
+	<context:component-scan base-package="com.dkitec.barocle">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Service"/>
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Repository"/>
+	</context:component-scan>
+	
+	<!-- @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)을 사용하기 위한 테그 -->
+	<!-- <mvc:annotation-driven/> 핸들러와 인터셉터 충돌로 initBinter로 변경-->
+	
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter">
+		<property name="webBindingInitializer">
+			<bean class="org.springframework.web.bind.support.ConfigurableWebBindingInitializer">
+				<property name="validator" ref="validator"/>
+			</bean>
+		</property>
+	</bean>
+
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping">
+		<property name="interceptors">
+			<list>
+				<bean class="com.dkitec.cfood.core.web.interceptor.LocaleChangeInterceptorEx">
+					<property name="paramName" value="lang"/>
+				</bean>
+				<bean class="com.dkitec.barocle.logging.interceptor.LoggingInterceptor"/>
+			</list>
+		</property>
+	</bean>
+	<bean id="downloadController" class="com.dkitec.barocle.admin.common.controller.DownloadController" />
+	<bean id="downloadView" class="com.dkitec.barocle.util.webutil.DownloadViewUtil" />
+	
+	
+	<bean id="" class="org.springframework.web.servlet.view.BeanNameViewResolver">
+		<property name="order" value="0"/>
+	</bean>
+	
+	<bean class="org.springframework.web.servlet.view.tiles3.TilesConfigurer">
+		<property name="definitions">
+			<list>
+				<value>classpath:config/tiles/mainTiles.xml</value>
+				<value>classpath:config/tiles/customerTiles.xml</value>
+				<value>classpath:config/tiles/managerTiles.xml</value>
+				<value>classpath:config/tiles/systemManageTiles.xml</value>
+				<value>classpath:config/tiles/serviceTiles.xml</value>
+				<value>classpath:config/tiles/statusTiles.xml</value>
+				<value>classpath:config/tiles/statisticsTiles.xml</value>
+				<value>classpath:config/tiles/maintenanceTiles.xml</value>
+				<value>classpath:config/tiles/repairBikeMallTiles.xml</value>
+				<value>classpath:config/tiles/repairMgmtTiles.xml</value>
+				<value>classpath:config/tiles/cleanStatusTiles.xml</value> 
+			</list>
+		</property>
+	</bean>
+	<bean class="org.springframework.web.servlet.view.tiles3.TilesViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.tiles3.TilesView"/>
+		<property name="order" value="1"/>
+	</bean>
+	
+	<bean class="org.springframework.web.servlet.view.UrlBasedViewResolver">
+		<property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+		<property name="prefix" value="/WEB-INF/views"/>
+		<property name="suffix" value=".jsp"/>
+		<property name="order" value="2"/>
+	</bean>
+	
+	<!-- AJAX 사용을위한 JSONView 설정 -->
+	<bean id="JSONView" class="org.springframework.web.servlet.view.json.MappingJacksonJsonView" />
+	
+	<bean id="defaultResolver" 	class="org.springframework.web.servlet.view.ContentNegotiatingViewResolver"	>
+		<property name="mediaTypes">
+			<map> 
+				<entry key="htm" value="text/html;charset=UTF-8" />
+				<entry key="html" value="text/html;charset=UTF-8" />
+				<entry key="ajax" value="text/html;charset=UTF-8" />
+				<entry key="json" value="application/json;charset=UTF-8" />
+				<entry key="do" value="text/html;charset=UTF-8" />
+			</map>
+		</property>
+		<property name="defaultViews">
+			<list><ref bean="JSONView" /></list>
+		</property>
+		<property name="order" value="3"/>
+	</bean>
+	
+	<bean class="org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver"/>
+
+	<bean class="com.dkitec.cfood.core.web.RequestMappingDetector"/>
+	
+	<!-- 파일 다운로드 위한 뷰등록 _cms_20161110-->
+	<bean id="filedownloadView" class="com.dkitec.barocle.util.webutil.DownloadView" />
+	
+</beans>

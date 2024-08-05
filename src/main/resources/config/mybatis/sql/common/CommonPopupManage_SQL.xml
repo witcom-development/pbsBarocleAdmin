@@ -1,0 +1,607 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.common.service.CommonPopupMapper">
+	
+	<update id="setApLastChkDttm" parameterType="regularChkVo">
+		UPDATE TB_IOT_DEVICE	 
+		<set>	   
+			<if test='chkDttm != null and chkDttm != ""'>
+			LAST_CHK_DTTM =  CONCAT(#{chkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+			</if>
+			<if test='chkDttm == null or chkDttm == ""'>
+			LAST_CHK_DTTM = now()
+			</if>
+		</set>
+		 WHERE DEVICE_ID = #{equipmentId}  
+	</update>
+	<update id="setArmLastChkDttm" parameterType="regularChkVo">
+		UPDATE TB_OPR_RACK
+		<set>		
+			<if test='chkDttm != null and chkDttm != ""'>
+			LAST_CHK_DTTM = CONCAT(#{chkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+			</if>
+			<if test='chkDttm == null or chkDttm == ""'>
+			LAST_CHK_DTTM = now()
+			</if>
+		 </set>   
+		 WHERE RACK_ID = #{equipmentId} 
+		
+	</update>
+	<update id="setBikeLastChkDttm" parameterType="regularChkVo">
+		UPDATE TB_OPR_BIKE
+	   <set>	   
+			<if test='chkDttm != null and chkDttm != ""'>
+			LAST_CHK_DTTM = CONCAT(#{chkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+			</if>
+			<if test='chkDttm == null or chkDttm == ""'>
+			LAST_CHK_DTTM = now()
+			</if>
+		</set>
+		 WHERE BIKE_NO = #{equipmentId}
+	</update>
+	<update id="setTerminalLastChkDttm" parameterType="regularChkVo">
+		UPDATE TB_IOT_DEVICE
+		<set>	   
+			<if test='chkDttm != null and chkDttm != ""'>
+			LAST_CHK_DTTM = CONCAT(#{chkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+			</if>
+			<if test='chkDttm == null or chkDttm == ""'>
+			LAST_CHK_DTTM = now()
+			</if>
+		</set>
+		 WHERE DEVICE_ID = #{equipmentId}  
+	</update>
+	<insert id="addRegularChkUpInfo" parameterType="regularChkVo">
+		INSERT INTO TB_MTC_RGULR_CHK_INFO
+		(
+			EQUIPMENT_CLS_CD
+		   ,EQUIPMENT_ID
+		   ,MAINTC_ADMIN_ID
+		   ,RGULR_CHK_DTTM
+		   ,RGULR_CHK_CONTENT
+		) VALUES (
+			#{equipmentClsCd}
+		   ,#{equipmentId}
+		   ,#{adminId}
+		   <if test='chkDttm == null or chkDttm == ""'>   
+		   ,now()
+		   </if>
+		   <if test='chkDttm != null and chkDttm != ""'>   
+		   ,CONCAT(#{chkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+		   </if>
+		   ,#{comments}
+		) 
+	</insert>  
+	<update id="updateFaultType" parameterType="regularChkVo">
+		UPDATE TB_MTC_FAULT_INFO SET READ_CLS_CD = 'H', MOD_DTTM = now(), MOD_ID = #{modId}
+		WHERE FAULT_SEQ = #{faultSeq}
+	</update>
+	<select id="getBeforeChkInfo" parameterType='regularChkVo' resultType="regularChkVo">
+		SELECT MAINTC_ADMIN_ID						 AS adminId
+			  ,DATE_FORMAT(RGULR_CHK_DTTM, '%Y-%m-%d') AS chkDttm	  
+			  ,RGULR_CHK_CONTENT					   AS comments
+			  ,(SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE LANG_CLS_CD = 'LAG_001'
+				   AND COM_CD = #{equipmentClsCd} )	AS equipmentClsName
+				,EQUIPMENT_CLS_CD					  AS equipmentClsCd
+				,EQUIPMENT_ID						  AS equipmentId
+		  FROM TB_MTC_RGULR_CHK_INFO	
+		 WHERE EQUIPMENT_CLS_CD = #{equipmentClsCd}
+		   AND EQUIPMENT_ID = #{equipmentId}
+		 ORDER BY RGULR_CHK_SEQ DESC
+		 LIMIT 1
+	</select>
+	  
+<!--	 <select id="getApDeviceInfo" parameterType="foDeviceVo" resultType="foDeviceVo">
+	<![CDATA[
+		SELECT A.DEVICE_ID	   AS apId
+			 , A.SERIAL_NO	   AS serialNo
+			 , A.DEVICE_STUS_CD  AS deviceStatusCd
+			 ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD 
+				WHERE COM_CD = A.DEVICE_STUS_CD 
+				  AND LANG_CLS_CD = #{lang} )	   AS deviceStatusName
+		  FROM TB_IOT_DEVICE A INNER JOIN TB_IOT_AP_LOCATE_INFO B
+			ON A.DEVICE_ID = B.DEVICE_ID
+		  WHERE B.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+	]]>
+		  <if test='apId != null and apId != ""'>
+			AND A.DEVICE_ID LIKE CONCAT('%',#{apId}, '%')
+		  </if> 
+		  <if test='searchType != null and searchType != ""'>
+			  AND B.LOCATE_CLS_CD = #{searchType}  
+		  </if>   
+		  <if test='deviceStatusCd != null and deviceStatusCd != ""'>		 
+			AND A.DEVICE_STUS_CD	= #{deviceStatusCd}
+		  </if>
+	</select> -->
+	<select id="getApDeviceInfo" parameterType="foDeviceVo" resultType="foDeviceVo">
+	<![CDATA[
+		 SELECT AP.* FROM 
+		 ( SELECT A.DEVICE_ID	   AS apId
+			 , A.SERIAL_NO	   AS serialNo
+			 , A.DEVICE_STUS_CD  AS deviceStatusCd
+			 ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD 
+				WHERE COM_CD = A.DEVICE_STUS_CD 
+				  AND LANG_CLS_CD = #{lang} )	   AS deviceStatusName
+			   , B.LOCATE_CLS_CD
+			   , B.LOCATE_ID
+			   ,(if (B.LOCATE_CLS_CD = 'S',
+						(SELECT S.STATION_GRP_SEQ FROM TB_OPR_STATION S WHERE S.STATION_ID = B.LOCATE_ID ),''
+					)) AS stationGuId
+			   ,(case 
+					   when B.LOCATE_CLS_CD = 'C' then (SELECT MCOM.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD MCOM
+						 JOIN TB_OPR_CENTER OPCEN ON OPCEN.DISTRICT_CD = MCOM.COM_CD 
+						 WHERE MCOM.LANG_CLS_CD =  #{lang} AND OPCEN.CENTER_ID = B.LOCATE_ID)
+						 
+					   else (SELECT OPMLST.STATION_GRP_NAME FROM TB_OPR_MLANG_STATION_GRP OPMLST
+					   JOIN TB_OPR_STATION OPST ON OPST.STATION_GRP_SEQ = OPMLST.STATION_GRP_SEQ
+					   WHERE OPMLST.LANG_CLS_CD = #{lang}  AND OPST.STATION_ID = B.LOCATE_ID
+				) 
+					end) AS stationGuName					
+					,(case 
+					   when B.LOCATE_CLS_CD = 'C' then (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = B.LOCATE_ID)
+					   else (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = B.LOCATE_ID AND LANG_CLS_CD = #{lang})
+					end)							  AS stationName  
+				
+		  FROM TB_IOT_DEVICE A INNER JOIN TB_IOT_AP_LOCATE_INFO B
+			ON A.DEVICE_ID = B.DEVICE_ID
+		  WHERE B.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') ) AP
+		  WHERE 1=1
+	]]>
+		  <if test='apId != null and apId != ""'>
+			AND AP.apId LIKE CONCAT('%',#{apId}, '%')
+		  </if> 
+		  <if test='searchType != null and searchType != ""'>
+			  AND AP.LOCATE_CLS_CD = #{searchType}  
+		  </if>   
+		  <if test='deviceStatusCd != null and deviceStatusCd != ""'>		 
+			AND AP.deviceStatusCd	= #{deviceStatusCd}
+		  </if>
+		  <if test='searchType=="S" and stationGroupId != null and stationGroupId != ""'>		 
+			AND AP.stationGuId = #{stationGroupId}
+		  </if>
+		  <if test='searchType=="C" and stationGroupId != null and stationGroupId != ""'>		 
+			AND AP.LOCATE_ID = #{stationGroupId}
+		  </if>
+		  <if test='stationId != null and stationId != ""'>		 
+			AND AP.LOCATE_ID = #{stationId}
+		  </if>
+	</select>
+	<select id="getArmDeviceInfo" parameterType="foDeviceVo" resultType="foDeviceVo">
+	<![CDATA[
+		SELECT RS.RACK_ID							AS rackId 
+			  ,RS.RACK_STUS_CD					   AS deviceStatusCd
+			  ,RS.DEVICE_STATUS_NAME	   			AS deviceStatusName
+			  ,RS.NOW_STATION_EQUIP_ORD					AS stationEquipOrder
+			  ,RS.NOW_LOCATE_ID						  AS locateId
+			  ,CONCAT(RS.CENTER_NAME, RS.STATION_NAME)	   AS stationName
+		  FROM (SELECT
+		  		A.RACK_ID							
+			   ,A.RACK_STUS_CD					   
+			   ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD 
+				 WHERE COM_CD = A.RACK_STUS_CD 
+				 AND LANG_CLS_CD = #{lang} ) AS DEVICE_STATUS_NAME
+			   ,A.NOW_STATION_EQUIP_ORD				
+			   ,A.NOW_LOCATE_ID	  
+			   ,A.NOW_LOCATE_CLS_CD
+		  	   ,IF(CEN.CENTER_NAME IS NULL, '', CONCAT('(C)', CEN.CENTER_NAME)) CENTER_NAME
+			   ,IF(ST.STATION_NAME IS NULL, '', CONCAT('(S)', ST.STATION_NAME)) STATION_NAME
+				FROM  TB_OPR_RACK A
+		  		LEFT OUTER JOIN TB_OPR_CENTER CEN ON A.NOW_LOCATE_ID = CEN.CENTER_ID
+		  	LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}) ST ON A.NOW_LOCATE_ID = ST.STATION_ID
+		  	) RS
+		  	WHERE 1 = 1
+	]]>
+		<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+			AND RS.RACK_STUS_CD  = #{deviceStatusCd}
+		</if>
+		<if test='searchType != null and searchType != ""'>
+			AND RS.NOW_LOCATE_CLS_CD = #{searchType}
+		</if>
+		<if test ='stationName != null and stationName != "" and stationName != null'>
+			AND CONCAT(RS.CENTER_NAME, RS.STATION_NAME) LIKE CONCAT('%', #{stationName},'%')
+		</if>	
+		<if test='rackId != null and rackId != ""'>
+		   	AND RACK_ID LIKE CONCAT('%', #{rackId},'%')
+		</if>
+	</select>
+	
+	<select id="getStations" parameterType="String" resultType="String">
+		SELECT STATION_SEQ
+		  FROM TB_OPR_MLANG_STATION
+		 WHERE STATION_NAME LIKE #{statonName}+'%'	   
+		   AND LANG_CLS_CD = #{lang}  
+	</select>	
+	
+	<select id="getBikeDeviceDtlObsInfo" parameterType="foDeviceVo" resultType="foDeviceVo">
+		SELECT /* CommonPopupManage_SQL.getBikeDeviceDtlObsInfo */
+			   bikeId
+			  ,bikeNo
+			  ,deviceStatusCd
+			  ,deviceStatusName
+			<if test ='bikeNo != null and bikeNo !=""'>   
+			  ,faultContent
+			  ,reportContent
+			  ,batReplaceTime 
+			</if>  
+		  FROM
+		  	  (
+				SELECT A.BIKE_ID								AS bikeId
+					  ,A.BIKE_NO								AS bikeNo
+					  ,A.BIKE_STUS_CD				   		AS deviceStatusCd
+					  ,(
+						 SELECT MLANG_COM_CD_NAME
+						   FROM spb.TB_SYS_MLANG_COM_CD 
+						  WHERE COM_CD = A.BIKE_STUS_CD 
+							AND LANG_CLS_CD = #{lang} 
+						)   									AS deviceStatusName
+				   <if test ='bikeNo != null and bikeNo !=""'>	
+					  ,(
+						 SELECT FAULT_CONTENT						
+						   FROM	spb.TB_MTC_FAULT_INFO
+						  WHERE FAULT_SEQ = MAX(D.FAULT_SEQ)	 
+						)  										AS faultContent
+					  ,(
+						 SELECT MLANG_COM_CD_NAME
+						   FROM spb.TB_MTC_REPORT_DETL   	A
+					 INNER JOIN spb.TB_SYS_MLANG_COM_CD 	B 	ON A.BRKDN_STUS_CD = B.COM_CD
+						  WHERE A.FAULT_SEQ = MAX(D.FAULT_SEQ)
+							AND LANG_CLS_CD = #{lang} 
+						)  										AS reportContent
+					  ,(
+					  	 SELECT DATE_FORMAT(MAX(REG_DTTM),'%Y-%m-%d %H:%i:%s')
+					  	   FROM spb.TB_MTC_BAT_REPLACE_INFO
+					  	  WHERE BIKE_NO = CASE WHEN LENGTH(#{bikeNo}) BETWEEN 1 AND 5 THEN CONCAT('BRC-',LPAD(#{bikeNo},5,'0'))
+																			ELSE 'X'
+																			END
+						)										AS batReplaceTime	
+				   </if>		   
+				  FROM spb.TB_OPR_BIKE 						A 
+				  LEFT OUTER JOIN spb.TB_OPR_BIKE_PARKING 	B 		ON A.BIKE_ID = B.BIKE_ID
+				  LEFT OUTER JOIN spb.TB_OPR_RACK 			C 		ON B.RACK_ID = C.RACK_ID
+				  LEFT OUTER JOIN spb.TB_MTC_FAULT_INFO 	D 		ON A.BIKE_ID = D.EQUIPMENT_ID AND A.BIKE_STUS_CD ='BKS_001' AND D.READ_CLS_CD = 'S'
+			
+				<trim prefix="WHERE" prefixOverrides="AND"> 
+				<if test ='bikeNo == null or bikeNo ==""'>
+					 1=2
+				</if>	
+				<choose>
+					<when test='searchType == "T"'>
+						A.BIKE_STUS_CD  NOT IN ('BKS_002','BKS_007')
+						AND (A.TERMINAL_ID IS NULL OR A.TERMINAL_ID = '')
+						<if test ='bikeNo != null and bikeNo !=""'>
+						AND A.BIKE_NO = CASE WHEN LENGTH(#{bikeNo}) BETWEEN 1 AND 5 THEN CONCAT('BRC-',LPAD(#{bikeNo},5,'0'))
+																			ELSE 'X'
+																			END 
+						
+						
+						</if>
+					</when>
+					<otherwise>
+					<if test ='bikeNo != null and bikeNo !=""'>
+						AND A.BIKE_NO = CASE WHEN LENGTH(#{bikeNo}) BETWEEN 1 AND 5 THEN CONCAT('BRC-',LPAD(#{bikeNo},5,'0'))
+																			ELSE 'X'
+																			END 
+					</if>
+					<if test='searchType != null and searchType != ""'>
+						AND C.NOW_LOCATE_CLS_CD = #{searchType} 
+					</if> 
+					<if test='deviceStatusCd != null and deviceStatusCd != ""'>	
+						AND A.BIKE_STUS_CD = #{deviceStatusCd}
+					</if>
+					</otherwise>
+				</choose>	
+				</trim>
+			  ) ta
+		 WHERE ta.bikeId IS NOT NULL AND ta.bikeId != ''  
+	</select>
+	
+	<select id="getBikeDeviceInfo" parameterType="foDeviceVo" resultType="foDeviceVo">
+	<![CDATA[
+		SELECT A.BIKE_ID						AS bikeId
+			  ,A.BIKE_NO						AS bikeNo
+			  ,A.BIKE_STUS_CD				   AS deviceStatusCd
+			  ,(SELECT MLANG_COM_CD_NAME
+				 FROM spb.TB_SYS_MLANG_COM_CD 
+				WHERE COM_CD = A.BIKE_STUS_CD 
+				  AND LANG_CLS_CD = #{lang} )	AS deviceStatusName
+		  FROM spb.TB_OPR_BIKE A 
+		  LEFT OUTER JOIN spb.TB_OPR_BIKE_PARKING B ON A.BIKE_ID = B.BIKE_ID
+		  LEFT OUTER JOIN spb.TB_OPR_RACK C ON B.RACK_ID = C.RACK_ID
+	]]>
+		<trim prefix="WHERE" prefixOverrides="AND"> 
+		<choose>
+			<when test='searchType == "T"'>
+				A.BIKE_STUS_CD  NOT IN ('BKS_002','BKS_007')
+				AND (A.TERMINAL_ID IS NULL OR A.TERMINAL_ID = '')
+				<if test ='bikeNo != null and bikeNo !=""'>
+				AND A.BIKE_NO LIKE CONCAT('%',#{bikeNo},'%')
+				</if>
+			</when>
+			<otherwise>	
+			<if test ='bikeNo != null and bikeNo !=""'>
+				A.BIKE_NO LIKE CONCAT('%',#{bikeNo},'%')
+			</if>
+			<if test='searchType != null and searchType != ""'>
+				AND C.NOW_LOCATE_CLS_CD = #{searchType} 
+			</if> 
+			<if test='deviceStatusCd != null and deviceStatusCd != ""'>	
+				AND A.BIKE_STUS_CD = #{deviceStatusCd}
+			</if>
+			</otherwise>
+		</choose>	
+		</trim>	
+	</select>
+	<select id="getTerminalDeviceInfo" parameterType="foDeviceVo" resultType="foDeviceVo">
+		SELECT A.DEVICE_ID					   AS terminalId
+			 , A.SERIAL_NO					   AS serialNo
+			 , A.DEVICE_STUS_CD				  AS deviceStatusCd
+			 ,(SELECT MLANG_COM_CD_NAME
+				 FROM TB_SYS_MLANG_COM_CD 
+				WHERE COM_CD = A.DEVICE_STUS_CD 
+				  AND LANG_CLS_CD = #{lang} )	AS deviceStatusName
+		  FROM TB_IOT_DEVICE A INNER JOIN TB_IOT_TERMINAL_LOCATE_INFO B
+			ON A.DEVICE_ID = B.DEVICE_ID
+		 WHERE B.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+		<if test='terminalId != null and terminalId != ""'>		  
+			AND A.DEVICE_ID LIKE CONCAT('%',#{terminalId},'%') 
+		</if> 
+		<if test='searchType != null and searchType != ""'>
+			AND B.LOCATE_CLS_CD  = #{searchType}
+			<if test='searchType == "C"'>
+				AND A.DEVICE_STUS_CD = 'DES_003'
+			</if>
+		</if>   
+		<if test='deviceStatusCd != null and deviceStatusCd != ""'>		 
+			AND A.DEVICE_STUS_CD  = #{deviceStatusCd}
+		</if>
+	</select>
+	<select id="getPenaltyDetailInfo" parameterType="penaltyVo" resultType="penaltyVo">
+		SELECT PENALTY_CD   AS penaltyCd
+			  ,PENALTY_DESC AS penaltyDesc
+		  FROM spb.TB_SVC_PENALTY	 
+		 WHERE PENALTY_SEQ = #{penaltySeq}
+	</select>	
+	
+	<!-- 2017.07.04_라이브 소스 비교의 따른 변경_JHN -->
+	<!-- <delete id="delRentPenaltyImpose" parameterType="penaltyVo">
+		DELETE FROM spb.TB_SVC_PENALTY WHERE PENALTY_SEQ = #{penaltySeq}
+	</delete> -->
+	<update id="delRentPenaltyImpose" parameterType="penaltyVo">
+		UPDATE spb.TB_SVC_PENALTY 
+		  SET READ_CLS_CD = 'H'
+		WHERE PENALTY_SEQ = #{penaltySeq}
+	</update>
+	
+	<insert id="addRentPenaltyImpose" parameterType="penaltyVo">
+		INSERT INTO spb.TB_SVC_PENALTY (
+			 USR_SEQ
+			,PENALTY_CD
+			,REG_ID
+			,REG_DTTM
+			,RENT_HIST_SEQ
+			,PENALTY_DESC
+			,READ_CLS_CD	<!-- 2017.07.04_라이브 소스 비교의 따른 변경_JHN -->
+			) VALUES (
+			  #{usrSeq}
+			 ,#{penaltyCd}
+			 ,#{adminId}
+			 ,now()
+			 ,CASE WHEN #{rentHistSeq} = '' THEN 0
+				   WHEN #{rentHistSeq} IS NULL THEN 0 
+			  ELSE #{rentHistSeq}
+			  END
+			 ,#{penaltyDesc}
+			 ,'S'
+			)
+	</insert>	
+	<select id="getSmsMessageList" resultType="smsSendVo">
+		 SELECT SMS_SEQ	   AS smsSeq
+			   ,ORIGNL_MSG	AS smsMsg
+			   ,SEND_CLS_NAME AS sendClsName
+		   FROM spb.TB_SYS_SMS
+		  WHERE AUTO_SEND_YN = 'N'
+	</select>
+	<select id="getTroubleReportInfo" parameterType="troubleReportVo" resultType="troubleReportVo">
+		SELECT T.FAULT_SEQ AS faultSeq,
+			   T.EQUIPMENT_ID AS equipmentId,
+			   T.EQUIPMENT_CLS_CD AS equipmentClsCd,
+			   T.MOD_ID AS reportId,
+			   T.STATION_NAME as stationName,
+			   T.FAULT_CONTENT as faultContent
+		FROM (
+		<if test='deviceType == "DEV_001"'>
+   			SELECT A.FAULT_SEQ,
+   				   B.BIKE_NO AS EQUIPMENT_ID,
+   				   A.EQUIPMENT_CLS_CD,
+   				   A.MOD_ID,
+				   (CASE
+					WHEN D.LOCATE_CLS_CD = 'C' THEN CONCAT('(C)', (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = D.LOCATE_ID))
+					ELSE CONCAT('(S)', (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = D.LOCATE_ID AND LANG_CLS_CD = #{lang}))
+					END) AS STATION_NAME,
+				   A.FAULT_CONTENT
+   			FROM TB_MTC_FAULT_INFO A
+			LEFT OUTER JOIN TB_OPR_BIKE B ON A.EQUIPMENT_ID = B.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_BIKE_PARKING C ON B.BIKE_ID = C.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO D ON C.RACK_ID = D.RACK_ID AND D.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		</if>
+		<if test='deviceType == "DEV_003"'>
+			SELECT A.FAULT_SEQ,
+   				   A.EQUIPMENT_ID,
+   				   A.EQUIPMENT_CLS_CD,
+   				   A.MOD_ID,
+				   (CASE
+					WHEN B.LOCATE_CLS_CD = 'C' THEN CONCAT('(C)', (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = B.LOCATE_ID))
+					ELSE CONCAT('(S)', (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = B.LOCATE_ID AND LANG_CLS_CD = #{lang}))
+					END) AS STATION_NAME,
+				   A.FAULT_CONTENT
+   			FROM TB_MTC_FAULT_INFO A
+			LEFT OUTER JOIN TB_IOT_AP_LOCATE_INFO B ON A.EQUIPMENT_ID = B.DEVICE_ID AND B.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		</if>
+		<if test='deviceType == "DEV_004"'>
+			SELECT A.FAULT_SEQ,
+   				   A.EQUIPMENT_ID,
+   				   A.EQUIPMENT_CLS_CD,
+   				   A.MOD_ID,
+   				   CONCAT((CASE
+					WHEN B.LOCATE_CLS_CD = 'C' THEN CONCAT('(C)', (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = B.LOCATE_ID))
+					ELSE CONCAT('(S)', (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = B.LOCATE_ID AND LANG_CLS_CD = #{lang}))
+					END), '/', B.STATION_EQUIP_ORD) AS STATION_NAME,
+				   A.FAULT_CONTENT
+   			FROM TB_MTC_FAULT_INFO A
+			LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO B ON A.EQUIPMENT_ID = B.RACK_ID AND B.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		</if>
+		) T
+		WHERE FAULT_SEQ = #{faultSeq}
+	</select>
+	<select id="getStationName" parameterType="troubleReportVo" resultType="String">
+		SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = #{stationId} AND LANG_CLS_CD = #{lang}
+	</select>
+	<select id="chkFaultExist"  parameterType="troubleReportVo" resultType="int">
+		SELECT COUNT(*) AS cnt
+		  FROM TB_MTC_FAULT_INFO
+		 WHERE EQUIPMENT_CLS_CD = #{deviceType}
+		   AND EQUIPMENT_ID = #{equipmentId}
+		   AND READ_CLS_CD = 'S'
+	</select>	
+	<insert id="insertTrouble" parameterType="troubleReportVo">
+		INSERT INTO TB_MTC_FAULT_INFO (
+			 EQUIPMENT_ID,
+			 EQUIPMENT_CLS_CD, 
+			 READ_CLS_CD,
+			 REG_DTTM,
+			 MOD_DTTM,
+			 MOD_ID,
+			 FAULT_CONTENT
+			)
+		VALUES (
+			#{equipmentId},
+			#{deviceType},
+			'S',
+			now(),
+			now(),
+			#{reportId},
+			#{faultContent}
+		)
+		<selectKey keyProperty="faultSeq" resultType="String">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+	</insert>  
+	 
+	<insert id="insertTroubleType" parameterType="troubleReportVo">
+		INSERT INTO TB_MTC_FAULT_DETL (
+	   		 FAULT_SEQ,
+			 FAULT_CLS_CD
+		)
+		VALUES (
+			#{faultSeq}, 
+			<if test='deviceType == "DEV_001"'>
+				'ERB_002'
+			</if>
+			<if test='deviceType == "DEV_003"'>
+				'ERA_002'
+			</if>
+			<if test='deviceType == "DEV_004"'>
+				'ERR_002'
+			</if>
+		)
+		<selectKey keyProperty="faultSeq" resultType="String">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+	</insert>  
+	 
+	<update id="updateTrouble" parameterType="troubleReportVo">
+		UPDATE TB_MTC_FAULT_INFO SET MOD_DTTM = now(), MOD_ID = #{reportId}, FAULT_CONTENT = #{faultContent}
+		WHERE FAULT_SEQ = #{faultSeq}
+	</update>
+	
+	<update id="updateApStatus" parameterType="troubleReportVo">
+		UPDATE TB_IOT_DEVICE SET DEVICE_STUS_CD = #{deviceStatus}
+		WHERE DEVICE_ID = #{equipmentId}
+	</update>
+	
+	<update id="updateBikeStatus" parameterType="troubleReportVo">
+		UPDATE TB_OPR_BIKE SET BIKE_STUS_CD = #{deviceStatus}
+		WHERE BIKE_ID = #{equipmentId}
+	</update>
+	
+	<update id="updateLockStatus" parameterType="troubleReportVo">
+		UPDATE TB_OPR_RACK SET RACK_STUS_CD = #{deviceStatus}
+		WHERE RACK_ID = #{equipmentId}
+	</update>
+	
+	<insert id="insertTroubleDetail" parameterType="troubleReportVo">
+		INSERT INTO TB_MTC_REPORT_DETL (
+		   	FAULT_SEQ, BRKDN_STUS_CD
+			) VALUES (
+			  #{faultSeq}
+			 ,#{faultCode}
+			)
+	</insert>
+	
+	<delete id="deleteTroubleDetail" parameterType="troubleReportVo">
+		DELETE FROM TB_MTC_REPORT_DETL
+		WHERE FAULT_SEQ = #{faultSeq}
+	</delete>
+	
+	<select id="isBlackList" parameterType="penaltyVo" resultType="int">
+		SELECT IF((SELECT SUM(PENALTY_POINT)
+						  FROM spb.TB_SVC_PENALTY_CD A, spb.TB_SVC_PENALTY B 
+						 WHERE A.PENALTY_CD = B.PENALTY_CD
+						   AND B.USR_SEQ = #{usrSeq}
+						   <![CDATA[ AND B.READ_CLS_CD = 'S' ) >= (SELECT ADD_VAL1 
+						  FROM spb.TB_SYS_COM_CD
+						 WHERE COM_CD = 'MSI_002'), 1,0) AS isBlack ]]> <!-- 2017.07.04_라이브 소스 비교의 따른 추가(AND B.READ_CLS_CD = 'S')_JHN -->
+		  FROM DUAL
+	</select>
+	<select id="existBlackUsr" parameterType="penaltyVo" resultType="int" >
+		SELECT COUNT(USR_SEQ)
+		  FROM spb.TB_SVC_USR_BLKLIST
+		 WHERE USR_SEQ = #{usrSeq}  
+	</select>   
+	
+	 <insert id="addMileageImpose" parameterType="mileageVO">
+		INSERT INTO TB_SVC_MILEAGE (
+		   	USR_SEQ
+		   	, MB_CARD_SEQ
+		   	, MILEAGE_CLS_CD
+		   	, MILEAGE_POINT
+		   	
+		   	, REG_DTTM
+		   	, REG_ID
+			) VALUES (
+			  #{usrSeq}
+			  ,IFNULL((SELECT MB_CARD_SEQ FROM TB_SVC_MB_CARD WHERE USR_SEQ = #{usrSeq} AND CARD_USE_CLS_CD = 'M'	AND END_DTTM = '9999-12-31 23:59:59' ORDER BY MB_CARD_SEQ DESC LIMIT 1),0)
+			 ,#{mileageClsCd}
+			 ,#{mileagePoint}
+			
+			 ,NOW()
+			 ,#{userId}
+			)
+	</insert>
+	
+	<select id="getTeamInfo" parameterType="TeamMgmtVO" resultType="TeamMgmtVO">
+	SELECT TEAM_SEQ AS teamSeq
+	, CENTER_ID AS centerId
+	, TEAM_ID AS teamId
+	, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = CENTER_ID AND LA.LANG_CLS_CD = 'LAG_001') as centerNm
+	, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = TEAM_ID AND LA.LANG_CLS_CD = 'LAG_001') as teamNm
+	FROM TB_SYS_TEAM_INFO
+	WHERE 1=1
+	<if test='centerId != null and centerId != ""'>
+	AND CENTER_ID = #{centerId}
+	</if>
+	<if test='teamId != null and teamId != ""'>
+	AND TEAM_ID = #{teamId}
+	</if>
+	</select>
+	 
+</mapper>

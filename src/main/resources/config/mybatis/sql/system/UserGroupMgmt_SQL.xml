@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.usergroupmgmt.service.UserGroupMgmtMapper">
+
+	
+	
+	<select id="getGroList" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" resultType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO">
+	
+		<![CDATA[
+			SELECT  		A.ADMIN_GRP_SEQ as usrGrpCd
+			, ADMIN_CLS_CD
+			 , (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = ADMIN_CLS_CD) as usrGrpCdName
+			 , A.GRP_NAME as grpName
+			 , A.GRP_DESC as grpDesc
+			 , DATE_FORMAT(A.MOD_DTTM,'%Y-%m-%d %H:%i:%s') as modDate
+			 , mod_id
+ 			 , (SELECT COUNT(*) FROM TB_SYS_ADMIN WHERE ADMIN_GRP_SEQ = A.ADMIN_GRP_SEQ) ADMIN
+		  FROM TB_SYS_GRP_CD A
+		 WHERE 1 = 1
+		]]>
+		<if test="admin_cls_cd != '' and admin_cls_cd != null">
+			   AND A.ADMIN_CLS_CD = #{admin_cls_cd}
+		</if>
+		<if test="grpName != '' and grpName != null">
+			   AND A.GRP_NAME like concat(#{grpName}, '%')
+		</if>
+			ORDER BY A.MOD_DTTM DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		
+	</select>
+	
+	
+	
+		
+	<select id="getGroCount" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" resultType="int">
+	
+		<![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_SYS_GRP_CD A
+		 WHERE 1 = 1
+		]]>
+		<if test="admin_cls_cd != '' and admin_cls_cd != null">
+			   AND A.ADMIN_CLS_CD = #{admin_cls_cd}
+		</if>
+		<if test="grpName != '' and grpName != null">
+			   AND A.GRP_NAME like concat(#{grpName}, '%')
+		</if>
+		
+	</select>
+	
+	<select id="getGroInfo" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" resultType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO">
+		<![CDATA[
+		SELECT  A.ADMIN_GRP_SEQ as usrGrpCd
+			 ,(SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = ADMIN_CLS_CD) as usrGrpCdName
+			 , A.READ_AUTH_CD as readAuthCd
+			 , A.GRP_NAME as grpName
+			 , A.GRP_DESC as grpDesc
+			 , DATE_FORMAT(A.REG_DTTM,'%Y-%m-%d %H:%i:%s') as creDate
+			 , DATE_FORMAT(A.MOD_DTTM,'%Y-%m-%d %H:%i:%s') as modDate
+			 , admin_cls_cd
+		FROM TB_SYS_GRP_CD A
+		WHERE A.ADMIN_GRP_SEQ = #{usrGrpCd}
+		]]>
+	</select>
+			
+	<select id="getGroCdList" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" resultType="com.dkitec.barocle.admin.system.commonCodeMgmt.vo.CommonCodeVO">
+		<![CDATA[
+			SELECT 
+				A.COM_CD AS comCd
+				,B.MLANG_COM_CD_NAME AS comCdName
+			FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE A.COM_CD = B.COM_CD
+			AND COM_UP_CD = 'ADM'
+			AND A.COM_CD NOT IN (SELECT ADMIN_GRP_SEQ FROM TB_SYS_GRP_CD)
+		]]>
+	</select>
+	
+		
+	<select id="getAdminGroCodeList" resultType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO">
+		<![CDATA[ 
+		SELECT GRP.ADMIN_GRP_SEQ AS usrGrpCd
+			 , concat(CODE.COM_CD_NAME, ' - ', GRP.GRP_NAME) AS grpName
+		  FROM TB_SYS_COM_CD AS CODE
+			   INNER JOIN TB_SYS_GRP_CD AS GRP
+			   ON CODE.COM_CD = GRP.ADMIN_GRP_SEQ
+		  WHERE GRP.READ_AUTH_CD IN ('RAA', 'RAM')
+		]]>
+	</select>
+	
+	<select id="getPatnrGroCodeList" resultType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO">
+		<![CDATA[ 
+		SELECT GRP.ADMIN_GRP_SEQ AS usrGrpCd
+			 , concat(CODE.COM_CD_NAME, ' - ', GRP.GRP_NAME) AS grpName
+		  FROM TB_SYS_COM_CD AS CODE
+			   INNER JOIN TB_SYS_GRP_CD AS GRP
+			   ON CODE.COM_CD = GRP.ADMIN_GRP_SEQ
+		  WHERE GRP.READ_AUTH_CD = 'RAS'
+		]]>
+	</select>
+		
+		
+		
+		
+		
+	
+	
+	
+	
+	<insert id="insertGro" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" >
+		<![CDATA[ 
+		INSERT INTO TB_SYS_GRP_CD (
+			ADMIN_CLS_CD
+			, READ_AUTH_CD
+			, GRP_NAME 
+			, GRP_DESC 
+			, REG_DTTM
+			, REG_ID
+			, MOD_ID
+		) VALUES ( 
+			#{admin_cls_cd}
+			, ''
+			, #{grpName}
+			, #{grpDesc}
+			, now()
+			, #{reg_id}
+			, #{reg_id}
+		)
+		]]> 
+	</insert>
+		
+	<delete id="deleteGro" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" >
+		<![CDATA[ 
+		DELETE FROM TB_SYS_GRP_CD 
+		 WHERE ADMIN_GRP_SEQ = #{usrGrpCd}
+		]]> 
+	</delete>
+	
+	<delete id="deleteGroAuth" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" >
+		<![CDATA[ 
+		DELETE FROM TB_SYS_GRP_AUTH_INFO 
+		 WHERE ADMIN_GRP_SEQ = #{usrGrpCd}
+		]]> 
+	</delete>
+	
+	<update id="updateGro" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" >
+		<![CDATA[ 
+		UPDATE TB_SYS_GRP_CD
+		   SET GRP_NAME = #{grpName}
+			 , GRP_DESC = #{grpDesc} 
+			 , ADMIN_CLS_CD = #{admin_cls_cd}
+			 , MOD_DTTM = now()
+			 , MOD_ID = #{mod_id}
+		WHERE ADMIN_GRP_SEQ = #{usrGrpCd}
+		]]> 
+	</update>
+		
+		
+		
+	<select id="getGroupNameList" parameterType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO" resultType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO">
+	
+			SELECT  		
+				A.ADMIN_GRP_SEQ as usrGrpCd,
+			 	A.GRP_NAME as grpName,
+				A.ADMIN_CLS_CD,
+				B.MLANG_COM_CD_NAME,
+				B.COM_CD
+		  FROM TB_SYS_GRP_CD A, TB_SYS_MLANG_COM_CD B
+		  WHERE A.ADMIN_CLS_CD = B.COM_CD
+	</select>
+		
+
+</mapper>
+

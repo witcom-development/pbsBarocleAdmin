@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+<!--실시간 현황	-->
+
+<tiles-definitions>
+
+	<definition name="statisticsTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+		
+		<!-- 월간운영현황 에디터 -->
+		<put-attribute name="static_daum_editor" value="/WEB-INF/views/admin/layout/static_daum_editor.jsp" />
+		
+	</definition>
+	
+	<definition name="/admin/statistics/admlogin/stt_bike_adm" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/admlogin/stt_bike_adm.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/group/stt_grp_mov" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/group/stt_grp_mov.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/join/stt_mem_jon" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/join/stt_mem_jon.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/maintain/stt_err_rpr" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/maintain/stt_err_rpr.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/maintain/stt_err_stat" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/maintain/stt_err_stat.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/manage/stt_tot_sta" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/manage/stt_tot_sta.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 최대운영 자전거 추가 -->
+	<definition name="/admin/statistics/manage/stt_bike_sta" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/manage/stt_bike_sta.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 자전거 배터리 정보 추가 -->
+	<definition name="/admin/statistics/manage/stt_bike_battery_sta" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/manage/stt_bike_battery_sta.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/rent/stt_bike_bike" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/rent/stt_bike_bike.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/rent/stt_bike_return" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/rent/stt_bike_return.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/route/stt_bike_mov" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/route/stt_bike_mov.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/use/stt_ctn_age" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_age.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/use/stt_ctn_foreign" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_foreign.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/use/stt_ctn_ran" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_ran.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/use/stt_ctn_stm" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_stm.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/statistics/use/stt_ctn_use" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_use.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 제로페이 통계 추가 -->
+	<definition name="/admin/statistics/zeropay/stt_zpay_ticket" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/zeropay/stt_zpay_ticket.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	 <definition name="/admin/statistics/zeropay/stt_zpay_paymentType" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/zeropay/stt_zpay_paymentType.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	 <definition name="/admin/statistics/zeropay/stt_zpay_dailyTicketPmt" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/zeropay/stt_zpay_dailyTicketPmt.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	 <definition name="/admin/statistics/zeropay/stt_zpay_seasonTicketPmt" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/zeropay/stt_zpay_seasonTicketPmt.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 요금감면 통계 추가 -->
+	<definition name="/admin/statistics/reduction/stt_reduction_type" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/reduction/stt_reduction_type.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 월간운영현황 - 목록 -->
+	<definition name="/admin/statistics/use/stt_ctn_use_board" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_use_board.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 월간운영현황 - 등록/수정 -->	
+	<definition name="/admin/statistics/use/stt_ctn_use_board_detail" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/use/stt_ctn_use_board_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>   
+	
+	<!-- 20210511 통계 - 대시보드 -->	
+	<definition name="/admin/statistics/dashBoard/stt_dashBoard" extends="statisticsTemplate" template="/WEB-INF/views/admin/statistics/dashBoard/stt_dashBoard.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>   
+	
+	
+	
+	
+
+	
+</tiles-definitions>

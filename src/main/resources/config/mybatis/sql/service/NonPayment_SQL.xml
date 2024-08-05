@@ -1,0 +1,209 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.paymentmgmt.nonpayment.service.NonPaymentMapper">
+
+	<select id="getNonPaymentList" parameterType="nonPaymentVO" resultType="nonPaymentVO">
+		SELECT /* NonPayment_SQL.getNonPaymentList */
+				( CASE
+					WHEN D.USR_CLS_CD IN ( 'USR_002' ,  'USR_003' )
+						THEN IFNULL( 
+										(
+										SELECT SERIAL_NO 
+										FROM TB_SVC_SERIAL_NO_HIST 
+								   		WHERE USR_SEQ = D.USR_SEQ AND VOUCHER_SEQ = C.VOUCHER_SEQ
+								  		)
+							  		<!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', D.USR_MPN_NO) -->
+							  		, D.USR_MPN_NO
+							  		)
+					ELSE ( SELECT MB_ID FROM TB_SVC_MB Z WHERE Z.USR_SEQ = C.USR_SEQ ) 
+					END
+				 ) AS usrMainId
+			 , D.USR_CLS_CD AS usrClsCd
+			 , D.USR_SEQ AS usrSeq
+			 , (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID =D.USR_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) AS usrClsCdName
+			 , C.RENT_STATION_ID AS rentStationId
+			 , (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = C.RENT_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) AS rentStationName
+			 , C.RETURN_STATION_ID AS returnStationId
+			 , (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = C.RETURN_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) AS returnStationName
+			 , C.USE_MI AS useMi
+			 , A.RENT_HIST_SEQ AS rentHistSeq
+			 , A.RENT_DTTM AS rentDttm
+			 , C.RETURN_DTTM AS returnDttm
+			 , A.OVER_MI AS overMi
+			 , A.OVER_FEE AS overFee
+			 , A.PAYMENT_SEQ AS paymentSeq
+			 , A.PAYMENT_DTTM AS paymentDttm
+			 , A.OVER_FEE_PROCESS_CLS_CD AS overFeeProcessClsCd
+			 , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.OVER_FEE_PROCESS_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS overFeeProcessClsCdName
+			 , A.PAYMENT_ATT_CNT AS paymentAttCnt
+			 , A.PROCESS_REASON_DESC AS processReasonDesc
+			  <if test='paymentMethodCd != null and paymentMethodCd != "" and paymentMethodCd != "BIM_002" '>
+			 , B.PAYMENT_METHOD_CD AS paymentMethodCd
+			 , ( SELECT MLANG_COM_CD_NAME FROM  TB_SYS_MLANG_COM_CD WHERE COM_CD = B.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001' ) AS paymentMethodCdName
+			 </if>
+			 <if test='(paymentMethodCd == null and paymentMethodCd = "") or paymentMethodCd == "BIM_002" '>
+			 , ( SELECT Z.PAYMENT_METHOD_CD FROM TB_SVC_PAYMENT Z , TB_SVC_VOUCHER   F 
+				  WHERE F.PAYMENT_SEQ = Z.PAYMENT_SEQ
+					AND C.VOUCHER_SEQ = F.VOUCHER_SEQ 
+			   ) AS paymentMethodCd
+			 , (
+			 	SELECT X.MLANG_COM_CD_NAME FROM TB_SVC_PAYMENT Z , TB_SVC_VOUCHER   F , TB_SYS_MLANG_COM_CD X
+				  WHERE F.PAYMENT_SEQ = Z.PAYMENT_SEQ
+					AND C.VOUCHER_SEQ = F.VOUCHER_SEQ 	
+					AND X.COM_CD	  = Z.PAYMENT_METHOD_CD 
+					AND X.LANG_CLS_CD = 'LAG_001'
+				)  AS paymentMethodCdName
+			 </if> 
+			 , C.RENT_BIKE_ID AS rentBikeId
+		  FROM TB_SVC_RENT_OVER_FEE A
+		 INNER JOIN TB_SVC_RENT_HIST C ON ( A.RENT_HIST_SEQ = C.RENT_HIST_SEQ AND A.RENT_DTTM = C.RENT_DTTM )
+		 <if test='paymentMethodCd != null and paymentMethodCd != "" and paymentMethodCd != "BIM_002" '>
+		 	INNER JOIN TB_SVC_VOUCHER   F ON (	  C.VOUCHER_SEQ = F.VOUCHER_SEQ )
+	   		INNER JOIN TB_SVC_PAYMENT   B ON ( 		F.PAYMENT_SEQ = B.PAYMENT_SEQ 
+												AND B.PAYMENT_METHOD_CD = #{paymentMethodCd}
+											 )
+   		</if> 
+	   	INNER JOIN TB_SVC_USR	   D ON ( C.USR_SEQ  = D.USR_SEQ 
+									   		<if test='usrSearchType == "PHONE"'>
+												<!-- AND D.USR_MPN_NO = dg_encrypt('TB_SVC_USR','USR_MPN_NO',#{usrSearchKey}) -->
+												AND D.USR_MPN_NO = #{usrSearchKey}
+											</if>
+											<!-- 외국카드는 외국인으로 조회하게 변경 -->
+											<if test='paymentMethodCd == "BIM_002" '>
+												AND D.USR_CLS_CD ='USR_002'
+											</if>  
+											<if test='usrSearchType == "USRSEQ"'>
+												AND  D.USR_SEQ =  #{usrSearchKey}
+											</if>
+										   )
+		<if test='usrSearchType == "ID"'>
+		INNER JOIN TB_SVC_MB		E ON ( C.USR_SEQ  = E.USR_SEQ  AND E.MB_ID = #{usrSearchKey} )
+		</if>
+	   <if test='usrSearchType == "CARD_NO"'>
+		INNER JOIN TB_SVC_PAYMENT_METHOD G ON ( C.USR_SEQ = G.USR_SEQ 
+									   			AND		(			
+										 			   			(
+										 			   			LENGTH(TRIM(REPLACE(#{usrSearchKey},'*',''))) = 10 
+										 			   		AND D.USR_CLS_CD = 'USR_002' 
+														   	<!-- AND	G.CARD_NO = dg_encrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CONCAT(SUBSTR( TRIM(REPLACE(#{usrSearchKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{usrSearchKey},'*','')) ,7,4))) -->
+														   	AND	G.CARD_NO = CONCAT(SUBSTR( TRIM(REPLACE(#{usrSearchKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{usrSearchKey},'*','')) ,7,4))
+													 			) 
+													 	) 
+	   										)
+	   </if> 
+	   <if test='usrSearchType == "RENTSERIALNO"'>
+			INNER JOIN TB_SVC_SERIAL_NO_HIST K ON (  D.USR_SEQ = K.USR_SEQ AND K.VOUCHER_SEQ = C.VOUCHER_SEQ AND  SERIAL_NO = #{usrSearchKey} )
+		</if>
+		
+	   WHERE A.OVER_FEE_PROCESS_CLS_CD = 'OPD_002'
+		 AND A.OVER_FEE_PAYMENT_YN = 'N'
+		<if test='startDttm != null and startDttm != "" and endDttm != null and endDttm != ""'>
+		AND A.RENT_DTTM  BETWEEN STR_TO_DATE(#{startDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startDttm == null or startDttm == ""'>
+		AND A.RENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		ORDER BY C.RENT_HIST_SEQ   
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	
+<!--   TODO	 usrSearchType == "CARD_NO" 	
+			  	(
+						LENGTH(TRIM(REPLACE(#{usrSearchKey},'*',''))) != 10 AND B.PAYMENT_CONFM_NO LIKE CONCAT( TRIM(REPLACE(#{usrSearchKey},'*','')), '%')
+			  	)
+   -->   
+	
+	<select id="getNonPaymentListCount" parameterType="nonPaymentVO" resultType="int">
+	  SELECT COUNT(*)
+		FROM TB_SVC_RENT_OVER_FEE A
+		<if test='( paymentMethodCd != null and paymentMethodCd != "" ) or ( usrSearchType != null and usrSearchType != "")'> 
+		   INNER JOIN TB_SVC_RENT_HIST C ON ( A.RENT_HIST_SEQ = C.RENT_HIST_SEQ AND A.RENT_DTTM = C.RENT_DTTM )
+		   	<if test='paymentMethodCd == "BIM_002" and usrSearchType != "CARD_NO" '>
+			   INNER JOIN TB_SVC_USR	   E ON ( C.USR_SEQ	   = E.USR_SEQ	   AND E.USR_CLS_CD ='USR_002' )
+		   	</if> 
+	   		<if test='paymentMethodCd != null and paymentMethodCd != "" and paymentMethodCd !=  "BIM_002" '>
+				INNER JOIN TB_SVC_VOUCHER   F ON ( C.VOUCHER_SEQ = F.VOUCHER_SEQ )
+			   	INNER JOIN TB_SVC_PAYMENT   B ON ( F.PAYMENT_SEQ = B.PAYMENT_SEQ  AND B.PAYMENT_METHOD_CD = #{paymentMethodCd} )
+		   	</if>
+			<choose>
+				<when test='usrSearchType == "PHONE"'>
+		   			INNER JOIN TB_SVC_USR	   D ON (  C.USR_SEQ  = D.USR_SEQ 
+													<!-- AND D.USR_MPN_NO = dg_encrypt('TB_SVC_USR','USR_MPN_NO', #{usrSearchKey} ) -->
+													AND D.USR_MPN_NO = #{usrSearchKey}
+													 )	
+				</when>
+				<when test='usrSearchType == "ID"'>
+				INNER JOIN TB_SVC_MB			 Z ON ( C.USR_SEQ  = Z.USR_SEQ AND Z.MB_ID = #{usrSearchKey} )
+				</when>
+			   <when test='usrSearchType == "CARD_NO"'>
+			   INNER JOIN TB_SVC_USR			D ON (  C.USR_SEQ  = D.USR_SEQ ) 
+			   INNER JOIN TB_SVC_PAYMENT_METHOD G ON (  C.USR_SEQ = G.USR_SEQ 
+											   			AND (
+											 					(
+												 			   			LENGTH(TRIM(REPLACE(#{usrSearchKey},'*',''))) = 10 
+												 			   		AND D.USR_CLS_CD = 'USR_002' 
+																   	<!-- AND	G.CARD_NO = dg_encrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CONCAT(SUBSTR( TRIM(REPLACE(#{usrSearchKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{usrSearchKey},'*','')) ,7,4))) -->
+																   	AND	G.CARD_NO = CONCAT(SUBSTR( TRIM(REPLACE(#{usrSearchKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{usrSearchKey},'*','')) ,7,4))
+															 	) 
+															)	   
+			   										)
+			   </when> 
+			   <when test='usrSearchType == "RENTSERIALNO"'>
+			   INNER JOIN TB_SVC_USR			D ON (  C.USR_SEQ  = D.USR_SEQ ) 
+			   INNER JOIN TB_SVC_SERIAL_NO_HIST K ON (  D.USR_SEQ = K.USR_SEQ AND K.VOUCHER_SEQ = C.VOUCHER_SEQ AND SERIAL_NO = #{usrSearchKey} )
+			   </when>
+			</choose> 
+		</if>
+	   WHERE A.OVER_FEE_PROCESS_CLS_CD = 'OPD_002'
+		 AND A.OVER_FEE_PAYMENT_YN = 'N'
+		<if test='startDttm != null and startDttm != "" and endDttm != null and endDttm != ""'>
+		AND A.RENT_DTTM  BETWEEN STR_TO_DATE(#{startDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startDttm == null or startDttm == ""'>
+		AND A.RENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='usrSearchType == "USRSEQ"'>
+			AND  C.USR_SEQ =  #{usrSearchKey}
+		</if>
+	</select>
+	
+	<select id="getStation" parameterType="String" resultType="String">
+		SELECT STATION_ID AS stationId
+		  FROM TB_OPR_STATION
+		 WHERE STATION_GRP_SEQ = #{stationGrpSeq}
+	</select>
+	
+	<insert id="addNonPayment" parameterType="nonPaymentVO" useGeneratedKeys="true" keyProperty="paymentSeq">
+		INSERT INTO TB_SVC_PAYMENT (
+				 PAYMENT_DTTM
+				,USR_SEQ
+				,PAYMENT_CLS_CD
+				,PAYMENT_METHOD_CD
+				,PAYMENT_STUS_CD
+				,TOT_AMT
+				,RENT_OVER_FEE_SUM
+		) VALUES (
+				now()
+			   ,#{usrSeq} 
+			   ,'BIL_009'
+			   ,#{paymentMethodCd}
+			   ,'BIS_001'
+			   ,#{overFee}
+			   ,#{overFee}
+		)
+	</insert>
+	
+	<update id="setRentOverFee" parameterType="nonPaymentVO"> 
+		UPDATE TB_SVC_RENT_OVER_FEE
+		   SET OVER_FEE_PAYMENT_YN = 'Y'
+			 , OVER_FEE_PROCESS_CLS_CD = #{overFeeProcessClsCd}
+			 , PROCESS_REASON_DESC = #{processReasonDesc}
+			 , PAYMENT_SEQ = #{paymentSeq}
+			 , PAYMENT_DTTM = (SELECT PAYMENT_DTTM FROM TB_SVC_PAYMENT WHERE PAYMENT_SEQ = #{paymentSeq})
+		 WHERE RENT_HIST_SEQ = #{rentHistSeq}
+		 <if test='rentDttm != null and rentDttm != ""'>
+		   AND RENT_DTTM = STR_TO_DATE(#{rentDttm},'%Y-%m-%d %H:%i:%S')
+		 </if>  
+	</update>
+</mapper>

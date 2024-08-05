@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.repairMgmt.common.service.RepairMgmtCommMapper">
+
+ 		<select id="getAdmComCodeList" parameterType="commonCodeVo" resultType="commonCodeVo">
+		<![CDATA[
+		  SELECT A.COM_CD							AS comCd
+				,A.COM_UP_CD						 AS comUpCd
+				,A.CD_DESC1						  AS cdDesc1
+				,A.CD_DESC2						  AS cdDesc2
+				,A.ADD_VAL1						  AS addVal1
+				,A.ADD_VAL2						  AS addVal2
+				,A.ADD_VAL3						  AS addVal3
+				,A.CD_DESC2				 		 AS comCdName
+			FROM TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+		   WHERE A.COM_UP_CD = #{comUpCd}
+		]]>
+	</select>
+	
+	<select id="getAdmCenterCodeList" resultType="commonCenterVo">
+		<![CDATA[
+		SELECT CENTER_ID   		AS centerId
+			  ,CENTER_NAME 		AS centerName
+		  FROM TB_OPR_CENTER
+		 WHERE CENTER_CLS_CD 	= 'CEN_004'
+		   AND DISTRICT_CD   	IN('GUG_026','GUG_027')
+		]]>
+	</select>
+	
+	<select id="getPartsStockCnt" parameterType="inventVo" resultType="inventVo">
+		<![CDATA[
+			SELECT
+				  PART_CD	 		AS partCd 
+				 ,STOCK_QUNT 		AS partQunt
+			FROM  TB_MTC_STOCK_LIST
+			WHERE CENTER_ID = #{centerId}
+		]]>
+	</select>
+	
+	
+</mapper>

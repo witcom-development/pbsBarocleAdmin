@@ -1,0 +1,930 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.repair.bike.service.RepairBikeMapper">
+
+	<insert id="insertBatReplace" parameterType="RepairBikeVO">
+	
+	<if test='bfBatStat != null and bfBatStat != ""'>
+		INSERT INTO TB_MTC_BAT_REPLACE_INFO
+					(
+						BIKE_ID
+					  , BIKE_NO
+					  , REG_ID
+					  , BF_BAT_STAT
+					)
+					VALUES 
+					(
+						#{bikeId}
+					  , #{bikeNo}
+					  , #{adminId}
+					  , #{bfBatStat}
+					)
+	</if>
+	<if test='bfBatStat == null or bfBatStat == ""'>				
+	 	INSERT INTO TB_MTC_BAT_REPLACE_INFO
+					(
+						BIKE_ID
+					  , BIKE_NO
+					  , REG_ID
+					  , BF_BAT_STAT
+					)
+			 		SELECT #{bikeId} AS BIKE_ID,  #{bikeNo} AS BIKE_NO, #{adminId} AS REG_ID,
+						   IFNULL(A.USE_CNT,100) AS BF_BAT_STAT
+					  FROM TB_OPR_BIKE A
+					 WHERE A.BIKE_ID = #{bikeId} 									
+	</if>	
+	</insert>
+	
+	<select id="getBatReplaceList" parameterType="RepairBikeVO" resultType="RepairBikeVO">
+	
+		SELECT /* admin.maintenance.repair.bike.service.RepairBikeMapper.getBatReplaceList */
+		 
+			   BAT.BIKE_ID 				AS bikeId
+			  ,BAT.BIKE_NO 				AS bikeNo
+			  ,BAT.REG_DTTM				AS batReplaceTime
+			  ,ADMIN.ADMIN_ID			AS adminId
+			  ,TEAM.TEAM_NAME			AS division
+			  ,CENTER.CENTER_NAME		AS centerName
+			  ,ADMIN.ADMIN_NAME			AS adminName
+			  ,BAT.BF_BAT_STAT			AS bfBatStat
+			  ,BAT.AF_BAT_STAT			AS afBatStat 
+			  
+  		  FROM TB_MTC_BAT_REPLACE_INFO		BAT
+  	INNER JOIN TB_SYS_ADMIN					ADMIN		ON BAT.REG_ID 				= ADMIN.ADMIN_ID
+	 LEFT JOIN TB_SYS_TEAM_INFO				TEAM		ON ADMIN.TEAM_SEQ 			= TEAM.TEAM_SEQ
+	 LEFT JOIN TB_OPR_CENTER				CENTER		ON ADMIN.ASSIGN_CENTER_ID	= CENTER.CENTER_ID
+		
+		 <trim prefix ="WHERE" prefixOverrides="AND"> 
+			<if test='searchBgnDe != null and searchBgnDe != ""'>
+			   BAT.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='searchBgnDe == null or searchBgnDe == ""'>
+			   BAT.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-01-01') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if> 
+		 </trim>   
+		 
+	</select>
+	
+	<select id="getBikeStatusCd" parameterType="RepairBikeVO" resultType="String">
+	
+		SELECT BIKE_STUS_CD
+	  	  FROM TB_OPR_BIKE
+	  	 WHERE BIKE_NO = #{bikeNo}
+	
+	</select>
+	
+	<select id="checkRepairDtlIsBatReplace" parameterType="RepairBikeVO" resultType="String">
+	
+		SELECT CASE WHEN 'REB_057' = REPLACE(#{repairCode}, ' ','') THEN 'Y' ELSE 'N' END FROM DUAL
+  	   
+	</select>
+	
+	<select id="getRepairCmptDttm" parameterType="RepairBikeVO" resultType="String">
+	
+		SELECT DATE_FORMAT(MAX(REPAIR_CMPT_DTTM), '%Y-%m-%d %T')
+		  FROM TB_MTC_REPAIR_INFO 		A
+	INNER JOIN TB_OPR_CENTER 			B		ON A.REPAIR_CENTER_ID = B.CENTER_ID AND B.CENTER_CLS_CD = 'CEN_004'		  
+		 WHERE A.REPAIR_CMPT_YN = 'Y'
+		   AND A.EQUIPMENT_ID = #{bikeId}
+  	   
+	</select>
+	
+	<select id="getBikeEntrsName" parameterType="RepairBikeVO" resultType="String">
+	
+		SELECT 
+			   A.MLANG_COM_CD_NAME
+		  FROM 
+			   TB_SYS_MLANG_COM_CD 							A
+	INNER JOIN
+			   (
+   					SELECT ENTRPS_CD
+	  				  FROM TB_OPR_BIKE
+	 				  WHERE BIKE_ID = #{bikeId}
+	  
+			   ) 											B	 	ON A.COM_CD = B.ENTRPS_CD
+  	   
+	</select>
+	
+	<select id="getCenterClsCd" parameterType="RepairBikeVO" resultType="String">
+	
+	  SELECT CENTER_CLS_CD AS centerClsCd  
+		FROM TB_OPR_CENTER
+  	   WHERE CENTER_ID = #{centerId}
+  	   
+	</select>
+	
+	<select id="getAdminCenterId" parameterType="RepairBikeVO" resultType="String">
+	
+	  SELECT assign_center_id AS centerId  
+		FROM TB_SYS_ADMIN
+  	   WHERE admin_id = #{adminId}
+  	   
+	</select>
+	
+	<update id="repairBikeFaultCleanUp" parameterType="RepairBikeVO">
+	
+	 	 UPDATE
+	   	  		TB_MTC_FAULT_INFO
+			SET 
+				READ_CLS_CD   = 'H' 		  
+		  WHERE 
+				EQUIPMENT_ID = #{bikeId}
+		   AND 
+				READ_CLS_CD = 'S'				  		
+		
+	</update>
+	
+	<update id="repairBikeCleanUp" parameterType="RepairBikeVO">
+	
+	 	UPDATE
+	   	  	   TB_MTC_REPAIR_INFO A 
+	INNER JOIN (
+	
+				SELECT 
+					   REPAIR_SEQ
+				  FROM TB_MTC_REPAIR_INFO
+				 WHERE EQUIPMENT_ID = #{bikeId}
+				   AND REPAIR_CMPT_YN = 'N'
+				   AND REG_DTTM BETWEEN (DATE_FORMAT(NOW(), '%Y-%m-%d') + INTERVAL -1 YEAR) AND (DATE_FORMAT(NOW(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)	  
+				
+				) B										ON A.REPAIR_SEQ = B.REPAIR_SEQ
+	  LEFT JOIN TB_MTC_REPAIR_TERM_INFO C				ON A.REPAIR_SEQ = C.REPAIR_SEQ AND C.TERM_CMPT_YN = 'N'		
+			SET 
+				A.REPAIR_CMPT_YN   = 'Y'
+			  , A.MAINTC_ADMIN_ID  = 'system'
+			  , A.REPAIR_CENTER_ID = NULL
+			  , A.MOD_DTTM		 = NOW()
+			  , A.REPAIR_CMPT_DTTM = NOW()
+			  
+			  , C.TERM_CMPT_YN	 = 'Y'
+			  , C.TERM_ADMIN_ID	= 'system'
+			  , C.TERM_CENTER_ID   = NULL				 
+			  , C.TERM_CMPT_DTTM   = NOW()			  		
+		
+	</update>
+	
+	<select id="getRepairBikeList" parameterType="RepairBikeVO" resultType="RepairBikeVO">
+	<![CDATA[
+		SELECT REPINFO.REPAIR_SEQ 		  									AS repairSeq 
+			, BIKE.BIKE_NO 				  									AS bikeNo
+			, BIKE.BIKE_ID 				  									AS bikeId
+			, CONCAT(ADMIN.ADMIN_NAME, CASE WHEN TERMINFO.REPAIR_SEQ IS NULL THEN '' ELSE CONCAT('(',TADMIN.ADMIN_NAME,')') END) AS adminId
+			, REPINFO.REPAIR_CENTER_ID										AS centerId
+			, CONCAT(
+						CASE WHEN REPINFO.REPAIR_CMPT_YN = 'Y' THEN '수리완료' ELSE '수리중' END, 
+					 	CASE WHEN TERMINFO.TERM_CMPT_YN IS NULL THEN '' ELSE 
+					 	CONCAT('(', CASE WHEN TERMINFO.TERM_CMPT_YN = 'Y' THEN '수리완료' ELSE '수리중' END, ')') END
+			 		 	
+			 		 ) 														AS repairCmptYn
+			, DATE_FORMAT( REPINFO.REG_DTTM, "%m-%d %H:%i")				AS repDttm
+			, DATE_FORMAT( REPINFO.REPAIR_CMPT_DTTM, "%m-%d %H:%i")		AS cmptDttm
+			, REPINFO.BIKE_REPORT		 AS bikeReport
+		FROM TB_MTC_REPAIR_INFO REPINFO 
+		JOIN TB_OPR_BIKE		   			 BIKE	 ON REPINFO.EQUIPMENT_ID = BIKE.BIKE_ID
+		LEFT JOIN TB_SYS_ADMIN				 ADMIN	ON REPINFO.MAINTC_ADMIN_ID = ADMIN.ADMIN_ID
+		-- 2019.03.27 바로클 포 관련 추가
+		LEFT JOIN TB_OPR_CENTER  			 CENTER   ON REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID
+		-- 2020.06.23 단말기 수리자 관련 추가
+		LEFT JOIN TB_MTC_REPAIR_TERM_INFO	TERMINFO ON REPINFO.REPAIR_SEQ = TERMINFO.REPAIR_SEQ
+		LEFT JOIN TB_SYS_ADMIN				 TADMIN   ON TERMINFO.TERM_ADMIN_ID = TADMIN.ADMIN_ID 
+		]]>
+		 <choose>
+		 	
+		 	<when test='onlyMyListYn =="Y" and ( divisionValue == null or divisionValue == "" )'>
+		 	
+				<trim prefix ="WHERE" prefixOverrides="AND"> 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>
+								REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>	
+								REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>		
+					</if>
+					<if test='repairCmptYn != null and repairCmptYn != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+				  				AND TERMINFO.TERM_CMPT_YN = #{repairCmptYn}
+							</when>
+							<otherwise>
+				  				AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+							</otherwise>
+				  		</choose>
+					</if>
+				   	<if test='division == null or ( division != null and division != "termAdminId" )'>
+					AND ADMIN.ADMIN_ID = #{adminId}
+					</if>
+					<if test='division != null and division == "termAdminId"'>
+					AND TADMIN.ADMIN_ID = #{adminId}
+					</if>   
+			   </trim>
+			   		 	
+		 	</when>
+		 	
+		 	<otherwise>
+			
+				<trim prefix ="WHERE" prefixOverrides="AND"> 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>
+								REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>	
+								REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>		
+					</if>
+					<if test='repairCmptYn != null and repairCmptYn != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+				  				AND TERMINFO.TERM_CMPT_YN = #{repairCmptYn}
+							</when>
+							<otherwise>
+				  				AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+							</otherwise>
+				  		</choose>
+					</if>
+					<if test='division != null and division == "bikeNo" and divisionValue != null and divisionValue != ""'>
+				  	AND BIKE.BIKE_NO = CASE WHEN LENGTH(#{divisionValue}) <![CDATA[<=]]> 5 THEN CONCAT('BRC-',LPAD(#{divisionValue}, 5, '0'))
+						  ELSE UPPER(#{divisionValue})
+						  END
+					</if>
+					<!-- 2019.03.27 조회조건 변경 -->
+					<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+					AND ADMIN.ADMIN_NAME LIKE CONCAT('%',#{divisionValue},'%')  
+					</if>
+					<if test='division != null and division == "termAdminId" and divisionValue != null and divisionValue != ""'>
+					AND TADMIN.ADMIN_NAME LIKE CONCAT('%',#{divisionValue},'%')  
+					</if>
+			   </trim>
+			   
+		   </otherwise>
+		 </choose>		
+			AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_001'
+			AND  IFNULL( CENTER.CENTER_CLS_CD, 'CEN_001' ) IN ( 'CEN_001', 'CEN_002', 'CEN_004' )	
+		   ORDER BY REPINFO.REPAIR_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	
+	
+	
+		
+	<select id="getRepairBikeLisHistCount" parameterType="RepairBikeVO" resultType="int">
+	  SELECT SUM(CNT)
+	  FROM
+	  (
+		SELECT COUNT(1) AS CNT
+		  FROM TB_MTC_REPAIR_INFO A
+		WHERE  A.EQUIPMENT_ID = #{bikeId}
+		  AND A.REG_DTTM >=DATE_ADD( NOW(), INTERVAL -3 MONTH)
+		UNION ALL
+		
+		SELECT COUNT(1)
+		  FROM TB_MTC_REPAIR_OUTSRC_INFO A
+		 WHERE  A.EQUIPMENT_ID = #{bikeId} 
+		  AND A.REG_DTTM >=DATE_ADD( NOW(), INTERVAL -3 MONTH)
+	  ) A  
+	</select>
+	
+	<select id="getRepairBikeHistList" parameterType="RepairBikeVO" resultType="RepairBikeVO">
+	   SELECT * 
+	   FROM
+	   (
+		SELECT A.REPAIR_SEQ AS repairSeq
+			, A.REG_DTTM  
+			, B.BIKE_NO AS bikeNo
+			, B.BIKE_ID AS bikeId
+			, C.ADMIN_NAME		  AS adminId
+			, A.REPAIR_CMPT_YN	  AS repairCmptYn
+			, A.REG_DTTM			AS repDttm
+			, A.REPAIR_CMPT_DTTM	AS cmptDttm
+		  FROM TB_MTC_REPAIR_INFO A 
+		  LEFT JOIN TB_SYS_ADMIN  C ON ( A.MAINTC_ADMIN_ID = C.ADMIN_ID )   
+		 INNER JOIN TB_OPR_BIKE		B ON (  A.EQUIPMENT_ID = B.BIKE_ID )   
+		WHERE 1=1
+		  AND A.REG_DTTM >=DATE_ADD( NOW(), INTERVAL -3 MONTH)
+		  AND B.BIKE_ID =  #{bikeId}
+		 
+		 UNION ALL
+		   SELECT A.REPAIR_OUTSRC_MAIN_SEQ
+				, A.REG_DTTM
+				, B.BIKE_NO AS bikeNo
+				, B.BIKE_ID AS bikeId
+				, D.CENTER_NAME		  AS adminId
+				, A.COLLECT_YN		  AS repairCmptYn
+				, A.REG_DTTM			AS repDttm
+				, A.COLLECT_DTTM		AS cmptDttm
+		  FROM TB_MTC_REPAIR_OUTSRC_INFO A
+		   LEFT JOIN TB_SYS_ADMIN  C ON ( A.TAKE_ID = C.ADMIN_ID )
+		   LEFT JOIN TB_OPR_CENTER D ON ( C.ASSIGN_CENTER_ID = D.CENTER_ID )
+		  INNER JOIN TB_OPR_BIKE		B ON (  A.EQUIPMENT_ID = B.BIKE_ID )  
+		 WHERE  A.EQUIPMENT_ID = #{bikeId} 
+		   AND A.REG_DTTM >=DATE_ADD( NOW(), INTERVAL -3 MONTH)
+		   AND B.BIKE_ID =  #{bikeId}
+		) A
+		ORDER BY A.REG_DTTM DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+		  
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	<select id="getRepairBikeListCount" parameterType="RepairBikeVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_MTC_REPAIR_INFO REPINFO 
+ 	   ]]>
+ 	<if test='division != null and division == "bikeNo" and divisionValue != null and divisionValue != ""'>   
+		INNER JOIN TB_OPR_BIKE BIKE ON REPINFO.EQUIPMENT_ID = BIKE.BIKE_ID
+	</if>
+	<if test='onlyMyListYn =="Y" or ( division != null and division == "adminId" and divisionValue != null and divisionValue != "")'>
+	 	LEFT JOIN TB_SYS_ADMIN	ADMIN	ON REPINFO.MAINTC_ADMIN_ID = ADMIN.ADMIN_ID
+	</if> 
+	
+	<if test='division != null and division == "termAdminId"'>
+	 LEFT JOIN TB_MTC_REPAIR_TERM_INFO	TERMINFO	ON REPINFO.REPAIR_SEQ = TERMINFO.REPAIR_SEQ
+	 LEFT JOIN TB_SYS_ADMIN 			  TADMIN	  ON TERMINFO.TERM_ADMIN_ID = TADMIN.ADMIN_ID
+	</if>
+	
+ 	 LEFT JOIN TB_OPR_CENTER  CENTER	ON REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID
+		 <choose>
+		 	
+		 	<when test='onlyMyListYn =="Y" and ( divisionValue == null or divisionValue == "" )'>
+		 	
+				<trim prefix ="WHERE" prefixOverrides="AND"> 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>
+								REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>	
+								REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>		
+					</if>
+					<if test='repairCmptYn != null and repairCmptYn != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+				  				AND TERMINFO.TERM_CMPT_YN = #{repairCmptYn}
+							</when>
+							<otherwise>
+				  				AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+							</otherwise>
+				  		</choose>
+					</if>
+					<if test='division != "termAdminId"'>
+					AND ADMIN.ADMIN_ID = #{adminId}
+					</if>
+					<if test='division == "termAdminId"'>
+					AND TADMIN.ADMIN_ID = #{adminId}
+					</if>  
+			   </trim>
+			   		 	
+		 	</when>
+		 	
+		 	<otherwise>
+			
+				<trim prefix ="WHERE" prefixOverrides="AND"> 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>
+								REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+								TERMINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</when>
+							<otherwise>	
+								REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</otherwise>
+						</choose>		
+					</if>
+					<if test='repairCmptYn != null and repairCmptYn != ""'>
+						<choose>
+							<when test='division != null and division == "termAdminId"'>
+				  				AND TERMINFO.TERM_CMPT_YN = #{repairCmptYn}
+							</when>
+							<otherwise>
+				  				AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+							</otherwise>
+				  		</choose>
+					</if>
+					<if test='division != null and division == "bikeNo" and divisionValue != null and divisionValue != ""'>
+				  	AND BIKE.BIKE_NO = CASE WHEN LENGTH(#{divisionValue}) <![CDATA[<=]]> 5 THEN CONCAT('BRC-',LPAD(#{divisionValue}, 5, '0'))
+						  ELSE UPPER(#{divisionValue})
+						  END
+					</if>
+					<!-- 2019.03.27 조회조건 변경 -->
+					<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+					AND ADMIN.ADMIN_NAME LIKE CONCAT('%',#{divisionValue},'%')  
+					</if>
+					<if test='division != null and division == "termAdminId" and divisionValue != null and divisionValue != ""'>
+					AND TADMIN.ADMIN_NAME LIKE CONCAT('%',#{divisionValue},'%')
+					</if>
+			   </trim>
+			   
+		   </otherwise>
+		 </choose>		
+		  AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_001'
+		  AND IFNULL( CENTER.CENTER_CLS_CD, 'CEN_001' ) IN ( 'CEN_001', 'CEN_002', 'CEN_004' )
+	</select>
+
+	<select id="getRepairBikeMallList" parameterType="RepairBikeVO" resultType="RepairBikeVO">
+		SELECT REPINFO.REPAIR_SEQ AS repairSeq 
+			, BIKE.BIKE_NO AS bikeNo
+			, BIKE.BIKE_ID AS bikeId
+			, ADMIN.ADMIN_NAME		 AS adminId
+			, REPINFO.REPAIR_CENTER_ID	AS centerId
+			, REPINFO.REPAIR_CMPT_YN	  AS repairCmptYn
+			, REPINFO.REG_DTTM			AS repDttm
+			, REPINFO.REPAIR_CMPT_DTTM	AS cmptDttm
+			, REPINFO.BIKE_REPORT		 AS bikeReport
+			, CENTER.CENTER_NAME		  AS centerName
+		
+			, (SELECT GROUP_CONCAT( DETL.REPAIR_CLS_CD )
+				FROM TB_MTC_REPAIR_DETL DETL 
+				WHERE DETL.REPAIR_SEQ = REPINFO.REPAIR_SEQ) AS repairCode
+			, ( SELECT  GROUP_CONCAT( B.MLANG_COM_CD_NAME )	
+				  FROM TB_MTC_REPAIR_DETL A, TB_SYS_MLANG_COM_CD B
+				 WHERE   A.REPAIR_SEQ = REPINFO.REPAIR_SEQ
+			   	   AND A.REPAIR_CLS_CD = B.COM_CD
+			  ) AS bikeStatusComCd
+			, (
+				 SELECT SUM(ADD_VAL1)   
+				   FROM TB_MTC_REPAIR_DETL A, TB_SYS_COM_CD B
+				  WHERE   A.REPAIR_SEQ = REPINFO.REPAIR_SEQ
+				   AND A.REPAIR_CLS_CD = B.COM_CD   		   
+			   ) AS bikeStatusName
+		  
+		FROM TB_MTC_REPAIR_INFO REPINFO 
+		JOIN TB_OPR_BIKE		   BIKE	ON REPINFO.EQUIPMENT_ID = BIKE.BIKE_ID
+		LEFT JOIN TB_SYS_ADMIN	ADMIN	ON REPINFO.MAINTC_ADMIN_ID = ADMIN.ADMIN_ID
+	   INNER JOIN TB_OPR_CENTER  CENTER	ON REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID
+	 
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='repairCmptYn == null or repairCmptYn == "" or repairCmptYn == "N" '>
+					
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					
+				</if>	
+				
+				<if test=' repairCmptYn == "Y" '>
+					
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						REPINFO.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					
+				</if>
+				
+				<if test='repairCmptYn != null and repairCmptYn != ""'>
+			  	AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+				</if>
+				<if test='division != null and division == "bikeNo" and divisionValue != null and divisionValue != ""'>
+			  	AND BIKE.BIKE_NO LIKE CONCAT('%',#{divisionValue},'')  
+				</if>
+				<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+				AND ADMIN.ADMIN_NAME LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+				<if test='division != null and division == "centerId" and divisionValue != null and divisionValue != ""'>
+				AND CENTER.CENTER_NAME LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+		   </trim>	  
+		   AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_001'
+		   AND CENTER.CENTER_CLS_CD	 = 'CEN_003'
+		   ORDER BY REPINFO.REG_DTTM   DESC
+				  , REPINFO.REPAIR_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	
+	<select id="getRepairBikeMallListCount" parameterType="RepairBikeVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_MTC_REPAIR_INFO REPINFO 
+		  JOIN TB_OPR_BIKE		   BIKE ON REPINFO.EQUIPMENT_ID = BIKE.BIKE_ID
+	 LEFT JOIN TB_SYS_ADMIN		 ADMIN ON REPINFO.MAINTC_ADMIN_ID = ADMIN.ADMIN_ID		  
+	INNER JOIN TB_OPR_CENTER	   CENTER ON REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID	  
+	  ]]>
+		  <trim prefix ="WHERE" prefixOverrides="AND"> 
+			  
+				  <if test='repairCmptYn == null or repairCmptYn == "" or repairCmptYn == "N" '>
+					
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					
+				</if>	
+				
+				<if test=' repairCmptYn == "Y" '>
+					
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						REPINFO.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					
+				</if>
+			  
+			  <if test='repairCmptYn != null and repairCmptYn != ""'>
+			  AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+			  </if>
+			  <if test='division != null and division == "bikeNo" and divisionValue != null and divisionValue != ""'>
+			  AND BIKE.BIKE_NO LIKE CONCAT('%',#{divisionValue},'')  
+			  </if>
+			  <if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+			  AND ADMIN.ADMIN_NAME LIKE CONCAT('',#{divisionValue},'%')  
+			  </if>
+			  <if test='division != null and division == "centerId" and divisionValue != null and divisionValue != ""'>
+				AND CENTER.CENTER_NAME LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+		  </trim> 
+		  AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_001'
+		  AND CENTER.CENTER_CLS_CD	 = 'CEN_003'
+	</select>
+	
+	
+	
+	
+	
+	
+	<select id="getRepairBikeInfo" parameterType="RepairBikeVO" resultType="RepairBikeVO">
+		<![CDATA[
+			SELECT REPINFO.REPAIR_SEQ 					AS repairSeq
+				, BIKE.BIKE_NO 							AS bikeNo
+				, BIKE_STUS_CD 							AS bikeStusCd
+				, BIKE.BIKE_ID 							AS bikeId
+				, REPINFO.MAINTC_ADMIN_ID 				AS adminId
+				, ADMIN.ADMIN_NAME 						AS adminName
+				, REPINFO.REPAIR_CENTER_ID 				AS centerId
+				, (SELECT GROUP_CONCAT(MLANG.COM_CD) FROM TB_MTC_FAULT_DETL DETL 	LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD 	AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = REPINFO.FAULT_SEQ) AS bikeStatusComCd
+				, (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = REPINFO.FAULT_SEQ) AS bikeStatusName
+				, REPINFO.REPAIR_CMPT_YN 				AS repairCmptYn
+				, REPINFO.REPAIR_CENTER_ID 				AS repairCenterSeq
+				, REPINFO.BIKE_REPORT 					AS bikeReport
+				, REPINFO.REPAIR_REPORT 				AS repairReport
+				, CENTER.CENTER_NAME		  			AS centerName
+				, ( 
+					SELECT DATE_FORMAT(MAX(A.REG_DTTM),'%Y-%m-%d %H:%i:%s')
+		   			  FROM TB_MTC_BAT_REPLACE_INFO A 
+		   			 WHERE A.BIKE_ID = BIKE.BIKE_ID 
+		   		  )			  						AS batReplaceTime
+				, ( 
+					SELECT A.MLANG_COM_CD_NAME 
+		   			  FROM TB_SYS_MLANG_COM_CD A 
+		   			 WHERE A.COM_CD = BIKE.ENTRPS_CD 
+		   			   AND A.LANG_CLS_CD = #{lang} 
+		   		  )			  						AS entrpsCd
+		   		, (
+				 	SELECT CASE WHEN A.REPAIR_CMPT_DTTM IS NULL THEN 'N' ELSE 'Y' END 
+					  FROM TB_MTC_REPAIR_INFO A 
+					 WHERE A.REPAIR_SEQ = REPINFO.REPAIR_SEQ 
+					   AND A.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				  )										AS editRepairYn  
+				, DATEDIFF( NOW(),  IFNULL( REPAIR_CMPT_DTTM, NOW() ) )  AS divisionValue
+			FROM TB_MTC_REPAIR_INFO	   REPINFO
+			JOIN TB_OPR_BIKE 				 BIKE ON REPINFO.EQUIPMENT_ID = BIKE.BIKE_ID	
+	   LEFT JOIN TB_SYS_ADMIN			   ADMIN ON REPINFO.MAINTC_ADMIN_ID = ADMIN.ADMIN_ID
+	   LEFT JOIN TB_OPR_CENTER			 CENTER ON REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID
+		   WHERE REPINFO.REPAIR_SEQ = #{repairSeq} AND BIKE.BIKE_ID = #{bikeId} AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_001'
+		]]>
+	</select>
+	
+	<select id="getRepairCodeList" parameterType="String" resultType="String">
+		<![CDATA[
+			SELECT REPAIR_CLS_CD 
+			  FROM TB_MTC_REPAIR_DETL
+			 WHERE REPAIR_SEQ = #{repairSeq}
+		]]>
+	</select>
+	
+	<select id="getRepairPartsChgInfo" parameterType="RepairBikeVO" resultType="RepairPartsVO">
+		<![CDATA[
+			SELECT A.PART_CD AS partsName
+				 , A.CENTER_ID AS centerName
+				 , IFNULL(B.STOCK_QUNT, 0) AS remainPartsCnt
+				 , A.CHNG_QUNT AS usePartsCnt
+			  FROM TB_MTC_BIKE_PART_CHNG_DETL A
+   LEFT OUTER JOIN TB_MTC_STOCK_LIST B ON A.CENTER_ID = B.CENTER_ID AND A.PART_CD = B.PART_CD
+			 WHERE REPAIR_SEQ = #{repairSeq}
+		]]>
+	</select>
+	
+	<update id="updateBikeStatus" parameterType="repairBikeVo">
+		UPDATE TB_OPR_BIKE SET 
+		<if test='repairCmptYn == "Y"'>
+			BIKE_STUS_CD = 'BKS_009'
+		</if>	
+		<if test='repairCmptYn == "N"'>
+			BIKE_STUS_CD = 'BKS_005'
+		</if>
+		<if test='moveYn == "Y"'>
+			, CENTER_ID = #{centerId}
+		</if>
+		WHERE BIKE_ID = #{bikeId}
+	</update>
+	
+	<select id="getBikeMoveYn" parameterType="repairBikeVo" resultType="String">
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'N' ELSE 'Y' END moveYn FROM TB_OPR_BIKE_LOCATE_HIST 
+		WHERE BIKE_ID = #{bikeId}
+		AND LOCATE_ID = #{centerId}
+		AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+	</select>
+	
+	<insert id="insertBikeMoveHistory" parameterType="repairBikeVo">
+		INSERT INTO TB_OPR_BIKE_LOCATE_HIST(BIKE_ID, LOCATE_CLS_CD, LOCATE_ID, LOCATE_STR_DTTM, LOCATE_END_DTTM)
+		VALUES (#{bikeId}, 'C', #{centerId}, DATE_ADD(now() ,interval 1 second), STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S'))
+	</insert>
+	
+	<delete id="deleteBikeParkingInfo" parameterType="repairBikeVo">
+		DELETE FROM TB_OPR_BIKE_PARKING WHERE BIKE_ID = #{bikeId}
+	</delete>
+	
+	<update id="updateBikeMoveHistory" parameterType="repairBikeVo">
+ <!--		<selectKey resultType="string" keyProperty="histSeq" order="BEFORE">
+			SELECT LOCATE_HIST_SEQ FROM TB_OPR_BIKE_LOCATE_HIST WHERE BIKE_ID = #{bikeId} ORDER BY LOCATE_STR_DTTM DESC LIMIT 1
+		</selectKey>
+		UPDATE TB_OPR_BIKE_LOCATE_HIST 
+		SET	LOCATE_END_DTTM = STR_TO_DATE(now(),'%Y-%m-%d %H:%i:%S')
+		WHERE LOCATE_HIST_SEQ = #{histSeq} -->
+		UPDATE TB_OPR_BIKE_LOCATE_HIST 
+	 SET LOCATE_END_DTTM = STR_TO_DATE(now(),'%Y-%m-%d %H:%i:%S')
+	 WHERE BIKE_ID = #{bikeId} 
+
+		 AND LOCATE_END_DTTM  >  now()
+		
+	</update>
+	
+	<update id="updateBikeLocationInfo" parameterType="repairBikeVo">
+		UPDATE TB_OPR_BIKE SET 
+		CENTER_ID = #{centerId}
+		WHERE BIKE_ID = #{bikeId}
+	</update>
+	
+	<update id="updateFaultBike" parameterType="repairBikeVo">
+ 		UPDATE TB_MTC_FAULT_INFO SET READ_CLS_CD = 'H' WHERE FAULT_SEQ = #{faultSeq}
+	</update>
+	
+	<insert id="insertRepairBike" parameterType="repairBikeVo">
+		INSERT INTO TB_MTC_REPAIR_INFO(
+		<if test='faultSeq != null and faultSeq !=""'>
+			FAULT_SEQ,
+		</if>
+			EQUIPMENT_CLS_CD, 
+			EQUIPMENT_ID, 
+			MAINTC_ADMIN_ID, 
+			REPAIR_CMPT_YN, 
+		<if test='repairCmptYn == "Y"'>
+			REPAIR_CMPT_DTTM,
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			REPAIR_CENTER_ID, 
+		</if>
+			REG_DTTM, 
+			MOD_DTTM,
+			BIKE_REPORT,
+			REPAIR_REPORT
+			)
+		VALUES(
+		<if test='faultSeq != null and faultSeq !=""'>
+			#{faultSeq},
+		</if>	
+			'DEV_001', 
+			#{bikeId}, 
+			#{adminId}, 
+			#{repairCmptYn}, 
+		<if test='repairCmptYn == "Y"'>
+			NOW(),
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			#{centerId}, 
+		</if>	
+			NOW(), 
+			NOW(),
+			#{bikeReport},
+			#{repairReport}
+		)
+		<selectKey keyProperty="repairSeq" order="AFTER" resultType="String">
+			SELECT LAST_INSERT_ID()
+		</selectKey>
+	</insert>   
+	
+	<update id="updateRepairBike" parameterType="repairBikeVo">
+		UPDATE TB_MTC_REPAIR_INFO SET 
+		EQUIPMENT_ID = #{bikeId},
+		MAINTC_ADMIN_ID = #{adminId},
+		REPAIR_CMPT_YN 	= #{repairCmptYn},
+		BIKE_REPORT 	= IFNULL( #{bikeReport}, BIKE_REPORT),
+		REPAIR_REPORT 	= IFNULL( #{repairReport}, REPAIR_REPORT ),
+		<if test='repairCmptYn == "Y"'>
+			REPAIR_CMPT_DTTM = NOW(),
+		</if>	
+		<if test='repairCmptYn == "N"'>
+			REPAIR_CMPT_DTTM = NULL,
+		</if>		
+		<if test='centerId != null and centerId !=""'>
+			REPAIR_CENTER_ID = #{centerId}, 
+		</if>	
+		MOD_DTTM = NOW()
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</update>
+	
+	<delete id="deleteRepairBike" parameterType="repairBikeVo">
+		DELETE FROM TB_MTC_REPAIR_INFO
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>
+	
+	<insert id="insertRepairBikeDetail" parameterType="repairBikeVo">
+		INSERT INTO TB_MTC_REPAIR_DETL (
+		   	REPAIR_SEQ, REPAIR_CLS_CD
+			) VALUES (
+			  #{repairSeq}
+			 ,#{repairCode}
+			)
+	</insert>
+	
+	<delete id="deleteRepairBikeDetail" parameterType="repairBikeVo">
+		DELETE FROM TB_MTC_REPAIR_DETL
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>
+	
+	<insert id="insertChangeParts" parameterType="repairPartsVo">
+		INSERT INTO TB_MTC_BIKE_PART_CHNG_DETL (
+		   	REPAIR_SEQ, PART_CD, CENTER_ID, CHNG_QUNT
+			) VALUES (
+			  #{repairSeq}
+			 ,#{partsName}
+			 ,#{centerName}
+			 ,#{usePartsCnt}
+			)
+	</insert>
+	
+	<delete id="deleteChangeParts" parameterType="repairBikeVo">
+		DELETE FROM TB_MTC_BIKE_PART_CHNG_DETL
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>
+	
+	<update id="updateUsePart" parameterType="repairPartsVo" >	
+		UPDATE TB_MTC_STOCK_LIST SET
+		<if test='chngType == "P"'>
+			STOCK_QUNT = STOCK_QUNT-CONVERT(#{chngCnt}, UNSIGNED)
+		</if>
+		<if test='chngType == "M"'>
+			STOCK_QUNT = STOCK_QUNT+CONVERT(#{chngCnt}, UNSIGNED)
+		</if>
+		 WHERE CENTER_ID = #{centerName} AND PART_CD = #{partsName}
+	</update>
+	
+	<insert id="insertUsePartHistory"  parameterType="repairPartsVo" >	
+		 INSERT INTO TB_MTC_STOCK_USE_HIST(
+				CENTER_ID
+			   ,PART_CD
+			   ,USE_CLS_CD
+			   ,MOD_ID
+			   ,MOD_DTTM
+			   ,PART_QUNT
+		 ) VALUES (
+			   #{centerName}
+			  ,#{partsName}
+		 <if test='chngType == "P"'>
+			  ,'STK_002'
+		 </if>
+		 <if test='chngType == "M"'>
+			  ,'STK_004'
+		 </if>
+			  ,#{modId}
+			  ,now()
+		 <if test='chngType == "P"'>
+			  ,CONCAT('-', #{chngCnt})
+		 </if>
+		 <if test='chngType == "M"'>
+			  ,CONCAT('+', #{chngCnt})
+		 </if>	 
+		 )
+	</insert>
+	
+	<select id="getRemainPartsCnt" parameterType="inventVo" resultType="String">
+		SELECT 
+		STOCK_QUNT AS partQunt
+		FROM TB_MTC_STOCK_LIST
+		WHERE CENTER_ID = #{centerId} AND PART_CD = #{partCd}
+	</select>
+	
+		<update id="updateBikeStatusCmi" parameterType="repairBikeVo">
+		UPDATE TB_CMI_BIKE SET
+		BIKE_STUS_CD = 'BKS_014',
+		BF_STUS_CD = #{bikeStusCd},
+		CENTER_ID = #{centerId},
+		MOD_ID = #{adminId},
+		MOD_DTTM = STR_TO_DATE(now(),'%Y-%m-%d %H:%i:%S')
+		WHERE BIKE_ID = #{bikeId}
+	</update>
+	
+	<insert id="insertBikeStatusHistory"  parameterType="repairBikeVo" >	
+		INSERT INTO TB_CMI_BIKE_HIST(
+			BIKE_ID,
+			BIKE_STUS_CD,
+			CENTER_ID,
+			PROCESS_NAME,
+			ADMIN_ID,
+			REG_DTTM
+		)VALUES(
+			#{bikeId},
+			'BKS_014',
+			#{centerId},
+			'입고',
+			#{adminId},
+			STR_TO_DATE(now(),'%Y-%m-%d %H:%i:%S')
+		)
+	</insert>
+	
+   <select id="selectRepairCurrDate" parameterType="repairBikeVo" resultType="int">
+	
+		SELECT COUNT(1)
+		  FROM TB_MTC_REPAIR_INFO 		A
+		 INNER JOIN TB_MTC_REPAIR_DETL B ON ( A.REPAIR_SEQ = B.REPAIR_SEQ )
+		 INNER JOIN (
+					  SELECT substring_index( substring_index(  #{repairCode}, ',', n) , ',' , -1) AS REPAIR_CLS_CD
+						FROM number_set A
+					   WHERE A.n <![CDATA[ <= ]]> GET_SPT_CNT( #{repairCode}, ',')
+					 ) C ON B.REPAIR_CLS_CD = C.REPAIR_CLS_CD 
+		 WHERE A.EQUIPMENT_ID	= #{bikeId}	
+		   AND A.MAINTC_ADMIN_ID = #{adminId}
+		   AND A.REG_DTTM  	 BETWEEN CURDATE() AND ADDDATE(CURDATE(), 1 )
+		   AND B.REPAIR_CLS_CD IN ('REB_009', 'REB_018',  'REB_024', 'REB_057' )
+	</select>
+	
+	
+</mapper>

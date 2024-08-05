@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.center.service.CenterMapper">
+	
+	<resultMap id="resultCenterVO" type="com.dkitec.barocle.admin.manage.center.vo.CenterVO">
+		<result column="CENTER_ID" property="centerID" />
+		<result column="CENTER_CLS_CD" property="centerClsCD" />
+		<result column="DISTRICT_CD" property="districtCD" />
+		<result column="CENTER_NAME" property="centerName" />
+		<result column="CENTER_TEL_NO" property="centerTelNO" />
+		<result column="OPR_STR_TIME" property="oprStrTime" />
+		<result column="OPR_END_TIME" property="oprEndTime" />
+		<result column="CHARGER_NAME" property="chargerName" />
+		<result column="CENTER_POST_NO" property="centerPostNO" />
+		<result column="CENTER_ADDR1" property="centerAddr1" />
+		<result column="CENTER_ADDR2" property="centerAddr2" />
+		<result column="CENTER_LATITUDE" property="centerLatitude" />
+		<result column="CENTER_LONGITUDE" property="centerLongitude" />
+		<result column="CENTER_DESC" property="centerDesc" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="MOD_NAME" property="modName" />
+		<result column="CENTER_GUBUN" property="centerGubun" />
+		<result column="CENTER_GU" property="centerGu" />
+	</resultMap>
+	
+	<select id="listCenterCount" parameterType="centerVO" resultType="int">
+		SELECT	COUNT(T1.CENTER_ID) AS centerID
+		FROM	TB_OPR_CENTER T1
+		WHERE	1=1
+				<if test="centerClsCD!='' and centerClsCD!=null">AND T1.CENTER_CLS_CD = #{centerClsCD}</if>
+				<if test="searchValue!='' and searchValue!=null">AND T1.CENTER_NAME LIKE CONCAT('%',#{searchValue},'%')</if>
+		ORDER BY
+				T1.CENTER_NAME ASC
+	</select>
+	
+	<select id="listCenter" parameterType="centerVO" resultMap="resultCenterVO">
+		SELECT
+				T1.CENTER_ID,
+				T1.CENTER_CLS_CD,
+				(SELECT TT2.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD TT1, TB_SYS_MLANG_COM_CD TT2 WHERE TT1.COM_CD=TT2.COM_CD AND TT1.COM_CD=T1.CENTER_CLS_CD) AS CENTER_GUBUN,
+				T1.DISTRICT_CD,
+				(SELECT TT2.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD TT1, TB_SYS_MLANG_COM_CD TT2 WHERE TT1.COM_CD=TT2.COM_CD AND TT1.COM_CD=T1.DISTRICT_CD) AS CENTER_GU,
+				T1.CENTER_NAME,
+				T1.CENTER_TEL_NO,
+				T1.OPR_STR_TIME,
+				T1.OPR_END_TIME,
+				T1.CHARGER_NAME,
+				T1.CENTER_POST_NO,
+				T1.CENTER_ADDR1,
+				T1.CENTER_ADDR2,
+				T1.CENTER_LATITUDE,
+				T1.CENTER_LONGITUDE,
+				T1.CENTER_DESC,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID
+		FROM	TB_OPR_CENTER T1
+		WHERE	1=1
+				<if test="centerClsCD!='' and centerClsCD!=null">AND T1.CENTER_CLS_CD = #{centerClsCD}</if>
+				<if test="searchValue!='' and searchValue!=null">AND T1.CENTER_NAME LIKE CONCAT('%',#{searchValue},'%')</if>
+		ORDER BY
+				T1.CENTER_NAME ASC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="getSysCode" parameterType="java.util.Map" resultType="java.util.HashMap">
+		SELECT	T1.COM_CD AS comCD, T2.MLANG_COM_CD_NAME AS comCdName
+		FROM	TB_SYS_COM_CD T1 LEFT OUTER JOIN TB_SYS_MLANG_COM_CD T2 ON T1.COM_CD = T2.COM_CD 
+		WHERE	T1.COM_UP_CD = #{sysCode} AND T1.USE_YN = 'Y' AND T2.LANG_CLS_CD = #{mLang}
+		ORDER BY
+				T1.COM_CD ASC
+	</select>
+	
+	<select id="viewCenter" parameterType="centerVO" resultMap="resultCenterVO">
+		SELECT
+				T1.CENTER_ID,
+				T1.CENTER_CLS_CD,
+				(SELECT TT2.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD TT1, TB_SYS_MLANG_COM_CD TT2 WHERE TT1.COM_CD=TT2.COM_CD AND TT1.COM_CD=T1.CENTER_CLS_CD) AS CENTER_GUBUN,
+				T1.DISTRICT_CD,
+				(SELECT TT2.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD TT1, TB_SYS_MLANG_COM_CD TT2 WHERE TT1.COM_CD=TT2.COM_CD AND TT1.COM_CD=T1.DISTRICT_CD) AS CENTER_GU,
+				T1.CENTER_NAME,
+				T1.CENTER_TEL_NO,
+				T1.OPR_STR_TIME,
+				T1.OPR_END_TIME,
+				T1.CHARGER_NAME,
+				T1.CENTER_POST_NO,
+				T1.CENTER_ADDR1,
+				T1.CENTER_ADDR2,
+				T1.CENTER_LATITUDE,
+				T1.CENTER_LONGITUDE,
+				T1.CENTER_DESC,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID,
+				(SELECT TT2.ADMIN_NAME FROM TB_SYS_ADMIN TT2 WHERE TT2.ADMIN_ID=T1.MOD_ID) AS MOD_NAME
+		FROM	TB_OPR_CENTER T1
+		WHERE	CENTER_ID = #{centerID}
+	</select>
+	
+	<select id="getNextCenterID" resultType="java.lang.String">
+		SELECT IFNULL(MAX(CENTER_ID),NULL) AS centerID FROM TB_OPR_CENTER
+	</select>
+	
+	<insert id="insertCenter" parameterType="centerVO">
+		INSERT INTO TB_OPR_CENTER
+			(
+				CENTER_ID, CENTER_CLS_CD, DISTRICT_CD,
+				CENTER_NAME, CENTER_TEL_NO, OPR_STR_TIME, OPR_END_TIME, CHARGER_NAME,
+				CENTER_POST_NO, CENTER_ADDR1, CENTER_ADDR2,
+				CENTER_LATITUDE, CENTER_LONGITUDE, CENTER_DESC,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, USE_YN
+			)
+		VALUES
+			(
+				#{centerID}, #{centerClsCD}, #{districtCD},
+				#{centerName}, #{centerTelNO}, #{oprStrTime}, #{oprEndTime}, #{chargerName},
+				#{centerPostNO}, #{centerAddr1}, #{centerAddr2},
+				#{centerLatitude}, #{centerLongitude}, #{centerDesc},
+				NOW(), #{regID}, NOW(), #{regID},
+				<choose>
+					<when test="useYn != null and useYn !=''">
+						#{useYn}
+					</when>
+					<otherwise>
+						'Y'
+					</otherwise>
+				</choose>
+			)
+	</insert>
+	
+	<update id="updateCenter" parameterType="centerVO">
+		UPDATE	TB_OPR_CENTER
+		SET
+				CENTER_CLS_CD = #{centerClsCD},
+				DISTRICT_CD = #{districtCD},
+				CENTER_NAME = #{centerName},
+				CENTER_TEL_NO = #{centerTelNO},
+				<if test="oprStrTime!='' and oprStrTime!=null">
+					OPR_STR_TIME = #{oprStrTime},
+				</if>
+				<if test="oprEndTime!='' and oprEndTime!=null">
+					OPR_END_TIME = #{oprEndTime},
+				</if>
+				<if test="chargerName!='' and chargerName!=null">
+					CHARGER_NAME = #{chargerName},
+				</if>
+				<if test="useYn!='' and useYn!=null">
+					USE_YN = #{useYn},
+				</if>
+				CENTER_POST_NO = #{centerPostNO},
+				CENTER_ADDR1 = #{centerAddr1},
+				CENTER_ADDR2 = #{centerAddr2},
+				CENTER_LATITUDE = #{centerLatitude},
+				CENTER_LONGITUDE = #{centerLongitude},
+				CENTER_DESC = #{centerDesc},
+				MOD_DTTM = NOW(),
+				MOD_ID = #{modID}
+		WHERE	CENTER_ID = #{centerID}
+	</update>
+	
+	<delete id="deleteCenter" parameterType="centerVO">
+		DELETE FROM TB_OPR_CENTER WHERE CENTER_ID = #{centerID}
+	</delete>
+
+</mapper>

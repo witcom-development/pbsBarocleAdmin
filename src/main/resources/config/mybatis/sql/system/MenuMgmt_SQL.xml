@@ -1,0 +1,498 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.MenuMgmt.service.MenuMgmtMapper">
+	<select id="getMenuList" parameterType="menuMgmtVO" resultType="menuMgmtVO">
+		<![CDATA[
+		SELECT MENU_CD	  AS menuCd
+			 , UP_MENU	  AS upMenu
+			 , MENU_NAME	AS menuName
+			 , MENU_LEVEL   AS menuLevel
+			 , MENU_DETAIL_CD   AS menuDetailCd
+			 , LINK_IMG	 AS linkImg
+			 , MENU_IMG	 AS menuImg
+			 , SRC_LINK	 AS srcLink
+			 , MENU_ORD	 AS menuOrd
+			 , MENU_DESC	AS menuDesc
+			 , REG_ID	   AS regUsrId
+			 , REG_DTTM	 AS regData
+			 , HIDDEN_YN	AS hiddenYn
+		  FROM TB_SYS_MENU_CD 
+		 WHERE MENU_CD > 0 
+		 
+		]]>
+		<if test="menuCd != null"> 
+			<![CDATA[
+			AND   MENU_CD NOT IN  (
+								  SELECT T1.MENU_CD MENU_CD
+									FROM TB_SYS_MENU_CD AS T1
+										 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+								   WHERE T1.MENU_CD =  #{menuCd}
+									 AND T1.MENU_CD IS NOT NULL
+								   UNION ALL
+								  SELECT T2.MENU_CD MENU_CD
+									FROM TB_SYS_MENU_CD AS T1
+										 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+								   WHERE T1.MENU_CD =  #{menuCd}
+									 AND T2.MENU_CD IS NOT NULL
+								   UNION ALL
+								  SELECT T3.MENU_CD MENU_CD
+									FROM TB_SYS_MENU_CD AS T1
+										 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+								   WHERE T1.MENU_CD =  #{menuCd}
+									 AND T3.MENU_CD IS NOT NULL
+								   UNION ALL
+								  SELECT T4.MENU_CD MENU_CD
+									FROM TB_SYS_MENU_CD AS T1
+										 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+										 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+								   WHERE T1.MENU_CD =  #{menuCd}
+									 AND T4.MENU_CD IS NOT NULL
+								)
+			]]>
+		</if>
+		ORDER BY MENU_ORD
+	</select>
+	
+	<select id="getMenuInfo" parameterType="menuMgmtVO" resultType="menuMgmtVO">
+		SELECT MENU_CD	  AS menuCd
+			 , UP_MENU	  AS upMenu
+			 , MENU_NAME	AS menuName
+			 , MENU_LEVEL   AS menuLevel
+			 , MENU_DETAIL_CD   AS menuDetailCd
+			 , LINK_IMG	 AS linkImg
+			 , MENU_IMG	 AS menuImg
+			 , SRC_LINK	 AS srcLink
+			 , MENU_ORD	 AS menuOrd
+			 , MENU_DESC	AS menuDesc
+			 , REG_ID	   AS regUsrId
+			 , REG_DTTM	 AS regData
+			 , HIDDEN_YN	AS hiddenYn
+		  FROM TB_SYS_MENU_CD 
+		  <where>
+			   <if test='downMenuCd != null and downMenuCd != ""'>
+				   MENU_CD = #{downMenuCd} 
+			   </if>   
+			   <if test='downMenuCd == null or downMenuCd == ""'>
+				   MENU_CD = #{menuCd} 
+			   </if>
+		  </where>	 
+	
+
+	</select>
+	<select id="getMenuUnderCount" parameterType="menuMgmtVO" resultType="int">
+		<![CDATA[
+		SELECT COUNT(MENU_CD) 
+		  FROM TB_SYS_MENU_CD
+		]]>
+		<where>
+			<if test='menuCd != null and menuCd != "" '>
+				 UP_MENU = #{menuCd}
+			</if>	
+			<if test='menuCd == null or menuCd == ""' >
+				UP_MENU is not null				
+			</if>	
+		</where>
+	</select>
+	<update id="setMenuOrder" parameterType="menuMgmtVO">
+		<![CDATA[ 
+			UPDATE TB_SYS_MENU_CD   
+		]]> 
+		<set>
+			<if test='type == "I"'>
+				 <![CDATA[ 
+					MENU_ORD = MENU_ORD + 1
+				WHERE UP_MENU = #{menuCd}
+				  AND MENU_ORD >= #{menuOrd}
+				]]> 
+			</if>
+			<if test='type == "U"'>
+				<![CDATA[ 
+					MENU_ORD = 
+								CASE 
+									WHEN #{menuOrd} < #{oldMenuOrd} THEN MENU_ORD + 1
+									WHEN #{menuOrd} > #{oldMenuOrd} THEN MENU_ORD - 1
+									ELSE MENU_ORD
+								END
+				WHERE UP_MENU = #{upMenu}
+				  AND MENU_ORD >= 
+								CASE 
+									WHEN #{menuOrd} > #{oldMenuOrd} THEN #{oldMenuOrd} + 1
+									WHEN #{menuOrd} < #{oldMenuOrd} THEN #{menuOrd}
+									ELSE #{menuOrd}
+								END
+				  AND MENU_ORD < 
+								CASE 
+									WHEN #{menuOrd} > #{oldMenuOrd} THEN #{menuOrd} + 1
+									WHEN #{menuOrd} < #{oldMenuOrd} THEN #{oldMenuOrd}
+									ELSE #{oldMenuOrd}
+								END
+				]]> 
+				
+			</if>
+			<if test='type == "D"'>
+				<![CDATA[ 
+					MENU_ORD = MENU_ORD - 1
+				WHERE UP_MENU = #{upMenu}
+				  AND MENU_ORD > #{menuOrd}
+				]]> 
+			</if>
+		</set>
+	</update>
+	
+	<update id="setMenu" parameterType="menuMgmtVO">
+		<![CDATA[ 
+		UPDATE TB_SYS_MENU_CD 
+		   SET MENU_NAME		= #{menuName}
+			 , UP_MENU		  = #{upMenu}
+			 , MENU_LEVEL	   = #{menuLevel}
+			 , MENU_DETAIL_CD   = #{menuDetailCd}
+			 , LINK_IMG		 = #{linkImg}
+			 , MENU_IMG		 = #{menuImg}
+			 , SRC_LINK		 = #{srcLink}	
+			 , MENU_ORD		 = #{menuOrd}
+			 , MENU_DESC		= #{menuDesc}
+			 , HIDDEN_YN		= #{hiddenYn}
+			 , REG_ID		   = #{regUsrId}
+			 , REG_DTTM		 = now()
+		WHERE MENU_CD = #{menuCd}
+		]]> 
+	</update>
+	
+	<insert id="addMenu" parameterType="menuMgmtVO">
+		<![CDATA[
+		INSERT INTO TB_SYS_MENU_CD (
+			  MENU_CD
+			, MENU_NAME
+			, UP_MENU
+			, MENU_LEVEL
+			, MENU_DETAIL_CD
+			, LINK_IMG
+			, MENU_IMG
+			, SRC_LINK
+			, MENU_ORD
+			, MENU_DESC
+			, HIDDEN_YN
+			, REG_ID
+			, REG_DTTM
+		) VALUES(
+			  #{downMenuCd}
+			, #{downMenuName}
+			, #{menuCd}
+			, coalesce(#{menuLevel}, 0) +1
+			, #{menuDetailCd}
+			, #{linkImg}
+			, #{menuImg}
+			, #{srcLink}
+			, CAST(#{menuOrd} AS UNSIGNED)
+			, #{menuDesc}
+			, 'N' 
+			, #{regUsrId}
+			, now()
+		)
+		]]>
+	</insert>
+	
+	<delete id="delMenu" parameterType="menuMgmtVO" >
+		<![CDATA[
+		DELETE FROM TB_SYS_MENU_CD
+		WHERE MENU_CD IN (
+					  SELECT *
+						FROM (
+							  SELECT T1.MENU_CD MENU_CD
+								FROM TB_SYS_MENU_CD AS T1
+									 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+							   WHERE T1.MENU_CD =  #{menuCd}
+								 AND T1.MENU_CD IS NOT NULL
+							   UNION ALL
+							  SELECT T2.MENU_CD MENU_CD
+								FROM TB_SYS_MENU_CD AS T1
+									 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+							   WHERE T1.MENU_CD =  #{menuCd}
+								 AND T2.MENU_CD IS NOT NULL
+							   UNION ALL
+							  SELECT T3.MENU_CD MENU_CD
+								FROM TB_SYS_MENU_CD AS T1
+									 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+							   WHERE T1.MENU_CD =  #{menuCd}
+								 AND T3.MENU_CD IS NOT NULL
+							   UNION ALL
+							  SELECT T4.MENU_CD MENU_CD
+								FROM TB_SYS_MENU_CD AS T1
+									 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+									 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+							   WHERE T1.MENU_CD =  #{menuCd}
+								 AND T4.MENU_CD IS NOT NULL
+							 ) as T
+						 )
+		]]>
+	</delete> 
+	
+	<select id="getMenuUrlList" parameterType="menuMgmtVO" resultType="menuUrlVO">
+		<![CDATA[ 
+		SELECT MENU_CD AS menuCd
+			 , MENU_URL AS menuUrl
+			 , MENU_CRUD AS menuCrud
+			 , MENU_URL_SEQ AS menuUrlSeq
+		  FROM TB_SYS_MENU_URL_INFO
+		 WHERE MENU_CD = #{menuCd}
+		]]> 
+	</select>
+		
+	<insert id="addMenuUrl" parameterType="menuUrlVO">
+		<![CDATA[ 
+		INSERT INTO TB_SYS_MENU_URL_INFO (MENU_CD ,MENU_URL,MENU_CRUD )VALUES ( #{menuCd}, #{menuUrl}, #{menuCrud})
+		]]>
+	   
+	</insert>
+	
+	<update id="setMenuUrl" parameterType="menuUrlVO">
+		<![CDATA[ 
+		UPDATE TB_SYS_MENU_URL_INFO 
+		   SET MENU_CRUD = #{menuCrud}
+			 , MENU_URL = #{menuUrl}
+		 WHERE MENU_CD = #{menuCd} 
+		   AND MENU_URL_SEQ = #{menuUrlSeq}
+		]]> 
+	</update>
+	
+	<delete id="delMenuSeqALLUrlDelete" parameterType="menuUrlVO">
+		<![CDATA[ 
+			DELETE FROM TB_SYS_MENU_URL_INFO
+			WHERE MENU_CD = #{menuCd} 
+		]]> 
+	</delete>
+	
+	<delete id="delMenuUrlDelete" parameterType="menuUrlVO">
+		DELETE FROM TB_SYS_MENU_URL_INFO
+		<where>
+			<if test='menuUrlSeq != null and menuUrlSeq != ""'>
+			MENU_URL_SEQ  = #{menuUrlSeq}
+			</if>
+			<!--
+			<if test='menuUrlNotIn != null and menuUrlNotIn != ""'>
+						MENU_URL_SEQ not in 
+							<foreach item="urlSeq" collection="menuUrlNotIn" open="(" separator="," close=")">
+							  #{urlSeq}
+							</foreach>
+						</if>-->
+		</where>
+	</delete>
+	
+	<select id="getMenuTop" parameterType="menuMgmtVO" resultType="menuMgmtVO">
+		<![CDATA[
+		SELECT A.MENU_CD				AS menuCd
+			 , A.MENU_NAME			  AS menuName
+			 , A.UP_MENU				AS upMenu
+			 , A.MENU_LEVEL			 AS menuLevel
+			 , A.MENU_DETAIL_CD		 AS menuDetailCd
+			 , A.LINK_IMG			   AS linkImg
+			 , A.MENU_IMG			   AS menuImg
+			 , A.SRC_LINK			   AS srcLink
+			 , A.MENU_ORD			   AS menuOrd
+			 , A.MENU_DESC			  AS menuDesc
+			 , A.REG_ID				 AS regUsrId
+			 , A.REG_DTTM			   AS regDate
+			 , A.HIDDEN_YN				  AS hiddenYn
+			 , IFNULL(B.READ_YN, 'N')	   AS readYn
+			 , IFNULL(B.CRE_YN, 'N')		AS creYn
+			 , IFNULL(B.UPDATE_YN, 'N')	 AS updateYn
+			 , IFNULL(B.DEL_YN, 'N')		AS delYn
+		FROM TB_SYS_MENU_CD AS A
+			 LEFT OUTER JOIN TB_SYS_GRP_AUTH_INFO AS B
+			 ON (A.MENU_CD = B.MENU_CD AND B.ADMIN_GRP_SEQ = #{usrGrpCd})
+		WHERE A.MENU_LEVEL = 1
+		  AND A.HIDDEN_YN = 'N'
+		  AND IFNULL(B.READ_YN,'N') = 'Y'
+		ORDER BY A.MENU_ORD
+		]]>
+	</select>
+	
+	<select id="getMenuLeft" parameterType="menuMgmtVO" resultType="menuMgmtVO">
+		<![CDATA[
+		SELECT A.MENU_CD				AS menuCd
+			 , A.MENU_NAME			  AS menuName
+			 , A.UP_MENU				AS upMenu
+			 , A.MENU_LEVEL			 AS menuLevel
+			 , A.MENU_DETAIL_CD		 AS menuDetailCd
+			 , A.LINK_IMG			   AS linkImg
+			 , A.MENU_IMG			   AS menuImg
+			 , A.SRC_LINK			   AS srcLink
+			 , A.MENU_ORD			   AS menuOrd
+			 , A.MENU_DESC			  AS menuDesc
+			 , A.HIDDEN_YN			  AS hiddenYn
+			 , A.REG_ID				 AS regUsrId
+			 , A.REG_DTTM			   AS regDate
+			 , (SELECT COUNT(MENU_CD) 
+				  FROM TB_SYS_MENU_CD 
+				 WHERE UP_MENU = A.MENU_CD 
+				   AND HIDDEN_YN = 'N' 
+			   )							AS downCnt
+			 , IFNULL(B.READ_YN, 'N')	   AS readYn
+			 , IFNULL(B.CRE_YN, 'N')		AS creYn
+			 , IFNULL(B.UPDATE_YN, 'N')	 AS updateYn
+			 , IFNULL(B.DEL_YN, 'N')		AS delYn
+		FROM (
+			  SELECT DISTINCT A.*
+				FROM TB_SYS_MENU_CD A
+				   , (
+					  SELECT T1.MENU_CD MENU_CD1
+						   , T2.MENU_CD MENU_CD2
+						   , T3.MENU_CD MENU_CD3
+						   , T4.MENU_CD MENU_CD4
+						FROM TB_SYS_MENU_CD AS T1
+							 LEFT JOIN TB_SYS_MENU_CD AS T2 ON T2.UP_MENU = T1.MENU_CD
+							 LEFT JOIN TB_SYS_MENU_CD AS T3 ON T3.UP_MENU = T2.MENU_CD
+							 LEFT JOIN TB_SYS_MENU_CD AS T4 ON T4.UP_MENU = T3.MENU_CD
+					   WHERE T1.MENU_CD = #{menuCd}
+					 ) C
+			   WHERE A.MENU_CD IN (C.MENU_CD1, C.MENU_CD2, C.MENU_CD3, C.MENU_CD4)
+			 ) AS A
+			 LEFT OUTER JOIN TB_SYS_GRP_AUTH_INFO AS B
+			 ON (A.MENU_CD = B.MENU_CD AND B.ADMIN_GRP_SEQ = #{usrGrpCd})
+		WHERE MENU_LEVEL != 1
+		  AND IFNULL(B.READ_YN,'N') = 'Y'
+		ORDER BY A.MENU_LEVEL, A.MENU_ORD
+		]]>
+	</select>
+	
+	<select id="getMenuGrpList" parameterType="menuMgmtVO" resultType="menuMgmtVO">
+		<![CDATA[
+		SELECT A.MENU_CD				AS menuCd
+			 , A.MENU_NAME			  AS menuName
+			 , A.UP_MENU				AS upMenu
+			 , A.MENU_LEVEL			 AS menuLevel
+			 , A.MENU_DETAIL_CD		 AS menuDetailCd
+			 , A.LINK_IMG			   AS linkImg
+			 , A.MENU_IMG			   AS menuImg
+			 , A.SRC_LINK			   AS srcLink
+			 , A.MENU_ORD			   AS menuOrd
+			 , A.MENU_DESC			  AS menuDesc
+			 , A.REG_ID				 AS regUsrId
+			 , A.REG_DTTM			   AS regDate
+			 , (SELECT COUNT(MENU_CD) 
+				  FROM TB_SYS_MENU_CD 
+				 WHERE UP_MENU = A.MENU_CD 
+			   )							AS downCnt
+			 , IFNULL(B.READ_YN, 'N')	   AS readYn
+			 , IFNULL(B.CRE_YN, 'N')		AS creYn
+			 , IFNULL(B.UPDATE_YN, 'N')	 AS updateYn
+			 , IFNULL(B.DEL_YN, 'N')		AS delYn
+			 , CASE WHEN B.READ_YN IS NULL 
+					THEN 'I'
+					ELSE 'U' 
+			   END					  AS type
+		  FROM TB_SYS_MENU_CD AS A
+			   LEFT OUTER JOIN TB_SYS_GRP_AUTH_INFO AS B
+			   ON (A.MENU_CD = B.MENU_CD AND B.ADMIN_GRP_SEQ = #{usrGrpCd})
+		 WHERE A.MENU_CD != 0
+		 ORDER BY A.MENU_LEVEL, A.MENU_ORD
+		]]>
+	</select>
+			
+	<insert id="addMenuGrp" parameterType="menuMgmtVO">
+		<![CDATA[ 
+		INSERT INTO TB_SYS_GRP_AUTH_INFO (
+			  MENU_CD
+			, ADMIN_GRP_SEQ
+			, READ_YN
+			, CRE_YN
+			, UPDATE_YN
+			, DEL_YN
+			, REG_ID
+			, REG_DTTM
+		) VALUES (
+			  #{menuCd}
+			, #{usrGrpCd}
+			, #{readYn}
+			, #{creYn}
+			, #{updateYn}
+			, #{delYn}
+			, #{regUsrId}
+			, now()
+		)
+		]]> 
+	</insert>
+	
+	<update id="setMenuGrp" parameterType="menuMgmtVO">
+		<![CDATA[ 
+		UPDATE TB_SYS_GRP_AUTH_INFO 
+		   SET READ_YN   = #{readYn}
+			 , CRE_YN	= #{creYn}
+			 , UPDATE_YN = #{updateYn}
+			 , DEL_YN	= #{delYn}
+			 , REG_ID	= #{regUsrId}
+			 , REG_DTTM  = now()
+		WHERE MENU_CD = #{menuCd} 
+		  AND ADMIN_GRP_SEQ = #{usrGrpCd}
+		]]> 
+	</update>
+	
+	<delete id="delMenuGrp" parameterType="menuMgmtVO">
+		<![CDATA[ 
+		DELETE FROM TB_SYS_GRP_AUTH_INFO
+		 WHERE MENU_CD = #{menuCd} 
+		   AND ADMIN_GRP_SEQ = #{usrGrpCd}
+		]]> 
+	</delete>
+	
+	<select id="getMenuGrpUrlNotLogin" parameterType="menuUrlVO" resultType="int">
+		<![CDATA[ 
+		SELECT COUNT(MENU_URL) 
+		  FROM TB_SYS_MENU_URL_INFO
+		 WHERE MENU_URL = #{menuUrl}
+		]]>
+	</select>
+	
+	<select id="getMenuGrpUrlCheck" parameterType="menuUrlVO" resultType="menuMgmtVO">
+		<![CDATA[ 
+		SELECT A.MENU_CD AS menuCd
+			 , A.MENU_LEVEL AS menuLevel
+			 , A.MENU_NAME AS menuName
+			 , B.CRE_YN AS creYn
+			 , B.READ_YN readYn
+			 , B.UPDATE_YN AS updateYn
+			 , B.DEL_YN AS delYn
+			 , C.MENU_CRUD AS type
+			 , A.MENU_DETAIL_CD AS menuDetailCd
+			 , D.MENU_NAME	  AS topMenuName
+		FROM TB_SYS_MENU_CD AS A
+			 LEFT OUTER JOIN TB_SYS_GRP_AUTH_INFO AS B 
+			 ON (A.MENU_CD = B.MENU_CD AND B.ADMIN_GRP_SEQ = #{usrGrpCd})
+			 INNER JOIN TB_SYS_MENU_URL_INFO AS C
+			 ON (A.MENU_CD = C.MENU_CD AND C.MENU_URL = #{menuUrl})
+			 LEFT OUTER JOIN TB_SYS_MENU_CD AS D
+			 ON (D.MENU_LEVEL = 1 AND substring(A.MENU_DETAIL_CD, 1, INSTR(A.MENU_DETAIL_CD, '/')-1) = D.MENU_CD)
+		ORDER BY A.MENU_ORD 
+		]]>
+	</select>
+
+<insert id="addMenuOpenHist" parameterType="menuOpenHistVO">
+		<![CDATA[
+		INSERT INTO TB_SYS_MENU_OPEN_HIST (
+			  ADMIN_ID
+			, ADMIN_IP
+			, MENU_DESC
+		) VALUES(
+			  #{ADMIN_ID}
+			, #{ADMIN_IP}  
+			, SUBSTR(#{MENU_DESC}, 1, 490)
+		)
+		]]>
+	</insert>
+
+</mapper>
+

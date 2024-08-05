@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.mainset.service.MainSetMapper">
+	
+	<resultMap id="resultCategoryVO" type="com.dkitec.barocle.admin.customer.faq.vo.CategoryVO">
+		<result column="COM_CD" property="comCD" />
+		<result column="COM_UP_CD" property="comUpCD" />
+		<result column="CD_DESC1" property="cdDesc1" />
+		<result column="CD_DESC2" property="cdDesc2" />
+		<result column="USE_YN" property="useYN" />
+		<result column="DSP_ORD" property="dspOrd" />
+		<result column="REG_ID" property="regID" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="ADD_VAL1" property="addVal1" />
+		<result column="ADD_VAL2" property="addVal2" />
+		<result column="ADD_VAL3" property="addVal3" />
+		<result column="LANG_CLS_CD" property="langClsCD" />
+		<result column="MLANG_COM_CD_NAME" property="mLangComCDName" />
+	</resultMap>
+	
+	<select id="listMainSet" parameterType="categoryVO" resultMap="resultCategoryVO">
+		<!-- SELECT
+				T1.COM_CD, T1.COM_UP_CD, T1.CD_DESC1, T1.CD_DESC2, T1.USE_YN,
+				T1.DSP_ORD, T1.REG_ID, T1.REG_DTTM, 
+				T1.ADD_VAL1, T1.ADD_VAL2, T1.ADD_VAL3,
+				T2.LANG_CLS_CD, T2.MLANG_COM_CD_NAME
+		FROM	TB_SYS_COM_CD T1 LEFT OUTER JOIN TB_SYS_MLANG_COM_CD T2 ON T1.COM_CD=T2.COM_CD
+		WHERE	T1.COM_UP_CD = #{comUpCD} AND  T2.LANG_CLS_CD = #{langClsCD}
+		ORDER BY
+				T1.COM_CD ASC -->
+				
+		 SELECT COM_CD, 
+				COM_UP_CD, 
+				CD_DESC1, 
+				CD_DESC2, 
+				USE_YN,
+						DSP_ORD, 
+				REG_ID, 
+				REG_DTTM, 
+						CASE WHEN COM_CD = 'MSI_025' 
+							 THEN CONCAT(MAX(VAL1),',',MAX(VAL2),',',MAX(VAL3),',',MAX(VAL4),',',MAX(VAL5)) 
+							 WHEN COM_CD = 'MSI_030' 
+							 THEN CONCAT(MAX(VAL7),',',MAX(VAL8),',',MAX(VAL9)) 
+							 WHEN COM_CD = 'MSI_035' 
+							 THEN CONCAT(MAX(VAL10),',',MAX(VAL11),',',MAX(VAL12),',',MAX(VAL13))
+							 ELSE ADD_VAL1 
+							 END AS ADD_VAL1,
+				ADD_VAL2, 
+				ADD_VAL3,
+						LANG_CLS_CD, 
+				MLANG_COM_CD_NAME
+		   FROM (
+			  SELECT
+					T1.COM_CD, 
+					T1.COM_UP_CD, 
+					T1.CD_DESC1, 
+					T1.CD_DESC2, 
+					T1.USE_YN,
+							T1.DSP_ORD, 
+					T1.REG_ID, 
+					T1.REG_DTTM, 
+							T1.ADD_VAL1,
+					T1.ADD_VAL2, 
+					T1.ADD_VAL3,
+							T2.LANG_CLS_CD, 
+					T2.MLANG_COM_CD_NAME,
+					CASE WHEN T1.COM_CD = 'MSI_025' THEN T1.ADD_VAL1 END AS VAL1,
+					CASE WHEN T1.COM_CD = 'MSI_026' THEN T1.ADD_VAL1 END AS VAL2,
+					CASE WHEN T1.COM_CD = 'MSI_027' THEN T1.ADD_VAL1 END AS VAL3,
+					CASE WHEN T1.COM_CD = 'MSI_028' THEN T1.ADD_VAL1 END AS VAL4,
+					CASE WHEN T1.COM_CD = 'MSI_029' THEN T1.ADD_VAL1 END AS VAL5,
+					CASE WHEN T1.COM_CD = 'MSI_030' THEN T1.ADD_VAL1 END AS VAL7,
+					CASE WHEN T1.COM_CD = 'MSI_031' THEN T1.ADD_VAL1 END AS VAL8,
+					CASE WHEN T1.COM_CD = 'MSI_032' THEN T1.ADD_VAL1 END AS VAL9,
+					CASE WHEN T1.COM_CD = 'MSI_035' THEN T1.ADD_VAL1 END AS VAL10,
+					CASE WHEN T1.COM_CD = 'MSI_036' THEN T1.ADD_VAL1 END AS VAL11,
+					CASE WHEN T1.COM_CD = 'MSI_037' THEN T1.ADD_VAL1 END AS VAL12,
+					CASE WHEN T1.COM_CD = 'MSI_038' THEN T1.ADD_VAL1 END AS VAL13
+					FROM	TB_SYS_COM_CD T1 LEFT OUTER JOIN TB_SYS_MLANG_COM_CD T2 ON T1.COM_CD=T2.COM_CD
+					WHERE	T1.COM_UP_CD = #{comUpCD} AND  T2.LANG_CLS_CD = #{langClsCD}
+					ORDER BY
+							T1.COM_CD ASC
+			  )A
+			  GROUP BY DSP_ORD		
+	</select>
+	
+	<update id="updateMainSet" parameterType="categoryVO">
+		UPDATE	TB_SYS_COM_CD
+		SET
+			ADD_VAL1 = #{addVal1}
+		  , ADD_VAL2 = #{addVal2}
+		  , ADD_VAL3 = #{addVal3}
+		WHERE	COM_CD = #{comCD}
+	</update>
+	
+	<update id="updateMainSetMbMenu" parameterType="categoryVO">
+		UPDATE TB_SYS_MB_MENU_CD
+		SET
+				HIDDEN_YN = #{addVal1}
+		WHERE MB_MENU_CD LIKE #{addVal3}
+	</update>
+
+</mapper>

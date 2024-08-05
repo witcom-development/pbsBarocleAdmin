@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.5.xsd">
+	<bean name="propertiesService" class="egovframework.rte.fdl.property.impl.EgovPropertyServiceImpl" destroy-method="destroy">
+		<property name="properties">
+			<map>
+				<!-- 홈페이지 주소 -->
+<!-- 				<entry key="homeURL" value="http://localhost:8080"/> -->
+				<entry key="homeURL" value="https://abc.bikeseoul.com/"/>
+				
+				<entry key="allowuri" value="/,/main.do,/moveMainPage.do"/>
+				
+				<!-- 주소 api key -->
+				<entry key="jusoKey" value="U01TX0FVVEgyMDE1MDkwMzEwMDM0Nw=="/>
+				<entry key="jusoPublicZone" value="http://www.juso.go.kr/addrlink/addrLinkUrl.do"/>
+				<entry key="jusoPrivateZone" value="http://www.juso.go.kr/addrlink/addrLinkUrl.do"/>
+				
+				<!-- NAVER 지도 - 지도 OPEN API -->
+<!--				<entry key="naverMapApiKey" value="OzK5wOvceXWhVeu2ulAk"/> --> <!-- http://localhost:8080 -->
+  				<entry key="naverMapApiKey" value="CLrhqI0ZXD0ykvcxIIWg"/> <!-- https://www.bikeseoul.com:444 -->
+ 				
+				<!-- 베이스 경로  -->
+				<!-- <entry key="basePath" value="D:/dki/barocle/basePath"/> -->
+				
+				<!-- 페이징 설정  -->
+				<entry key="pageUnit" value="10"/>
+				<entry key="pageSize" value="10"/>
+				<entry key="pageMobileSize" value="5"/>
+				<entry key="staPageSize" value="10"/>
+				
+				<!-- DAUM 파일 로드 url -->	
+				<entry key="ctnDaumURL" value="/upload"/>
+				<entry key="ctnDaumDir" value="/daum"/>
+				<entry key="daumImageAlign" value="C"/>
+				<entry key="fileUploadDir" value="/nas_link/barocle/attachFiles/file_admin/basePath"/>
+				<entry key="fileMaxSize" value="10485760"/>
+				<entry key="allowFileExt" value="jpg,JPG,jpeg,JPEG,png,PNG,gif,GIF"/>
+				<entry key="allowFileDir" value="faq,hikingcourse,notice,opinionboard,photogallery,survey,donor,mobilesurvey,manageBoard,static"/>
+				<entry key="fileEncoding" value="UTF-8"/>
+				<!-- Thumbnail 이미지  -->
+				<entry key="thumbnailDir" value="thumbnail/"/>
+				<entry key="thumbnailWidth" value="100"/>
+				<entry key="thumbnailHeight" value="100"/>
+				<entry key="photoGalleryThumbnailWidth" value="240"/>
+				<entry key="photoGalleryThumbnailHeight" value="180"/>
+				
+			  	<!-- 포토캘러리 목록 -->
+			  	<entry key="pglrRcrdSize" value="6"/>
+			  	<entry key="pglrPgSize" value="5"/>
+				
+				<!-- 펌웨어 파일 업로드 경로 -->
+				<entry key="fwUploadDir" value="/nas_link/barocle/attachFiles/file_admin/basePath"/>
+				
+				<!-- 대여소 이미지 파일 업로드 경로 -->
+				<entry key="stationUploadDir" value="/nas_link/barocle/attachFiles/file_admin/basePath/station" />
+				
+				<!-- LGUPlus 설정 파일 -->
+				<entry key="LGD_CST_MID" value="bike_seoul"/>
+				<!-- 14.63.180.215 -->
+				<entry key="LGUPlusConfigPath" value="/home/barocle/barocleUserWeb/LGU/LGU+_XPayClient_MobileBilling_JSP/lgdacom"></entry>
+				<!-- 116.122.37.211 -->
+				<!-- <entry key="LGUPlusConfigPath" value="/home/barocle/barocleAppWeb/LGU/LGU+_XPayClient_MobileBilling_JSP/lgdacom"></entry> -->
+				<!-- 175.125.130.68 -->
+				<!-- <entry key="LGUPlusConfigPath" value="D:\eGovFrameDev-3.5.1-64bit\workspace_s\barocle-app\src\main\webapp\LGU\LGU+_XPay_Crossplatform_JSP\lgdacom"></entry> -->
+				
+				<entry key="LGD_CST_PLATFORM" value="service"/>
+				<entry key="LGD_CST_MID" value="bike_seoul"/>
+				<entry key="LGD_MERTKEY" value="17a39d010d622984c08ab535d46bbea6"/>
+				<!-- <entry key="LGD_RETURNURL" value="http://14.63.180.215:6060/app/mybike/addpay/addAutoPayMethod.do"/> -->
+				<!-- <entry key="LGD_RETURNURL" value="http://116.122.37.211:8080/app/mybike/addpay/addAutoPayMethod.do"/> -->
+				<entry key="LGD_RETURNURL" value="http://14.63.180.215:8080/app/mybike/addpay/addAutoPayMethod.do"/>
+				
+				<!-- payco 설정 파일 -->
+				<!-- <entry key="paycoSellerKey" value="S0FSJE"/>
+				<entry key="paycoCpId" value="PARTNERTEST_AUTO"/>
+				<entry key="paycoProductId" value="PROD_AUTO"/>
+				<entry key="paycoServerType" value="DEV"/>
+				<entry key="paycoLogYn" value="Y"/> -->
+				
+				<entry key="paycoSellerKey" value="9794JT"/>
+				<entry key="paycoCpId" value="BIKESEOUL_BATCHP"/>
+				<entry key="paycoProductId" value="BIKESEOUL_BATCHP"/>
+				<entry key="paycoServerType" value="SERIVCE"/>
+				<entry key="paycoLogYn" value="Y"/>
+				
+				<!-- kakao pay 설정 파일 -->
+				<entry key="kakao_admin_key" value="ee39326f15cfe3b0922640f3e61b017f"/>
+				<!-- <entry key="kakao_cid" value="TCSUBSCRIP"/> -->
+				<entry key="kakao_cid" value="C751820173"/>
+				
+				<entry key="kakao_approval_url" value="http://14.63.180.215:8080/app/buy/addTicketPaymentRes.do"/>
+				<entry key="kakao_cancel_url" value="http://14.63.180.215:8080/app/buy/addTicketPaymentRes.do"/>
+				<entry key="kakao_fail_url" value="http://14.63.180.215:8080/app/buy/addTicketPaymentRes.do"/>
+				
+				
+				<!-- kakao pay 추가 요금 결제 -->
+				<entry key="kakao_over_approval_url" value="http://14.63.180.215:8080/app/ticket/overFeePaymentKakao.do"/>
+				
+				<!-- kakao pay 추가 과금 수단 변경 -->
+				<entry key="kakao_billing_approval_url" value="http://14.63.180.215:8080/app/mybike/addpay/addAutoPayMethod.do"/>
+				 
+				<entry key="kakao_log_yn" value="Y"/>
+				
+				<!-- tmoney pay 추가 과금 수단 변경 -->
+				<entry key="TmoneyServerType" value="DEV"/>
+				<entry key="TmoneyLogYn" value="Y"/>
+				
+			</map>
+		</property>
+		
+	</bean>
+</beans>	

@@ -1,0 +1,360 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.manage.service.ManageStatisticsMapper">
+
+	<select id="opinionList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+	
+			SELECT 
+			<![CDATA[
+				   A.STAT_DATE																 AS days
+				 , A.opinionCnt 
+				 , SUM( CASE WHEN A.STAT_DATE >= B.STAT_DATE THEN  B.opinionCnt ELSE 0 END ) AS opinionMCnt
+				 , A.processCnt
+				 , SUM( CASE WHEN A.STAT_DATE >= B.STAT_DATE THEN  B.processCnt ELSE 0 END ) AS processMCnt
+			]]>	 
+			  FROM
+				 (
+				 			SELECT  A.STAT_DATE	
+				 				 ,  A.REG_CNT		AS opinionCnt
+				 				 ,  A.PROCESS_CNT	AS processCnt 
+				 			  FROM TB_STA_QNA_PROCESS_DD 	A
+				 			  WHERE SUBSTR( A.STAT_DATE,1,7 ) = SUBSTR( #{searchEndDe}, 1,7)
+				 ) A
+				 ,
+				 (
+				 			SELECT  A.STAT_DATE	
+				 				 ,  A.REG_CNT		AS opinionCnt
+				 				 ,  A.PROCESS_CNT	AS processCnt 
+				 			  FROM TB_STA_QNA_PROCESS_DD 	A
+				 			  WHERE SUBSTR( A.STAT_DATE,1,7 ) = SUBSTR( #{searchEndDe}, 1,7)
+				 ) B
+			 WHERE 1 = 1
+		 <choose>
+		   <when test='dateType != null and dateType == "D" and searchBgnDe != "" and searchEndDe != ""'>
+			   AND A.STAT_DATE BETWEEN ( DATE_FORMAT(#{searchBgnDe}, '%Y-%m-%d') ) AND ( DATE_FORMAT(#{searchEndDe}, '%Y-%m-%d') )
+		   </when>
+		   <otherwise>
+		   	   AND 1 = 2
+		   </otherwise>	   
+		 </choose>	   
+			 GROUP BY A.STAT_DATE
+			 ORDER BY A.STAT_DATE
+	</select>
+		
+	<select id="getManageDayPeriod" parameterType="manageStatisticsVo" resultType="int">
+		SELECT 
+			TIMESTAMPDIFF(DAY, #{searchBgnDe}, #{searchEndDe})+1 
+		FROM DUAL
+	</select>
+	
+	<select id="getManageMonthPeriod" parameterType="manageStatisticsVo" resultType="int">
+		SELECT 
+			TIMESTAMPDIFF(MONTH, CONCAT(#{searchBgnMt},'01'), CONCAT(#{searchEndMt},'01'))+1 
+		FROM DUAL
+	</select>
+
+	<!-- 수익금 리스트  -->
+	<select id="getIncomeDayList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT
+			MB_YN AS usrType,
+			SUM(PAYMENT_AMT) payAmt
+		FROM
+		(
+			SELECT
+				A.STAT_DATE,
+				IF(USR_CLS_CD IN('USR_001', 'USR_002'), 'USR_MB', 'NUSR_MB') MB_YN,
+				A.PAYMENT_AMT
+			FROM TB_STA_PAYMENT_DD A
+			WHERE STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		) A
+		GROUP BY MB_YN
+		ORDER BY MB_YN DESC
+	</select>
+	
+	<select id="getIncomeMonthList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT
+			MB_YN AS usrType,
+			SUM(PAYMENT_AMT) payAmt
+		FROM
+		(
+			SELECT
+				A.STAT_MM,
+				IF(USR_CLS_CD IN('USR_001', 'USR_002'), 'USR_MB', 'NUSR_MB') MB_YN,
+				A.PAYMENT_AMT
+			FROM TB_STA_PAYMENT_MM A
+			WHERE STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		) A
+		GROUP BY MB_YN
+		ORDER BY MB_YN DESC
+	</select>
+
+	<!-- 회원가입 리스트 -->
+	<select id="getUserJoinDayList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT
+			SEX_CD AS sexCd,
+			SUM(NEW_MB_CNT) AS totCnt
+		FROM 
+			TB_STA_NEW_MB_DD A
+		WHERE 
+			USR_CLS_CD IN ('USR_001', 'USR_002')
+		AND 
+			STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		GROUP BY 
+			SEX_CD
+	</select>
+	
+	<select id="getUserJoinMonthList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT
+			SEX_CD AS sexCd,
+			SUM(NEW_MB_CNT) AS totCnt
+		FROM 
+			TB_STA_NEW_MB_MM A
+		WHERE 
+			USR_CLS_CD IN ('USR_001', 'USR_002')
+		AND 
+			STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		GROUP BY 
+			SEX_CD
+	</select>
+	
+	<!-- 자전거이용 리스트 -->
+	<select id="getBikeUseDayList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT 
+			A.SEX_CD AS sexCd,
+			SUM(USE_CNT) AS useCnt,	   
+			SUM(MOVE_DIST) AS moveDist,
+			SUM(USE_MI) useMi
+		FROM 
+			TB_STA_BIKE_USE_DD A
+		WHERE 
+			STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		GROUP BY 
+			A.SEX_CD
+	</select>
+	
+	<select id="getBikeUseMonthList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT A.SEX_CD AS sexCd
+			 , SUM(USE_CNT) AS useCnt
+			 , SUM(MOVE_DIST) AS moveDist
+			 , SUM(USE_MI) useMi
+		  FROM TB_STA_BIKE_USE_MM A
+		 WHERE STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		 GROUP BY A.SEX_CD
+	</select>
+	
+	<!-- 시간대 이용 현황 리스트 -->
+	<select id="getTimeUseList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		   SELECT A.STAT_HH
+				 , SUM( CASE WHEN A.STAT_HH = '0' THEN A.USE_CNT ELSE 0 END ) useCnt00
+				 , SUM( CASE WHEN A.STAT_HH = '1' THEN A.USE_CNT ELSE 0 END ) useCnt01
+				 , SUM( CASE WHEN A.STAT_HH = '2' THEN A.USE_CNT ELSE 0 END ) useCnt02
+				 , SUM( CASE WHEN A.STAT_HH = '3' THEN A.USE_CNT ELSE 0 END ) useCnt03
+				 , SUM( CASE WHEN A.STAT_HH = '4' THEN A.USE_CNT ELSE 0 END ) useCnt04
+				 , SUM( CASE WHEN A.STAT_HH = '5' THEN A.USE_CNT ELSE 0 END ) useCnt05
+				 , SUM( CASE WHEN A.STAT_HH = '6' THEN A.USE_CNT ELSE 0 END ) useCnt06
+				 , SUM( CASE WHEN A.STAT_HH = '7' THEN A.USE_CNT ELSE 0 END ) useCnt07
+				 , SUM( CASE WHEN A.STAT_HH = '8' THEN A.USE_CNT ELSE 0 END ) useCnt08
+				 , SUM( CASE WHEN A.STAT_HH = '9' THEN A.USE_CNT ELSE 0 END ) useCnt09
+				 , SUM( CASE WHEN A.STAT_HH = '10' THEN A.USE_CNT ELSE 0 END ) useCnt10
+				 , SUM( CASE WHEN A.STAT_HH = '11' THEN A.USE_CNT ELSE 0 END ) useCnt11
+				 , SUM( CASE WHEN A.STAT_HH = '12' THEN A.USE_CNT ELSE 0 END ) useCnt12
+				 , SUM( CASE WHEN A.STAT_HH = '13' THEN A.USE_CNT ELSE 0 END ) useCnt13
+				 , SUM( CASE WHEN A.STAT_HH = '14' THEN A.USE_CNT ELSE 0 END ) useCnt14
+				 , SUM( CASE WHEN A.STAT_HH = '15' THEN A.USE_CNT ELSE 0 END ) useCnt15
+				 , SUM( CASE WHEN A.STAT_HH = '16' THEN A.USE_CNT ELSE 0 END ) useCnt16
+				 , SUM( CASE WHEN A.STAT_HH = '17' THEN A.USE_CNT ELSE 0 END ) useCnt17
+				 , SUM( CASE WHEN A.STAT_HH = '18' THEN A.USE_CNT ELSE 0 END ) useCnt18
+				 , SUM( CASE WHEN A.STAT_HH = '19' THEN A.USE_CNT ELSE 0 END ) useCnt19
+				 , SUM( CASE WHEN A.STAT_HH = '20' THEN A.USE_CNT ELSE 0 END ) useCnt20
+				 , SUM( CASE WHEN A.STAT_HH = '21' THEN A.USE_CNT ELSE 0 END ) useCnt21
+				 , SUM( CASE WHEN A.STAT_HH = '22' THEN A.USE_CNT ELSE 0 END ) useCnt22
+				 , SUM( CASE WHEN A.STAT_HH = '23' THEN A.USE_CNT ELSE 0 END ) useCnt23
+				 , SUM( CASE WHEN A.STAT_HH = '24' THEN A.USE_CNT ELSE 0 END ) useCnt24
+				 , SUM( A.USE_CNT )										   useCntTotal
+			  FROM TB_STA_BIKE_USE_HH_RE  A
+			 WHERE 1 = 1
+			  <if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+			  AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			  </if>
+			  <if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
+			  </if>
+	</select>
+	
+	<!-- 주요 대여소 리스트 -->
+	<!--리스트 조회인지 최대 최소 2건의 조회인지 불분명하여 일단 제외하였습니다 -->
+	<select id="getHighStationList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT
+			A.STATION_ID AS stationId,
+			B.STATION_GRP_NAME AS stationGrpName,
+			B.STATION_NAME AS stationName,
+			A.RENT_CNT AS rentCnt,
+			A.RETURN_CNT AS returnCnt
+		FROM
+		(
+			SELECT A.STATION_ID, SUM(RENT_CNT) RENT_CNT, SUM(RETURN_CNT) RETURN_CNT
+			FROM TB_STA_STATION_RENT_DD A
+		   	WHERE 1 = 1
+			<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+			AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   	</if>
+			<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+			AND STAT_DATE BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
+			</if>
+			GROUP BY A.STATION_ID
+		) A,
+		(
+			SELECT GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP,
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			WHERE GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		WHERE A.STATION_ID = B.STATION_ID
+		ORDER BY RENT_CNT DESC, RETURN_CNT DESC
+		LIMIT 20;
+	</select>
+		
+	<select id="getLowStationList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		SELECT
+			A.STATION_ID AS stationId,
+			B.STATION_GRP_NAME AS stationGrpName,
+			B.STATION_NAME AS stationName,
+			A.RENT_CNT AS rentCnt,
+			A.RETURN_CNT AS returnCnt
+		FROM
+		(
+			SELECT A.STATION_ID, SUM(RENT_CNT) RENT_CNT, SUM(RETURN_CNT) RETURN_CNT
+			FROM TB_STA_STATION_RENT_DD A
+		   	WHERE 1 = 1
+			<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+			AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   	</if>
+			<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+			AND STAT_DATE BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
+			</if>
+			GROUP BY A.STATION_ID
+		) A,
+		(
+			SELECT GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP,
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			WHERE GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		WHERE A.STATION_ID = B.STATION_ID
+		ORDER BY RENT_CNT ASC, RETURN_CNT ASC
+		LIMIT 20;
+	</select>
+	
+	<!-- 최대 운영 자전거 수 조회_cms_20161129 -->
+	<select id="getBikeListCnt" parameterType="manageStatisticsVo" resultType="int">
+		<![CDATA[
+		SELECT SUM(CNT)
+		FROM
+		(
+			SELECT COUNT(1) AS CNT
+			  FROM TB_STA_OPERATION_MAX_BIKE_DD
+			 WHERE STAT_DD BETWEEN replace(#{searchBgnDe},'-','') AND replace(#{searchEndDe},'-','')
+			   AND STAT_DD NOT LIKE '2018%'
+			 GROUP BY SUBSTR(STAT_DD,1,6)
+			 UNION ALL
+			SELECT COUNT(1)
+			  FROM TB_STA_OPERATION_MAX_BIKE_DD_G
+			 WHERE STAT_DD BETWEEN replace(#{searchBgnDe},'-','') AND replace(#{searchEndDe},'-','')
+			 GROUP BY SUBSTR(STAT_DD,1,6)
+			 UNION ALL   
+			SELECT COUNT(1) AS CNT 
+			  FROM TB_STA_OPERATION_MAX_BIKE_DD
+			 WHERE STAT_DD BETWEEN replace(#{searchBgnDe},'-','') AND replace(#{searchEndDe},'-','')
+			   AND STAT_DD NOT LIKE '2018%'
+			 UNION ALL	
+			SELECT COUNT(1) AS CNT
+			  FROM TB_STA_OPERATION_MAX_BIKE_DD_G
+			 WHERE STAT_DD BETWEEN replace(#{searchBgnDe},'-','') AND replace(#{searchEndDe},'-','')
+		) A	  
+		]]>			 
+	</select> 
+	
+	<select id="getBikeList" parameterType="manageStatisticsVo" resultType="manageStatisticsVo">
+		{ call  PROC_ADMIN.getManageStaticsBikeList(#{searchBgnDe}, #{searchEndDe},#{firstRecordIndex}, #{recordCountPerPage} ) }		
+	</select>
+	
+	
+	<!-- 자전거 배터리 상태 정보  조회_cms_20170111 -->
+	<select id="getBikeBatteryListCnt" parameterType="manageStatisticsVo" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		  FROM (
+			  SELECT 
+					 ${days}  
+				  FROM TB_STA_BIKE_BATTERY_DD TSBB
+				 where REG_YEAR in (${years})
+				  GROUP BY BIKE_ID
+			)A 
+			WHERE 1=1
+			 ]]>  
+			<if test='bikeNo != null and bikeNo != ""'>
+			  AND BIKE_ID  LIKE CONCAT('%',#{bikeNo},'%') 
+			</if>  
+			 
+	</select>
+	
+		<!-- 자전거 배터리 상태 정보  조회_cms_20170111 -->
+	<select id="getBikeBatteryList" parameterType="manageStatisticsVo" resultType="java.util.LinkedHashMap">
+		<![CDATA[
+			SELECT * 
+  			FROM (
+				SELECT 
+					   ${days}		 
+				  FROM TB_STA_BIKE_BATTERY_DD TSBB
+				 WHERE REG_YEAR in (${years})
+				 GROUP BY BIKE_ID 
+				 )A 
+			 WHERE 1=1
+			]]>	
+			 <if test='bikeNo != null and bikeNo != ""'>
+			   AND BIKE_ID  LIKE CONCAT('%',#{bikeNo},'%')
+			 </if>  
+			 LIMIT #{firstRecordIndex}, #{recordCountPerPage}  
+			 
+	</select>
+	
+	<select id="getBikeBatteryExcelList" parameterType="manageStatisticsVo" resultType="java.util.LinkedHashMap">
+		<![CDATA[
+			SELECT * 
+  			FROM (
+				SELECT 
+					   ${days}		 
+				  FROM TB_STA_BIKE_BATTERY_DD TSBB
+				 WHERE REG_YEAR in (${years})
+				 GROUP BY BIKE_ID 
+				 )A 
+			 WHERE 1=1
+			]]>	
+			 <if test='bikeNo != null and bikeNo != ""'>
+			   AND BIKE_ID  LIKE CONCAT('%',#{bikeNo},'%')
+			 </if>  
+	</select>
+</mapper>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<entry key="${success}">0000</entry>
+	<entry key="org.springframework.validation.BindException">1001</entry>
+	<entry key="java.lang.Throwable">9999</entry>
+</properties>

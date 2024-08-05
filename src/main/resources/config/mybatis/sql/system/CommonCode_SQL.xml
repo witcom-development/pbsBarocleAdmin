@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.system.commonCodeMgmt.service.CommonCodeMapper">
+	<resultMap id="codeList" type="commonCodeVo">
+		<result property="comCd" column="COM_CD"/>
+		<result property="comUpCd" column="COM_UP_CD"/>
+		<result property="comCdName" column="COM_CD_NAME"/>
+		<result property="cdDesc1" column="CD_DESC1"/>
+		<result property="cdDesc2" column="CD_DESC2"/>
+		<result property="grpFix" column="GRP_FIX"/>
+		<result property="regDate" column="REG_DTTM"/>
+		<result property="useYn" column="USE_YN"/>
+		<result property="dspOrd" column="DSP_ORD"/>   
+	</resultMap>
+	
+	<resultMap id="nameList" type="commonCodeVo">
+		<result property="lang"	   column="LANG_CLS_CD"/>
+		<result property="comCdName" column="MLANG_COM_CD_NAME"/>   
+	</resultMap>
+	
+	<insert id="addAdmComCode" parameterType="commonCodeVo">
+		<![CDATA[
+		INSERT INTO TB_SYS_COM_CD (
+				 COM_CD
+				,COM_UP_CD
+				,CD_DESC1
+				,CD_DESC2
+				,USE_YN
+				,DSP_ORD
+				,REG_ID
+				,REG_DTTM
+				,ADD_VAL1
+				,ADD_VAL2
+				,ADD_VAL3
+			) VALUES (
+				 #{comCd}
+				,#{comUpCd}
+				,#{cdDesc1}
+				,#{cdDesc2}
+				,#{useYn}
+				,#{dspOrd}
+				,#{regId}
+				,NOW()
+				,#{addVal1}
+				,#{addVal2}
+				,#{addVal3}
+			)
+		]]>
+	</insert>
+	<insert id="addSysLangName" parameterType="commonCodeVo">
+		INSERT INTO TB_SYS_MLANG_COM_CD 
+		(
+			COM_CD
+		   ,LANG_CLS_CD
+		   ,MLANG_COM_CD_NAME
+		) VALUES (
+			#{comCd}
+		   ,#{lang}
+		   ,#{comCdName}
+		)
+	</insert>
+	
+	<update id="setSysLangName" parameterType="commonCodeVo" >
+		UPDATE TB_SYS_MLANG_COM_CD
+		   SET MLANG_COM_CD_NAME = #{comCdName}
+		 WHERE COM_CD = #{comCd}
+		   AND LANG_CLS_CD = #{lang}
+	</update>
+	
+	<update id="setAdmComCode" parameterType="commonCodeVo">
+			UPDATE TB_SYS_COM_CD
+			   SET CD_DESC1 = #{cdDesc1}
+				  ,ADD_VAL1 = #{addVal1}
+				  ,ADD_VAL2 = #{addVal2}
+				  ,ADD_VAL3 = #{addVal3}
+				  ,DSP_ORD  = #{dspOrd}
+				  ,USE_YN   = #{useYn} 
+			 WHERE COM_CD = #{comCd}
+	</update>
+	
+	<select id="getAdmComCodeInfo" parameterType="commonCodeVo" resultType="commonCodeVo">
+		<![CDATA[
+		  SELECT A.COM_CD							AS comCd
+				,A.COM_UP_CD						 AS comUpCd
+				,A.CD_DESC1						  AS cdDesc1
+				,A.CD_DESC2						  AS cdDesc2
+				,A.USE_YN							AS useYn
+				,A.DSP_ORD						   AS dspOrd
+				,DATE_FORMAT(A.REG_DTTM, '%Y-%m-%d') AS regDate
+				,B.MLANG_COM_CD_NAME				 AS comCdName
+			FROM TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+		   WHERE A.COM_CD = #{comCd}
+			 AND B.LANG_CLS_CD = #{lang}
+		]]>
+	</select>
+	<select id="getComCodeInfo" parameterType="commonCodeVo" resultType="commonCodeVo">
+		<![CDATA[
+		  SELECT A.COM_CD			  AS comCd
+				,A.ADD_VAL1			AS addVal1
+				,A.ADD_VAL2			AS addVal2
+				,A.ADD_VAL3			AS addVal3
+				,B.MLANG_COM_CD_NAME   AS comCdName
+			FROM TB_SYS_COM_CD A INNER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+		   WHERE A.COM_UP_CD   = #{comUpCd}
+			 AND B.LANG_CLS_CD = #{lang}
+			 AND USE_YN = 'Y'
+			ORDER BY CAST(A.DSP_ORD AS UNSIGNED)
+		]]>
+	</select>
+	<select id="getComCodeVal" parameterType="commonCodeVo" resultType="commonCodeVo">
+		  SELECT A.COM_CD			  AS comCd
+				,A.ADD_VAL1			AS addVal1
+				,A.ADD_VAL2			AS addVal2
+				,A.ADD_VAL3			AS addVal3
+				,B.MLANG_COM_CD_NAME   AS comCdName
+			FROM TB_SYS_COM_CD A INNER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+		   WHERE USE_YN = 'Y'
+			 <if test='comCd != null and comCd != ""'>
+			 AND A.COM_CD   = #{comCd}
+			 </if>
+			 AND B.LANG_CLS_CD = #{lang}
+			ORDER BY CAST(A.DSP_ORD AS UNSIGNED)
+	</select>
+	<select id="getSubCode" parameterType="String" resultType="commonCodeVo">
+		  SELECT COM_CD			  AS comCd
+				,COM_UP_CD		   AS comUpCd
+				,CD_DESC1			AS cdDesc1						  
+				,CD_DESC2			AS cdDesc2
+				,USE_YN			  AS useYn
+				,DSP_ORD			 AS dspOrd
+				,ADD_VAL1			AS addVal1
+				,ADD_VAL2			AS addVal2
+				,ADD_VAL3			AS addVal3
+			FROM spb.TB_SYS_COM_CD
+		   WHERE COM_UP_CD = #{comUpCd} ;
+	</select>
+	<select id="getAdmComCodeList" parameterType="commonCodeVo" resultType="commonCodeVo">
+		  SELECT A.COM_CD							AS comCd
+				,A.COM_UP_CD						 AS comUpCd
+				,A.DSP_ORD						   AS dspOrd
+				,A.USE_YN							AS useYn
+				,A.CD_DESC1						  AS cdDesc1
+				,A.CD_DESC2						  AS cdDesc2
+				,A.ADD_VAL1						  AS addVal1
+				,A.ADD_VAL2						  AS addVal2
+				,A.ADD_VAL3						  AS addVal3
+				,DATE_FORMAT(A.REG_DTTM, '%Y-%m-%d') AS regDttm
+				,B.MLANG_COM_CD_NAME				 AS comCdName
+				,A.REG_ID							AS regId
+			FROM TB_SYS_COM_CD A LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+		<trim  prefix="WHERE" prefixOverrides="AND">
+			<if test='lang != null and lang != ""'>
+			  B.LANG_CLS_CD = #{lang}
+			</if>	   
+			<if test='comUpCd != null and comUpCd != ""'>
+			  AND A.COM_UP_CD = #{comUpCd} 
+			</if>
+			<if test='comUpCd == null or comUpCd == ""'>
+			  AND A.COM_UP_CD IS NULL
+			</if>
+			<if test='searchWord != null and searchWord != ""'>
+			  AND B.MLANG_COM_CD_NAME LIKE CONCAT(#{searchWord}, '%') 
+			</if>
+			<if test='searchBgnDe != null and searchBgnDe !=""'>
+			<![CDATA[AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') <= A.REG_DTTM	   ]]>
+			</if>
+			<if test='searchEndDe != null and searchEndDe !=""'>
+			<![CDATA[AND A.REG_DTTM  <= (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)	 ]]>
+			</if>
+		</trim>
+		<if test='orderTerm == "DSP_ORD"'>
+			ORDER BY A.DSP_ORD 
+		</if>
+		<if test='orderTerm == null or orderTerm != "DSP_ORD"'>
+			ORDER BY A.REG_DTTM DESC 
+		</if>
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getAdmComCodeListCnt" parameterType="commonCodeVo" resultType="int">
+		<![CDATA[
+			SELECT 
+				COUNT(*) 
+			FROM TB_SYS_COM_CD A  LEFT OUTER JOIN TB_SYS_MLANG_COM_CD B
+			  ON A.COM_CD = B.COM_CD 
+		   WHERE B.LANG_CLS_CD = #{lang}
+		]]>
+		<if test='comUpCd != null and comUpCd != ""'>
+			 AND A.COM_UP_CD = #{comUpCd} 
+		</if>
+		<if test='comUpCd == null or comUpCd == ""'>
+			 AND A.COM_UP_CD IS NULL
+		</if>
+		<if test='searchWord != null and searchWord != ""'>
+			 AND B.MLANG_COM_CD_NAME LIKE CONCAT(#{searchWord}, '%')  
+		</if>
+		<if test='searchBgnDe != null and searchBgnDe != ""'>
+			 AND  A.REG_DTTM BETWEEN STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+	</select>
+	
+	<select id="getComCodeList" parameterType="commonCodeVo" resultType="commonCodeVo">
+		<![CDATA[
+			SELECT A.COM_CD							AS comCd
+				  ,A.COM_UP_CD						 AS comUpCd
+				  ,A.CD_DESC1						  AS cdDesc1						  
+				  ,A.CD_DESC2						  AS cdDesc2
+				  ,DATE_FORMAT(A.REG_DTTM, '%Y-%m-%d') AS regDttm
+				  ,A.USE_YN							AS useYn
+				  ,A.DSP_ORD						   AS dspOrd
+				  ,B.MLANG_COM_CD_NAME				 AS comCdName
+			 FROM FROM TB_SYS_COM_CD A INNER JOIN TB_SYS_MLANG_COM_CD B
+			   ON A.COM_CD = B.COM_CD 
+			WHERE B.LANG_CLS_CD = #{lang} 
+			  AND A.USE_YN = 'Y'							  ]]>
+			<if test='comUpCd != null and comUpCd != ""'>
+			<![CDATA[
+			  AND COM_UP_CD = #{comUpCd}
+			]]>
+			</if>
+			<if test='useYn != null and useYn != ""'>
+			<![CDATA[
+			  AND USE_YN = #{useYn}
+			]]>
+			</if>
+		ORDER BY DSP_ORD
+	</select>
+	
+	<select id="getLangInfo" parameterType ="String" resultMap="nameList" >
+		SELECT LANG_CLS_CD
+			  ,MLANG_COM_CD_NAME
+		  FROM TB_SYS_MLANG_COM_CD
+		 WHERE COM_CD = #{comCd}		   
+	</select>
+	<select id="isExistCode" parameterType="String" resultType="int">
+	<![CDATA[
+		SELECT COUNT(COM_CD)
+		FROM TB_SYS_COM_CD
+		WHERE COM_CD LIKE CONCAT(#{code},"%")
+	]]>
+	</select>
+	 
+	<select id="getUpcodeDspOrdNum" resultType="int">
+		SELECT COUNT(COM_CD)+1
+		  FROM spb.TB_SYS_COM_CD
+		  WHERE COM_UP_CD IS NULL   
+	</select>
+	
+	<select id="getStationGrp" parameterType="commonStationVO" resultType= "commonStationVO">
+		SELECT A.STATION_GRP_SEQ		AS stationId
+			  ,B.STATION_GRP_NAME	   AS stationName
+		  FROM spb.TB_OPR_STATION_GRP A INNER JOIN TB_OPR_MLANG_STATION_GRP B
+			ON A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+		 WHERE B.LANG_CLS_CD = #{lang} 
+		ORDER BY A.STATION_GRP_SEQ  
+	</select>
+	<select id="getStation" parameterType="commonStationVO" resultType= "commonStationVO">
+		SELECT A.STATION_ID		 AS stationId
+			  ,B.STATION_NAME	   AS stationName
+		  FROM spb.TB_OPR_STATION A INNER JOIN spb.TB_OPR_MLANG_STATION B
+			ON A.STATION_ID = B.STATION_ID
+		  WHERE A.STATION_GRP_SEQ = #{stationId}
+			AND B.LANG_CLS_CD = #{lang}
+		  ORDER BY B.STATION_NAME  
+	</select>
+	<select id="getCenterInfo" resultType="commonCenterVo">
+		SELECT CENTER_ID   AS centerId
+			  ,CENTER_NAME AS centerName
+		  FROM spb.TB_OPR_CENTER
+		 WHERE CENTER_CLS_CD IN ( 'CEN_001', 'CEN_002' )
+	</select>
+
+	<select id="getCenterMallInfo" resultType="commonCenterVo">
+		SELECT REPLACE(CENTER_ID,'CEN','') AS centerId
+			  ,CENTER_NAME AS centerName
+		  FROM spb.TB_OPR_CENTER
+		 WHERE CENTER_CLS_CD = 'CEN_003'
+		   AND USE_YN = 'Y'
+	</select>
+
+	
+	<select id="getChkLangCode" parameterType="commonCodeVo" resultType="int">
+		SELECT COUNT(*)
+		  FROM TB_SYS_MLANG_COM_CD
+		 WHERE COM_CD = #{comCd}
+		   AND LANG_CLS_CD = #{lang} 
+	</select>	
+	
+	<select id="getUserInfo" parameterType="userMgmtVO" resultType="userMgmtVO">
+	   SELECT ADMIN_ID	 AS  usrId
+			 ,ADMIN_NAME   AS  usrName
+		 FROM spb.TB_SYS_ADMIN  
+		WHERE ADMIN_GRP_SEQ in (SELECT ADMIN_GRP_SEQ
+								 FROM spb.TB_SYS_GRP_CD
+								WHERE ADMIN_CLS_CD =  CONCAT('ADM_' ,#{usrGrpCd}) )
+								
+		<if test='usrName != null and usrName != ""'>
+		  AND ADMIN_NAME LIKE CONCAT('', #{usrName}, '%')
+		</if>	  
+		  AND USE_YN = 'Y'		 
+	</select>   
+	 
+   <select id="getRepBikeAdminInfo" parameterType="userMgmtVO" resultType="userMgmtVO">
+	   SELECT ADMIN_ID	 AS  usrId
+			 ,ADMIN_NAME   AS  usrName
+	   FROM spb.TB_SYS_ADMIN  
+	   WHERE ADMIN_GRP_SEQ in (  SELECT ADMIN_GRP_SEQ
+								 FROM spb.TB_SYS_GRP_CD
+								 WHERE ADMIN_CLS_CD =  CONCAT('ADM_' ,#{usrGrpCd})
+								 AND ADMIN_GRP_SEQ='21' )					
+	   <if test='usrName != null and usrName != ""'>
+		  AND ADMIN_NAME LIKE CONCAT('', #{usrName}, '%')
+	   </if>	  
+		  AND USE_YN = 'Y'		 
+	</select>  
+	
+	<select id="getPenaltyCode" resultType="penaltyVo">
+		 SELECT PENALTY_CD	AS penaltyCd
+			   ,PENALTY_NAME  AS penaltyName
+			   ,PENALTY_POINT AS penaltyPoint
+		   FROM spb.TB_SVC_PENALTY_CD
+		  WHERE USE_YN = 'Y'	 
+		  ORDER BY PENALTY_NAME 
+	</select>	
+	<select id="getFaultList" parameterType="troubleReportVo"  resultType="troubleReportVo">
+		 SELECT BRKDN_STUS_CD as faultCode FROM TB_MTC_REPORT_DETL
+		  WHERE FAULT_SEQ = #{faultSeq}
+		  UNION ALL
+		SELECT B.BRKDN_STUS_CD FROM TB_MTC_CHECK_INFO A, TB_MTC_CHECK_DETL B , TB_MTC_FAULT_INFO C, TB_SVC_MB D
+		  WHERE A.READ_CLS_CD = 'S'
+			AND A.FAULT_SEQ = B.FAULT_SEQ
+			AND A.EQUIPMENT_ID = C.EQUIPMENT_ID
+			AND C.FAULT_SEQ =  #{faultSeq}
+			AND C.MOD_ID   = D.MB_ID
+			AND D.USR_SEQ  = A.USR_SEQ	
+	</select>  
+</mapper>

@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.maintenance.stockMgmt.invent.service.StockInventMapper">
+	
+	<select id="getStockInventList" parameterType="inventVo" resultType="inventVo">
+   
+		SELECT CENTER_ID							  AS centerId
+			  ,(SELECT CENTER_NAME
+				  FROM spb.TB_OPR_CENTER
+				  WHERE CENTER_ID = A.CENTER_ID)	  AS centerName	 
+			  ,PART_CD								AS partCd
+			  ,(SELECT MLANG_COM_CD_NAME
+				  FROM spb.TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PART_CD
+				   AND LANG_CLS_CD = #{lang} )		AS partName
+			  ,STOCK_QUNT							 AS stockQunt  
+		 FROM spb.TB_MTC_STOCK_LIST A
+		<trim prefix='WHERE' prefixOverrides="AND | OR">
+			<if test='centerId != null and centerId !=""'>
+			CENTER_ID = #{centerId}
+			</if>
+			<if test='partCd != null and partCd !=""'>
+			AND PART_CD = #{partCd}	
+			</if>	 
+		</trim>
+		<if test='pagingYn == "Y"'>
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	<select id="getStockInventListCount" parameterType="inventVo" resultType="int">
+	   SELECT COUNT(PART_CD)
+		 FROM spb.TB_MTC_STOCK_LIST
+		<trim prefix='WHERE' prefixOverrides="AND | OR">
+			<if test='centerId != null and centerId !=""'>
+			CENTER_ID = #{centerId}
+			</if>
+			<if test='partCd != null and partCd !=""'>
+			AND PART_CD = #{partCd}	
+			</if>	 
+		</trim>
+	</select>
+	
+	<select id='getStockInventDetailInfo' parameterType="inventVo" resultType="inventVo">
+		SELECT CENTER_ID							AS centerId
+			  ,(SELECT CENTER_NAME
+				  FROM spb.TB_OPR_CENTER
+				  WHERE CENTER_ID = A.CENTER_ID)	AS centerName	 
+			  ,PART_CD							  AS partCd
+			  ,(SELECT MLANG_COM_CD_NAME
+				  FROM spb.TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PART_CD
+				   AND LANG_CLS_CD = #{lang} )	  AS partName
+			  ,STOCK_QUNT						   AS stockQunt  
+		  FROM spb.TB_MTC_STOCK_LIST A
+		 WHERE CENTER_ID = #{centerId}
+		   AND PART_CD   = #{partCd}		 
+	</select>	
+	
+	<select id="getStockInventHistInfoCnt" parameterType="inventVo" resultType="int">
+		SELECT COUNT(A.STOCK_USE_HIST_SEQ)
+		   FROM spb.TB_MTC_STOCK_USE_HIST A
+		  WHERE A.CENTER_ID = #{centerId}
+			AND A.PART_CD   = #{partCd}
+	</select>	
+	<select id="getStockInventHistInfo" parameterType="inventVo" resultType="inventVo">
+		  SELECT (SELECT CENTER_NAME
+					FROM spb.TB_OPR_CENTER
+					WHERE CENTER_ID = A.CENTER_ID)				   AS centerName 
+				,A.MOD_ID											AS modId
+				,IFNULL((SELECT MLANG_COM_CD_NAME
+						   FROM spb.TB_SYS_MLANG_COM_CD
+						  WHERE LANG_CLS_CD = #{lang}
+							AND COM_CD = A.USE_CLS_CD)  ,'-')		AS useClsCdName
+				 ,A.USE_CLS_CD									   AS useClsCd
+				 ,DATE_FORMAT(A.MOD_DTTM, '%Y-%m-%d')		  AS modDttm   
+				 ,A.PART_CD										  AS partCd 
+				 ,A.PART_QUNT										AS partQunt
+				 ,A.MOD_REASON_DESC								  AS modReasonDesc
+		   FROM spb.TB_MTC_STOCK_USE_HIST A
+		  WHERE A.CENTER_ID = #{centerId}
+			AND A.PART_CD   = #{partCd}
+		  ORDER BY A.MOD_DTTM DESC, STOCK_USE_HIST_SEQ DESC
+		  <if test='pagingYn == "Y"'>
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>
+	</select>
+	
+	<select id="isPartExist" parameterType="inventVo" resultType="int">
+		 SELECT COUNT(*)
+		   FROM spb.TB_MTC_STOCK_LIST
+		  WHERE CENTER_ID = #{centerId}
+			AND PART_CD   = #{partCd}
+	</select>	
+		
+	<insert id="addNewPart"  parameterType="inventVo" >	
+		 INSERT INTO TB_MTC_STOCK_LIST(
+				CENTER_ID
+			   ,PART_CD
+			   ,STOCK_QUNT 
+		 ) VALUES (
+			   #{centerId}
+			  ,#{partCd}
+			  ,#{stockQunt}
+		 )
+	</insert>
+	<insert id="addNewPartInventHistory"  parameterType="inventVo" >	
+		 INSERT INTO TB_MTC_STOCK_USE_HIST(
+				CENTER_ID
+			   ,PART_CD
+			   ,USE_CLS_CD
+			   ,MOD_REASON_DESC
+			   ,MOD_ID
+			   ,MOD_DTTM
+			   ,PART_QUNT
+		 ) VALUES (
+			   #{centerId}
+			  ,#{partCd}
+			  ,#{useClsCd}
+			  ,#{modReasonDesc}
+			  ,#{modId}
+			  ,now()
+			  ,#{partQunt}
+		 )
+	</insert>
+	<update id="setPartInvent" parameterType="inventVo"  >
+		UPDATE TB_MTC_STOCK_LIST
+		<set>
+			<choose>
+				<when test='viewFlg == "C"'>
+					STOCK_QUNT = (STOCK_QUNT +#{stockQunt})
+				</when>
+				<otherwise>
+					STOCK_QUNT = #{stockQunt}
+				</otherwise>	
+			</choose>
+		</set>
+		 WHERE CENTER_ID = #{centerId}
+		   AND PART_CD   = #{partCd}
+	</update>
+	  
+</mapper>

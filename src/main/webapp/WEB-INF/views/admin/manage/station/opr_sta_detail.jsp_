@@ -1,0 +1,355 @@
+<%@ page contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="fmt" uri="http://java.sun.com/jsp/jstl/fmt" %>
+<%@ taglib prefix="form" uri="http://www.springframework.org/tags/form" %>
+<%@ taglib prefix="ui" uri="http://egovframework.gov/ctl/ui"%>
+<%@ taglib prefix="spring" uri="http://www.springframework.org/tags"%>
+<%@ taglib uri="http://tiles.apache.org/tags-tiles" prefix="tiles"%>
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta content="text/html; charset=KSC5601" http-equiv="content-type" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge" /> 
+<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="description=" Content="" />
+<title><tiles:insertAttribute name="title"/></title>
+<tiles:insertAttribute name="resource"/>
+<script type="text/javascript" src="/js/common_barocle.js"></script>
+<script type="text/javascript">
+
+
+	function fn_duplStationCheck(){
+		
+		if($("#station_no").val().length != 5){
+			alert('<spring:message code="fail.input.chkLength" arguments="5"/>');
+			$("#station_no").focus();
+			return;
+		}
+		
+		$.post("/admin/manage/station/stationNumberCheck.do", "station_no=" + $("#station_no").val()  , function(data) {
+			
+			if(data.result == "ok"){
+				alert('<spring:message code="success.duplicationCheck.isNot" arguments="대여소 번호"/>');
+				$("#checkNo").val($("#station_no").val());
+			}else{
+				alert('<spring:message code="fail.duplicated.data" arguments="대여소 번호"/>');
+			}
+			
+		});
+		
+	}
+	
+	
+	function fn_duplStationNameCheck(){
+		
+		
+		if("${cmd}" == "INFO"){
+			if($("#LAG_001").val() == $("#checkName").val()){
+				alert('<spring:message code="fail.duplicated.data" arguments="대여소 명"/>');
+				return;
+			}
+			
+		}
+		
+		if(!$("#LAG_001").val()){
+			alert('<spring:message code="fail.input.emptyValue1" arguments="대여소 명"/>');
+			return;
+		}
+		
+		
+		$.post("/admin/manage/station/stationNumberCheck.do", "station_name=" + $("#LAG_001").val()  , function(data) {
+			
+			if(data.result == "ok"){
+				alert('<spring:message code="success.duplicationCheck.isNot" arguments="대여소 명"/>');
+				$("#checkName").val($("#LAG_001").val());
+			}else{
+				alert('<spring:message code="fail.duplicated.data" arguments="대여소 명"/>');
+			}
+			
+			
+		});
+		
+	
+	}
+	
+	function checkBeacon(num){
+		
+		var checkSerial = null;
+		
+		if(num == 1){
+			checkSerial = $("#beaconId1").val();
+		}else{
+			checkSerial = $("#beaconId2").val();
+		}
+		
+		$.post("/admin/manage/station/beaconCheck.do", "beaconId1=" + checkSerial  , function(data) {
+			
+			if(data.result == "ok"){
+				alert('<spring:message code="success.duplicationCheck.isNot" arguments="비콘 번호"/>');
+			}else{
+				alert('<spring:message code="fail.duplicated.data" arguments="비콘 번호"/>');
+			}
+			
+		});
+		
+		
+	}
+	
+	
+	$(function() {
+		
+			
+		if("${result }" != ""){
+			alert("${result}")
+		}
+		
+		$("#station_no").keyup(function(){
+			$(this).val($(this).val().replace(/[^0-9]/g,""));
+		});
+		
+		
+		if("${cmd}" == "INFO"){
+			
+			
+			if("${info.device_id}" != ""){
+				$("select[name=device_id]").append("<option value='${info.device_id}' selected>${info.device_id}");
+			}
+			
+			
+			
+			//$("#addCode").on("click",this.clickAddCodeFormFnc);
+			 
+		}
+		
+	});
+
+	
+	function vallidateModify( flag, id ){
+
+		var temp  = false;
+		$("input[name=nameList]").each(function(){
+			//alert($(this).val())
+			if(!$(this).val()){
+				
+				alert('<spring:message code="fail.input.emptyValue1" arguments="대여소 명"/>');
+				$(this).focus();
+				temp = true;
+				return false;
+			}
+		});
+
+		
+		if(temp){
+			return false;
+		}
+		if($("input[name=nameList]").val() != $("#checkName").val()){
+			alert('<spring:message code="fail.input.emptyValue2" arguments="대여소 명 중복검사"/>');
+			return false;
+		}
+		
+		
+	}
+	
+	
+	var doubleClick = true;
+	var succMsg = '<spring:message code="success.common.save" />';
+	var failMsg = '<spring:message code="fail.request.msg" />';
+	
+	
+	function fn_regist(){
+		
+	//	vallidateModify();
+		
+		$("#cmd").val("INSERT");
+		frm.histYn.value = 'N';
+		frm.currentPageNo.value=0;
+		if(doubleClick){
+			doubleClick = false;
+			$("#frm").attr({method : "post", action : "/admin/manage/station/stationModify.do"}).submit();
+		/*	$.post("/admin/manage/station/stationModify.do", $("#frm").serialize()  , function(data) {
+				
+				if(data.rtMsg == "성공"){
+					alert(succMsg);
+					fn_list();
+				}else{
+					alert(failMsg);
+				}
+			});
+			*/
+		}
+			
+	}
+	
+	function fn_delete(id){
+		
+		$("#cmd").val("DELETE");
+		$("#station_id").val(id);
+		
+		if(confirm('<spring:message code="common.delete.msg"/>')){
+			
+			$("#frm").attr("action", "/admin/manage/station/stationModify.do");
+			$("#frm").submit();
+			
+		}
+		
+	}
+	
+	function goMapAddr(){
+		
+		/* 		if(!$("#station_latitude").val() && !$("#station_longitude").val()){
+		alert('<spring:message code="fail.input.emptyValue2" arguments="위경도"/>');
+		return;
+	} */
+		var pwidth = 600;
+		var pheight = 680;
+		var winL = (screen.width-pwidth)/2;
+		var winT = (screen.height-pheight)/2;
+		var lat = $("#station_latitude").val();
+		var lon = $("#station_longitude").val();
+		window.open("/common/pop/showLocationMapPop.do?outptt=%uC704%uCE58%uC9C0%uB3C4%uCC3E%uAE30&latitude="+ lat +"&longitude=" + lon , "winpop", "width=600, height=680, top="+winT+", left="+winL , "scrollbars=yes");
+
+	}
+    
+    
+    
+
+</script>
+
+<script type="text/javascript">
+	 String.prototype.trim = function(){
+	      return this.replace(/\s/g, "");
+	  }
+
+</script>
+
+</head>
+<body>
+	<div class="allwrap">
+		<div id="body">
+			<div class="cont">
+				<!--conteent S-->
+			<form action="" method="post"	name="frm" id="frm"  enctype="multipart/form-data">
+				<div class="content">
+					<div class="tabWrap type3">
+							<div class="tabCon on">
+							<fieldset>
+
+								 <div id="childDiv">
+                                    <p class="head ttbtncase1">설치 비콘<span><button type="button" class="btnType05" id="addCode">추가</button></span></p>
+	                                <div class="questionBoxWrap">
+	                                    <c:forEach var="result"  items="${beaconList}" varStatus="loop">
+	                                        <div class="questionBox">
+		                                        <div class="addStwrap">
+		                                            <table class="tb_type02">
+		                                                <colgroup>
+		                                                    <col style="width:25%"/>
+		                                                    <col style="width:75%"/>
+		                                                </colgroup>
+		                                                <tbody>
+		                                                    <tr>
+                                                                <th class="top">코드</th>
+                                                                <td class="top">
+                                                                    <span class="input-text07"><input type="text" name="beaconList[${loop.index}].deviceId" id="beaconList[${loop.index}].deviceId" readonly="readonly" value="<c:out value='${result.deviceId }'/>" /></span>
+                                                                </td>
+                                                            </tr>
+			                                                <%-- <tr>
+			                                                    <th>순서</th>
+			                                                    <td style="display: none" >
+								                                    <input type="hidden" name="beaconList[${loop.index}].beaconId" value="${result.deviceId }"/>
+								                                </td>
+			                                                    <td>
+			                                                        <span class="input-text07">&nbsp;</span>
+			                                                    </td>
+			                                                </tr> --%>
+			                                                <tr>
+			                                                    <th>시리얼 번호</th>
+			                                                    <td>
+			                                                        <span class="input-text07">
+			                                                            <input type="text"  name="beaconList[${loop.index}].serialNo" id="SserialNo${loop.index}" placeholder="코드설명1" value="<c:out value='${result.serialNo }'/>"/> 
+			                                                            <a href="#" id="${loop.index}" onclick="fn_beaconDupChkFnc([this.id],'update');return false;">저장</a>
+			                                                            <a href="#" id="${loop.index}" onclick="fn_matchingBeacon2([this.id],'delete');return false;">삭제</a>
+			                                                        </span>
+			                                                    </td>
+			                                                </tr>
+			                                                
+		                                               </tbody>
+		                                           </table>
+		                                       </div>
+	                                       </div>
+	                                   </c:forEach>
+	                                </div>
+                                </div>
+								
+								<div class="btnArea">
+									
+									<c:if test="${cmd == 'INFO'}">
+										<span class="right" onclick="vallidateModify('UPDATE','${info.station_id}'); return false;"><button class="btnType01 bc_green">저장</button></span>
+										<%-- <span class="right" onclick="fn_delete('${info.station_id}'); return false;"><button class="btnType01 bc_green">삭제</button></span> --%>
+									</c:if>
+									
+									<c:if test="${cmd == 'INSERT'}">
+										<span class="right" onclick="vallidateModify('INSERT'); return false;"><button class="btnType01 bc_green">저장</button></span>
+									</c:if>
+								</div>
+							</fieldset>
+							</div>
+									
+						</div>
+							
+							
+							</div>
+						</div>
+				</form>
+				<!--content E-->
+			</div>
+		</div>
+
+	</div>
+	<!--하위코드 추가용 clone  -->
+    <section id="cloneDiv" style="display: none;" >
+        <div class="questionBox" >
+	        <div class="btn_delQ"><button class="btnType04" ><img src="/images/btn_delQ.png" alt="" /></button></div>
+	        <div class="addStwrap">
+		        <table>
+	                <colgroup>
+	                    <col style="width:25%"/>
+	                    <col style="width:75%"/>
+	                </colgroup>
+	                <tr style="display: none;"></tr>
+		            <tr>
+                                   <th class="top">코드</th>
+                                   <td class="top">
+                                       <span class="input-text07"><input type="text" name="" id="" readonly="readonly" value="" /></span>
+                                   </td>
+                               </tr>
+                      <!-- <tr>
+                          <th>순서</th>
+                          <td style="display: none" >
+            			   <input type="hidden" name="beaconList[0].beaconId" value="0"/>
+          				 </td>
+                          <td>
+                              <span class="input-text07">&nbsp;</span>
+                          </td>
+                      </tr> -->
+                      <tr>
+                          <th>시리얼 번호</th>
+                          <td>
+                             <span class="pwtableblock">
+                                  <input type="text"  name="beaconList[0].serialNo" id="SserialNo0" placeholder="시리얼 번호" value=""/>
+                                 
+                                  <a href="#" id="0" onclick="fn_beaconDupChkFnc([this.id],'insert');return false;">저장</a>
+                                  <!-- <a href="#" id="0" onclick="fn_matchingBeacon2([this.id],'delete');return false;">삭제</a> -->
+                                  </span>
+                                 
+                                  
+                          </td>
+                          
+                      </tr>
+		        </table>
+	        </div>
+        </div>
+        </section>
+</body>
+</html>
+

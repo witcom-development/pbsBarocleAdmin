@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+
+	<entry key="0000">성공</entry>
+	<entry key="1001">입력 파라미터 오류</entry>
+	<entry key="1234">테스트</entry>
+	<entry key="9999">정의되지 않은 오류</entry>
+	<entry key="fail.common.msg">error_ko</entry>
+	<entry key="fail.request.msg">error_ko</entry>
+	<entry key="error.invalidSession">error_ko</entry>
+
+
+	<entry key="com.dkitec.barocle.logging.interceptor.LoggingInterceptor.NullMenuAuthException">메뉴 코드값을 찾을 수 없습니다.</entry>
+	<entry key="com.dkitec.barocle.logging.interceptor.LoggingInterceptor.NullPointerException">메뉴 권한 찾을 수 없습니다.</entry>
+	<entry key="com.dkitec.barocle.logging.interceptor.LoggingInterceptor.Exception">권환 설정을 하는데 치명적인 오류가 발견 되었습니다.</entry>
+	
+	<entry key="com.dkitec.barocle.base.BaseController.setGivenParameterValue">파라미터 메시지를 생성하는데 실패했습니다.</entry>
+	<entry key="com.dkitec.barocle.base.BaseController.setResultMessage">에러 메시지를 생성하는데 실패했습니다.</entry>
+
+	<!-- 다음 에디터 -->
+	<entry key="daumeditor.upload.error.menu">유효하지 않은 메뉴명을 가지고 있습니다.</entry>
+	<entry key="daumeditor.upload.error.size">이미지 사이즈는 10MB를 넘길 수 없습니다.</entry>
+	<entry key="daumeditor.upload.error.extension">휴효하지 않은 확장자명을 가지고 있습니다.</entry>
+	<entry key="daumeditor.upload.error.uploadDaumEditorImage">이미지를 업로드 하는데 실패 하였습니다.</entry>
+
+	<!-- FAQ -->
+	<entry key="admin.customer.faq.faqList">FAQ 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqEdit.bindingexception">FAQ 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqEdit">FAQ 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqPersist.bindingexception">FAQ 내용을 등록/수정한는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqPersist.NullModeException">FAQ 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqPersist.NullSessionException">FAQ 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqPersist">FAQ 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqDelete.bindingexception">FAQ 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqDelete.NullSessionException">FAQ 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.faqDelete">FAQ 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.getFaqCategoryInfo">FAQ 카테고리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.getCategorySelectionList">FAQ 팝업 카테고리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.getCategorySelectedList">선택한 FAQ 카테고리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.faq.persistCategory">FAQ 카테고리를 등록/수정하늗데 실패했습니다.</entry>
+
+	<!-- hiking course -->
+	<entry key="admin.customer.hikingcourse.hikingCourseList">하이킹코스 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCourseEdit.bindingexception">하이킹코스 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCourseEdit">하이킹코스 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCoursePersist.NullModeException">하이킹코스 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCoursePersist.NullSessionException">하이킹코스 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCoursePersist">하이킹코스 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCourseDelete.bindingexception">하이킹코스 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCourseDelete.NullSessionException">하이킹코스 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.hikingcourse.hikingCourseDelete">하이킹코스 내용을 삭제하는데 실패했습니다.</entry>
+	
+	<!-- 수리관리 -->
+	<entry key="admin.system.maintenance.rep_bik_list">자전거 수리관리 조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.rep_bik_detail">자전거 수리관리 상세조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.insertRepairBikeAjax">자전거 수리관리 등록에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.updateRepairBikeAjax">자전거 수리관리 수정에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.deleteRepairBike">자전거 수리관리 삭제에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.getRemainPartsCnt">자전거 수리관리 재고부품 조회에 실패하였습니다.</entry>
+	
+	<entry key="admin.system.maintenance.rep_bik_list_mgmt">자전거 수리관리 조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.rep_bik_detail_mgmt">자전거 수리관리 상세조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.insertRepairTermAjax">자전거 수리관리 단말기 수리등록에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.updateRepairTermAjax">자전거 수리관리 단말기 수리저장에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.getBikeEntrsAjax">자전거 납품처 조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.getRepairCmptDttmAjax">자전거 최근 수리완료 시간 조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.getCheckMntncAdminAjax">정비 직원 근태 등록 확인 조회에 실패하였습니다.</entry>
+	
+	
+	<entry key="admin.system.maintenance.rep_bik_mall_list">바로클포 조회에 실패하였습니다.</entry>
+	<entry key="admin.system.maintenance.moveRepairBikeEditMallForm">바로클포 상세내역조회에 실패하였습니다.</entry>
+	
+	<!-- 공지사항 -->
+	<entry key="admin.customer.notice.noticeList">공지사항 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticeEdit.bindingexception">공지사항 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticeEdit">공지사항 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticePersist.NullModeException">공지사항 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticePersist.NullSessionException">공지사항 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticePersist">공지사항을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticeDelete.bindingexception">공지사항을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticeDelete.NullSessionException">공지사항 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.noticeDelete">공지사항을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.popupNoticeCount">공지사항 팝업 개수를 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.notice.popupNotice">공지사항 팝업 내용을 가져오는데 실패했습니다.</entry>
+
+	<!-- 시민의견수렴 -->
+	<entry key="admin.customer.opinionboard.opinionBoardList">시민의견수렴 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardEdit.bindingexception">시민의견수렴 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardEdit">시민의견수렴 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardPersist.NullModeException">시민의견수렴 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardPersist.NullSessionException">시민의견수렴 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardPersist">시민의견수렴을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardDelete.bindingexception">시민의정수렴을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardDelete.NullSessionException">시민의견수렴 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.opinionboard.opinionBoardDelete">시민의견수렴을 삭제하는데 실패했습니다.</entry>
+
+	<!-- 포토갤러리 -->
+	<entry key="admin.customer.photogallery.photoGalleryList">포토갤러리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photoGalleryEdit.bindingexception">포토갤러리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photoGalleryEdit">포토갤러리 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photogalleryPersist.NullModeException">포토갤러리 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photogalleryPersist.NullSessionException">포토갤러리 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photoGalleryPersist">포토갤러리 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photoGalleryDelete.bindingexception">포토갤러리 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photogalleryDelete.NullSessionException">포토갤러리 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.photogallery.photoGalleryDelete">포토갤러리 내용을 삭제하는데 실패했습니다.</entry>
+
+	<!-- 설문조사 -->
+	<entry key="admin.customer.survey.surveyList">설문조사 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyEdit.bindingexception">설문조사 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyEdit">설문조사 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyPersist.NullModeException">설문조사 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyPersist.NullSessionException">설문조사 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyPersist">설문조사 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyDelete.NullSessionException">설문조사 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.customer.survey.surveyDelete">설문조사 내용을 삭제하는데 실패했습니다.</entry>
+	
+	<!-- 관리자 관리 -->
+	<entry key="admin.system.user.userInsert">관리자등록에 실패했습니다.</entry>
+	
+	<!-- sms 관리 -->
+	<entry key="admin.system.sms.smsList">sms 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsEdit.bindingexception">sms 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsEdit">sms 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsInsert.NullSessionException">세션 정보를 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsInsert">sms 내용을 등록하는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsUpdate.NullSessionException">세션 정보를 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsUpdate">sms 내용을 수정하는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsDelete.bindingexception">sms 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.smsDelete">sms 내용을 삭제하는데 실패했습니다.</entry>
+	
+	<entry key="admin.system.sms.smsAdmin">관리자SMS 등록 화면 조회하는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.getSmsAdminList">관리자SMS 목록 조회하는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.getSmsAdminDtl">관리자SMS 상세 내용을 조회하는데 실패했습니다.</entry>
+	<entry key="admin.system.sms.reqSendAdminSms">관리자SMS 등록에 실패했습니다.</entry>
+	<entry key="admin.system.sms.getAdminSmsTpl">관리자SMS 발송구분 조회를 실패했습니다.</entry>
+
+	<!-- 앱 버전 -->
+	<entry key="admin.system.appversion.appVersionList">앱 버전 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionEdit.bindingexception">앱 버전 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionEdit">앱 버전 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionInsert.NullSessionException">세션 정보를 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionInsert">앱 버전 내용을 등록하는데 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionUpdate.NullSessionException">세션 정보를 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionUpdate">앱 버전 내용을 수정하는데 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionDelete.bindingexception">앱 버전 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.system.appversion.appVersionDelete">앱 버전 내용을 삭제하는데 실패했습니다.</entry>
+
+	<!-- 주요 설정항목 -->
+	<entry key="admin.system.mainset.mainSetEdit.bindingexception">주요 설정 항목 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.system.mainset.mainSetEdit">주요 설정 항목 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.mainset.mainSetUpdate">주소 설정 항목을 등록하는데 실패했습니다.</entry>
+
+	<!-- 센터 관리 -->
+	<entry key="admin.manage.center.centerList">센터 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerEdit.validator">센터 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerEdit">센터 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerPersist.NullModeException">센터 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerPersist.NullSessionException">센터 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerPersist">센터 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerDelete.validator">센터 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerDelete.NullSessionException">센터 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.centerDelete">센터 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.getDistrictCD.NullParameterValue">자치구 파라미터 값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.center.getDistrictCD">자치구 목록을 가져오는데 실패했습니다.</entry>
+
+	<!-- 재배치 차량 관리 -->
+	<entry key="admin.manage.relocationcar.relocationCarCenterClsCD.NullParameterValue">재배치 차량 소속 센터 파라미터 값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarCenterClsCD">재배치 차량 소속 센터 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarList">재배치 차량 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.system.relocationcar.relocationCarEdit.validator">재배치 차량 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarEdit">재배치 차량 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarPersist.NullSessionException">재배치 차량 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarPersist">재배치 차량 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarDelete.validator">재배치 차량 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarDelete.NullSessionException">재배치 차량 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.relocationcar.relocationCarDelete">재배치 차량 내용을 삭제하는데 실패했습니다.</entry>
+
+	<!-- 주변상가 관리 -->
+	<entry key="admin.manage.mallpromotion.mallPromotionList">주변상가 관리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionEdit.validator">주변상가 관리 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionEdit">주변상가 관리 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionPersist.NullModeException">주변상가 관리 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionPersist.NullSessionException">주변상가 관리 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionPersist">주변상가 관리 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionDelete.validator">주변상가 관리 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionDelete.NullSessionException">주변상가 관리 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.mallPromotionDelete">주변상가 관리 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.getStationGroup.NullParameterValue">아파트 코드값이 존재하지 않습니다.</entry>
+	<entry key="admin.manage.mallpromotion.getStationGroup">아파트 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.getStation.NullParameterValue">스테이션 코드값이 존재하지 않습니다.</entry>
+	<entry key="admin.manage.mallpromotion.getStation">스테이션 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.mallpromotion.getMallPromotionType.NullParameterValue">업종 코드값이 존재하지 않습니다.</entry>
+	<entry key="admin.manage.mallpromotion.getMallPromotionType">업종 목록을 가져오는데 실패했니다</entry>
+
+	<!-- 운휴관리 -->
+	<entry key="admin.manage.suspension.suspensionList">운휴관리 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionEdit.validator">운휴관리 유효성 검사에 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionEdit">운휴관리 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionPersist.NullModeException">운휴관리 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionPersist.NullSessionException">운휴관리 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionPersist">운휴관리 내용을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionDelete.validator">운휴관리 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionDelete.NullSessionException">운휴관리 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.manage.suspension.suspensionDelete">운휴관리 내용을 삭제하는데 실패했습니다.</entry>
+	<entry key="com.dkitec.barocle.admin.manage.suspension.service.insertSuspensionException">운휴관리 내용을 입력하는데 실패했습니다.</entry>
+	<entry key="com.dkitec.barocle.admin.manage.suspension.service.updateSuspensionException">운휴관리 내용을 수정하는데 실패했습니다.</entry>
+	
+	<!-- 바로클포 -->
+	<entry key="admin.repairBikeMall.transferBike.trans_bik_mall_list">바로클포 자전거 수리요청 등록현황 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.transferBike.trans_bik_mall_detail">바로클포 자전거 수리요청 등록 상세 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.transferBike.chk_trans_bik_list">바로클포 수리요청 현황조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.transferBike.checkTransferBike">바로클포 인수(인계)확인 수정에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.repairBike.repair_bik_mall_list">바로클포 수리내역증빙 목록 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.repairBike.updateRepairTnsBike">바로클포 수리완료 처리에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.repairBike.bik_mall_rep_list">바로클포 점포별 월 정비 보고서 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.manageMall.rep_part_list">바로클포 수리단가 목록 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.manageMall.exePartPriceAjax">바로클포 수리단가 등록에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.manageMall.exeBrokenPartAjax">바로클포 고장부위 등록에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.transferBike.chk_repair_bik_list">바로클포 자전거 검수 현황 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.transferBike.checkRepairBike">바로클포 검수완료 처리에 실패하였습니다.</entry>
+	<entry key="admin.repairBikeMall.manageMall.sendRepMonthReport">바로클포 월정비 내역 메세지 전송에 실패하였습니다.</entry>
+	
+	<!-- 정비관리  -->
+	<entry key="admin.repairMgmt.repairWork.insertRepairWork">정비직원 근태입력을 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.repairWork.updateRepairWork">정비직원 근태수정을 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.repairWork.updateRepairWorkAprvd">정비직원 근태 승인여부 처리를 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.repairWork.getRepairWork">정비직원 근태 정보 조회를 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.repairWork.getMainWork">메인화면 정비직원 근태 정보 조회를 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.repairWork.rep_bik_list_mgmt">자전거 수리관리 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairMgmt.repairWork.rep_bik_detail_mgmt">자전거 수리관리 상세조회에 실패하였습니다.</entry>
+	<entry key="admin.repairMgmt.repairPerf.getRepairPerf">정비직원 실적조회를 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.centerStatus.getCenterStatus">정비센터 현황조회를 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.mgmtStat.getMgmtStat">관리팀 통계조회를 실패했습니다.</entry>
+	<entry key="admin.repairMgmt.comm.getAdmCenterCodeAjax">정비센터 코드 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairMgmt.comm.getAdmComCodeAjax">자전거 수리관리 수리구분 코드 조회에 실패하였습니다.</entry>
+	<entry key="admin.repairMgmt.comm.getPartsStockCnt">자전거 경정비 부품 재고 조회에 실패하였습니다.</entry>		
+	
+	<!-- 분배관리 -->
+	<entry key="admin.maintenance.distMgmt.vcleMgmt.getVcleInfoList">차량 현황 정보 조회를 실패했습니다.</entry>
+	<entry key="admin.maintenance.distMgmt.vcleMgmt.getMainDistVcle">메인화면 당일 분배원 차량 정보 조회를 실패했습니다.</entry>
+	<entry key="admin.maintenance.distMgmt.vcleMgmt.getDistVcleList">분배원 차량 정보 조회를 실패했습니다.</entry>
+	<entry key="admin.maintenance.distMgmt.vcleMgmt.insertDistVcle">분배원 차량 입력을 실패했습니다.</entry>	
+	<entry key="admin.maintenance.distMgmt.vcleMgmt.updateDistVcle">분배원 차량 수정을 실패했습니다.</entry>
+	
+	<entry key="admin.maintenance.distMgmt.distributionDiary.viewDistributionDiary">분배일지 페이지 이동에 실패했습니다.</entry>
+	<entry key="admin.maintenance.distMgmt.distributionDiary.getDistributionDiary">분배일지 조회에 실패했습니다.</entry>	
+	
+	<!-- 방역단근태 -->
+	<entry key="admin.cleansvc.CleanStatusReg">방역단 근태입력을 실패했습니다.</entry>
+	<entry key="admin.cleansvc.CleanStatusDetail">방역단 근태상세 조회를 실패했습니다.</entry>
+	<entry key="admin.cleansvc.CleanStatusNotice">방역단 준수사항 조회를 실패했습니다.</entry>
+	<entry key="admin.cleansvc.CleanStatusList">방역단 근태목록 조회를 실패했습니다.</entry>
+	<entry key="admin.cleansvc.CleanStatus">방역단 근태관리 조회를 실패했습니다.</entry>
+	
+	<!-- 날짜 validation check -->
+	<entry key="com.dkitec.barocle.util.validator.SearchDateValidator.message">날짜 validation에 오류가 발생하였습니다.</entry>
+	
+	
+	<!-- 월간운영현황 -->
+	<entry key="admin.use.static.useStatisticsBoard">월간운영현황 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardEdit.bindingexception">월간운영현황 목록을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardEdit">월간운영현황 내용을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardPersist.NullModeException">월간운영현황 모드값을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardPersist.NullSessionException">월간운영현황 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardPersist">월간운영현황을 등록/수정하는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardDelete.bindingexception">월간운영현황을 삭제하는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardDelete.NullSessionException">월간운영현황 세션을 가져오는데 실패했습니다.</entry>
+	<entry key="admin.use.static.useStatisticsBoardDelete">월간운영현황을 삭제하는데 실패했습니다.</entry>
+	
+	
+</properties>

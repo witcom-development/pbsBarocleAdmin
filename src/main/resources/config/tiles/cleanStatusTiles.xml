@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+
+<tiles-definitions>
+	
+	<!-- 정비관리 공통 -->
+	<definition name="repairMgmtTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- solbit test S -->	
+	<definition name="/admin/cleansvc/cleanStatus" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/cleansvc/cleanStatus.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 정비원 근태 조회 페이지 -->
+	</definition>
+	
+	<definition name="/admin/cleansvc/cleanStatusList" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/cleansvc/cleanStatusList.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 정비원 근태 조회 페이지 -->
+	</definition>
+	<definition name="/admin/cleansvc/cleanStatusDetail" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/cleansvc/cleanStatusDetail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 정비원 근태 조회 출퇴근 페이지 -->
+	</definition>
+	 <definition name="/admin/cleansvc/cleanStatusNotice" extends="repairMgmtTemplate" template="/WEB-INF/views/admin/cleansvc/cleanStatusNotice.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" /><!-- 정비원 근태 조회 출퇴근 페이지 -->
+	</definition>
+	
+		
+	
+</tiles-definitions>

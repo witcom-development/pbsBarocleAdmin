@@ -1,0 +1,622 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper
+	namespace="com.dkitec.barocle.admin.repairBikeMall.transferBike.service.TransferBikeMapper">
+	<select id="getTransferBikeList" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		SELECT /* 바로클포 수리요청 현황 조회 */
+			A.REPAIR_OURSRC_SEQ  AS repairOursrcSeq
+			, A.BIKE_ID AS equipmentId
+			, A.REG_DTTM AS regDttm
+			, A.ADMIN_NAME AS adminName
+			, COUNT(A.BROKEN_TYPE) AS brokenType
+			, A.TRANS_YN AS transYn
+			, A.TAKE_ID AS takeId
+			, (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = TAKE.ASSIGN_CENTER_ID) AS centerName 
+			, A.BIKE_NO AS bikeNo
+			, A.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+			, A.COLLECT_YN AS collectYn
+			, A.ADMIN_ID AS adminId
+		FROM (
+			SELECT INFO.REPAIR_OURSRC_SEQ, BIKE.BIKE_NO, MAIN.REPAIR_OUTSRC_MAIN_SEQ,
+				INFO.EQUIPMENT_ID AS BIKE_ID, INFO.REG_DTTM, ADMIN.ADMIN_NAME, 
+				COM.MLANG_COM_CD_NAME AS BROKEN_TYPE, INFO.TRANS_YN ,INFO.TAKE_ID, INFO.COLLECT_YN, INFO.ADMIN_ID
+			FROM TB_MTC_REPAIR_OUTSRC_INFO INFO,
+			TB_MTC_REPAIR_OUTSRC_DETL DETL,
+			TB_MTC_REPAIR_OUTSRC_MAIN MAIN,
+			TB_SYS_ADMIN ADMIN,
+			TB_SYS_MLANG_COM_CD COM,
+			TB_OPR_BIKE BIKE
+			WHERE INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+			AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+			AND INFO.ADMIN_ID = ADMIN.ADMIN_ID
+			AND DETL.BRKDN_STUS_CD = COM.COM_CD
+			AND INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+		) A 
+		LEFT JOIN TB_SYS_ADMIN TAKE 
+		ON A.TAKE_ID = TAKE.ADMIN_ID AND TAKE.ADMIN_GRP_SEQ = 21
+		WHERE 1=1
+	  <if test="searchBgnDe!='' and searchBgnDe!=null">	
+	   <![CDATA[AND A.REG_DTTM  >= STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')]]>
+		</if>
+		<if test="searchEndDe!='' and searchEndDe!=null">
+	   <![CDATA[AND A.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+		</if>
+		<if test="transYn=='Y'.toString()">
+			AND A.TRANS_YN = 'Y'
+		</if>
+		<if test="transYn=='N'.toString()">
+			AND A.TRANS_YN = 'N'
+		</if>
+		<if test="adminName != null and adminName != '' ">
+			AND ( A.ADMIN_ID LIKE CONCAT(#{adminName},'%') OR A.ADMIN_NAME LIKE CONCAT(#{adminName},'%'))
+		</if>
+		<if test= "chkYn != null and chkYn !='' and chkYn == 'Y' and userId != null and userId != ''">
+			AND ( A.ADMIN_ID LIKE CONCAT(#{userId},'%') OR A.ADMIN_NAME LIKE CONCAT(#{userId},'%'))
+		</if>
+		<if test="centerId != null and centerId != ''">
+			AND TAKE.ASSIGN_CENTER_ID = #{centerId}
+		</if> 
+		<if test="adminId != null and adminId != ''">
+			AND A.TAKE_ID = #{adminId}
+		</if> 
+		GROUP BY repairOursrcSeq
+		ORDER BY A.REG_DTTM DESC
+		
+		LIMIT #{firstRecordIndex},#{recordCountPerPage}
+		
+	</select>
+
+	<select id="getTransferBikeListCount" parameterType="TransferBikeVo" resultType="int">
+		SELECT COUNT(*) FROM ( /* 바로클포 수리요청 현황 조회 COUNT */
+			SELECT
+				A.REPAIR_OURSRC_SEQ  AS repairOursrcSeq
+				, A.BIKE_ID AS equipmentId
+				, A.REG_DTTM AS regDttm
+				, A.ADMIN_NAME AS adminName
+				, COUNT(A.BROKEN_TYPE) AS brokenType
+				, A.TRANS_YN AS transYn
+				, A.TAKE_ID AS takeId
+				, (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = TAKE.ASSIGN_CENTER_ID) AS centerName 
+				, A.BIKE_NO AS bikeNo
+				, A.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+				, A.ADMIN_ID AS adminId
+			FROM (
+				SELECT INFO.REPAIR_OURSRC_SEQ, BIKE.BIKE_NO, MAIN.REPAIR_OUTSRC_MAIN_SEQ, INFO.ADMIN_ID,
+					INFO.EQUIPMENT_ID AS BIKE_ID, INFO.REG_DTTM, ADMIN.ADMIN_NAME, COM.MLANG_COM_CD_NAME AS BROKEN_TYPE, INFO.TRANS_YN ,INFO.TAKE_ID
+				FROM TB_MTC_REPAIR_OUTSRC_INFO INFO,
+				TB_MTC_REPAIR_OUTSRC_DETL DETL,
+				TB_MTC_REPAIR_OUTSRC_MAIN MAIN,
+				TB_SYS_ADMIN ADMIN,
+				TB_SYS_MLANG_COM_CD COM,
+				TB_OPR_BIKE BIKE
+				WHERE INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+				AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+				AND INFO.ADMIN_ID = ADMIN.ADMIN_ID
+				AND DETL.BRKDN_STUS_CD = COM.COM_CD
+				AND INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+			) A
+			LEFT JOIN TB_SYS_ADMIN TAKE 
+			ON A.TAKE_ID = TAKE.ADMIN_ID AND TAKE.ADMIN_GRP_SEQ = 21
+			WHERE 1=1
+			<if test="searchBgnDe!='' and searchBgnDe!=null">	
+		   <![CDATA[AND A.REG_DTTM  >= STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')]]>
+			</if>
+			<if test="searchEndDe!='' and searchEndDe!=null">
+		   <![CDATA[AND A.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+			</if>
+			<if test="transYn=='Y'.toString()">
+				AND A.TRANS_YN = 'Y'
+			</if>
+			<if test="transYn=='N'.toString()">
+				AND A.TRANS_YN = 'N'
+			</if> 
+			
+			<if test="adminName != null and adminName != '' ">
+				AND ( A.ADMIN_ID LIKE CONCAT(#{adminName},'%') OR A.ADMIN_NAME LIKE CONCAT(#{adminName},'%'))
+			</if>
+			<if test= "chkYn != null and chkYn !='' and chkYn == 'Y' and userId != null and userId != ''">
+			AND ( A.ADMIN_ID LIKE CONCAT(#{userId},'%') OR A.ADMIN_NAME LIKE CONCAT(#{userId},'%'))
+			</if>
+			<if test="centerId != null and centerId != ''">
+				AND TAKE.ASSIGN_CENTER_ID = #{centerId}
+			</if> 
+			<if test="adminId != null and adminId != ''">
+			AND A.TAKE_ID = #{adminId}
+			</if>
+			GROUP BY repairOursrcSeq
+			ORDER BY A.REG_DTTM DESC
+		) Z
+	</select>
+
+	<select id="getBikeMallList" parameterType="TransferBikeVo"
+		resultType="TransferBikeVo">
+		SELECT
+		CENTER.CENTER_NAME AS centerName
+		, CENTER.CENTER_Id AS centerId
+		, ADMIN.ADMIN_NAME AS adminName
+		, ADMIN.ADMIN_ID AS takeId
+		FROM TB_SYS_ADMIN ADMIN, TB_OPR_CENTER CENTER
+		WHERE ADMIN_GRP_SEQ = 21
+		AND ADMIN.ASSIGN_CENTER_ID = CENTER.CENTER_ID
+		AND ADMIN.USE_YN = 'Y'
+		AND CENTER.CENTER_CLS_CD = 'CEN_003'
+		AND	CENTER.USE_YN = 'Y'
+		<if test ="districtCd != null and districtCd != ''">
+				AND CENTER.DISTRICT_CD = #{districtCd}
+		</if>
+		ORDER BY CENTER.CENTER_NAME
+	</select>
+
+	<select id="getCheckTransferList" parameterType="TransferBikeVo"
+		resultType="TransferBikeVo">
+		SELECT /* 바로클포 인수처리 목록 조회 */
+			A.REPAIR_OURSRC_SEQ AS repairOursrcSeq
+			, A.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+			, A.BIKE_ID AS equipmentId
+			, A.REG_DTTM AS regDttm
+			, A.ADMIN_NAME AS adminName
+			, COUNT(A.BROKEN_TYPE) AS brokenType
+			, A.TRANS_ID AS transId
+			, A.TRANS_YN AS transYn
+			, A.TRANS_DTTM AS transDttm
+			, A.TAKE_ID AS takeId
+			, A.TAKE_YN AS takeYn
+			, A.TAKE_DTTM AS takeDttm
+			,(SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = TAKE.ASSIGN_CENTER_ID) AS centerName
+			, A.BIKE_NO AS bikeNo
+			, A.COLLECT_YN AS collectYn
+		FROM (
+			SELECT INFO.REPAIR_OURSRC_SEQ, INFO.REPAIR_OUTSRC_MAIN_SEQ, INFO.EQUIPMENT_ID AS BIKE_ID, INFO.REG_DTTM, ADMIN.ADMIN_NAME,  ADMIN.ADMIN_ID,
+			COM.MLANG_COM_CD_NAME AS BROKEN_TYPE, INFO.TAKE_ID , INFO.TAKE_YN, INFO.TRANS_YN ,INFO.TRANS_ID
+			, BIKE.BIKE_NO, INFO.TRANS_DTTM, INFO.TAKE_DTTM ,INFO.COLLECT_YN
+			FROM TB_MTC_REPAIR_OUTSRC_INFO INFO,
+			TB_MTC_REPAIR_OUTSRC_DETL DETL,
+			TB_MTC_REPAIR_OUTSRC_MAIN MAIN,
+			TB_SYS_ADMIN ADMIN,
+			TB_SYS_MLANG_COM_CD COM,
+			TB_OPR_BIKE BIKE
+			WHERE INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+			AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+			AND INFO.ADMIN_ID = ADMIN.ADMIN_ID
+			AND DETL.BRKDN_STUS_CD = COM.COM_CD
+			AND INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+		) A
+		LEFT JOIN TB_SYS_ADMIN TAKE 
+		ON A.TAKE_ID = TAKE.ADMIN_ID AND TAKE.ADMIN_GRP_SEQ = 21
+		WHERE 1=1
+		<if test="searchBgnDe!='' and searchBgnDe!=null">
+			<![CDATA[AND A.REG_DTTM  >= STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')]]>
+		</if>
+		<if test="searchEndDe!='' and searchEndDe!=null">
+			<![CDATA[AND A.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+		</if>
+		<if test="takeYn == 'Y'.toString()">
+			AND A.TAKE_YN = 'Y'
+		</if>
+		<if test="takeYn == 'N'.toString()">
+			AND A.TAKE_YN = 'N'
+		</if> 
+		<if test="centerId !='' and centerId !=null">
+			AND TAKE.ASSIGN_CENTER_ID = #{centerId}
+		</if>
+		<if test="adminName != null and adminName != '' ">
+			AND ((A.ADMIN_ID LIKE CONCAT(#{adminName},'%') OR A.ADMIN_NAME LIKE CONCAT(#{adminName},'%')))
+		</if>
+		<if test="takeId != null and takeId != ''">
+			AND A.TAKE_ID = #{takeId}
+		</if> 
+		GROUP BY repairOursrcSeq
+		ORDER BY A.REG_DTTM DESC
+		<if test='pageYn =="Y"'>
+		LIMIT #{firstRecordIndex},#{recordCountPerPage}
+		</if>
+	</select>
+
+	<select id="getCheckTransferListCount" parameterType="TransferBikeVo"
+		resultType="int">
+		SELECT /* 바로클포 인수처리 목록 count 조회 */
+		COUNT(*)
+		FROM (
+			SELECT
+				A.REPAIR_OURSRC_SEQ AS repairOursrcSeq
+				, A.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+				, A.BIKE_ID AS equipmentId
+				, A.REG_DTTM AS regDttm
+				, A.ADMIN_NAME AS adminName
+				, COUNT(A.BROKEN_TYPE) AS brokenType
+				, A.TRANS_ID AS transId
+				, A.TRANS_YN AS transYn
+				, A.TRANS_DTTM AS transDttm
+				, A.TAKE_ID AS takeId
+				, A.TAKE_YN AS takeYn
+				, A.TAKE_DTTM AS takeDttm
+				,(SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = TAKE.ASSIGN_CENTER_ID) AS centerName
+				, A.BIKE_NO AS bikeNo
+			FROM (
+				SELECT INFO.REPAIR_OURSRC_SEQ, INFO.REPAIR_OUTSRC_MAIN_SEQ, INFO.EQUIPMENT_ID AS BIKE_ID, INFO.REG_DTTM, ADMIN.ADMIN_NAME,  ADMIN.ADMIN_ID,
+				COM.MLANG_COM_CD_NAME AS BROKEN_TYPE, INFO.TAKE_ID , INFO.TAKE_YN, INFO.TRANS_YN , INFO.TRANS_ID
+				, BIKE.BIKE_NO, INFO.TRANS_DTTM, INFO.TAKE_DTTM
+				FROM TB_MTC_REPAIR_OUTSRC_INFO INFO,
+				TB_MTC_REPAIR_OUTSRC_DETL DETL,
+				TB_MTC_REPAIR_OUTSRC_MAIN MAIN,
+				TB_SYS_ADMIN ADMIN,
+				TB_SYS_MLANG_COM_CD COM,
+				TB_OPR_BIKE BIKE
+				WHERE INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+				AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+				AND INFO.ADMIN_ID = ADMIN.ADMIN_ID
+				AND DETL.BRKDN_STUS_CD = COM.COM_CD
+				AND INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+			) A
+			LEFT JOIN TB_SYS_ADMIN TAKE 
+			ON A.TAKE_ID = TAKE.ADMIN_ID AND TAKE.ADMIN_GRP_SEQ = 21
+			WHERE 1=1
+			<if test="searchBgnDe!='' and searchBgnDe!=null">
+				<![CDATA[AND A.REG_DTTM  >= STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')]]>
+			</if>
+			<if test="searchEndDe!='' and searchEndDe!=null">
+				<![CDATA[AND A.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+			</if>
+			<if test="takeYn == 'Y'.toString()">
+				AND A.TAKE_YN = 'Y'
+			</if>
+			<if test="takeYn == 'N'.toString()">
+				AND A.TAKE_YN = 'N'
+			</if>  
+			<if test="centerId !='' and centerId !=null">
+				AND TAKE.ASSIGN_CENTER_ID = #{centerId}
+			</if>
+			<if test="adminName != null and adminName != '' ">
+				AND ((A.ADMIN_ID LIKE CONCAT(#{adminName},'%') OR A.ADMIN_NAME LIKE CONCAT(#{adminName},'%')))
+			</if>
+			<if test="takeId != null and takeId != ''">
+			AND A.TAKE_ID = #{takeId}
+			</if> 
+			GROUP BY repairOursrcSeq
+			ORDER BY A.REG_DTTM DESC
+		)C
+	</select>
+
+	<update id="updateTransferYn" parameterType="TransferBikeVo">
+		UPDATE TB_MTC_REPAIR_OUTSRC_INFO
+		SET
+			TRANS_YN = 'Y'
+			, TRANS_DTTM = NOW()
+			, TAKE_YN = 'Y'
+			, TAKE_DTTM = NOW()
+		WHERE REPAIR_OURSRC_SEQ = #{repairOursrcSeq}
+	</update>
+	
+	<insert id="addTransferBikeMain" parameterType="TransferBikeVo" useGeneratedKeys="true" keyProperty="repairOutsrcMainSeq">
+		INSERT INTO TB_MTC_REPAIR_OUTSRC_MAIN
+	(REPAIR_OUTSRC_MAIN_SEQ)
+	VALUES (NULL)
+	</insert>
+	
+	<insert id="addTransferBikeInfo" parameterType="TransferBikeVo" useGeneratedKeys="true" keyProperty="repairOursrcSeq">
+	  INSERT INTO TB_MTC_REPAIR_OUTSRC_INFO
+	(
+	  REPAIR_OUTSRC_MAIN_SEQ
+	, EQUIPMENT_ID
+	, EQUIPMENT_CLS_CD
+	, READ_CLS_CD
+	, REG_DTTM
+	, ADMIN_ID
+	, MOD_DTTM
+	, MOD_ID
+	, TAKE_ID
+	, TRANS_ID
+	)
+	VALUES (
+	  #{repairOutsrcMainSeq}   
+	, (SELECT BIKE_ID FROM TB_OPR_BIKE WHERE BIKE_NO=#{bikeNo}) 
+	, 'DEV_001'  
+	, 'S'		
+	, NOW()
+	, #{adminId}  
+	, NOW() 
+	, #{adminId}
+	, #{takeId}
+	, #{adminId}
+	)
+	</insert>
+	
+	<insert id="addTransferBikeDetl" parameterType="TransferBikeVo">
+	INSERT INTO TB_MTC_REPAIR_OUTSRC_DETL
+	(
+	REPAIR_OURSRC_SEQ 
+	, BRKDN_STUS_CD
+	, PICTURE_FILENAME
+	, REPAIR_YN
+	, REPAIR_DTTM
+	, REG_ID
+	, REG_DTTM
+	)
+	VALUES (
+	#{repairOursrcSeq}
+	, #{brokenStatusCd}
+	, ''
+	<if test="repairYn == null or repairYn == '' or repairYn == 'N'.toString()">
+	, 'N' 
+	, '0000-00-00 00:00:00'
+	</if>
+	<if test="repairYn == 'Y'.toString()">
+	, #{repairYn}
+	, STR_TO_DATE(#{repairDttm}, '%Y-%m-%d %H:%i:%s')
+	</if>
+	, #{adminId}
+	, NOW()
+	)
+	</insert>
+	
+	
+	<update id="updateTransferBikeDetl" parameterType="TransferBikeVo">
+		/* 수리요청 부품 할인율 적용 */
+		UPDATE TB_MTC_REPAIR_OUTSRC_DETL
+			SET DISCOUNT_RATE = CONVERT(#{discountRate}, DECIMAL(3,2))
+		WHERE REPAIR_OURSRC_SEQ = #{repairOursrcSeq}
+		AND   BRKDN_STUS_CD IN <foreach item="brokenStatusCd" index="index" collection="brokenStatusCdList" open="(" separator="," close=")">#{brokenStatusCd}</foreach>
+	</update>
+	
+	<update id="updateTransferBikeDtl" parameterType="TransferBikeVo">
+		/* 2022년 2월 김춘홍 과장 요청 사항 그룹항목 REC_012, REC_016 ADD_VAL2 제거 */
+	
+		UPDATE	/* updateTransferBikeDetl 수리요청 부품 할인율 적용 */
+				 TB_MTC_REPAIR_OUTSRC_DETL A
+		INNER JOIN
+			(		  
+					  SELECT A.REPAIR_OURSRC_SEQ
+						   , A.BRKDN_STUS_CD  
+					   	 , CASE WHEN (	   SELECT COUNT(1) 
+											   FROM TB_MTC_REPAIR_OUTSRC_DETL C
+											 , TB_SYS_COM_CD			 D
+											   WHERE C.REPAIR_OURSRC_SEQ = A.REPAIR_OURSRC_SEQ
+												 AND C.BRKDN_STUS_CD = D.COM_CD	   
+												 AND D.ADD_VAL2	  = B.ADD_VAL2 
+											) > 1 THEN 0.6
+								 ELSE 1 END	AS DISCOUNT_RATE				 
+						FROM TB_MTC_REPAIR_OUTSRC_DETL A
+						, TB_SYS_COM_CD			  B
+					   WHERE 1=1
+						 AND A.BRKDN_STUS_CD = B.COM_CD
+						 AND B.ADD_VAL2 != ''
+						 AND A.REPAIR_OURSRC_SEQ  = #{repairOursrcSeq} 
+			) B  ON A.REPAIR_OURSRC_SEQ = B.REPAIR_OURSRC_SEQ AND A.BRKDN_STUS_CD = B.BRKDN_STUS_CD
+		SET A.DISCOUNT_RATE =  CONVERT(B.DISCOUNT_RATE, DECIMAL(3,2))
+	  WHERE  A.REPAIR_OURSRC_SEQ = B.REPAIR_OURSRC_SEQ AND A.BRKDN_STUS_CD = B.BRKDN_STUS_CD
+		AND  A.REPAIR_OURSRC_SEQ  = #{repairOursrcSeq} 
+	</update>
+	
+	
+	<select id="getTransferBikeListExcel" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		SELECT /* 인수인계증 출력 */
+			INFO.REPAIR_OURSRC_SEQ	AS repairOursrcSeq
+			, BIKE.BIKE_NO	AS bikeNo
+		 	, GROUP_CONCAT(DETL.BRKDN_STUS_CD)	AS brokenType
+		FROM TB_MTC_REPAIR_OUTSRC_INFO INFO
+		LEFT JOIN TB_OPR_BIKE BIKE ON INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+		LEFT JOIN TB_MTC_REPAIR_OUTSRC_DETL DETL ON INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+		WHERE INFO.REPAIR_OUTSRC_MAIN_SEQ = #{repairOutsrcMainSeq}
+		GROUP BY DETL.REPAIR_OURSRC_SEQ
+	</select>
+	
+	<select id="getTransInfo" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		SELECT 
+			ADMIN.ADMIN_ID AS takeId
+			, CENTER.CENTER_NAME AS centerName
+			, ADMIN.ADMIN_NAME AS adminName
+		FROM TB_SYS_ADMIN ADMIN, TB_OPR_CENTER CENTER, TB_MTC_REPAIR_OUTSRC_INFO INFO
+		WHERE ADMIN_GRP_SEQ = 21
+		AND ADMIN.ASSIGN_CENTER_ID = CENTER.CENTER_ID
+		AND INFO.TAKE_ID = ADMIN.ADMIN_ID
+		AND ADMIN.USE_YN = 'Y'
+		AND CENTER.CENTER_CLS_CD = 'CEN_003'
+		AND CENTER.USE_YN = 'Y'
+		AND INFO.REPAIR_OUTSRC_MAIN_SEQ = #{repairOutsrcMainSeq}
+		ORDER BY CENTER.CENTER_NAME
+		LIMIT 1
+	</select>
+	
+	<select id="getBrokenInfo" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		<!-- 2010327 GROUP을 ROWCASE로 변경 -->
+		SELECT  COM.COM_CD 	AS brokenStatusCd
+			, CASE WHEN  DETL.BRKDN_STUS_CD IS NULL THEN 'N' ELSE 'Y' END AS chkYn
+			, COM.MLANG_COM_CD_NAME AS brokenType
+			, DETL.REPAIR_YN	AS repairYn
+			, DATE_FORMAT ( DETL.REPAIR_DTTM, '%Y-%m-%d %H:%i:%s' ) 	AS repairDttm
+			, DATE_FORMAT ( DETL.REG_DTTM, '%Y-%m-%d %H:%i' )	AS regDttm
+			, DETL.REG_ID	   AS adminId
+			, DETL.DISCOUNT_RATE AS discountRate 
+		FROM TB_SYS_MLANG_COM_CD COM
+		 LEFT JOIN TB_MTC_REPAIR_OUTSRC_DETL DETL   ON DETL.BRKDN_STUS_CD = COM.COM_CD AND  DETL.REPAIR_OURSRC_SEQ = #{repairOursrcSeq}
+		WHERE COM.COM_CD LIKE 'REC_%'
+		  AND COM.LANG_CLS_CD = 'LAG_001'
+		ORDER BY DETL.REG_DTTM DESC, COM.COM_CD
+	</select>
+	
+	<select id="getTransferBikeInfo" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		SELECT	/* 수리요청등록 상세 점포 조회 */
+			MAIN.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+			, INFO.ADMIN_ID AS adminId
+			, INFO.REG_DTTM AS regDttm
+			, INFO.TRANS_YN AS transYn
+			, INFO.TAKE_ID AS takeId
+			, ADM.ADMIN_NAME AS adminName		-- 인수자 이름조회임 헷갈리면 안됨
+			, INFO.TAKE_YN AS takeYn
+			, ADM.ASSIGN_CENTER_ID AS centerId
+			, (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = ADM.ASSIGN_CENTER_ID) AS centerName
+			, INFO.COLLECT_YN AS collectYn
+		FROM TB_MTC_REPAIR_OUTSRC_MAIN MAIN
+		, TB_MTC_REPAIR_OUTSRC_INFO INFO
+		, TB_SYS_ADMIN ADM
+		WHERE 1=1
+		AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+		AND INFO.TAKE_ID = ADM.ADMIN_ID
+		AND MAIN.REPAIR_OUTSRC_MAIN_SEQ = #{repairOutsrcMainSeq}
+		LIMIT 1
+	</select>
+	
+	
+	<select id="getTransferBikeDetail" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		SELECT /* 수리요청등록 상세 수리부위 */
+			INFO.REPAIR_OURSRC_SEQ AS repairOursrcSeq
+			, (SELECT BIKE_NO FROM TB_OPR_BIKE BIKE WHERE BIKE.BIKE_ID = INFO.EQUIPMENT_ID) AS bikeNo
+			, GROUP_CONCAT(DETL.BRKDN_STUS_CD ORDER BY DETL.BRKDN_STUS_CD ASC) AS partsData
+			, COUNT(DETL.BRKDN_STUS_CD) AS brokenType
+		FROM TB_MTC_REPAIR_OUTSRC_INFO INFO
+		JOIN TB_MTC_REPAIR_OUTSRC_DETL DETL ON INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+		WHERE 1=1
+		AND INFO.REPAIR_OUTSRC_MAIN_SEQ = #{repairOutsrcMainSeq}
+		GROUP BY DETL.REPAIR_OURSRC_SEQ
+	</select>
+	
+	<delete id="deleteTransferBikeDetl" parameterType="String">
+		DELETE FROM TB_MTC_REPAIR_OUTSRC_DETL
+		WHERE REPAIR_OURSRC_SEQ= #{repairOursrcSeq}
+	</delete>
+	
+	<delete id="deleteTransferBikeDtl" parameterType="TransferBikeVo">
+		DELETE FROM TB_MTC_REPAIR_OUTSRC_DETL
+		WHERE REPAIR_OURSRC_SEQ= #{repairOursrcSeq}
+		  AND BRKDN_STUS_CD = #{brokenStatusCd}
+	</delete>
+	
+	<delete id="deleteTransferBikeInfo" parameterType="TransferBikeVo">
+		DELETE FROM TB_MTC_REPAIR_OUTSRC_INFO
+		WHERE REPAIR_OUTSRC_MAIN_SEQ= #{repairOutsrcMainSeq}
+	</delete>
+	
+	<select id="getCheckRepairBikeList" parameterType="TransferBikeVo" resultType="TransferBikeVo">
+		SELECT /* 바로클포 자전거 검수 현황 조회 */
+			A.REPAIR_OURSRC_SEQ AS repairOursrcSeq
+			, A.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+			, A.REG_DTTM AS regDttm
+			, A.ADMIN_NAME AS adminName
+			, COUNT(A.BROKEN_TYPE) AS brokenType
+			, A.TRANS_ID AS transId
+			, A.TRANS_YN AS transYn
+			, A.TAKE_ID AS takeId
+			, A.TAKE_YN AS takeYn
+			,(SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = TAKE.ASSIGN_CENTER_ID) AS centerName
+			, A.BIKE_NO AS bikeNo
+			, A.COLLECT_YN AS collectYn
+		FROM (
+			SELECT INFO.REPAIR_OURSRC_SEQ, INFO.REPAIR_OUTSRC_MAIN_SEQ, INFO.EQUIPMENT_ID AS BIKE_ID, INFO.REG_DTTM, ADMIN.ADMIN_NAME,  ADMIN.ADMIN_ID,
+			COM.MLANG_COM_CD_NAME AS BROKEN_TYPE, INFO.TAKE_ID , INFO.TAKE_YN, INFO.TRANS_YN ,INFO.TRANS_ID ,INFO.COLLECT_YN
+			, BIKE.BIKE_NO
+			FROM TB_MTC_REPAIR_OUTSRC_INFO INFO,
+			TB_MTC_REPAIR_OUTSRC_DETL DETL,
+			TB_MTC_REPAIR_OUTSRC_MAIN MAIN,
+			TB_SYS_ADMIN ADMIN,
+			TB_SYS_MLANG_COM_CD COM,
+			TB_OPR_BIKE BIKE
+			WHERE INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+			AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+			AND INFO.ADMIN_ID = ADMIN.ADMIN_ID
+			AND DETL.BRKDN_STUS_CD = COM.COM_CD
+			AND INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+			AND INFO.READ_CLS_CD = 'H'	<!-- 수리완료된 건수만 조회 -->
+		) A
+		LEFT JOIN TB_SYS_ADMIN TAKE 
+		ON A.TAKE_ID = TAKE.ADMIN_ID AND TAKE.ADMIN_GRP_SEQ = 21
+		WHERE 1=1
+		<if test="searchBgnDe!='' and searchBgnDe!=null">
+			<![CDATA[AND A.REG_DTTM  >= STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')]]>
+		</if>
+		<if test="searchEndDe!='' and searchEndDe!=null">
+			<![CDATA[AND A.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+		</if>
+		<if test="collectYn == 'Y'.toString()">
+			AND A.COLLECT_YN = 'Y'
+		</if>
+		<if test="collectYn == 'N'.toString()">
+			AND A.COLLECT_YN = 'N'
+		</if>
+		<if test="centerId !='' and centerId !=null">
+			AND TAKE.ASSIGN_CENTER_ID = #{centerId}
+		</if>
+		<if test="adminName != null and adminName != '' ">
+			AND ((A.ADMIN_ID LIKE CONCAT(#{adminName},'%') OR A.ADMIN_NAME LIKE CONCAT(#{adminName},'%')))
+		</if>
+		GROUP BY repairOursrcSeq
+		ORDER BY A.REG_DTTM DESC
+		LIMIT #{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="getCheckRepairBikeListCount" parameterType="TransferBikeVo" resultType="int">
+		SELECT COUNT(*) /* 바로클포 자전거 검수 현황 조회 COUNT */
+		FROM(
+			SELECT
+				A.REPAIR_OURSRC_SEQ AS repairOursrcSeq
+				, A.REPAIR_OUTSRC_MAIN_SEQ AS repairOutsrcMainSeq
+				, A.REG_DTTM AS regDttm
+				, A.ADMIN_NAME AS adminName
+				, COUNT(A.BROKEN_TYPE) AS brokenType
+				, A.TRANS_ID AS transId
+				, A.TRANS_YN AS transYn
+				, A.TAKE_ID AS takeId
+				, A.TAKE_YN AS takeYn
+				,(SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = TAKE.ASSIGN_CENTER_ID) AS centerName
+				, A.BIKE_NO AS bikeNo
+				, A.COLLECT_YN AS collectYn
+			FROM (
+				SELECT INFO.REPAIR_OURSRC_SEQ, INFO.REPAIR_OUTSRC_MAIN_SEQ, INFO.EQUIPMENT_ID AS BIKE_ID, INFO.REG_DTTM, ADMIN.ADMIN_NAME,  ADMIN.ADMIN_ID,
+				COM.MLANG_COM_CD_NAME AS BROKEN_TYPE, INFO.TAKE_ID , INFO.TAKE_YN, INFO.TRANS_YN ,INFO.TRANS_ID ,INFO.COLLECT_YN
+				, BIKE.BIKE_NO
+				FROM TB_MTC_REPAIR_OUTSRC_INFO INFO,
+				TB_MTC_REPAIR_OUTSRC_DETL DETL,
+				TB_MTC_REPAIR_OUTSRC_MAIN MAIN,
+				TB_SYS_ADMIN ADMIN,
+				TB_SYS_MLANG_COM_CD COM,
+				TB_OPR_BIKE BIKE
+				WHERE INFO.REPAIR_OURSRC_SEQ = DETL.REPAIR_OURSRC_SEQ
+				AND INFO.REPAIR_OUTSRC_MAIN_SEQ = MAIN.REPAIR_OUTSRC_MAIN_SEQ
+				AND INFO.ADMIN_ID = ADMIN.ADMIN_ID
+				AND DETL.BRKDN_STUS_CD = COM.COM_CD
+				AND INFO.EQUIPMENT_ID = BIKE.BIKE_ID
+				AND INFO.READ_CLS_CD = 'H'	<!-- 수리완료된 건수만 조회 -->
+			) A
+			LEFT JOIN TB_SYS_ADMIN TAKE 
+			ON A.TAKE_ID = TAKE.ADMIN_ID AND TAKE.ADMIN_GRP_SEQ = 21
+			WHERE 1=1
+			<if test="searchBgnDe!='' and searchBgnDe!=null">
+				<![CDATA[AND A.REG_DTTM  >= STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')]]>
+			</if>
+			<if test="searchEndDe!='' and searchEndDe!=null">
+				<![CDATA[AND A.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+			</if>
+			<if test="collectYn == 'Y'.toString()">
+				AND A.COLLECT_YN = 'Y'
+			</if>
+			<if test="collectYn == 'N'.toString()">
+				AND A.COLLECT_YN = 'N'
+			</if>
+			<if test="centerId !='' and centerId !=null">
+				AND TAKE.ASSIGN_CENTER_ID = #{centerId}
+			</if>
+			<if test="adminName != null and adminName != '' ">
+				AND ((A.ADMIN_ID LIKE CONCAT(#{adminName},'%') OR A.ADMIN_NAME LIKE CONCAT(#{adminName},'%')))
+			</if>
+			GROUP BY repairOursrcSeq
+			ORDER BY A.REG_DTTM DESC
+		) C
+	</select>
+	
+	<update id="updateCollectYn" parameterType="TransferBikeVo">
+		UPDATE TB_MTC_REPAIR_OUTSRC_INFO	/* 자전거 검수 완료 */
+		SET
+			COLLECT_YN = 'Y'
+			, COLLECT_DTTM = NOW()
+		WHERE REPAIR_OURSRC_SEQ = #{repairOursrcSeq}
+	</update>
+	
+	<select id="validationTransferBike" parameterType="String" resultType="int">
+	
+	SELECT COUNT(*) 
+	FROM TB_OPR_BIKE
+	WHERE BIKE_NO =	 (CASE WHEN LENGTH(#{bikeNo}) = 5 THEN CONCAT('BRC-', #{bikeNo})
+					WHEN LENGTH(#{bikeNo}) = 4 THEN CONCAT('BRC-0', #{bikeNo})
+				  ELSE #{bikeNo} END)
+	</select>
+</mapper>

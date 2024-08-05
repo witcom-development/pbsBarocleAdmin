@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.cleansvc.service.CleanStatusMapper">
+	
+	
+	<select id="getLastClean" parameterType="cleanStatusVO" resultType="cleanStatusVO">
+	  SELECT CLEAN_SEQ as clean_seq,
+	  	CLEAN_TYPE as clean_type,
+	  	REG_ID as reg_id,
+	  	B.ADMIN_NAME  as reg_name,
+	  	REG_LAT as reg_lat,
+	  	REG_LONG as reg_long,
+	  	ADDR as reg_addr,
+	  	ADDR_DETAIL as reg_addr_detail,	  	
+	  	REG_DTTM as reg_dttm
+		FROM TB_SVC_CLEAN  A
+		INNER JOIN TB_SYS_ADMIN B ON ( A.REG_ID = B.ADMIN_ID)
+	   WHERE 1=1  
+	  <if test='reg_id !=null and reg_id != ""'>	   
+		   AND (REG_ID = #{reg_id} or B.ADMIN_NAME = #{reg_name} )
+	   </if>
+	   <if test='clean_type !=null and clean_type != ""'>	   
+		   AND CLEAN_TYPE = #{clean_type}
+	   </if>	   
+	   <if test='searchBgnDe != null and searchBgnDe !=""'>
+			AND REG_DTTM  BETWEEN STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  AND  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND
+	   </if>
+	   ORDER BY CLEAN_SEQ DESC 
+	</select> 
+	
+	
+	<select id="getLastCleanExcel" parameterType="cleanStatusVO" resultType="CleanStatusExcelVO">
+		SELECT A.ADMIN_ID as adminId
+			, A.ADMIN_NAME  as adminName
+			, COUNT(1)											 AS status_cnt
+			, MAX(CASE WHEN A.REG_DTTM = 1 THEN '전일' ELSE '' END) AS status_01
+			, MAX(CASE WHEN A.REG_DTTM = 2 THEN '전일' ELSE '' END) AS status_02
+			, MAX(CASE WHEN A.REG_DTTM = 3 THEN '전일' ELSE '' END) AS status_03
+			, MAX(CASE WHEN A.REG_DTTM = 4 THEN '전일' ELSE '' END) AS status_04
+			, MAX(CASE WHEN A.REG_DTTM = 5 THEN '전일' ELSE '' END) AS status_05
+			, MAX(CASE WHEN A.REG_DTTM = 6 THEN '전일' ELSE '' END) AS status_06
+			, MAX(CASE WHEN A.REG_DTTM = 7 THEN '전일' ELSE '' END) AS status_07
+			, MAX(CASE WHEN A.REG_DTTM = 8 THEN '전일' ELSE '' END) AS status_08
+			, MAX(CASE WHEN A.REG_DTTM = 9 THEN '전일' ELSE '' END) AS status_09
+			, MAX(CASE WHEN A.REG_DTTM = 10 THEN '전일' ELSE '' END) AS status_10
+			, MAX(CASE WHEN A.REG_DTTM = 11 THEN '전일' ELSE '' END) AS status_11
+			, MAX(CASE WHEN A.REG_DTTM = 12 THEN '전일' ELSE '' END) AS status_12
+			, MAX(CASE WHEN A.REG_DTTM = 13 THEN '전일' ELSE '' END) AS status_13
+			, MAX(CASE WHEN A.REG_DTTM = 14 THEN '전일' ELSE '' END) AS status_14
+			, MAX(CASE WHEN A.REG_DTTM = 15 THEN '전일' ELSE '' END) AS status_15
+			, MAX(CASE WHEN A.REG_DTTM = 16 THEN '전일' ELSE '' END) AS status_16
+			, MAX(CASE WHEN A.REG_DTTM = 17 THEN '전일' ELSE '' END) AS status_17
+			, MAX(CASE WHEN A.REG_DTTM = 18 THEN '전일' ELSE '' END) AS status_18
+			, MAX(CASE WHEN A.REG_DTTM = 19 THEN '전일' ELSE '' END) AS status_19
+			, MAX(CASE WHEN A.REG_DTTM = 20 THEN '전일' ELSE '' END) AS status_20
+			, MAX(CASE WHEN A.REG_DTTM = 21 THEN '전일' ELSE '' END) AS status_21
+			, MAX(CASE WHEN A.REG_DTTM = 22 THEN '전일' ELSE '' END) AS status_22
+			, MAX(CASE WHEN A.REG_DTTM = 23 THEN '전일' ELSE '' END) AS status_23
+			, MAX(CASE WHEN A.REG_DTTM = 24 THEN '전일' ELSE '' END) AS status_24
+			, MAX(CASE WHEN A.REG_DTTM = 25 THEN '전일' ELSE '' END) AS status_25
+			, MAX(CASE WHEN A.REG_DTTM = 26 THEN '전일' ELSE '' END) AS status_26
+			, MAX(CASE WHEN A.REG_DTTM = 27 THEN '전일' ELSE '' END) AS status_27
+			, MAX(CASE WHEN A.REG_DTTM = 28 THEN '전일' ELSE '' END) AS status_28
+			, MAX(CASE WHEN A.REG_DTTM = 29 THEN '전일' ELSE '' END) AS status_29
+			, MAX(CASE WHEN A.REG_DTTM = 30 THEN '전일' ELSE '' END) AS status_30
+			, MAX(CASE WHEN A.REG_DTTM = 31 THEN '전일' ELSE '' END) AS status_31
+		FROM
+		(	
+			SELECT B.ADMIN_ID
+				 , B.ADMIN_NAME
+				 ,  DAY(A.REG_DTTM) AS REG_DTTM 		
+			  FROM TB_SVC_CLEAN A, TB_SYS_ADMIN B
+			 WHERE 1=1
+			<if test='@com.dkitec.barocle.util.webutil.StringUtil@isEmpty(searchBgnDe)'>
+				AND A.REG_DTTM BETWEEN ( LAST_DAY(NOW() - interval 1 MONTH) + INTERVAL 1 DAY ) AND ( LAST_DAY(NOW()) - INTERVAL 1 SECOND )
+			</if>
+			
+		   <if test='searchBgnDe !=null and searchBgnDe != ""'>	   
+			   AND A.REG_DTTM BETWEEN ( LAST_DAY(STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') - interval 1 MONTH) + INTERVAL 1 DAY ) AND ( LAST_DAY(STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')) - INTERVAL 1 SECOND )
+		   </if>
+			  AND A.REG_ID = B.ADMIN_ID
+			  GROUP BY B.ADMIN_ID, DAY(A.REG_DTTM)
+		) A	  
+		GROUP BY A.ADMIN_ID	   
+		ORDER BY A.ADMIN_NAME
+ 
+	</select>  
+	
+	
+	 
+	
+	<select id="getCheckClean" parameterType="cleanStatusVO" resultType="cleanStatusVO">
+	  SELECT CLEAN_SEQ as clean_seq
+		FROM TB_SVC_CLEAN 
+	   WHERE 1=1  
+		 AND REG_ID = #{reg_id}	   
+		 AND CLEAN_TYPE = #{clean_type}
+		 AND reg_dt = date_format(now(),'%Y-%m-%d') 
+	</select>  
+	
+	<insert id="insertClean" useGeneratedKeys="true" keyProperty="CLEAN_SEQ" parameterType="cleanStatusVO">
+		INSERT INTO TB_SVC_CLEAN
+				(CLEAN_TYPE 
+				,REG_LAT
+				,REG_LONG
+				,ADDR
+				,ADDR_DETAIL  
+				,REG_ID 
+				,REG_NAME
+				,REG_DTTM
+				,REG_DT
+		) VALUES (#{clean_type}
+				,#{reg_lat}
+				,#{reg_long}
+				,#{reg_addr}
+				,#{reg_addr_detail}
+				,#{reg_id}
+				,#{reg_name}
+				,#{reg_dttm}		   		
+				,#{reg_dt}
+		)		
+		
+		<!-- choose>
+		<when test='clean_type == "A"'>
+   		UPDATE REG_LAT=#{reg_lat} , REG_LONG=#{reg_long} , ADDR = #{reg_addr} , ADDR_DETAIL= #{reg_addr_detail} 
+   		</when>
+   		<when test='clean_type == "B"'>
+   		UPDATE REG_LAT=#{reg_lat} , REG_LONG=#{reg_long} , ADDR = #{reg_addr} , ADDR_DETAIL= #{reg_addr_detail} , REG_DTTM = #{reg_dttm} 
+   		</when>
+   		</choose-->
+	</insert>
+	
+	
+	  
+</mapper>

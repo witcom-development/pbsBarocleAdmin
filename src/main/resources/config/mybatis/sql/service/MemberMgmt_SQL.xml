@@ -1,0 +1,2682 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.membermgmt.service.MemberMgmtMapper">
+	<select id="memberListPaymentCnt"	parameterType="memberMgmtVO"	resultType="int">
+		SELECT  /* MemberMgmt_SQL.memberListPaymentCnt */
+				COUNT(1)
+		  FROM spb.TB_SVC_USR USR
+		  LEFT JOIN  spb.TB_SVC_MB	  MB   ON ( USR.USR_SEQ = MB.USR_SEQ ) 
+		  LEFT OUTER JOIN spb.TB_SVC_VOUCHER V ON MB.USR_SEQ = V.USR_SEQ
+		 WHERE 1=1
+		   AND MB.LEAVE_YN = 'N'
+		   AND REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			<if test="paymentClsCd != null and  paymentClsCd !=''">
+				 AND PAYMENT_CLS_CD = #{paymentClsCd}
+				 AND ( VOUCHER_USE_YN= 'N' OR NOW() BETWEEN VOUCHER_STR_DTTM AND VOUCHER_END_DTTM )
+			</if>
+			<if test="usr_cls_cd != null and usr_cls_cd != ''">
+				AND USR.USR_CLS_CD = #{usr_cls_cd}
+			</if>
+			<if test="searchValue != null and searchValue != '' ">
+				<if test="searchParameter != null and searchParameter.equals('ID')">
+					AND MB.MB_ID LIKE  CONCAT( #{searchValue}, '%')
+				</if>
+				<if test="searchParameter != null and searchParameter.equals('PHONE')">
+					<!-- AND USR.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+					<!-- AND USR.USR_MPN_NO  = #{searchValue} -->
+					AND USR.USR_MPN_NO  = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				</if>
+			</if>
+	</select>
+	
+	<select id="memberListPayment"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		SELECT  /* MemberMgmt_SQL.memberListPayment */ 
+				USR.USR_SEQ
+			 <!-- ,  IFNULL( BIRTH_YEAR, dg_decrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', USR_BIRTH_DATE) ) AS USR_BIRTH_DATE -->
+			 <!-- ,  IFNULL( BIRTH_YEAR, USR_BIRTH_DATE) AS USR_BIRTH_DATE -->
+			 ,  IFNULL( BIRTH_YEAR, CAST(AES_DECRYPT(UNHEX(USR_BIRTH_DATE),'BRC') as CHAR)) AS USR_BIRTH_DATE
+			 ,  USR.SEX_CD
+			 ,  USR.USR_CLS_CD
+			 ,  USR.REG_DTTM
+			 ,  IFNULL(RPAD(substr(MB_ID,1,2),LENGTH(MB_ID),'*') ,'GUEST')  AS mb_id_excel
+			 ,  MB.MB_ID
+			 ,  MB.MB_TEL_NO
+			 ,  PAYMENT_CLS_CD
+			 ,  VOUCHER_STR_DTTM
+			 ,  VOUCHER_END_DTTM
+			 ,  VOUCHER_USE_YN
+			 ,  0 AS PENALTY_POINT  -- 20200810 벌점 내역 삭제 
+			 <!-- ,  dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO) AS MB_TEL_NO --> 
+			 <!-- ,  MB_TEL_NO AS MB_TEL_NO -->
+			 ,  CAST(AES_DECRYPT(UNHEX(MB_TEL_NO),'BRC') as CHAR) AS MB_TEL_NO
+			 ,  MLANG_COM_CD_NAME
+			 <!-- ,  dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) AS USR_MPN_NO --> 
+			 <!-- ,  USR_MPN_NO AS USR_MPN_NO -->
+			 ,  CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO
+		  FROM spb.TB_SVC_USR USR 
+LEFT OUTER JOIN spb.TB_SYS_MLANG_COM_CD Z   ON ( USR.USR_CLS_CD = Z.COM_CD AND  LANG_CLS_CD = 'LAG_001' )
+LEFT OUTER JOIN spb.TB_SVC_MB		   MB  ON ( USR.USR_SEQ = MB.USR_SEQ ) 
+LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
+		  WHERE 1=1
+			AND 1=1 -- MB.LEAVE_YN = 'N'
+			AND REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			<if test="searchValue != null and searchValue != '' ">
+				<if test="searchParameter != null and searchParameter.equals('ID')">
+					AND MB_ID LIKE  CONCAT( #{searchValue}, '%')
+				</if>
+				<if test="searchParameter != null and searchParameter.equals('PHONE')">
+					<!-- AND USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+					<!-- AND USR_MPN_NO = #{searchValue} -->
+					AND USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				</if>
+			</if>	
+			 
+			<if test="paymentClsCd != null and  paymentClsCd !=''">
+				 AND V.PAYMENT_CLS_CD = #{paymentClsCd}
+				 AND (V.VOUCHER_USE_YN= 'N' OR NOW() BETWEEN V.VOUCHER_STR_DTTM AND V.VOUCHER_END_DTTM)
+			</if>
+			<if test="usr_cls_cd != null and usr_cls_cd != ''">
+				AND USR_CLS_CD = #{usr_cls_cd}
+			</if>				
+			ORDER BY REG_DTTM DESC
+			<if test="excel == null or excel == ''">
+				LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			</if>
+	
+	</select>
+	
+	<select id="memberListCnt" parameterType="memberMgmtVO"	resultType="int">
+		  SELECT /** 회원 목록 건수 조회 */
+				  COUNT(1)
+			FROM spb.TB_SVC_USR USR 
+	   LEFT JOIN spb.TB_SVC_MB  MB   ON ( USR.USR_SEQ = MB.USR_SEQ )
+	   <if test='usr_cls_cd != null and "Y".toString() eq usr_cls_cd'>
+	   LEFT JOIN spb.TB_SVC_SFT_CERT_USR C ON USR.USR_MPN_NO = C.USR_MPN_NO
+	   </if>  
+		   WHERE 1=1
+			AND USR.REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		<if test="usr_cls_cd != null and usr_cls_cd != ''">
+			<if test='usr_cls_cd != null and "Y".toString() eq usr_cls_cd'>
+				AND IF(ISNULL(C.CERT_NUM)  ,'N','Y') = #{usr_cls_cd}
+			</if>
+			<if test='usr_cls_cd != null and "Y".toString() neq usr_cls_cd'>
+				AND USR_CLS_CD = #{usr_cls_cd}
+			</if>
+		</if>
+		<if test="searchValue != null and searchValue != '' ">
+			<if test="searchParameter != null and searchParameter.equals('ID')">
+				AND MB.MB_ID LIKE  CONCAT( #{searchValue}, '%')
+			</if>
+			<if test="searchParameter != null and searchParameter.equals('PHONE')">
+				<!-- AND USR.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+				<!-- AND USR.USR_MPN_NO = #{searchValue} -->
+				AND USR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+			</if>
+		</if>
+		
+	</select>
+	
+	<select id="memberList"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+			SELECT /** 회원 목록 조회 */
+				   USR.USR_SEQ
+				 <!-- , IFNULL( BIRTH_YEAR, dg_decrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', USR_BIRTH_DATE) ) AS USR_BIRTH_DATE  -->
+				 <!-- , IFNULL( BIRTH_YEAR, USR_BIRTH_DATE ) AS USR_BIRTH_DATE -->
+				 , IFNULL( BIRTH_YEAR, CAST(AES_DECRYPT(UNHEX(USR.USR_BIRTH_DATE),'BRC') as CHAR)) AS USR_BIRTH_DATE
+				 , USR.BIRTH_YEAR
+				 , USR.SEX_CD
+				 , USR.USR_CLS_CD
+				 , USR.REG_DTTM
+				 <!-- , dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO)	AS MB_TEL_NO --> 
+				 <!-- , MB_TEL_NO	AS MB_TEL_NO -->
+				 , CAST(AES_DECRYPT(UNHEX(MB_TEL_NO),'BRC') as CHAR) AS MB_TEL_NO
+				 <!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR.USR_MPN_NO) AS USR_MPN_NO -->
+				 <!-- , USR.USR_MPN_NO AS USR_MPN_NO -->
+				 , CAST(AES_DECRYPT(UNHEX(USR.USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO
+				 , IFNULL(MB.MB_ID ,'GUEST') AS MB_ID
+				 , MB.MB_TEL_NO
+				 , IFNULL(MB.MB_ID  ,'GUEST')  AS mb_id_excel
+				 <!-- , 0 AS PENALTY_POINT	 	IFNULL(PENALTY_POINT, 0) PENALTY_POINT -->
+				 , CASE WHEN MB.LEAVE_YN = 'Y' THEN CONCAT( '탈회회원(', MB.LEAVE_DTTM, ')' ) 
+				   ELSE MLANG_COM_CD_NAME
+				   END AS MLANG_COM_CD_NAME
+			  FROM spb.TB_SVC_USR USR 
+			LEFT JOIN spb.TB_SVC_MB  MB ON ( USR.USR_SEQ = MB.USR_SEQ )
+			<if test='usr_cls_cd != null and "Y".toString() eq usr_cls_cd'>
+			LEFT JOIN spb.TB_SVC_SFT_CERT_USR C ON USR.USR_MPN_NO = C.USR_MPN_NO
+			</if>  
+				 , spb.TB_SYS_MLANG_COM_CD COM 
+			  WHERE 1=1 
+			  <!-- USR.USR_SEQ = MB.USR_SEQ -->
+			   AND COM.COM_CD = USR.USR_CLS_CD
+			   AND COM.LANG_CLS_CD = 'LAG_001'
+			   AND USR.REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   <if test="usr_cls_cd != null and usr_cls_cd != ''">
+					<if test='usr_cls_cd != null and "Y".toString() eq usr_cls_cd'>
+						AND IF(ISNULL(C.CERT_NUM)  ,'N','Y') = #{usr_cls_cd}
+					</if>
+					<if test='usr_cls_cd != null and "Y".toString() neq usr_cls_cd'>
+						AND USR_CLS_CD = #{usr_cls_cd}
+					</if>
+			   </if>
+			   <if test="searchValue != null and searchValue != '' ">
+				   <if test="searchParameter != null and searchParameter.equals('ID')">
+					   AND MB.MB_ID LIKE  CONCAT( #{searchValue}, '%')
+				   </if>
+				   <if test="searchParameter != null and searchParameter.equals('PHONE')">
+					   <!-- AND USR.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+					   <!-- AND USR.USR_MPN_NO = #{searchValue} -->
+					   AND USR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				   </if>
+			   </if>
+		ORDER BY USR.USR_SEQ DESC
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<insert id="addSmsAllMBMpnNo" parameterType="memberMgmtVO">
+	  INSERT INTO `barocle`.`SOMQ`(
+			 destno,callback ,msg ,reqdttm ,title ,auto_send_yn ,auto_send_id ,send_count
+   	 )
+	 SELECT
+			<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) -->
+			<!-- USR_MPN_NO -->
+			CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) 
+			,'02-542-7781'
+			,#{smsMsg}
+			<if test='bookDate != null and bookDate != ""'>
+			,#{bookDate}
+			</if>
+			<if  test='bookDate == null or bookDate == ""'>
+			,now()
+			</if>
+			,''
+			,'N'
+			,null
+			,0
+		FROM
+		(
+				SELECT USR.USR_MPN_NO
+					  ,USR_CLS_CD
+				FROM  TB_SVC_USR USR , TB_SVC_MB  MB
+				WHERE USR.USR_SEQ = MB.USR_SEQ
+				AND MB.LEAVE_YN = 'N'
+				AND USR_MPN_NO IS NOT NULL
+				<if test="penalty_point != null and penalty_point != ''">
+					<![CDATA[
+					AND IFNULL(PENALTY_POINT, 0) >= #{penalty_point}
+					]]>
+					</if>
+					<if test="searchStartDate!='' and searchStartDate!=null">
+					<![CDATA[
+					AND REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+					]]>
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+					<![CDATA[
+					AND REG_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+					]]>
+					</if>
+					<if test="usr_cls_cd != null and usr_cls_cd != ''">
+					AND USR_CLS_CD = #{usr_cls_cd}
+					</if>
+					<if test="searchValue != null and searchValue != '' ">
+						<if test="searchParameter != null and searchParameter.equals('ID')">
+						AND MB_ID LIKE  concat( #{searchValue}, '%')
+						</if>
+						<if test="searchParameter != null and searchParameter.equals('PHONE')">
+						<!-- AND USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+						<!-- AND USR_MPN_NO = #{searchValue} -->
+						AND USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+						</if>
+				</if>
+		) A ,
+		(
+			SELECT B.MLANG_COM_CD_NAME, A.COM_CD
+			FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE A.COM_CD = B.COM_CD
+			AND B.LANG_CLS_CD = 'LAG_001'
+		) B
+		WHERE A.USR_CLS_CD = B.COM_CD
+		
+	</insert>
+	
+	<select id="getMemberInfo"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		SELECT  /* MemberMgmt_SQL.getMemberInfo */
+				USR_SEQ,
+				MB_ID,
+				<!-- dg_decrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', USR_BIRTH_DATE) AS USR_BIRTH_DATE, -->
+				<!-- USR_BIRTH_DATE AS USR_BIRTH_DATE, -->
+				CAST(AES_DECRYPT(UNHEX(USR_BIRTH_DATE),'BRC') as CHAR) AS USR_BIRTH_DATE,
+				SEX_CD,
+				TELECOM_CLS_CD,
+				<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) AS USR_MPN_NO, -->
+				<!-- USR_MPN_NO AS USR_MPN_NO, -->
+				CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO,
+				<!-- dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO) AS MB_TEL_NO, -->
+				<!-- MB_TEL_NO AS MB_TEL_NO, -->
+				CAST(AES_DECRYPT(UNHEX(MB_TEL_NO),'BRC') as CHAR) AS MB_TEL_NO,
+				PUSH_YN,
+				USR_DEVICE_TYPE,
+				<!-- dg_decrypt('TB_SVC_MB', 'MB_EMAIL_NAME', MB_EMAIL_NAME)AS MB_EMAIL_NAME, -->
+				<!-- MB_EMAIL_NAME AS MB_EMAIL_NAME, -->
+				CAST(AES_DECRYPT(UNHEX(MB_EMAIL_NAME),'BRC') as CHAR) AS MB_EMAIL_NAME,
+				USR_CLS_CD,
+				IFNULL(MPN_LOST_YN,'N') MPN_LOST_YN,
+				IFNULL(MB_WGT,0) MB_WGT,
+				IFNULL(PENALTY_POINT, 0) PENALTY_POINT ,
+				IFNULL(MILEAGE, 0) MILEAGE,
+				MLANG_COM_CD_NAME,
+				BLACK_LIST
+			  , '' AS RE_STATION
+			  , '' AS USING_PURPOSE
+			  , '' AS USING_MEANS
+				,  MAIN_TYPE -- 20200422 즐겨찾기 화면 설정
+			  , PARENT_SEX_CD
+			  <!-- , dg_decrypt_date('TB_SVC_MB', 'PARENT_BIRTH_DATE', PARENT_BIRTH_DATE) AS PARENT_BIRTH_DATE -->
+			  <!-- , PARENT_BIRTH_DATE AS PARENT_BIRTH_DATE -->
+			  , CAST(AES_DECRYPT(UNHEX(PARENT_BIRTH_DATE),'BRC') as CHAR) AS PARENT_BIRTH_DATE
+			  <!-- , dg_decrypt('TB_SVC_MB', 'PARENT_MPN_NO', PARENT_MPN_NO) AS PARENT_MPN_NO -->
+			  <!-- , PARENT_MPN_NO AS PARENT_MPN_NO -->
+			  , CAST(AES_DECRYPT(UNHEX(PARENT_MPN_NO),'BRC') as CHAR) AS PARENT_MPN_NO
+		FROM 
+		(
+			SELECT USR.USR_SEQ,
+				MB.MB_ID,
+				USR.USR_BIRTH_DATE,
+				USR.SEX_CD,
+				USR.TELECOM_CLS_CD,
+				USR.USR_MPN_NO,
+				MB.MB_TEL_NO,
+				MB.MB_EMAIL_NAME,
+				MB.MPN_LOST_YN,
+				MB.MB_WGT,
+				USR.USR_CLS_CD,
+				USR.PUSH_YN,
+				USR.USR_DEVICE_TYPE,
+				(	
+					SELECT SUM(PENALTY_POINT)
+					FROM TB_SVC_PENALTY E, TB_SVC_PENALTY_CD F
+					WHERE E.PENALTY_CD = F.PENALTY_CD 
+					AND E.USR_SEQ = USR.USR_SEQ
+					AND E.READ_CLS_CD = 'S'
+				) PENALTY_POINT,
+				(
+					SELECT SUM(MILEAGE_POINT)
+					FROM TB_SVC_MILEAGE
+					WHERE USR_SEQ = USR.USR_SEQ
+				) MILEAGE,
+				(
+					SELECT  COUNT(BL.usr_seq)
+					FROM TB_SVC_USR_BLKLIST BL
+					WHERE BL.usr_seq = #{usr_seq}
+				) BLACK_LIST ,
+				USR.MAIN_TYPE,   -- 20200422 즐겨찾기 화면 설정
+				MB.PARENT_SEX_CD,
+				MB.PARENT_BIRTH_DATE,
+				MB.PARENT_MPN_NO
+			FROM  TB_SVC_USR USR 
+			LEFT JOIN TB_SVC_MB  MB  ON ( USR.USR_SEQ = MB.USR_SEQ )
+			WHERE 1=1 
+			AND USR.USR_SEQ = #{usr_seq}
+		) A,
+		(
+			SELECT B.MLANG_COM_CD_NAME, A.COM_CD
+			FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE A.COM_CD = B.COM_CD
+			AND B.LANG_CLS_CD = 'LAG_001'
+		) B 
+		WHERE A.USR_CLS_CD = B.COM_CD
+		
+	</select>
+	
+	<select id="getMemberAddChargeInfo" parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		SELECT /* MemberMgmt_SQL.getMemberAddChargeInfo */
+			USR_SEQ
+		  , PAYMENT_METHOD_CD
+		  <!-- , dg_decrypt('TB_SVC_PAYMENT_METHOD', 'MPN_NO', MPN_NO) AS MPN_NO -->
+		  <!-- , MPN_NO AS MPN_NO -->
+		  , CAST(AES_DECRYPT(UNHEX(MPN_NO),'BRC') as CHAR) AS MPN_NO
+		  <!-- , dg_decrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CARD_NO) AS CARD_NO -->
+		  <!-- , CARD_NO AS CARD_NO -->
+		  , CAST(AES_DECRYPT(UNHEX(CARD_NO),'BRC') as CHAR) AS CARD_NO
+		  , B.MLANG_COM_CD_NAME
+		FROM TB_SVC_PAYMENT_METHOD A , TB_SYS_MLANG_COM_CD B
+		WHERE A.PAYMENT_METHOD_CD = B.COM_CD
+		AND B.LANG_CLS_CD = 'LAG_001'
+		AND USR_SEQ = #{usr_seq}
+	</select>
+	
+	
+	<select id="getMemberCardInfo" parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		SELECT /* MemberMgmt_SQL.getMemberCardInfo */
+			USR_SEQ
+		  <!-- , dg_decrypt('TB_SVC_MB_CARD', 'MB_CARD_NO', MB_CARD_NO) AS MB_CARD_NO -->
+		  <!-- , MB_CARD_NO AS MB_CARD_NO -->
+		  , CAST(AES_DECRYPT(UNHEX(MB_CARD_NO),'BRC') as CHAR) AS MB_CARD_NO
+		  , CARD_TYPE_CD, REG_DTTM, MLANG_COM_CD_NAME
+		FROM TB_SVC_MB_CARD A, TB_SYS_MLANG_COM_CD B
+		WHERE A.CARD_TYPE_CD = B.COM_CD
+		AND A.END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		AND B.LANG_CLS_CD = 'LAG_001'
+		AND USR_SEQ = #{usr_seq}
+		<if test="card_use_cls_cd !='' and card_use_cls_cd !=null">
+		AND CARD_USE_CLS_CD = #{card_use_cls_cd}
+		</if>
+		LIMIT 1
+	</select>
+	
+	<select id="getMemberCardInfoList" parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		SELECT /* MemberMgmt_SQL.getMemberCardInfoList */
+			  USR_SEQ
+			<!-- , dg_decrypt('TB_SVC_MB_CARD', 'MB_CARD_NO', MB_CARD_NO) AS MB_CARD_NO -->
+			<!-- , MB_CARD_NO AS MB_CARD_NO -->
+			, CAST(AES_DECRYPT(UNHEX(MB_CARD_NO),'BRC') as CHAR) AS MB_CARD_NO
+			, STR_DTTM AS reg_dttm
+			, END_DTTM AS rent_dttm 
+		 FROM TB_SVC_MB_CARD A
+		WHERE 1=1
+		AND USR_SEQ = #{usr_seq}
+		AND CARD_USE_CLS_CD = 'M'
+		ORDER BY END_DTTM DESC
+	</select>
+	
+	
+	<select id="penaltyList"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+	
+		SELECT /* MemberMgmt_SQL.penaltyList */
+		   A.PENALTY_SEQ
+		 , A.USR_SEQ
+		 , A.REG_ID
+		 , A.REG_DTTM
+		 , A.PENALTY_DESC
+		 , B.PENALTY_NAME
+		 , B.PENALTY_POINT
+		FROM TB_SVC_PENALTY A, TB_SVC_PENALTY_CD B
+		WHERE A.PENALTY_CD = B.PENALTY_CD
+		AND A.USR_SEQ = #{usr_seq}
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND A.REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="readClsCd!='' and  readClsCd !=null">
+			<![CDATA[
+				AND A.READ_CLS_CD  = #{readClsCd}
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND A.REG_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		ORDER BY A.PENALTY_SEQ DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	
+	</select>
+	
+	<select id="penaltyListCnt"	parameterType="memberMgmtVO"	resultType="int">
+	
+		SELECT /* MemberMgmt_SQL.penaltyListCnt */
+			   COUNT(*)
+		FROM TB_SVC_PENALTY A, TB_SVC_PENALTY_CD B
+		WHERE A.PENALTY_CD = B.PENALTY_CD
+		AND A.USR_SEQ = #{usr_seq}
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND A.REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="readClsCd!='' and  readClsCd !=null">
+			<![CDATA[
+				AND A.READ_CLS_CD  = #{readClsCd}
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+		<![CDATA[
+		 	AND A.REG_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+		]]>
+		</if>
+	</select>
+	
+	
+	<select id="totalPenaltyBlackList"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+	
+		SELECT /* MemberMgmt_SQL.totalPenaltyBlackList */
+		 IFNULL(SUM(B.PENALTY_POINT),0) PENALTY_POINT,
+		 (
+				SELECT  COUNT(BL.usr_seq)
+				FROM TB_SVC_USR_BLKLIST BL
+				WHERE BL.usr_seq = #{usr_seq}
+			) BLACK_LIST
+		FROM TB_SVC_PENALTY A, TB_SVC_PENALTY_CD B
+		WHERE A.PENALTY_CD = B.PENALTY_CD
+		AND A.USR_SEQ = #{usr_seq}
+		<if test="readClsCd!='' and  readClsCd !=null">
+		<![CDATA[
+			AND A.READ_CLS_CD  = #{readClsCd}
+		]]>
+		</if>
+	</select>
+	<select id="getBlaTypeClsCd" parameterType="memberMgmtVO"  resultType="String">
+		 SELECT BLKLIST_REASON_CD FROM TB_SVC_USR_BLKLIST WHERE USR_SEQ = #{usr_seq}
+	</select>
+	<update id="deletePenalty"		parameterType="memberMgmtVO">
+		UPDATE TB_SVC_PENALTY
+		  SET READ_CLS_CD = 'H'
+		WHERE PENALTY_SEQ = #{penalty_seq}
+	</update>
+	
+	<select id="mileageList"		parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		<![CDATA[
+			SELECT /* MemberMgmt_SQL.mileageList */
+			  MILEAGE_SEQ
+			, USR_SEQ
+			, MILEAGE_CLS_CD
+			, MILEAGE_POINT
+			, REG_DTTM
+			, IFNULL(RENT_DTTM,'-') AS RENT_DTTM
+			, MLANG_COM_CD_NAME
+			]]>
+			<!-- , IFNULL(dg_decrypt('TB_SVC_MB_CARD', 'MB_CARD_NO', MB_CARD_NO) ,'-') AS MB_CARD_NO, -->
+			<!-- , IFNULL(MB_CARD_NO ,'-') AS MB_CARD_NO, -->
+			, IFNULL(CAST(AES_DECRYPT(UNHEX(MB_CARD_NO),'BRC') as CHAR),'-') AS MB_CARD_NO,
+			<![CDATA[
+			  MILEAGE_SUM, (MILEAGE_POINT+MILEAGE_SUM) MILEAGE
+			FROM 
+			(
+				SELECT MILEAGE_SEQ
+					 , A.USR_SEQ
+					 , MILEAGE_CLS_CD
+					 , MILEAGE_POINT
+					 , IF(A.RENT_HIST_SEQ IS NULL  ,'-',C.RENT_DTTM) AS RENT_DTTM
+					 , A.REG_DTTM
+					 , B.MB_CARD_NO
+					 , ( SELECT IFNULL(SUM(MILEAGE_POINT) ,0 ) 
+						  FROM TB_SVC_MILEAGE MIG 
+						 where MIG.MILEAGE_SEQ < A.MILEAGE_SEQ AND MIG.USR_SEQ = A.USR_SEQ ) MILEAGE_SUM 
+				  FROM TB_SVC_MILEAGE A  LEFT OUTER JOIN TB_SVC_RENT_HIST C ON A.RENT_HIST_SEQ = C.RENT_HIST_SEQ
+					   LEFT OUTER JOIN TB_SVC_MB_CARD B  ON  A.MB_CARD_SEQ = B.MB_CARD_SEQ				 ) A
+			   , TB_SYS_MLANG_COM_CD B 
+		   WHERE A.MILEAGE_CLS_CD = B.COM_CD
+			 AND A.USR_SEQ = #{usr_seq}
+		]]>
+		<if test="mileage_cls_cd != null and mileage_cls_cd != ''">
+			AND A.MILEAGE_CLS_CD = #{mileage_cls_cd}
+		</if>
+		<if test="searchStartDate!='' and searchStartDate!=null">
+		<![CDATA[
+			AND A.REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+		]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+		<![CDATA[
+			AND A.REG_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+		]]>
+		</if>
+			ORDER BY MILEAGE_SEQ DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="mileageListCnt"		parameterType="memberMgmtVO"	resultType="int">
+		SELECT /* MemberMgmt_SQL.mileageListCnt */
+			   COUNT(*)
+		FROM TB_SVC_MILEAGE A
+		WHERE A.USR_SEQ = #{usr_seq}
+		<if test="mileage_cls_cd != null and mileage_cls_cd != ''">
+			AND A.MILEAGE_CLS_CD = #{mileage_cls_cd}
+		</if>
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND A.REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND A.REG_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+	</select>
+	
+	
+	<update id="memberUnsubscribe"	parameterType="memberMgmtVO">
+	
+		UPDATE TB_SVC_MB
+		SET
+			LEAVE_YN = 'Y',
+			LEAVE_REASON_CD = 'OUT_001'
+		WHERE 
+			USR_SEQ = #{usr_seq}
+	
+	</update>
+	
+	
+	<select id="memberPaymentList"		parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+		SELECT * ,
+				 CONCAT((
+					 <![CDATA[
+					 	SELECT
+					 		ROUND(CASE WHEN VOUCHER_USE_YN = 'N' THEN TOT_AMT
+							ELSE
+							  CASE WHEN ( TOT_AMT /COUNT(1)) > (
+								   CASE WHEN STR_DATE <= 48		 AND PAYMENT_CLS_CD IN ('BIL_001')					 THEN DAY_1D_1H_VOUCHER	-- 7일권 1시간
+										WHEN STR_DATE <= 48		 AND PAYMENT_CLS_CD IN ('BIL_011')					 THEN DAY_1D_2H_VOUCHER   -- 7일권 2시간
+										WHEN STR_DATE <= (7 * 24)   AND PAYMENT_CLS_CD IN ('BIL_002','BIL_004','BIL_005') THEN DAY_1W_1H_VOUCHER  -- 30, 180, 365일권 1시간 7주일 차감
+										WHEN STR_DATE <= (7 * 24)   AND PAYMENT_CLS_CD IN ('BIL_012','BIL_014','BIL_015') THEN DAY_1W_2H_VOUCHER  -- 30, 180, 365일권 2시간 7주일 차감
+										WHEN STR_DATE <= (30 * 24)  AND PAYMENT_CLS_CD IN ('BIL_004','BIL_005'		  ) THEN DAY_1M_1H_VOUCHER  -- 180, 365일 1시간 1달권 차감
+										WHEN STR_DATE <= (30 * 24)  AND PAYMENT_CLS_CD IN ('BIL_014','BIL_015'		  ) THEN DAY_1M_2H_VOUCHER  -- 180, 365일 1시간 2달권 차감		 
+										WHEN STR_DATE <= (60 * 24)  AND PAYMENT_CLS_CD IN ('BIL_004','BIL_005'		  ) THEN ( DAY_1M_1H_VOUCHER * 2 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (60 * 24)  AND PAYMENT_CLS_CD IN ('BIL_014','BIL_015'		  ) THEN ( DAY_1M_2H_VOUCHER * 2 ) -- 180, 365일 2시간 2달권 차감
+										WHEN STR_DATE <= (90 * 24)  AND PAYMENT_CLS_CD IN ('BIL_005'					) THEN ( DAY_1M_1H_VOUCHER * 3 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (90 * 24)  AND PAYMENT_CLS_CD IN ('BIL_015'					) THEN ( DAY_1M_2H_VOUCHER * 3 ) -- 180, 365일 2시간 2달권 차감
+										WHEN STR_DATE <= (120 * 24) AND PAYMENT_CLS_CD IN ('BIL_005'					) THEN ( DAY_1M_1H_VOUCHER * 4 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (120 * 24) AND PAYMENT_CLS_CD IN ('BIL_015'					) THEN ( DAY_1M_2H_VOUCHER * 4 ) -- 180, 365일 2시간 2달권 차감
+										WHEN STR_DATE <= (150 * 24) AND PAYMENT_CLS_CD IN ('BIL_005'					) THEN ( DAY_1M_1H_VOUCHER * 5 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (150 * 24) AND PAYMENT_CLS_CD IN ('BIL_015'					) THEN ( DAY_1M_2H_VOUCHER * 5 ) -- 180, 365일 2시간 2달권 차감
+								   ELSE ( TOT_AMT /COUNT(1))
+								   END
+								   )
+							  THEN  
+								   TOT_AMT -
+								   CASE WHEN STR_DATE <= 48		 AND PAYMENT_CLS_CD IN ('BIL_001')					 THEN DAY_1D_1H_VOUCHER	-- 7일권 1시간
+										WHEN STR_DATE <= 48		 AND PAYMENT_CLS_CD IN ('BIL_011')					 THEN DAY_1D_2H_VOUCHER   -- 7일권 2시간
+										WHEN STR_DATE <= (7 * 24)   AND PAYMENT_CLS_CD IN ('BIL_002','BIL_004','BIL_005') THEN DAY_1W_1H_VOUCHER  -- 30, 180, 365일권 1시간 7주일 차감
+										WHEN STR_DATE <= (7 * 24)   AND PAYMENT_CLS_CD IN ('BIL_012','BIL_014','BIL_015') THEN DAY_1W_2H_VOUCHER  -- 30, 180, 365일권 2시간 7주일 차감
+										WHEN STR_DATE <= (30 * 24)  AND PAYMENT_CLS_CD IN ('BIL_004','BIL_005'		  ) THEN DAY_1M_1H_VOUCHER  -- 180, 365일 1시간 1달권 차감
+										WHEN STR_DATE <= (30 * 24)  AND PAYMENT_CLS_CD IN ('BIL_014','BIL_015'		  ) THEN DAY_1M_2H_VOUCHER  -- 180, 365일 1시간 2달권 차감		 
+										WHEN STR_DATE <= (60 * 24)  AND PAYMENT_CLS_CD IN ('BIL_004','BIL_005'		  ) THEN ( DAY_1M_1H_VOUCHER * 2 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (60 * 24)  AND PAYMENT_CLS_CD IN ('BIL_014','BIL_015'		  ) THEN ( DAY_1M_2H_VOUCHER * 2 ) -- 180, 365일 2시간 2달권 차감
+										WHEN STR_DATE <= (90 * 24)  AND PAYMENT_CLS_CD IN ('BIL_005'					) THEN ( DAY_1M_1H_VOUCHER * 3 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (90 * 24)  AND PAYMENT_CLS_CD IN ('BIL_015'					) THEN ( DAY_1M_2H_VOUCHER * 3 ) -- 180, 365일 2시간 2달권 차감
+										WHEN STR_DATE <= (120 * 24) AND PAYMENT_CLS_CD IN ('BIL_005'					) THEN ( DAY_1M_1H_VOUCHER * 4 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (120 * 24) AND PAYMENT_CLS_CD IN ('BIL_015'					) THEN ( DAY_1M_2H_VOUCHER * 4 ) -- 180, 365일 2시간 2달권 차감
+										WHEN STR_DATE <= (150 * 24) AND PAYMENT_CLS_CD IN ('BIL_005'					) THEN ( DAY_1M_1H_VOUCHER * 5 ) -- 180, 365일 1시간 2달권 차감
+										WHEN STR_DATE <= (150 * 24) AND PAYMENT_CLS_CD IN ('BIL_015'					) THEN ( DAY_1M_2H_VOUCHER * 5 ) -- 180, 365일 2시간 2달권 차감
+								   ELSE ( TOT_AMT /COUNT(1))
+								   END
+								   
+							 ELSE
+							  NULL
+							 END	 
+						   END)
+							AS refundAmt
+						
+						FROM VT_REFND_PAYMENT_ORG A
+						WHERE 1=1
+						  AND T.PAYMENT_SEQ = A.PAYMENT_SEQ
+						  AND T.PAYMENT_CLS_CD NOT IN ( 'BIL_009' )
+						GROUP BY A.PAYMENT_SEQ
+						]]>				   
+				   ), '(',(SELECT MAX(MAX_REFND_DTTM) FROM VT_REFND_PAYMENT A WHERE A.PAYMENT_SEQ = T.PAYMENT_SEQ),')' ) AS refund_amt
+				   
+				 , -- 20201003 VOUCHER 테이블에서 쿠폰 테이블로 변경 
+				  (SELECT  GROUP_CONCAT( COUPON_NO )  FROM TB_SVC_SEND_COUPON Z
+					 WHERE Z.PAYMENT_SEQ = T.PAYMENT_SEQ
+					   AND Z.SEND_USR_SEQ = T.USR_SEQ
+				 ) AS coupon_no
+				 
+		  FROM 
+		  (
+		  
+			SELECT 
+				A.PAYMENT_SEQ, A.USR_SEQ, 	PAYMENT_DTTM,
+				PAYMENT_CLS_CD,
+				(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) CLS_CD,
+				PAYMENT_METHOD_CD,
+				(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001' ) METHOD_CD, 
+				PAYMENT_STUS_CD,
+				<!-- shoh2999 -->
+				IF(ISNULL(CP.PAYMENT_SEQ)  ,'N','Y') as certDisYn,
+			<!-- 2020-12-15 상태코드는 아직 승인이지만 환불 진행중 인 상태일 때 환불 진행중 표시 -->	
+			<![CDATA[	
+				CASE WHEN A.PAYMENT_STUS_CD = 'BIS_001'
+					 THEN CONCAT(
+							 	   	( SELECT  MLANG_COM_CD_NAME  FROM   TB_SYS_MLANG_COM_CD   WHERE   COM_CD = A.PAYMENT_STUS_CD   AND   LANG_CLS_CD = 'LAG_001' ) 
+							 	  ,
+									( CASE WHEN A.REFND_REASON_DESC IS NOT NULL 
+										   THEN '<br/>(환불진행중)' ELSE '' END 
+									)
+						  )
+					 ELSE ( SELECT  MLANG_COM_CD_NAME   FROM  TB_SYS_MLANG_COM_CD  WHERE  COM_CD = A.PAYMENT_STUS_CD   AND  LANG_CLS_CD = 'LAG_001')
+					  END  STUS_CD,  
+				PAYMENT_CONFM_NO, 	PAYMENT_CONFM_DTTM,
+				PAYMENT_REQ_DTTM, 	TOT_AMT,
+				MILEAGE_PAYMENT_AMT, 	RENT_OVER_FEE_SUM,
+				CANCEL_DTTM, 	CANCEL_REASON_DESC, 	CANCEL_ADMIN_ID,
+				B.MB_ID
+			]]>	
+			FROM TB_SVC_PAYMENT A
+			LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
+			LEFT JOIN TB_SVC_SFT_CERT_PAYMENT CP ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
+			WHERE 1=1 
+			AND  A.USR_SEQ = #{usr_seq}
+
+		<choose>
+			<when test = "searchStartDate!='' and searchStartDate!=null">
+				AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			</when>
+			<otherwise>
+				AND PAYMENT_DTTM   >= date_add( now(), interval -3 YEAR ) 
+			</otherwise>
+		</choose>	
+
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+			UNION ALL
+			SELECT 
+				PAYMENT_FAIL_HIST_SEQ AS PAYMENT_SEQ, A.USR_SEQ, 	PAYMENT_DTTM,
+				PAYMENT_CLS_CD,
+				(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) CLS_CD,
+				PAYMENT_METHOD_CD,
+				(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001' ) METHOD_CD, 
+				ERR_CD AS PAYMENT_STUS_CD,
+				'실패' AS  STUS_CD, 
+				ERR_MSG AS PAYMENT_CONFM_NO, NULL AS	PAYMENT_CONFM_DTTM,
+				NULL AS PAYMENT_REQ_DTTM, PAYMENT_AMT AS TOT_AMT,
+				'0' AS MILEAGE_PAYMENT_AMT, 	'0' AS RENT_OVER_FEE_SUM,
+				NULL AS CANCEL_DTTM, 	NULL AS CANCEL_REASON_DESC, NULL AS	CANCEL_ADMIN_ID,
+				<!-- shoh2999 -->
+				'' as certDisYn,
+				B.MB_ID
+			FROM TB_SVC_PAYMENT_FAIL_HIST A
+			LEFT JOIN TB_SVC_MB B ON ( A.USR_SEQ = B.USR_SEQ )
+			WHERE 1=1  
+			AND A.USR_SEQ = #{usr_seq}
+
+		<choose>
+			<when test = "searchStartDate!='' and searchStartDate!=null">
+				AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			</when>
+			<otherwise>
+				AND PAYMENT_DTTM   >= date_add( now(), interval -3 YEAR ) 
+			</otherwise>
+		</choose>	
+
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+			 ) T
+			ORDER BY T.PAYMENT_DTTM DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		
+	</select>
+	
+	
+	<select id="memberPaymentListCnt"	parameterType="memberPaymentVO" 	resultType="int">
+		SELECT COUNT(*) FROM (
+			SELECT 
+				A.PAYMENT_SEQ
+			FROM TB_SVC_PAYMENT A
+	<if test='usr_seq == null or usr_seq == ""'>
+			WHERE 1 = 2
+	</if>
+	<if test='usr_seq != null and usr_seq != ""'>		
+			WHERE USR_SEQ = #{usr_seq}
+	 
+		<choose>
+			<when test = "searchStartDate!='' and searchStartDate!=null">
+				AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			</when>
+			<otherwise>
+				AND PAYMENT_DTTM   >= date_add( now(), interval -3 YEAR ) 
+			</otherwise>
+		</choose>			
+			
+			
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+			UNION ALL
+			SELECT 
+				B.PAYMENT_FAIL_HIST_SEQ
+			FROM TB_SVC_PAYMENT_FAIL_HIST B
+			WHERE B.USR_SEQ = #{usr_seq}
+		<choose>
+			<when test = "searchStartDate!='' and searchStartDate!=null">
+				AND PAYMENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			</when>
+			<otherwise>
+				AND PAYMENT_DTTM   >= date_add( now(), interval -3 YEAR ) 
+			</otherwise>
+		</choose>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND PAYMENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+	</if>		
+			) T
+	</select>	
+	
+	
+	
+	<select id="memberUseList"		parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+	<!-- 현재 대여중인 자전거 목록 전시_20160511_JJH_START -->
+		SELECT  RENT.RENT_SEQ AS RENT_HIST_SEQ,
+				RENT.RENT_DTTM,
+				RENT.USR_SEQ,
+				RENT.RENT_STATION_ID,
+				RENT.RENT_BIKE_ID,
+				(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID = RENT.RENT_BIKE_ID ) BIKE_NO,
+				(SELECT STATION_NAME FROM TB_OPR_MLANG_STATION  WHERE STATION_ID = RENT.RENT_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) RENT_STATION,
+				RENT.RENT_RACK_ID,
+				RENT.RENT_CLS_CD,
+				CONCAT((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = RENT_CLS_CD 
+					 AND LANG_CLS_CD = 'LAG_001') 
+					 	,' | '
+					 	,IFNULL((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = RENT_MTH_CD 
+					 AND LANG_CLS_CD = 'LAG_001')
+							   ,(SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = 'CHN_001'
+					 AND LANG_CLS_CD = 'LAG_001') ))		 CLS_CD,
+				'-' AS RETURN_STATION_ID,
+				'대여중' AS RETURN_STATION,
+				'-' AS RETURN_RACK_ID,
+				'-' AS RETURN_DTTM,
+				(TIMESTAMPDIFF(MINUTE,NOW(), RENT_DTTM) * -1) AS USE_MI,
+				'N' OVER_FRR_YN,
+				RENT.RENT_YN
+		FROM TB_SVC_RENT RENT 
+		WHERE 1=1
+		AND USR_SEQ = #{usr_seq}
+		UNION ALL
+		<!-- 현재 대여중인 자전거 목록 전시_20160511_JJH_END -->
+		SELECT 
+			A.RENT_HIST_SEQ, 	A.RENT_DTTM,
+			A.USR_SEQ, 	A.RENT_STATION_ID,	A.RENT_BIKE_ID,
+			(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID = A.RENT_BIKE_ID ) BIKE_NO,
+			(SELECT STATION_NAME FROM TB_OPR_MLANG_STATION  WHERE STATION_ID = A.RENT_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) RENT_STATION,
+			A.RENT_RACK_ID,	A.RENT_CLS_CD,
+			CONCAT((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = RENT_CLS_CD 
+					 AND LANG_CLS_CD = 'LAG_001') 
+					 	,' | '
+					 	,IFNULL((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = RENT_MTH_CD 
+					 AND LANG_CLS_CD = 'LAG_001')
+							   ,(SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = 'CHN_001'
+					 AND LANG_CLS_CD = 'LAG_001') ))	  CLS_CD,
+			A.RETURN_STATION_ID,
+			(SELECT STATION_NAME FROM TB_OPR_MLANG_STATION  WHERE STATION_ID = A.RETURN_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) RETURN_STATION,
+			RETURN_RACK_ID,	RETURN_DTTM,
+			USE_MI,	OVER_FEE_YN,'Y' AS RENT_YN
+		FROM TB_SVC_RENT_HIST A
+		WHERE USR_SEQ = #{usr_seq}
+		<choose>
+			<when test = "searchStartDate!='' and searchStartDate!=null">
+				AND RENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			</when>
+			<otherwise>
+				AND RENT_DTTM  >= date_add( now(), interval -1 year ) 
+			</otherwise>
+		</choose>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+		AND RENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		ORDER BY RENT_DTTM DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	
+	<select id="memberUseListCnt"	parameterType="memberPaymentVO" 	resultType="int">
+		
+		SELECT 
+			count(*)
+		FROM TB_SVC_RENT_HIST A
+		WHERE USR_SEQ = #{usr_seq}
+		<choose>
+			<when test = "searchStartDate!='' and searchStartDate!=null">
+				AND RENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			</when>
+			<otherwise>
+				AND RENT_DTTM  >= date_add( now(), interval -1 year ) 
+			</otherwise>
+		</choose>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND RENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		
+	</select>
+	
+	
+	<select id="memberRefundList"	parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+		SELECT 
+			A.REFUND_DTTM,
+			A.REFUND_AMT,
+			A.REFUND_REASON,
+			A.REFUND_COMSSN_AMT,
+			A.REFUND_ID,
+			B.USR_SEQ
+		FROM TB_SVC_REFUND_HIST A, TB_SVC_PAYMENT B
+		WHERE A.PAYMENT_SEQ = B.PAYMENT_SEQ
+		AND B.USR_SEQ = #{usr_seq}
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND REFUND_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND REFUND_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	
+	<select id="memberRefundListCnt"	parameterType="memberPaymentVO" 	resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM TB_SVC_REFUND_HIST A, TB_SVC_PAYMENT B
+		WHERE A.PAYMENT_SEQ = B.PAYMENT_SEQ
+		AND B.USR_SEQ = #{usr_seq}
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND REFUND_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND REFUND_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		
+	</select>
+	
+	
+	<select id="memberUnpaidList"	parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+	
+			SELECT 
+				A.RENT_HIST_SEQ, A.OVER_MI, A.OVER_FEE, A.OVER_FEE_PROCESS_CLS_CD,
+				(SELECT STATION_NAME FROM TB_OPR_MLANG_STATION  WHERE STATION_ID = B.RENT_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) RENT_STATION,
+				(SELECT STATION_NAME FROM TB_OPR_MLANG_STATION  WHERE STATION_ID = B.RETURN_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) RETURN_STATION,
+				B.RENT_DTTM, B.RETURN_DTTM, B.USR_SEQ, B.RENT_BIKE_ID, B.USE_MI
+			FROM TB_SVC_RENT_OVER_FEE A, TB_SVC_RENT_HIST B
+			WHERE A.RENT_HIST_SEQ = B.RENT_HIST_SEQ
+			AND A.RENT_DTTM = B.RENT_DTTM
+			AND A.OVER_FEE_PROCESS_CLS_CD = 'OPD_002'
+			AND B.USR_SEQ = #{usr_seq}
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				<![CDATA[
+					AND A.RENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+				]]>
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND A.RENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="memberUnpaidListCnt"	parameterType="memberPaymentVO" 	resultType="int">
+			SELECT 
+				COUNT(*)
+			FROM TB_SVC_RENT_OVER_FEE A, TB_SVC_RENT_HIST B
+			WHERE A.RENT_HIST_SEQ = B.RENT_HIST_SEQ
+			AND A.RENT_DTTM = B.RENT_DTTM
+			AND A.OVER_FEE_PROCESS_CLS_CD = 'OPD_002'
+			AND B.USR_SEQ = #{usr_seq}
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				<![CDATA[
+					AND A.RENT_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+				]]>
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND A.RENT_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+	
+	</select>
+	
+	
+	<select id="memberVoucherList"	parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+	
+		SELECT 
+			VOU.VOUCHER_SEQ, VOU.USR_SEQ, VOU.PAYMENT_CLS_CD,
+			(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) CLS_CD,
+				CASE WHEN VOU.COUPON_NO IS NOT NULL THEN VOU.COUPON_NO
+					ELSE ( SELECT COU.COUPON_NO FROM TB_SVC_COUPON COU INNER JOIN TB_SVC_COUPON_HISTORY COUH ON COU.COUPON_SEQ = COUH.COUPON_SEQ WHERE COUH.VOUCHER_SEQ = VOU.VOUCHER_SEQ) 
+					END AS COUPON_NO, 
+			VOU.PAYMENT_DTTM, VOU.VOUCHER_STR_DTTM, VOU.VOUCHER_END_DTTM, VOU.PARTY_USE_CNT, VOU.VOUCHER_USE_YN, VOU.PAYMENT_CHNNL_CD
+		FROM TB_SVC_VOUCHER VOU
+		WHERE VOU.USR_SEQ = #{usr_seq}
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				<![CDATA[
+					AND VOU.VOUCHER_END_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+				]]>
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND VOU.VOUCHER_END_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+			<if test="payment_cls_cd!='' and payment_cls_cd!=null">
+				 <![CDATA[
+					AND VOU.PAYMENT_CLS_CD = #{payment_cls_cd}
+				 ]]>
+			</if>
+			ORDER BY VOU.VOUCHER_SEQ DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+
+	</select>
+	<select id="memberVoucherListCnt"	parameterType="memberPaymentVO" 	resultType="int">
+		SELECT 
+			count(*)
+		FROM TB_SVC_VOUCHER
+		WHERE USR_SEQ = #{usr_seq}
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				<![CDATA[
+					AND VOUCHER_END_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+				]]>
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND VOUCHER_END_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+				 ]]>
+			</if>
+	
+	</select>
+	
+	
+	
+	<select id="getMemberVoucher"	parameterType="memberPaymentVO" 	resultType="memberPaymentVO">
+	
+	
+		SELECT 
+			VOUCHER_SEQ, USR_SEQ, PAYMENT_CLS_CD,
+			VOUCHER_STR_DTTM,
+			VOUCHER_END_DTTM, 
+			PARTY_USE_CNT, VOUCHER_USE_YN,
+			(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) CLS_CD
+		FROM TB_SVC_VOUCHER
+		WHERE USR_SEQ = #{usr_seq}
+		AND  voucher_use_yn ='Y'
+		AND SYSDATE() BETWEEN VOUCHER_STR_DTTM AND VOUCHER_END_DTTM
+		AND PAYMENT_CLS_CD NOT IN ('BIL_008','BIL_009')
+		LIMIT 1
+		
+	</select>
+	
+	
+	<select id="memberVoucherUpdateCheck"	parameterType="memberPaymentVO"		resultType="int">
+	
+		SELECT COUNT(*)
+		FROM TB_SVC_VOUCHER A
+		WHERE A.VOUCHER_SEQ NOT IN ( ${voucher_seq} ) 
+		AND  ( STR_TO_DATE(#{voucher_str_dttm } , '%Y-%m-%d') BETWEEN A.VOUCHER_STR_DTTM AND A.VOUCHER_END_DTTM
+		OR STR_TO_DATE(#{voucher_end_dttm } , '%Y-%m-%d') BETWEEN A.VOUCHER_STR_DTTM AND A.VOUCHER_END_DTTM )
+		
+	
+	</select>
+	
+	<update id="memberVoucherUpdate"	parameterType="memberPaymentVO">
+	
+		UPDATE TB_SVC_VOUCHER
+		SET
+			VOUCHER_STR_DTTM = STR_TO_DATE(#{voucher_str_dttm } , '%Y-%m-%d %H:%i:%s'),
+			VOUCHER_END_DTTM = STR_TO_DATE(#{voucher_end_dttm } , '%Y-%m-%d %H:%i:%s') 
+		WHERE 
+			VOUCHER_SEQ = ${voucher_seq}
+			
+	
+	</update>
+	
+		<select id="listUserOut" parameterType="userOutMgmtVO" resultType="userOutMgmtVO">
+		SELECT	MB_ID											AS mbId
+			   ,SEX_CD											AS sexCd
+			   <!-- ,dg_decrypt_date('TB_SVC_USR','USR_BIRTH_DATE',USR_BIRTH_DATE) AS usrBirthDate -->
+			   <!-- ,USR_BIRTH_DATE AS usrBirthDate -->
+			   ,CAST(AES_DECRYPT(UNHEX(USR_BIRTH_DATE),'BRC') as CHAR) AS usrBirthDate
+			   ,MLANG_COM_CD_NAME								AS leaveReasonCd
+			   ,DATE_FORMAT(LEAVE_DTTM , '%Y-%m-%d')			AS leaveDttm
+			   ,blklistYn
+		FROM
+		(
+			SELECT	MB_ID											
+				   ,SEX_CD											
+				   ,USR_BIRTH_DATE									
+				   ,LEAVE_REASON_CD									
+				   ,LEAVE_DTTM		
+				   ,IF(B.USR_SEQ IS NULL = 1, 'N', 'Y')						AS blklistYn								
+			FROM	
+			(
+				SELECT	A.USR_SEQ
+					   ,MB_ID
+					   ,SEX_CD
+					   ,USR_BIRTH_DATE				   
+					   ,LEAVE_REASON_CD
+					   ,LEAVE_DTTM
+				FROM	TB_SVC_MB A, TB_SVC_USR B
+				WHERE	A.USR_SEQ = B.USR_SEQ
+				AND		LEAVE_YN = 'Y'
+				<if test='leaveStrDate != null and leaveStrDate != ""'>
+					<![CDATA[
+					AND LEAVE_DTTM >= STR_TO_DATE(#{leaveStrDate}, '%Y-%m-%d') 
+					]]>
+				</if>
+				<if test='leaveEndDate != null and leaveEndDate != ""'>
+					<![CDATA[
+					AND LEAVE_DTTM <=  (STR_TO_DATE(#{leaveEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					]]>
+				</if>
+				<if test='mbId != null and mbId != ""'>
+					AND MB_ID LIKE CONCAT( #{mbId}, '%')
+				</if>
+				
+					
+				 <if test='mbId == null or mbId == ""'>		
+				 	AND 1=2
+				 </if>
+				 
+			) A LEFT OUTER JOIN 
+			(
+				SELECT	USR_SEQ
+				FROM	TB_SVC_USR_BLKLIST
+			) B
+			ON		A.USR_SEQ = B.USR_SEQ
+			ORDER BY LEAVE_DTTM DESC
+		) A, TB_SYS_MLANG_COM_CD B
+		WHERE	A.LEAVE_REASON_CD = B.COM_CD
+		AND		LANG_CLS_CD = 'LAG_001'
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+
+	<select id="listUserOutCount" parameterType="userOutMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM
+		(
+			SELECT	MB_ID											
+				   ,SEX_CD											
+				   ,USR_BIRTH_DATE									
+				   ,LEAVE_REASON_CD									
+				   ,LEAVE_DTTM										
+			FROM	
+			(
+				SELECT	A.USR_SEQ
+					   ,MB_ID
+					   ,SEX_CD
+					   ,USR_BIRTH_DATE				   
+					   ,LEAVE_REASON_CD
+					   ,LEAVE_DTTM
+				FROM	TB_SVC_MB A, TB_SVC_USR B
+				WHERE	A.USR_SEQ = B.USR_SEQ
+				AND		LEAVE_YN = 'Y'
+				<if test='leaveStrDate != null and leaveStrDate != ""'>
+					AND LEAVE_DTTM BETWEEN STR_TO_DATE(#{leaveStrDate}, '%Y-%m-%d') AND (STR_TO_DATE(#{leaveEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='mbId != null and mbId != ""'>
+					AND MB_ID LIKE CONCAT( #{mbId}, '%')
+				</if>
+				
+				 <if test='mbId == null or mbId == ""'>		
+				 	AND 1=2
+				 </if>
+				
+			) A LEFT OUTER JOIN 
+			(
+				SELECT	USR_SEQ
+				FROM	TB_SVC_USR_BLKLIST
+			) B
+			ON		A.USR_SEQ = B.USR_SEQ
+			ORDER BY LEAVE_DTTM DESC
+		) A, TB_SYS_MLANG_COM_CD B
+		WHERE	A.LEAVE_REASON_CD = B.COM_CD
+		AND		LANG_CLS_CD = 'LAG_001'
+	</select>
+	
+	<select id="listBlackList" parameterType="blackListMgmtVO" resultType="blackListMgmtVo">
+		SELECT	USR_SEQ												AS usrSeq
+			   ,MB_ID												AS mbId
+			   <!-- ,dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO)	 AS mbTelNo -->
+			   <!-- ,MB_TEL_NO	 AS mbTelNo -->
+			   ,CAST(AES_DECRYPT(UNHEX(MB_TEL_NO),'BRC') as CHAR) AS mbTelNo
+			   <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO)  AS usrMpnNo -->
+			   <!-- ,USR_MPN_NO  AS usrMpnNo -->
+			   ,CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
+			   ,MLANG_COM_CD_NAME									AS blkListReasonCd
+			   ,DATE_FORMAT(BLKLIST_REG_DTTM, '%Y-%m-%d')			AS blkListRegDttm
+		FROM
+		(
+			SELECT	A.USR_SEQ											
+				   ,MB_ID												
+				   ,MB_TEL_NO
+				   ,(SELECT USR_MPN_NO FROM TB_SVC_USR WHERE USR_SEQ = A.USR_SEQ) AS USR_MPN_NO											
+				   ,BLKLIST_REASON_CD									
+				   ,BLKLIST_REG_DTTM			
+			FROM	TB_SVC_USR_BLKLIST A, TB_SVC_MB B, TB_SVC_USR C
+			WHERE	A.USR_SEQ = B.USR_SEQ
+			AND	 C.USR_SEQ = A.USR_SEQ
+			AND	 B.USR_SEQ = C.USR_SEQ
+			AND		LEAVE_YN = 'N'
+			<if test='modStrDate != null and modStrDate != ""'>
+				<![CDATA[
+					AND BLKLIST_REG_DTTM >= STR_TO_DATE(#{modStrDate}, '%Y-%m-%d') 
+				]]>
+			</if>
+			<if test='modEndDate != null and modEndDate != ""'>
+				<![CDATA[
+					AND BLKLIST_REG_DTTM <= (STR_TO_DATE(#{modEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				]]>
+			</if>
+			<if test='mbId != null and mbId != ""'>
+				AND MB_ID LIKE CONCAT( #{mbId}, '%')
+			</if>
+		
+			
+			<if test='mbTelNo != null and mbTelNo != ""'>
+				<!-- AND USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{mbTelNo}) -->
+				<!-- AND USR_MPN_NO = #{mbTelNo} -->
+				AND USR_MPN_NO = HEX(AES_ENCRYPT(#{mbTelNo},'BRC'))
+			</if>
+			ORDER BY BLKLIST_REG_DTTM DESC
+		) A, TB_SYS_MLANG_COM_CD B
+		WHERE	A.BLKLIST_REASON_CD = B.COM_CD
+		AND		LANG_CLS_CD = 'LAG_001'
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="listBlackListCount" parameterType="blackListMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM
+		(
+			SELECT	A.USR_SEQ											
+				   ,MB_ID												
+				   ,MB_TEL_NO											
+				   ,BLKLIST_REASON_CD									
+				   ,BLKLIST_REG_DTTM			
+			FROM	TB_SVC_USR_BLKLIST A, TB_SVC_MB B
+			WHERE	A.USR_SEQ = B.USR_SEQ
+			AND		LEAVE_YN = 'N'
+			<if test='modStrDate != null and modStrDate != ""'>
+				<![CDATA[
+					AND BLKLIST_REG_DTTM >= STR_TO_DATE(#{modStrDate}, '%Y-%m-%d') 
+				]]>
+			</if>
+			<if test='modEndDate != null and modEndDate != ""'>
+				<![CDATA[
+					AND BLKLIST_REG_DTTM <= (STR_TO_DATE(#{modEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				]]>
+			</if>
+			<if test='mbId != null and mbId != ""'>
+				AND MB_ID LIKE CONCAT( #{mbId}, '%')
+			</if>
+			<if test='mbTelNo != null and mbTelNo != ""'>
+				<!-- AND MB_TEL_NO = dg_encrypt('TB_SVC_MB', 'MB_TEL_NO', #{mbTelNo}) -->
+				<!-- AND MB_TEL_NO = #{mbTelNo} -->
+				AND MB_TEL_NO = HEX(AES_ENCRYPT(#{mbTelNo},'BRC'))
+			</if>
+			ORDER BY BLKLIST_REG_DTTM DESC
+		) A, TB_SYS_MLANG_COM_CD B
+		WHERE	A.BLKLIST_REASON_CD = B.COM_CD
+		AND		LANG_CLS_CD = 'LAG_001'
+	</select>
+	
+	<update id="delBlackList" parameterType="blackListMgmtVO">
+		DELETE FROM	TB_SVC_USR_BLKLIST
+		WHERE	USR_SEQ = #{usrSeq}
+	</update>
+	
+	<update id="deletePenatyAll" parameterType="blackListMgmtVO">
+		UPDATE TB_SVC_PENALTY
+		   SET READ_CLS_CD = 'H'
+		 WHERE USR_SEQ = #{usrSeq}
+	</update>
+	
+	<select id="listBlackListReason" resultType="blackListMgmtVo">
+		SELECT	A.COM_CD				AS blkListReasonCd 
+			   ,MLANG_COM_CD_NAME		AS blkListReasonName
+		FROM
+		(
+			SELECT	COM_CD
+				   ,USE_YN
+			FROM	TB_SYS_COM_CD
+			WHERE	COM_UP_CD = 'BLA'
+			ORDER BY DSP_ORD
+		) A, TB_SYS_MLANG_COM_CD B
+		WHERE A.COM_CD = B.COM_CD
+	  	  AND LANG_CLS_CD = 'LAG_001'
+		  AND A.USE_YN = 'Y'
+	</select>
+	
+	<select id="getMemberUsrAuthVal"	 parameterType="blackListMgmtVO"		resultType="string">
+	
+		SELECT AUTH_DI_VAL
+		FROM TB_SVC_USR
+		WHERE USR_SEQ = #{usrSeq}
+		LIMIT 1
+	
+	</select>
+	
+	<insert id="regBlackList" parameterType="blackListMgmtVO">
+		INSERT INTO	TB_SVC_USR_BLKLIST
+		(
+				USR_SEQ
+			   ,BLKLIST_REG_DTTM
+			   ,BLKLIST_REASON_CD
+			   ,AUTH_DI_VAL
+		) VALUES (
+				#{usrSeq}
+			   ,NOW()
+			   ,#{blkListReasonCd}
+			   ,#{auth_di_val}
+		)
+	</insert>
+	
+	<select id="getRemainVoucher" parameterType ="memberMgmtVO" resultType="String">
+	<![CDATA[
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END AS remainVoucherYn FROM TB_SVC_VOUCHER WHERE USR_SEQ = #{usr_seq} AND VOUCHER_USE_YN = 'N'
+	]]>
+	</select>
+	
+	<select id="getUseVoucher" parameterType ="memberMgmtVO" resultType="String">
+	<![CDATA[
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END AS useVoucherYn FROM TB_SVC_VOUCHER WHERE USR_SEQ = #{usr_seq} AND VOUCHER_USE_YN = 'Y' AND NOW() BETWEEN VOUCHER_STR_DTTM AND VOUCHER_END_DTTM
+	]]>
+	</select>
+	
+	<select id="getRentYn" parameterType ="memberMgmtVO" resultType="String">
+	<![CDATA[
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END AS rentYn FROM TB_SVC_RENT WHERE USR_SEQ = #{usr_seq};
+	]]>
+	</select>	
+	
+	<select id="getRemainPayYn" parameterType ="memberMgmtVO" resultType="String">
+	<![CDATA[
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END AS remainPayYn FROM TB_SVC_RENT_HIST RENT JOIN TB_SVC_RENT_OVER_FEE OVER_ ON RENT.RENT_HIST_SEQ = OVER_.RENT_HIST_SEQ AND OVER_.OVER_FEE_PAYMENT_YN = 'N' AND RENT.USR_SEQ = #{usr_seq}
+	]]>
+	</select>
+	
+	<select id="getBlackListYn" parameterType ="memberMgmtVO" resultType="String">
+	<![CDATA[
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END AS blackListYn FROM TB_SVC_USR_BLKLIST WHERE USR_SEQ = #{usr_seq}
+	]]>
+	</select>
+	
+	<delete id="deleteMemberMileageInfo" parameterType ="memberMgmtVO">
+		DELETE FROM TB_SVC_MILEAGE WHERE USR_SEQ = #{usr_seq}
+	</delete>
+	
+	<delete id="deletePenaltyPointsInfo" parameterType ="memberMgmtVO">
+		UPDATE TB_SVC_PENALTY
+		   SET READ_CLS_CD = 'H'
+		 WHERE USR_SEQ = #{usr_seq}
+	</delete>
+	
+	<delete id="deleteMemberCard" parameterType ="memberMgmtVO">
+		DELETE FROM TB_SVC_MB_CARD WHERE USR_SEQ = #{usr_seq}
+	</delete>
+	
+	<delete id="deleteAddPayMethod" parameterType ="memberMgmtVO">
+		DELETE FROM TB_SVC_PAYMENT_METHOD WHERE USR_SEQ = #{usr_seq}
+	</delete>
+	
+	<update id="deleteMemberInfo" parameterType ="memberMgmtVO">
+		UPDATE TB_SVC_USR SET 
+			<!-- USR_BIRTH_DATE = dg_encrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', CONCAT(SUBSTR(dg_decrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', USR_BIRTH_DATE),1,4),'-01-01')), -->
+			<!-- USR_BIRTH_DATE = CONCAT(SUBSTR(USR_BIRTH_DATE,1,4),'-01-01'), -->
+			USR_BIRTH_DATE = HEX(AES_ENCRYPT(CONCAT(SUBSTR(CAST(AES_DECRYPT(UNHEX(USR_BIRTH_DATE),'BRC') as CHAR),1,4),'-01-01'),'BRC')),
+			ENC_PWD = NULL,
+			RENT_ENC_PWD = NULL,
+			TELECOM_CLS_CD = NULL,
+			AUTH_DI_VAL	= '-',
+			AUTH_CLS_CD = NULL,
+			USR_DEVICE_ID = NULL
+		WHERE USR_SEQ = #{usr_seq}
+	</update>
+	
+	<update id="deleteMemberDetailInfo" parameterType ="memberMgmtVO">
+		UPDATE TB_SVC_MB SET 
+			MB_TEL_NO = NULL,
+			MB_EMAIL_NAME = NULL, 
+			MB_POST_NO = NULL, 
+			MB_ADDR1 = NULL, 
+			MB_WGT = NULL,
+			PARENT_SEX_CD = NULL,
+			PARENT_BIRTH_DATE = NULL,
+			PARENT_MPN_NO = NULL,
+			LEAVE_YN = 'Y',
+			LEAVE_REASON_CD = 'OUT_001',
+			LEAVE_DTTM = NOW()		
+		WHERE USR_SEQ = #{usr_seq}
+	</update>
+	
+	<!-- 대중교통 이용정보 총 건수_20160908_JJH_START -->
+	<select id="getTransitListCnt" parameterType="transitMgmtVo"	resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SVC_TRANSFER_TMONEY A LEFT JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ, 
+			 TB_SVC_USR C
+		WHERE 1=1
+		AND A.USR_SEQ = C.USR_SEQ
+		<if test="searchStartDate != '' and searchStartDate != null and searchStartDate != '' and searchStartDate != null">
+			AND RIDE_DTTM BETWEEN CONCAT(STR_TO_DATE(#{searchStartDate }, '%Y-%m-%d'), ' 00:00:00') AND CONCAT(STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d'), ' 23:59:59')
+		</if>
+		<if test="searchValue != null and searchValue != '' ">
+			<if test="searchParameter != null and searchParameter.equals('ID')">
+				AND B.MB_ID LIKE   concat( #{searchValue}, '%')
+			</if>
+			<if test="searchParameter != null and searchParameter.equals('PHONE')">
+				<!-- AND C.USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+				<!-- AND C.USR_MPN_NO = #{searchValue} -->
+				AND C.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+			</if>
+		</if>
+		
+		  <if test="searchValue == null or searchValue == '' ">
+		  AND 1=2
+	   </if>
+	</select>
+	<!-- 대중교통 이용정보 총 건수_20160908_JJH_END -->
+	
+	<!-- 대중교통 이용정보 리스트_20160908_JJH_START -->
+	<select id="getTransitList" parameterType="transitMgmtVo"	resultType="transitMgmtVo">
+		SELECT  B.USR_SEQ,
+				B.MB_ID,
+				<!-- DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO) AS USR_MPN_NO, -->
+				<!-- USR_MPN_NO AS USR_MPN_NO, -->
+				CAST(AES_DECRYPT(UNHEX(C.USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO,
+				CASE
+					WHEN TRANSPORT_CD = '1'
+					THEN '버스'
+					WHEN TRANSPORT_CD = '2'
+					THEN '지하철'
+					ELSE '기타'
+				END AS TRANSPORT_CD,
+				RIDE_DTTM,
+				ALIGHT_DTTM
+		FROM TB_SVC_TRANSFER_TMONEY A LEFT JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ, 
+			 TB_SVC_USR C
+		WHERE 1=1
+		AND A.USR_SEQ = C.USR_SEQ
+		<if test="searchStartDate != '' and searchStartDate != null and searchStartDate != '' and searchStartDate != null">
+			AND RIDE_DTTM BETWEEN CONCAT(STR_TO_DATE(#{searchStartDate }, '%Y-%m-%d'), ' 00:00:00') AND CONCAT(STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d'), ' 23:59:59')
+		</if>
+		<if test="searchValue != null and searchValue != '' ">
+			<if test="searchParameter != null and searchParameter.equals('ID')">
+				AND B.MB_ID LIKE   concat( #{searchValue}, '%')
+			</if>
+			<if test="searchParameter != null and searchParameter.equals('PHONE')">
+				<!-- AND C.USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+				<!-- AND C.USR_MPN_NO = #{searchValue} -->
+				AND C.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+			</if>
+		</if>
+		
+		  <if test="searchValue == null or searchValue == '' ">
+		  AND 1=2
+	   </if>
+		ORDER BY RIDE_DTTM
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	<!-- 대중교통 이용정보 리스트_20160908_JJH_END -->
+	
+	<!-- 서비스 관리 > 회원관리 > 회원정보 > 이용권 > 이용권 생성_20161010_JJH_START -->
+	<select id="getVoucherType" resultType="voucherMgmtVO">
+		SELECT CD.COM_CD AS voucherCd,
+		 	   ML.MLANG_COM_CD_NAME AS voucherName
+		FROM TB_SYS_COM_CD CD LEFT JOIN TB_SYS_MLANG_COM_CD ML ON CD.COM_CD = ML.COM_CD
+		WHERE 1=1
+		AND CD.COM_UP_CD = 'BIL'
+		AND ML.LANG_CLS_CD = 'LAG_001'
+		<!-- AND CD.COM_CD NOT IN ('BIL_008', 'BIL_009', 'BIL_010', 'BIL_007', 'BIL_017') -->
+		AND CD.USE_YN = 'Y'
+	</select>
+	<!-- 서비스 관리 > 회원관리 > 회원정보 > 이용권 > 이용권 생성_20161010_JJH_END -->
+	
+	<!-- 서비스 관리 > 회원관리 > 회원정보 > 이용권 > 이용권 생성_20161010_JJH_START -->
+	<select id="getMemberVoucherInfo" parameterType="String" resultType="Map">
+		SELECT MB.MB_ID,
+			   <!-- DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', USR.USR_MPN_NO) AS USR_MPN_NO -->
+			   <!-- USR_MPN_NO AS USR_MPN_NO -->
+			   CAST(AES_DECRYPT(UNHEX(USR.USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO
+		FROM TB_SVC_MB MB LEFT JOIN TB_SVC_USR USR ON MB.USR_SEQ = USR.USR_SEQ
+		WHERE 1=1
+		AND MB.USR_SEQ = #{usr_seq}
+	</select>
+	<!-- 서비스 관리 > 회원관리 > 회원정보 > 이용권 > 이용권 생성_20161010_JJH_END -->
+	
+	<!-- 서비스 관리 > 회원관리 > 회원정보 > 이용권 > 이용권 연장_20161010_JJH_START -->
+	<select id="getVoucherPeriodInfo" parameterType="String" resultType="Map">
+	<![CDATA[
+		SELECT CASE
+				 	WHEN COUNT(VOUCHER_SEQ) > 0
+				 	THEN VOUCHER_STR_DTTM
+				 	ELSE 'N'
+				 END AS VOUCHER_STR_DTTM,
+				 CASE
+				 	WHEN COUNT(VOUCHER_SEQ) > 0
+				 	THEN VOUCHER_END_DTTM
+				 	ELSE 'N'
+				 END AS VOUCHER_END_DTTM,
+				 CASE
+				 	WHEN COUNT(VOUCHER_SEQ) > 0
+				 	THEN VOUCHER_SEQ
+				 	ELSE 'N'
+				 END AS VOUCHER_SEQ
+		FROM TB_SVC_VOUCHER
+		WHERE 1=1
+		AND USR_SEQ = #{usr_seq}
+		AND VOUCHER_STR_DTTM IS NOT NULL
+		AND NOW() BETWEEN VOUCHER_STR_DTTM AND VOUCHER_END_DTTM
+		ORDER BY VOUCHER_SEQ DESC
+		LIMIT 1
+	]]>
+	</select>
+	<!-- 서비스 관리 > 회원관리 > 회원정보 > 이용권 > 이용권 연장_20161010_JJH_END -->
+	
+	<!-- 이용권 생성할 회원의 이용권 존재여부_20161011_JJH -->
+	<select id="getMemberVoucherExistYN" parameterType="voucherMgmtVO" resultType="int">
+	<![CDATA[
+		SELECT SUM(voucher_exist_yn) AS VOUCHER_CNT
+		FROM (
+				SELECT CASE
+						 	WHEN COUNT(V.VOUCHER_SEQ) > 0
+						 	THEN COUNT(V.VOUCHER_SEQ)
+						 	ELSE 0
+						 END VOUCHER_EXIST_YN
+				FROM TB_SVC_VOUCHER V LEFT JOIN TB_SVC_RECV_COUPON C ON V.COUPON_NO = C.COUPON_NO
+				WHERE 1=1
+				AND USR_SEQ = #{usr_seq}
+				AND V.VOUCHER_USE_YN != 'Y'
+				AND V.VOUCHER_STR_DTTM IS NULL
+				AND V.VOUCHER_END_DTTM IS NULL
+				 
+				UNION ALL
+				
+				SELECT CASE
+						 	WHEN COUNT(V.VOUCHER_SEQ) > 0
+						 	THEN COUNT(V.VOUCHER_SEQ)
+						 	ELSE 0
+						 END VOUCHER_EXIST_YN
+				FROM TB_SVC_VOUCHER V LEFT JOIN TB_SVC_RECV_COUPON C ON V.COUPON_NO = C.COUPON_NO
+				WHERE 1=1
+				AND USR_SEQ = #{usr_seq}
+				AND NOW() BETWEEN VOUCHER_STR_DTTM AND VOUCHER_END_DTTM
+		)A
+	]]>	
+	</select>
+	<!-- 이용권 생성할 회원의 이용권 존재여부_20161011_END -->
+	
+	<!-- 관리자에 의한 이용권 생성(결제정보)_20161011_START -->
+	<insert id="insertPaymentInfo" parameterType="voucherMgmtVO">
+	  	INSERT INTO TB_SVC_PAYMENT
+			(PAYMENT_SEQ, 
+			 PAYMENT_DTTM, 
+			 USR_SEQ, 
+			 PAYMENT_CLS_CD, 
+			 PAYMENT_METHOD_CD, 
+			 PAYMENT_STUS_CD, 
+			 MB_SERIAL_NO, 
+			 TOT_AMT, 
+			 CREATE_REASON_DESC, 
+			 CREATE_ADMIN_ID)
+		VALUES
+			((SELECT MAX(P.PAYMENT_SEQ) FROM TB_SVC_PAYMENT P) + 1, 
+			 NOW(), 
+			 #{usr_seq}, 
+			 #{payment_cls_cd}, 
+			 'BIM_006', 
+			 'BIS_001', 
+			 CONCAT(#{usr_seq}, '_', REPLACE(#{payment_cls_cd}, '_', ''), '_', DATE_FORMAT(NOW(), '%Y%m%d')), 
+			 0, 
+			 #{voucher_create_reason}, 
+			 #{admin_id}) 
+	</insert>
+	<!-- 관리자에 의한 이용권 생성(결제정보)_20161011_END -->
+	
+	<!-- 관리자에 의한 이용권 생성(이용권 정보)_20161011_START -->
+	<insert id="insertVoucherInfo" parameterType="voucherMgmtVO">
+	  	INSERT INTO TB_SVC_VOUCHER
+			(VOUCHER_SEQ, 
+			 USR_SEQ, 
+			 PAYMENT_CLS_CD, 
+			 PAYMENT_SEQ, 
+			 PAYMENT_DTTM, 
+			 PARTY_USE_CNT, 
+			 VOUCHER_USE_YN)
+		VALUES
+			((SELECT MAX(VOUCHER_SEQ)  + 1 FROM TB_SVC_VOUCHER AS SUBQUERY), 
+			 #{usr_seq}, 
+			 #{payment_cls_cd}, 
+			 #{payment_seq}, 
+			 #{payment_dttm},
+			<if test="party_use_cnt == '' or party_use_cnt == null">
+					<![CDATA[	0, ]]>
+					</if>
+			<if test="party_use_cnt !='' and party_use_cnt != null">
+				 <![CDATA[
+					${party_use_cnt},
+				 ]]>
+			</if>	 
+			 'N')
+	</insert>
+	<!-- 관리자에 의한 이용권 생성(이용권 정보)_20161011_END -->
+	
+	<select id="getMemberPaymentInfo" parameterType="voucherMgmtVO" resultType="java.util.Map">
+		SELECT PAYMENT_SEQ AS payment_seq,
+				 PAYMENT_DTTM AS payment_dttm
+		FROM TB_SVC_PAYMENT
+		WHERE 1=1
+		AND USR_SEQ = #{usr_seq}
+		AND STR_TO_DATE(PAYMENT_DTTM, '%Y-%m-%d') = STR_TO_DATE(NOW(), '%Y-%m-%d') 
+		ORDER BY PAYMENT_SEQ DESC
+		LIMIT 1
+	</select>
+	
+	<!-- 비스관리 > 회원관리 > 회원정보 > 이용권 >이용권 연장_20161010_JJH_START -->
+	<update id="updateVoucherInfo" parameterType="voucherMgmtVO">
+		UPDATE TB_SVC_VOUCHER   /* MemberMgmt_SQL.updateVoucherInfo */
+		SET VOUCHER_STR_DTTM = STR_TO_DATE(
+											CASE WHEN LENGTH( #{voucher_str_dttm} ) = 19 THEN #{voucher_str_dttm}
+												 WHEN LENGTH( #{voucher_str_dttm} ) = 10 THEN CONCAT(#{voucher_str_dttm}, ' 00:00:00')
+												 ELSE #{voucher_str_dttm}
+											END 
+											, '%Y-%m-%d %H:%i:%s'	
+										   )
+		,	 VOUCHER_END_DTTM = STR_TO_DATE(
+			 								CASE WHEN LENGTH( #{voucher_end_dttm} ) = 19 THEN #{voucher_end_dttm}
+												 WHEN LENGTH( #{voucher_end_dttm} ) = 10 THEN CONCAT(#{voucher_end_dttm}, SUBSTR( VOUCHER_STR_DTTM  , 11 ))
+												 ELSE #{voucher_end_dttm}
+											END 
+											, '%Y-%m-%d %H:%i:%s'
+										   )
+		,	 EXTEND_REASON_DESC = #{voucher_extend_reason}
+		,	 EXTEND_ADMIN_ID = #{admin_id}
+		,	 EXTEND_DTTM = NOW()
+		WHERE 1=1
+		AND VOUCHER_SEQ = #{voucher_seq}
+	</update>
+	<!-- 비스관리 > 회원관리 > 회원정보 > 이용권 >이용권 연장_20161010_JJH_END -->
+	
+	<!-- 추가 : 선택한 사용자 ID로 받은 이용권 내역 조회 _20161104_cms -->
+	<select id="getRecvCouponList" parameterType="couponVo" resultType="couponVo">
+			  SELECT  /* MemberMgmt_SQL.getRecvCouponList */
+					  COUPONNAME,	 
+					  COUPONNO,	   
+					  COUPONSTATUS,   
+					  TELNO,		  
+			  		  REGDTTM,		
+			  		  USR_SEQ,
+			  		  paymentDttm,
+			  		  voucherEndDttm,
+			  		  voucherBgnDttm
+				FROM (
+					  SELECT 
+							 E.MLANG_COM_CD_NAME AS COUPONNAME,
+							 A.COUPON_NO AS COUPONNO,
+							 A.USE_YN AS COUPONSTATUS,
+							 <!-- DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', F.USR_MPN_NO) AS TELNO, -->
+							 <!-- USR_MPN_NO AS TELNO, -->
+							 CAST(AES_DECRYPT(UNHEX(F.USR_MPN_NO),'BRC') as CHAR) AS TELNO,
+							 DATE_FORMAT(A.REG_DTTM, '%Y-%m-%d %H:%i') AS REGDTTM,
+							 D.PAYMENT_DTTM AS paymentDttm,
+							 B.VOUCHER_STR_DTTM AS voucherBgnDttm,
+							 B.VOUCHER_END_DTTM AS voucherEndDttm,
+							 F.USR_SEQ AS USR_SEQ   
+						FROM TB_SVC_RECV_COUPON A 
+						LEFT OUTER JOIN TB_SVC_VOUCHER B ON A.COUPON_NO = B.COUPON_NO	 AND A.RECV_USR_SEQ = B.USR_SEQ
+						LEFT OUTER JOIN TB_SVC_SEND_COUPON C ON A.COUPON_NO = C.COUPON_NO
+						LEFT OUTER JOIN TB_SVC_PAYMENT D ON C.PAYMENT_SEQ = D.PAYMENT_SEQ
+						LEFT OUTER JOIN TB_SYS_MLANG_COM_CD E ON D.PAYMENT_CLS_CD = E.COM_CD AND E.LANG_CLS_CD = 'LAG_001'
+						LEFT OUTER JOIN TB_SVC_USR F ON C.SEND_USR_SEQ = F.USR_SEQ
+						WHERE A.RECV_USR_SEQ = #{usr_seq}
+						<if test="searchStartDate!='' and searchStartDate!=null">
+							<![CDATA[
+								AND A.REG_DTTM  >= #{searchStartDate }
+							]]>
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							 <![CDATA[
+								AND A.REG_DTTM <= #{searchEndDate}
+							 ]]>
+						</if>
+						) A
+				WHERE 1=1 
+				  ORDER BY A.REGDTTM DESC
+				  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	<!-- end -->
+	
+	<!-- 추가 : 선택한 사용자 ID로 받은 이용권 내역 조회 _20161104_cms -->
+	<select id="getRecvCouponListCnt" parameterType="couponVo" resultType="int">
+			  SELECT /* MemberMgmt_SQL.getRecvCouponListCnt */
+					 COUNT(*) AS CNT
+				FROM TB_SVC_RECV_COUPON A 
+			   WHERE A.RECV_USR_SEQ = #{usr_seq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					<![CDATA[
+						AND A.REGDTTM  >= #{searchStartDate }
+					]]>
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					 <![CDATA[
+						AND A.REGDTTM <= #{searchEndDate}
+					 ]]>
+				</if>
+	</select>
+	<!-- end -->
+	
+	<!-- 추가 : 선택한 사용자 ID로 받은 이용권  count _20161104_cms -->
+	<!-- 2018-10-21 양재영 AND A.PAYMENT_SEQ = B.PAYMENT_SEQ 추가 -->
+	<select id="getSendCouponList" parameterType="couponVo" resultType="couponVo">
+		  SELECT  /* MemberMgmt_SQL.getSendCouponList */
+				  COUPONNAME,	 
+				  COUPONNO,	   
+				  COUPONSTATUS,   
+				  TELNO,		  
+	  			  REGDTTM,		
+	  			  USR_SEQ,
+	  			  paymentDttm,
+		  		  voucherEndDttm,
+		  		  voucherBgnDttm
+			from (
+				  SELECT 
+						 D.MLANG_COM_CD_NAME AS COUPONNAME,
+						 A.COUPON_NO AS COUPONNO,
+						 E.USE_YN	AS COUPONSTATUS,
+						 <!-- DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', F.USR_MPN_NO) AS TELNO, -->
+						 <!-- USR_MPN_NO AS TELNO, -->
+						 CAST(AES_DECRYPT(UNHEX(F.USR_MPN_NO),'BRC') as CHAR) AS TELNO,
+						 DATE_FORMAT(E.REG_DTTM, '%Y-%m-%d %H:%i') AS REGDTTM,
+						  C.PAYMENT_DTTM AS paymentDttm,
+						  B.VOUCHER_STR_DTTM AS voucherBgnDttm,
+						  B.VOUCHER_END_DTTM AS voucherEndDttm,
+						 F.USR_SEQ AS USR_SEQ
+					FROM TB_SVC_SEND_COUPON A 
+					LEFT OUTER JOIN TB_SVC_VOUCHER B ON A.COUPON_NO = B.COUPON_NO  AND A.PAYMENT_SEQ = B.PAYMENT_SEQ 
+					LEFT OUTER JOIN TB_SVC_PAYMENT C ON A.PAYMENT_SEQ = C.PAYMENT_SEQ
+					LEFT OUTER JOIN TB_SYS_MLANG_COM_CD D ON C.PAYMENT_CLS_CD = D.COM_CD AND D.LANG_CLS_CD ='LAG_001'
+					LEFT OUTER JOIN TB_SVC_RECV_COUPON E ON A.COUPON_NO = E.COUPON_NO
+					LEFT OUTER JOIN TB_SVC_USR F ON E.RECV_USR_SEQ = F.USR_SEQ
+				   WHERE A.SEND_USR_SEQ = #{usr_seq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					<![CDATA[
+						AND A.REG_DTTM  >= #{searchStartDate }
+					]]>
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					 <![CDATA[
+						AND A.REG_DTTM <= #{searchEndDate}
+					 ]]>
+				</if>
+				)A
+			WHERE 1=1
+			ORDER BY A.REGDTTM DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	<!-- end -->
+	
+	<!-- 2018-10-21 양재영 AND A.PAYMENT_SEQ = B.PAYMENT_SEQ 추가 -->
+		<!-- 추가 : 선택한 사용자 ID로 보낸 이용권 내역 조회 _20161104_cms -->
+	<select id="getSendCouponListCnt" parameterType="couponVo" resultType="int">
+		  SELECT  /* MemberMgmt_SQL.getSendCouponListCnt */
+				  COUNT(*) AS CNT
+		  	FROM TB_SVC_SEND_COUPON A 
+					<!-- LEFT OUTER JOIN TB_SVC_VOUCHER B ON A.COUPON_NO = B.COUPON_NO 
+					LEFT OUTER JOIN TB_SVC_PAYMENT C ON A.PAYMENT_SEQ = C.PAYMENT_SEQ
+					LEFT OUTER JOIN TB_SYS_MLANG_COM_CD D ON C.PAYMENT_CLS_CD = D.COM_CD AND D.LANG_CLS_CD ='LAG_001'
+					 LEFT OUTER JOIN TB_SVC_RECV_COUPON E ON A.COUPON_NO = E.COUPON_NO 
+					LEFT OUTER JOIN TB_SVC_USR F ON E.RECV_USR_SEQ = F.USR_SEQ	-->
+			WHERE A.SEND_USR_SEQ = #{usr_seq}
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				<![CDATA[
+					AND A.REGDTTM  >= #{searchStartDate }
+				]]>
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				 <![CDATA[
+					AND A.REGDTTM <= #{searchEndDate}
+				 ]]>
+			</if>
+	</select>
+	<!-- end -->
+	
+	<!-- 추천반납 대여소 _20170116 -->
+	<select id="listReturnListCount" parameterType="returnListMgmtVO" resultType="int">
+	<!-- SELECT DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) -->
+	<![CDATA[
+		  SELECT COUNT(*) AS CNT
+			  FROM (
+				  SELECT TSRS.RECOMMEND_SEQ, 
+						 (
+							SELECT TSM.MB_ID 
+							  FROM TB_SVC_MB TSM
+							 WHERE TSM.USR_SEQ =  TSRS.USR_SEQ
+						 ) AS USR_ID,
+						 (
+							SELECT CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO
+							  FROM TB_SVC_USR
+							 WHERE USR_SEQ = TSRS.USR_SEQ
+						 ) AS TEL_NO,
+						 (
+						 SELECT CASE WHEN SUM(TSMI.MILEAGE_POINT) > 0 THEN '완료' ELSE '해당사항 없음' END  
+						   FROM TB_SVC_MILEAGE TSMI
+						  WHERE TSMI.RENT_HIST_SEQ = TSRS.RENT_HIST_SEQ 
+						 ) AS MILEAGE_YN,
+						 IFNULL((
+							SELECT TOS.STATION_ADDR2 
+							  FROM TB_OPR_STATION TOS
+							 WHERE TOS.STATION_ID = TSRH.RETURN_STATION_ID 
+						 ),'-') AS STATION_NM,
+						 IFNULL(TSRH.RETURN_DTTM,'-') AS RETURN_DTTM,
+						 TSRS.REG_DTTM
+					FROM TB_SYS_RECOMMEND_STATION TSRS
+					LEFT OUTER JOIN TB_SVC_RENT_HIST TSRH
+					 ON TSRS.RENT_HIST_SEQ = TSRH.RENT_HIST_SEQ
+				  )A
+				  WHERE 1=1
+				  ]]>
+					<!-- <if test="searchParameter != '' and searchParameter != null"> -->
+					<if test='searchParameter == "N"'>
+						AND MILEAGE_YN = '해당사항 없음'
+					</if>
+					<if test='searchParameter == "Y"'>
+						AND MILEAGE_YN = '완료'
+					</if>
+					<!-- </if> -->
+					<if test="searchParameter2 != '' and searchParameter2 != null">
+						<if test="searchValue != '' and searchValue != null">
+							<if test="searchParameter2 == 'ID'">
+								AND USR_ID LIKE CONCAT('%', #{searchValue}, '%')
+							</if>
+							<if test="searchParameter2 == 'PHONE'">
+								AND TEL_NO LIKE CONCAT('%', #{searchValue}, '%')
+							</if>
+						</if>
+					</if>
+					<if test="searchStartDate!='' and searchStartDate!=null">
+						<![CDATA[
+							AND STR_TO_DATE(REG_DTTM, '%Y-%m-%d')  >= #{searchStartDate }
+						]]>
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND STR_TO_DATE(REG_DTTM, '%Y-%m-%d') <= #{searchEndDate}
+						 ]]>
+					</if>
+	</select>
+	
+	
+	<!-- 추천반납 대여소 _20170116 -->
+	<select id="listReturnList" parameterType="returnListMgmtVO" resultType="returnListMgmtVO">
+	<!-- SELECT DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO)  -->
+	<![CDATA[
+		  SELECT RECOMMEND_SEQ AS recommendSeq,
+				 USR_ID,
+				 TEL_NO,
+				 MILEAGE_YN,
+				 STATION_NM,
+				 RETURN_DTTM,
+				 REG_DTTM
+			FROM (
+				  SELECT TSRS.RECOMMEND_SEQ, 
+						 (
+							SELECT TSM.MB_ID 
+							  FROM TB_SVC_MB TSM
+							 WHERE TSM.USR_SEQ =  TSRS.USR_SEQ
+						 ) AS USR_ID,
+						 (
+							SELECT CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO 
+							  FROM TB_SVC_USR
+							 WHERE USR_SEQ = TSRS.USR_SEQ
+						 ) AS TEL_NO,
+						 (
+						 SELECT CASE WHEN SUM(TSMI.MILEAGE_POINT) > 0 THEN '완료' ELSE '해당사항 없음' END  
+						   FROM TB_SVC_MILEAGE TSMI
+						  WHERE TSMI.RENT_HIST_SEQ = TSRS.RENT_HIST_SEQ 
+							AND TSMI.MILEAGE_CLS_CD = 'MIG_004' ) AS MILEAGE_YN,
+						 IFNULL((
+							SELECT TOS.STATION_ADDR2 
+							  FROM TB_OPR_STATION TOS
+							 WHERE TOS.STATION_ID = TSRH.RETURN_STATION_ID 
+						 ),'-') AS STATION_NM,
+						 IFNULL(TSRH.RETURN_DTTM,'-') AS RETURN_DTTM,
+						 TSRS.REG_DTTM
+					FROM TB_SYS_RECOMMEND_STATION TSRS
+					LEFT OUTER JOIN TB_SVC_RENT_HIST TSRH
+					 ON TSRS.RENT_HIST_SEQ = TSRH.RENT_HIST_SEQ
+				  )A
+				  WHERE 1=1
+				  ]]>
+				   <!-- <if test="searchParameter != '' and searchParameter != null"> -->
+					<if test='searchParameter == "N"'>
+						AND MILEAGE_YN = '해당사항 없음'
+					</if>
+					<if test='searchParameter == "Y"'>
+						AND MILEAGE_YN = '완료'
+					</if>
+					<!-- </if> -->
+					<if test="searchParameter2 != '' and searchParameter2 != null">
+						<if test="searchValue != '' and searchValue != null">
+							<if test="searchParameter2 == 'ID'">
+								AND USR_ID LIKE CONCAT('%', #{searchValue}, '%')
+							</if>
+							<if test="searchParameter2 == 'PHONE'">
+								AND TEL_NO LIKE CONCAT('%', #{searchValue}, '%')
+							</if>
+						</if>
+					</if>
+					<if test="searchStartDate!='' and searchStartDate!=null">
+						<![CDATA[
+							AND STR_TO_DATE(REG_DTTM, '%Y-%m-%d')  >= #{searchStartDate }
+						]]>
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						 <![CDATA[
+							AND STR_TO_DATE(REG_DTTM, '%Y-%m-%d') <= #{searchEndDate}
+						 ]]>
+					</if>
+					ORDER BY RETURN_DTTM DESC
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	
+	
+	<!-- 추천반납 대여소 _상세정보 20170116 -->
+	<select id="listReturnDetail" parameterType="returnListMgmtVO" resultType="returnListMgmtVO">
+	<![CDATA[
+			SELECT USR_SEQ AS usrSeq,
+				   USR_ID AS usrId,
+				   SUBSTRING(RECOMMEND_STATION,1,CHAR_LENGTH(RECOMMEND_STATION)-2) AS RECOMMEND_STATION,
+				   SUBSTRING(STATION_MAX_VAL,1,CHAR_LENGTH(STATION_MAX_VAL)-2) AS STATION_MAX_VAL,
+				   RETURN_RANK,
+				   STATION_NM AS stationNm,
+				   RETURN_DTTM AS returnDttm,
+				   MILEAGE_YN AS mileageYn
+				   ,IFNULL (MILEAGE_POINT,0) AS mileagePoint
+				,TODAY_ACCUMULATE_RECOMMEND_MILEAGE_POINT AS todayAccumulateMileagePoint
+				,DAY_MAX_RECOMMEND_MILEAGE_POINT AS dayMaxMileagePoint
+			 FROM (
+					SELECT USR_SEQ,
+						   USR_ID, 
+						   CONCAT(1ST_STATION_ID, 2ND_STATION_ID, 3RD_STATION_ID) AS RECOMMEND_STATION,
+						   CONCAT(1ST_STATION_MAX_VALUE, 2ND_STATION_MAX_VALUE, 3RD_STATION_MAX_VALUE ) AS STATION_MAX_VAL,
+						   RETURN_RANK,
+						   STATION_NM,
+						   RETURN_DTTM,
+						   MILEAGE_YN
+						   ,MILEAGE_POINT
+						   ,TODAY_ACCUMULATE_RECOMMEND_MILEAGE_POINT
+						   ,DAY_MAX_RECOMMEND_MILEAGE_POINT
+					  FROM (
+							SELECT TSRS.USR_SEQ AS USR_SEQ,
+								   (SELECT TSM.MB_ID 
+										FROM TB_SVC_MB TSM
+									   WHERE TSM.USR_SEQ =  TSRS.USR_SEQ
+								   ) AS USR_ID,
+								   CASE WHEN LENGTH(1ST_STATION_ID) > 0 THEN CONCAT((SELECT TOS.STATION_NAME 
+																					   FROM TB_OPR_MLANG_STATION TOS
+																					  WHERE TOS.STATION_ID = 1ST_STATION_ID
+																				  AND TOS.LANG_CLS_CD = 'LAG_001'),', ') ELSE '' END AS  1ST_STATION_ID,
+								   CASE WHEN LENGTH(2ND_STATION_ID) > 0 THEN CONCAT((SELECT TOS.STATION_NAME 
+																					   FROM TB_OPR_MLANG_STATION TOS
+																					  WHERE TOS.STATION_ID = 2ND_STATION_ID
+																				  AND TOS.LANG_CLS_CD = 'LAG_001'),', ') ELSE '' END AS  2ND_STATION_ID,
+								   CASE WHEN LENGTH(3RD_STATION_ID) > 0 THEN CONCAT((SELECT TOS.STATION_NAME 
+																					   FROM TB_OPR_MLANG_STATION TOS
+																					  WHERE TOS.STATION_ID = 3RD_STATION_ID
+																				  AND TOS.LANG_CLS_CD = 'LAG_001'),', ') ELSE '' END AS  3RD_STATION_ID,
+								   CASE WHEN 1ST_STATION_MAX_VALUE  > 0 THEN CONCAT(CONCAT((SELECT TOS.STATION_NAME 
+																					   FROM TB_OPR_MLANG_STATION TOS
+																					  WHERE TOS.STATION_ID = 1ST_STATION_ID
+																				  AND TOS.LANG_CLS_CD = 'LAG_001'),' : ',1ST_STATION_MAX_VALUE ),'개 ') ELSE '' END AS  1ST_STATION_MAX_VALUE,
+								   CASE WHEN 2ND_STATION_MAX_VALUE  > 0 THEN CONCAT(CONCAT((SELECT TOS.STATION_NAME 
+																					   FROM TB_OPR_MLANG_STATION TOS
+																					  WHERE TOS.STATION_ID = 2ND_STATION_ID
+																				  AND TOS.LANG_CLS_CD = 'LAG_001'),' : ',2ND_STATION_MAX_VALUE ),'개 ') ELSE '' END AS  2ND_STATION_MAX_VALUE,
+								   CASE WHEN 3RD_STATION_MAX_VALUE  > 0 THEN CONCAT(CONCAT((SELECT TOS.STATION_NAME 
+																					   FROM TB_OPR_MLANG_STATION TOS
+																					  WHERE TOS.STATION_ID = 3RD_STATION_ID
+																				  AND TOS.LANG_CLS_CD = 'LAG_001'),' : ',3RD_STATION_MAX_VALUE ),'개 ') ELSE '' END AS  3RD_STATION_MAX_VALUE,
+								   CASE WHEN TSRS.RETURN_RANK > 0 THEN CONCAT(TSRS.RETURN_RANK,' 번째 반납') END AS RETURN_RANK,
+								   IFNULL((
+									  SELECT CONCAT(TOS.STATION_NAME,' ( 거치대 번호 : ',(
+																	SELECT TOR.NOW_STATION_EQUIP_ORD 
+																	  FROM TB_OPR_RACK TOR 
+																	 WHERE TOR.RACK_ID = TSRH.RETURN_RACK_ID
+																),' )') 
+										FROM TB_OPR_MLANG_STATION TOS
+									   WHERE TOS.STATION_ID = TSRH.RETURN_STATION_ID 
+								   AND TOS.LANG_CLS_CD = 'LAG_001'
+								   ),'-') AS STATION_NM,
+								   IFNULL(TSRH.RETURN_DTTM,'-') AS RETURN_DTTM,
+								   (
+								   SELECT CASE WHEN SUM(TSMI.MILEAGE_POINT) > 0 THEN '완료' ELSE '해당사항 없음' END  
+									 FROM TB_SVC_MILEAGE TSMI
+									WHERE TSMI.RENT_HIST_SEQ = TSRS.RENT_HIST_SEQ
+									AND TSMI.MILEAGE_CLS_CD = 'MIG_004' ) AS MILEAGE_YN
+								   , (	SELECT TSMI2.MILEAGE_POINT 
+										FROM TB_SVC_MILEAGE TSMI2 
+										WHERE TSMI2.RENT_HIST_SEQ = TSRS.RENT_HIST_SEQ 
+										AND TSMI2.USR_SEQ=TSRS.USR_SEQ
+										AND TSMI2.MILEAGE_CLS_CD = 'MIG_004' ) AS MILEAGE_POINT
+								   , IFNULL((	SELECT SUM(TSMI3.MILEAGE_POINT) 
+										FROM TB_SVC_MILEAGE TSMI3 
+										WHERE TSMI3.USR_SEQ = TSRS.USR_SEQ 
+										AND TSMI3.MILEAGE_CLS_CD = 'MIG_004'
+										AND DATE_FORMAT(TSMI3.REG_DTTM,'%Y-%m-%d-%H-%i') >= CONCAT(DATE_FORMAT(TSRS.REG_DTTM, '%Y-%m-%d'),'-00-00')
+										AND TSMI3.RENT_HIST_SEQ <= TSRS.RENT_HIST_SEQ ), 0) AS TODAY_ACCUMULATE_RECOMMEND_MILEAGE_POINT
+								   , (	SELECT ADD_VAL1 
+										FROM TB_SYS_COM_CD 
+										WHERE COM_CD = 'MSI_028' ) AS DAY_MAX_RECOMMEND_MILEAGE_POINT
+							FROM TB_SYS_RECOMMEND_STATION TSRS
+							  LEFT OUTER JOIN TB_SVC_RENT_HIST TSRH
+							   ON TSRS.RENT_HIST_SEQ = TSRH.RENT_HIST_SEQ
+							 WHERE 1=1
+							 ]]>	
+							<if test="recommendSeq!='' and recommendSeq!=null">
+								AND TSRS.RECOMMEND_SEQ = #{recommendSeq}
+							</if>
+						  )A 
+					)A	 
+	</select>
+	
+	<!-- 대여일련번호 count _20170511 -->
+	<select id="listRentSerialNumCount" parameterType="rentSerialNumVO" resultType="int">
+	  	SELECT 	COUNT(*) AS CNT  
+		  FROM TB_SVC_SERIAL_NO_HIST SERIALNO 
+		<if test="searchValue != '' and searchValue != null">
+			<if test="searchParameter2 != '' and searchParameter2 != null">
+				<if test="searchParameter2 == 'CARDNUM'">
+					LEFT JOIN TB_SVC_PAYMENT PAY			 ON SERIALNO.PAYMENT_SEQ = PAY.PAYMENT_SEQ 
+					LEFT JOIN TB_SVC_USR_CARD_HIST PAYMETHOD ON PAY.USR_SEQ = PAYMETHOD.USR_SEQ AND PAYMETHOD.END_DTTM = '9999-12-31 23:59:59'
+				</if>
+				<if test="searchParameter2 == 'PHONE'">
+					LEFT JOIN TB_SVC_USR USR ON SERIALNO.USR_SEQ = USR.USR_SEQ
+				</if>
+			</if>
+		</if>  
+		 WHERE 1=1
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND SERIALNO.REG_DTTM  >= STR_TO_DATE( #{searchStartDate}, '%Y-%m-%d') 
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND SERIALNO.REG_DTTM  <= date_add( STR_TO_DATE( #{searchEndDate}, '%Y-%m-%d') , interval 1 DAY ) 
+			 ]]>
+		</if>			
+		<if test="searchValue != '' and searchValue != null">
+			<if test="searchParameter2 != '' and searchParameter2 != null">
+				<if test="searchParameter2 == 'CARDNUM'">
+					<!-- AND PAYMETHOD.USR_CARD_NO = dg_encrypt('TB_SVC_USR_CARD_HIST','USR_CARD_NO',#{searchValue} ) -->
+					<!-- AND PAYMETHOD.USR_CARD_NO = #{searchValue} -->
+					AND PAYMETHOD.USR_CARD_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				</if>
+				<if test="searchParameter2 == 'PHONE'">
+					<!-- AND USR.USR_MPN_NO		= dg_encrypt('TB_SVC_USR','USR_MPN_NO', #{searchValue} ) -->
+					<!-- AND USR.USR_MPN_NO		= #{searchValue} -->
+					AND USR.USR_MPN_NO		= HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				</if>
+				<if test="searchParameter2 == 'SERIALNUM'">
+					AND SERIALNO.SERIAL_NO = #{searchValue}
+				</if>
+			</if>
+		</if>  
+			
+	</select>
+	
+	<!-- 대여일련번호 목록 list _20170511 -->
+	<select id="listRentSerialNum" parameterType="rentSerialNumVO" resultType="rentSerialNumVO">
+		  	 SELECT   /* MemberMgmt_SQL.listRentSerialNum */
+		  			  SERIALNO.SERIAL_NO_HIST_SEQ 	AS serialNoHistSeq
+					, SERIALNO.USR_SEQ				AS serialNoUsrSeq
+		  			, SERIALNO.PAYMENT_SEQ			AS serialNoPaymentSeq
+		  			, SERIALNO.VOUCHER_SEQ			AS serialNoVoucherSeq
+		  			, SERIALNO.SERIAL_NO	 		AS serialNo
+		  			, SERIALNO.REG_DTTM				AS serialNoRegDttm	
+		  			, (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = PAY.PAYMENT_CLS_CD AND A.LANG_CLS_CD = 'LAG_001') 		AS voucherType
+		  			, (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = PAY.PAYMENT_METHOD_CD AND A.LANG_CLS_CD = 'LAG_001') 		AS payMethodType
+		  			, PAY.PAYMENT_DTTM			 AS paymentDttm
+		  			, <![CDATA[ IF(VOU.VOUCHER_STR_DTTM IS NULL, 
+									IF(VOU.VOUCHER_USE_YN = 'N', 
+										'미사용', 
+										IF(PAY.PAYMENT_STUS_CD = 'BIS_003',
+											'삭제',
+											'이용권 미생성'
+											)
+										), 
+							   		IF(VOU.VOUCHER_END_DTTM < NOW(),
+							  			IF(PAY.PAYMENT_STUS_CD = 'BIS_002',
+									   		'환불',
+										 	IF(PAY.PAYMENT_STUS_CD = 'BIS_003',
+												'만료*',
+											 	'만료'
+											 	)
+									  		),
+										'사용중'
+										)
+									) ]]> 		AS voucherUseYn	
+		  			<!-- , DG_DECRYPT('TB_SVC_USR_CARD_HIST','USR_CARD_NO',PAYMETHOD.USR_CARD_NO)  AS payMethodNo -->
+		  			, CAST(AES_DECRYPT(UNHEX(PAYMETHOD.USR_CARD_NO),'BRC') as CHAR) AS payMethodNo
+			FROM TB_SVC_SERIAL_NO_HIST SERIALNO 
+			LEFT JOIN TB_SVC_VOUCHER VOU ON SERIALNO.VOUCHER_SEQ = VOU.VOUCHER_SEQ
+			LEFT JOIN TB_SVC_PAYMENT PAY ON SERIALNO.PAYMENT_SEQ = PAY.PAYMENT_SEQ 
+			LEFT JOIN TB_SVC_USR_CARD_HIST PAYMETHOD ON PAY.USR_SEQ = PAYMETHOD.USR_SEQ AND PAYMETHOD.END_DTTM = '9999-12-31 23:59:59'
+			LEFT JOIN TB_SVC_USR USR ON SERIALNO.USR_SEQ = USR.USR_SEQ
+		WHERE 1=1
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND SERIALNO.REG_DTTM  >= STR_TO_DATE( #{searchStartDate}, '%Y-%m-%d') 
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND SERIALNO.REG_DTTM  <= date_add( STR_TO_DATE( #{searchEndDate}, '%Y-%m-%d') , interval 1 DAY )
+			 ]]>
+		</if>	
+		<if test="searchValue != '' and searchValue != null">
+			<if test="searchParameter2 != '' and searchParameter2 != null">
+				<if test="searchParameter2 == 'CARDNUM'">
+					<!-- AND PAYMETHOD.USR_CARD_NO = DG_ENCRYPT('TB_SVC_USR_CARD_HIST','USR_CARD_NO', #{searchValue}) -->
+					AND PAYMETHOD.USR_CARD_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				</if>
+				<if test="searchParameter2 == 'PHONE'">
+					<!-- AND USR.USR_MPN_NO		= dg_encrypt('TB_SVC_USR','USR_MPN_NO', #{searchValue} ) -->
+					<!-- AND USR.USR_MPN_NO		= #{searchValue} -->
+					AND USR.USR_MPN_NO		= HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+				</if>
+				<if test="searchParameter2 == 'SERIALNUM'">
+					AND SERIALNO.SERIAL_NO = #{searchValue}
+				</if>
+			</if>
+		</if>	
+		ORDER BY SERIALNO.PAYMENT_SEQ DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="listRentSerialNumDetail" parameterType="rentSerialNumVO" resultType="rentSerialNumVO">
+		SELECT 	SERIALNO.SERIAL_NO_HIST_SEQ 				AS serialNoHistSeq
+				, SERIALNO.SERIAL_NO						AS serialNo
+				, SERIALNO.USR_SEQ							AS serialNoUsrSeq
+				, SERIALNO.PAYMENT_SEQ						AS serialNoPaymentSeq
+				, SERIALNO.VOUCHER_SEQ						AS serialNoVoucherSeq
+				, SERIALNO.REG_DTTM							AS serialNoRegDttm
+				, PAY.PAYMENT_STUS_CD 						AS paymentStusCd
+				, (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = PAY.PAYMENT_STUS_CD AND A.LANG_CLS_CD = 'LAG_001') 			AS payStatusType
+				, PAY.PAYMENT_METHOD_CD						AS paymentMethodCd
+				, (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = PAY.PAYMENT_METHOD_CD AND A.LANG_CLS_CD = 'LAG_001') 			AS payMethodType
+				<!-- , IF(PAY.PAYMENT_METHOD_CD = 'BIM_003', DG_DECRYPT('TB_SVC_USR','USR_MPN_NO',USR.USR_MPN_NO), DG_DECRYPT('TB_SVC_USR_CARD_HIST','USR_CARD_NO',PAYMETHOD.USR_CARD_NO)) 					AS payMethodNo -->
+				, IF(PAY.PAYMENT_METHOD_CD = 'BIM_003', CAST(AES_DECRYPT(UNHEX(USR.USR_MPN_NO),'BRC') as CHAR), CAST(AES_DECRYPT(UNHEX(PAYMETHOD.USR_CARD_NO),'BRC') as CHAR)) AS payMethodNo
+				, PAY.PAYMENT_CLS_CD																													AS paymentClsCd
+				, (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = PAY.PAYMENT_CLS_CD AND A.LANG_CLS_CD = 'LAG_001') 			AS voucherType
+				, PAY.PAYMENT_DTTM 																														AS paymentDttm
+				, IF(VOU.VOUCHER_STR_DTTM IS NULL, '-', VOU.VOUCHER_STR_DTTM) 																			AS voucherStrDttm
+				, IF(VOU.VOUCHER_END_DTTM IS NULL, '-', VOU.VOUCHER_END_DTTM) 																			AS voucherEndDttm
+				, IF(VOU.VOUCHER_USE_YN IS NULL, '-', VOU.VOUCHER_USE_YN)																				AS voucherUseYnFlg
+				, <![CDATA[ IF(VOU.VOUCHER_STR_DTTM IS NULL, 
+								IF(VOU.VOUCHER_USE_YN = 'N', 
+									'미사용', 
+									IF(PAY.PAYMENT_STUS_CD = 'BIS_003',
+										'삭제',
+										'이용권 미생성'
+										)
+									), 
+						   		IF(VOU.VOUCHER_END_DTTM < NOW(),
+						  			IF(PAY.PAYMENT_STUS_CD = 'BIS_002',
+								   		'환불',
+									 	IF(PAY.PAYMENT_STUS_CD = 'BIS_003',
+											'만료*',
+										 	'만료'
+										 	)
+								  		),
+									'사용중'
+									)
+								) ]]>										AS voucherUseYn
+				, PAY.TOT_AMT																															AS payTotAmt
+				<!-- , DG_DECRYPT('TB_SVC_USR','USR_MPN_NO',USR.USR_MPN_NO)									 										AS smsRecvAgreeYn -->
+				, CAST(AES_DECRYPT(UNHEX(USR.USR_MPN_NO),'BRC') as CHAR) AS smsRecvAgreeYn
+				, (CASE WHEN OVERFEE.PAYMENT_SEQ IS NULL
+						 THEN (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = OVERPAYMETHOD.PAYMENT_METHOD_CD AND A.LANG_CLS_CD = 'LAG_001') <!-- IF(OVERPAYMETHOD.PAYMENT_METHOD_CD = 'BIM_003', '휴대폰', '신용카드') -->
+						 ELSE (CASE WHEN OVERFEE.PAYMENT_SEQ = 0
+						 				THEN (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = OVERPAYMETHOD.PAYMENT_METHOD_CD AND A.LANG_CLS_CD = 'LAG_001') <!-- IF(OVERPAYMETHOD.PAYMENT_METHOD_CD = 'BIM_003', '휴대폰', '신용카드') -->
+										ELSE (CASE WHEN (SELECT OVERPAYMETHODPLUS.PAYMENT_METHOD_CD FROM TB_SVC_PAYMENT OVERPAYMETHODPLUS WHERE OVERPAYMETHODPLUS.PAYMENT_SEQ = OVERFEE.PAYMENT_SEQ) = 'BIM_005'
+													  THEN (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = 'BIM_005' AND A.LANG_CLS_CD = 'LAG_001')
+													  ELSE (SELECT A.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD A WHERE A.COM_CD = OVERPAYMETHOD.PAYMENT_METHOD_CD AND A.LANG_CLS_CD = 'LAG_001') <!-- IF(OVERPAYMETHOD.PAYMENT_METHOD_CD = 'BIM_003', '휴대폰', '신용카드') -->
+												END)
+								 END)
+					END) AS overPayMethodType
+				, IF(OVERFEE.OVER_FEE IS NULL, '0', OVERFEE.OVER_FEE)																					AS overFee
+				, IF(OVERFEE.OVER_FEE_PAYMENT_YN IS NULL, '-', IF(OVERFEE.OVER_FEE_PAYMENT_YN = 'Y','결제', '미결제'))										AS overFeePayYn
+				, IF(PAY.CANCEL_ADMIN_ID IS NULL,'insert', 'view')																						AS viewFlg
+		FROM TB_SVC_SERIAL_NO_HIST SERIALNO LEFT JOIN TB_SVC_USR USR ON SERIALNO.USR_SEQ = USR.USR_SEQ
+		LEFT JOIN TB_SVC_PAYMENT PAY ON SERIALNO.PAYMENT_SEQ = PAY.PAYMENT_SEQ
+		LEFT JOIN TB_SVC_VOUCHER VOU ON SERIALNO.VOUCHER_SEQ = VOU.VOUCHER_SEQ AND VOU.PAYMENT_SEQ = PAY.PAYMENT_SEQ
+		LEFT JOIN TB_SVC_USR_CARD_HIST PAYMETHOD ON SERIALNO.USR_SEQ = PAYMETHOD.USR_SEQ AND PAYMETHOD.END_DTTM = '9999-12-31 23:59:59'
+		LEFT JOIN TB_SVC_PAYMENT_METHOD OVERPAYMETHOD ON SERIALNO.USR_SEQ = OVERPAYMETHOD.USR_SEQ
+		LEFT JOIN TB_SVC_RENT_HIST RENTHIST ON SERIALNO.USR_SEQ = RENTHIST.USR_SEQ AND RENTHIST.VOUCHER_SEQ = SERIALNO.VOUCHER_SEQ AND RENTHIST.OVER_FEE_YN = 'Y'
+		LEFT JOIN TB_SVC_RENT_OVER_FEE OVERFEE ON RENTHIST.RENT_HIST_SEQ = OVERFEE.RENT_HIST_SEQ
+		WHERE 1=1 
+	<choose>
+			<when test="serialNoHistSeq!='' and serialNoHistSeq!=null">
+				AND SERIALNO.SERIAL_NO_HIST_SEQ = #{serialNoHistSeq}
+			</when>
+			<when test="serialNoPaymentSeq!='' and serialNoPaymentSeq!=null">
+					AND SERIALNO.PAYMENT_SEQ = #{serialNoPaymentSeq}
+			</when>
+			<when test="serialNoVoucherSeq!='' and serialNoVoucherSeq!=null and serialNoUsrSeq!='' and serialNoUsrSeq!=null">
+					AND SERIALNO.SERIAL_NO_HIST_SEQ = (SELECT SERIAL_NO_HIST_SEQ FROM TB_SVC_SERIAL_NO_HIST WHERE USR_SEQ = #{serialNoUsrSeq} AND VOUCHER_SEQ = #{serialNoVoucherSeq})
+			</when>
+	 <otherwise>
+	  AND 1=2
+	</otherwise> 
+		</choose>
+	
+		
+	</select>
+	<select id="getCancelInfo" parameterType="rentSerialNumVO" resultType="rentSerialNumVO">
+		SELECT 	SERIALNO.SERIAL_NO_HIST_SEQ 				AS serialNoHistSeq
+				, SERIALNO.SERIAL_NO						AS serialNo
+				, SERIALNO.USR_SEQ							AS serialNoUsrSeq
+				, SERIALNO.PAYMENT_SEQ						AS serialNoPaymentSeq
+				, SERIALNO.VOUCHER_SEQ						AS serialNoVoucherSeq
+				, SERIALNO.REG_DTTM							AS serialNoRegDttm
+				, PAY.PAYMENT_DTTM 																								AS paymentDttm
+				, <![CDATA[IF(VOU.VOUCHER_STR_DTTM IS NULL, 
+								IF(VOU.VOUCHER_USE_YN = 'N', 
+									'미사용', 
+									IF(PAY.PAYMENT_STUS_CD = 'BIS_003',
+										'삭제',
+										'이용권 미생성'
+										)
+									), 
+						   		IF(VOU.VOUCHER_END_DTTM < NOW(),
+						  			IF(PAY.PAYMENT_STUS_CD = 'BIS_002',
+								   		'환불',
+									 	IF(PAY.PAYMENT_STUS_CD = 'BIS_003',
+											'만료*',
+										 	'만료'
+										 	)
+								  		),
+									'사용중'
+									)
+								)]]>				AS voucherUseYn
+				, PAY.TOT_AMT																									AS payTotAmt
+				, IF(OVERFEE.OVER_FEE IS NULL, '0', OVERFEE.OVER_FEE)															AS overFee
+				, IF(OVERFEE.OVER_FEE_PAYMENT_YN IS NULL, '-', IF(OVERFEE.OVER_FEE_PAYMENT_YN = 'Y','결제', '미결제'))				AS overFeePayYn
+				, PAY.PAYMENT_CONFM_NO 																							AS paymentConfmNo
+				, IF(PAY.CANCEL_ADMIN_ID IS NULL,'insert', 'view')																AS viewFlg
+				, IFNULL(PAY.CANCEL_REASON_DESC,'')																				AS cancelReasonDesc
+				, IFNULL(PAY.CANCEL_ADMIN_ID,'')																				AS cancelAdminId
+		FROM TB_SVC_SERIAL_NO_HIST SERIALNO LEFT JOIN TB_SVC_PAYMENT PAY ON SERIALNO.PAYMENT_SEQ = PAY.PAYMENT_SEQ
+		LEFT JOIN TB_SVC_VOUCHER VOU ON SERIALNO.VOUCHER_SEQ = VOU.VOUCHER_SEQ AND VOU.PAYMENT_SEQ = PAY.PAYMENT_SEQ
+		LEFT JOIN TB_SVC_RENT_HIST RENTHIST ON SERIALNO.USR_SEQ = RENTHIST.USR_SEQ AND RENTHIST.VOUCHER_SEQ = SERIALNO.VOUCHER_SEQ AND RENTHIST.OVER_FEE_YN = 'Y'
+		LEFT JOIN TB_SVC_RENT_OVER_FEE OVERFEE ON RENTHIST.RENT_HIST_SEQ = OVERFEE.RENT_HIST_SEQ
+		WHERE 1=1
+		AND SERIALNO.PAYMENT_SEQ = #{serialNoPaymentSeq}
+		AND SERIALNO.VOUCHER_SEQ = #{serialNoVoucherSeq}
+		AND SERIALNO.USR_SEQ = #{serialNoUsrSeq}
+		AND SERIALNO.SERIAL_NO_HIST_SEQ = #{serialNoHistSeq}
+	</select>
+	
+	<update id="setPaymentCancel" parameterType="rentSerialNumVO">
+		UPDATE TB_SVC_PAYMENT
+		   SET PAYMENT_STUS_CD = 'BIS_003'
+			 , CANCEL_DTTM = NOW()
+			 , CANCEL_REASON_DESC = #{cancelReasonDesc}
+			 , CANCEL_ADMIN_ID = #{cancelAdminId}
+		 WHERE PAYMENT_SEQ = #{serialNoPaymentSeq}
+		   AND PAYMENT_DTTM = #{paymentDttm}
+<!--			STR_TO_DATE(#{paymentDttm},'%Y-%m-%d %H:%i:%S') -->
+	</update>
+	
+	<update id="setVoucherExpiry" parameterType="rentSerialNumVO">
+		UPDATE TB_SVC_VOUCHER
+		SET   VOUCHER_STR_DTTM = NOW()
+			, VOUCHER_END_DTTM = NOW()
+			, FIRST_STR_DTTM = NOW()
+			, FIRST_END_DTTM = NOW()
+			, VOUCHER_USE_YN = 'Y'
+			, EXTEND_REASON_DESC = #{cancelReasonDesc}
+			, EXTEND_ADMIN_ID = #{cancelAdminId}
+		WHERE 1=1
+		AND PAYMENT_SEQ = #{serialNoPaymentSeq}
+	</update>
+	
+<!-- 	<update id="setVoucherExpiry" parameterType="rentSerialNumVO" resultType="int"> -->
+<!--		 UPDATE TB_SVC_VOUCHER -->
+<!-- 		SET   VOUCHER_STR_DTTM = NOW() -->
+<!-- 			, VOUCHER_END_DTTM = NOW() -->
+<!-- 			, FIRST_STR_DTTM = NOW() -->
+<!-- 			, FIRST_END_DTTM = NOW() -->
+<!-- 			, VOUCHER_USE_YN = 'Y' -->
+<!-- 			, EXTEND_REASON_DESC = #{cancelReasonDesc} -->
+<!-- 			, EXTEND_ADMIN_ID = #{cancelAdminId} -->
+<!-- 		WHERE 1=1 -->
+<!-- 		AND PAYMENT_SEQ = #{serialNoPaymentSeq} -->
+<!--	  </update> -->
+	
+	
+	<!-- SMS 인증 목록 count _20170620 -->
+	<select id="listMobileSmsAuthCount" parameterType="mobileSmsAuthVO" resultType="int">
+		  	SELECT COUNT(A.authNoHistSeq) 
+			FROM (SELECT  SMSNO.AUTH_NO_HIST_SEQ AS authNoHistSeq
+							, SMSNO.USR_SEQ AS usrSeq
+							, SMSNO.AUTH_NO AS authNo
+							, SMSNO.USR_MPN_NO AS usrMpnNo
+							, SMSNO.REG_DTTM AS noHistRegDttm
+							, CASE WHEN SMSDET.AUTH_NO_DET_SEQ IS NOT NULL
+								THEN (SELECT COUNT(*) FROM TB_SYS_SMS_AUTH_DET_HIST DET WHERE DET.AUTH_NO_HIST_SEQ = SMSNO.AUTH_NO_HIST_SEQ)
+								ELSE 0
+							END AS smsAuthTryCnt
+					FROM TB_SYS_SMS_AUTH_NO_HIST SMSNO LEFT JOIN TB_SYS_SMS_AUTH_DET_HIST SMSDET ON SMSNO.AUTH_NO_HIST_SEQ = SMSDET.AUTH_NO_HIST_SEQ
+					WHERE 1=1
+			<if test="searchValue != '' and searchValue != null">
+			<if test="searchParameter2 != '' and searchParameter2 != null">
+				<if test="searchParameter2 == 'PHONE'">
+					<!-- AND USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR','USR_MPN_NO',#{searchValue}) -->
+					AND USR_MPN_NO = CAST(AES_DECRYPT(UNHEX(#{searchValue}),'BRC') as CHAR)
+				</if>
+			</if>
+		</if>
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND DATE_FORMAT(SMSNO.REG_DTTM, '%Y-%m-%d')  >= #{searchStartDate }
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND DATE_FORMAT(SMSNO.REG_DTTM, '%Y-%m-%d') <= #{searchEndDate}
+			 ]]>
+		</if>
+			GROUP BY SMSNO.AUTH_NO_HIST_SEQ
+			ORDER BY SMSNO.REG_DTTM DESC) A
+	</select>
+	
+	<!-- SMS 인증 목록 list _20170620 -->
+	<select id="listMobileSmsAuth" parameterType="mobileSmsAuthVO" resultType="mobileSmsAuthVO">
+		SELECT  SMSNO.AUTH_NO_HIST_SEQ AS authNoHistSeq
+				, SMSNO.USR_SEQ AS usrSeq
+				, SMSNO.AUTH_NO AS authNo
+				<!-- , DG_DECRYPT('TB_SYS_SMS_AUTH_NO_HIST','USR_MPN_NO',SMSNO.USR_MPN_NO) AS usrMpnNo -->
+				, CAST(AES_DECRYPT(UNHEX(SMSNO.USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
+				, SMSNO.REG_DTTM AS noHistRegDttm
+				, CASE WHEN SMSDET.AUTH_NO_DET_SEQ IS NOT NULL
+					THEN (SELECT COUNT(*) FROM TB_SYS_SMS_AUTH_DET_HIST DET WHERE DET.AUTH_NO_HIST_SEQ = SMSNO.AUTH_NO_HIST_SEQ)
+					ELSE 0
+				END AS smsAuthTryCnt
+		FROM TB_SYS_SMS_AUTH_NO_HIST SMSNO LEFT JOIN TB_SYS_SMS_AUTH_DET_HIST SMSDET ON SMSNO.AUTH_NO_HIST_SEQ = SMSDET.AUTH_NO_HIST_SEQ
+		WHERE 1=1
+		<if test="searchValue != '' and searchValue != null">
+			<if test="searchParameter2 != '' and searchParameter2 != null">
+				<if test="searchParameter2 == 'PHONE'">
+					<!-- AND SMSNO.USR_MPN_NO = DG_ENCRYPT('TB_SYS_SMS_AUTH_NO_HIST','USR_MPN_NO',#{searchValue}) -->
+					AND SMSNO.USR_MPN_NO = CAST(AES_DECRYPT(UNHEX(#{searchValue}),'BRC') as CHAR)
+				</if>
+			</if>
+		</if>
+			
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND DATE_FORMAT(SMSNO.REG_DTTM, '%Y-%m-%d')  >= DATE_FORMAT(#{searchStartDate }, '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND DATE_FORMAT(SMSNO.REG_DTTM, '%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate}, '%Y-%m-%d')
+			 ]]>
+		</if>
+		GROUP BY SMSNO.AUTH_NO_HIST_SEQ
+		ORDER BY SMSNO.REG_DTTM DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<!-- SMS 인증 목록 list _20170620 -->
+	<select id="listMobileSmsAuthDetail" parameterType="mobileSmsAuthVO" resultType="mobileSmsAuthVO">
+		SELECT DET.AUTH_NO_HIST_SEQ AS authNoHistSeq
+				, DET.INPUT_NO AS inputNo
+				, DET.REG_DTTM AS authDetRegDttm
+		FROM TB_SYS_SMS_AUTH_DET_HIST DET
+		WHERE DET.AUTH_NO_HIST_SEQ = #{authNoHistSeq}
+		ORDER BY DET.REG_DTTM DESC
+	</select>
+	
+	<update id="memberSaveInfo"		parameterType="memberMgmtVO">
+			UPDATE TB_SVC_USR
+			   <!-- SET USR_MPN_NO =  dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{mpn_no}) -->
+			   <!-- SET USR_MPN_NO =  #{mpn_no} -->
+			   SET USR_MPN_NO =  HEX(AES_ENCRYPT(#{mpn_no},'BRC'))
+				 , MAIN_TYPE  =  #{mainType}
+			 WHERE USR_SEQ = #{usr_seq}
+	</update>
+	
+	<update id="memberSaveParentInfo"		parameterType="memberMgmtVO">
+			UPDATE TB_SVC_MB
+			   <!-- SET PARENT_MPN_NO =  dg_encrypt('TB_SVC_MB', 'PARENT_MPN_NO', #{parent_mpn_no}) -->
+			   <!-- SET PARENT_MPN_NO =  #{parent_mpn_no} -->
+			   SET PARENT_MPN_NO =  HEX(AES_ENCRYPT(#{parent_mpn_no},'BRC'))
+			 WHERE USR_SEQ = #{usr_seq}
+	</update>
+	
+	<select id="VoucherCount" parameterType="voucherMgmtVO" resultType="int">
+		SELECT count(*) FROM TB_SVC_VOUCHER
+		WHERE USR_SEQ=#{usr_seq}
+		AND VOUCHER_END_DTTM > NOW()
+	</select>
+	
+	 <update id="expiryVoucher" parameterType="voucherMgmtVO">
+		UPDATE TB_SVC_VOUCHER
+		SET VOUCHER_END_DTTM = NOW()
+		WHERE VOUCHER_SEQ = #{voucher_seq} AND VOUCHER_USE_YN = 'Y'
+	</update>
+	
+	<update id="resetVoucherProc" parameterType="voucherMgmtVO">
+		UPDATE TB_SVC_VOUCHER
+		SET VOUCHER_STR_DTTM =NULL, 
+			VOUCHER_END_DTTM =NULL,
+			VOUCHER_USE_YN='N'
+		WHERE VOUCHER_SEQ = #{voucher_seq}
+	</update>
+	
+	<select id="memberCprListCnt" parameterType="memberMgmtVO"	resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+		(
+				SELECT 
+					USR.USR_SEQ,
+					USR.USR_BIRTH_DATE,
+					USR.SEX_CD,
+					USR.USR_CLS_CD,
+					USR.REG_DTTM,
+					USR.USR_MPN_NO,
+					MB.MB_ID,
+					MB.MB_TEL_NO,
+					CPR.JURIR_NO,
+					CPR.JURIR_FILE,
+					CPR.AUTH_YN,
+					(   
+						SELECT SUM(PENALTY_POINT)
+						FROM spb.TB_SVC_PENALTY E, spb.TB_SVC_PENALTY_CD F
+						WHERE E.PENALTY_CD = F.PENALTY_CD 
+						AND E.USR_SEQ = USR.USR_SEQ
+						AND E.READ_CLS_CD = 'S'
+					) PENALTY_POINT
+				FROM  spb.TB_SVC_USR USR , spb.TB_SVC_MB  MB , spb.TB_SVC_USR_CPR CPR
+				WHERE USR.USR_SEQ = MB.USR_SEQ
+				AND USR.USR_SEQ = CPR.USR_SEQ
+				AND MB.LEAVE_YN = 'N'
+		) A 
+		WHERE 1=1
+
+		<if test="penalty_point != null and penalty_point != ''">
+			 <![CDATA[
+				AND IFNULL(PENALTY_POINT, 0) >= #{penalty_point}
+			 ]]>
+		</if>
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND REG_DTTM <= (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+	   
+		<if test="searchValue != null and searchValue != '' ">
+			<if test="searchParameter != null and searchParameter.equals('ID')">
+				AND MB_ID LIKE  concat( #{searchValue}, '%')
+			</if>
+			<if test="searchParameter != null and searchParameter.equals('PHONE')">
+				<!-- AND USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+				<!-- AND USR_MPN_NO  = #{searchValue} -->
+				AND USR_MPN_NO  = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+			</if>
+		</if>
+	</select>
+	
+	<select id="memberCprList"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+		SELECT
+			A.USR_SEQ,
+			<!-- dg_decrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', USR_BIRTH_DATE) AS USR_BIRTH_DATE , -->
+			<!-- dg_decrypt_date('TB_SVC_USR', 'USR_BIRTH_DATE', USR_BIRTH_DATE) AS USR_BIRTH_DATE , -->
+			CAST(AES_DECRYPT(UNHEX(USR_BIRTH_DATE),'BRC') as CHAR) AS USR_BIRTH_DATE ,
+			SEX_CD,
+			USR_CLS_CD,
+			REG_DTTM,
+			MB_ID,
+			IFNULL(RPAD(substr(MB_ID,1,2),LENGTH(MB_ID),'*') ,'GUEST')  AS mb_id_excel,
+			<!-- dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO) AS MB_TEL_NO , -->
+			<!-- dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO) AS MB_TEL_NO , -->
+			CAST(AES_DECRYPT(UNHEX(MB_TEL_NO),'BRC') as CHAR) AS MB_TEL_NO ,
+			MLANG_COM_CD_NAME,
+			<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) AS USR_MPN_NO , -->
+			<!-- USR_MPN_NO AS USR_MPN_NO , -->
+			CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO ,
+			IFNULL(PENALTY_POINT, 0) PENALTY_POINT,
+			JURIR_NO,
+			JURIR_FILE,
+			AUTH_YN
+		FROM
+		(
+				SELECT 
+					USR.USR_SEQ,
+					USR.USR_BIRTH_DATE,
+					USR.SEX_CD,
+					USR.USR_CLS_CD,
+					USR.REG_DTTM,
+					USR.USR_MPN_NO,
+					MB.MB_ID,
+					MB.MB_TEL_NO,
+					(   
+						SELECT SUM(PENALTY_POINT)
+						FROM spb.TB_SVC_PENALTY E, spb.TB_SVC_PENALTY_CD F
+						WHERE E.PENALTY_CD = F.PENALTY_CD 
+						AND E.USR_SEQ = USR.USR_SEQ
+						AND E.READ_CLS_CD = 'S'
+					) PENALTY_POINT
+				FROM  spb.TB_SVC_USR USR , spb.TB_SVC_MB  MB 
+				WHERE USR.USR_SEQ = MB.USR_SEQ
+				AND MB.LEAVE_YN = 'N'
+		) A 
+		WHERE 1=1
+		<if test="penalty_point != null and penalty_point != ''">
+			 <![CDATA[
+				AND IFNULL(PENALTY_POINT, 0) >= #{penalty_point}
+			 ]]>
+		</if>
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND REG_DTTM <=  (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		
+		<if test="searchValue != null and searchValue != '' ">
+			<if test="searchParameter != null and searchParameter.equals('ID')">
+				AND MB_ID LIKE  concat( #{searchValue}, '%')
+			</if>
+			<if test="searchParameter != null and searchParameter.equals('PHONE')">
+				<!-- AND USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+				<!-- AND USR_MPN_NO = #{searchValue} -->
+				AND USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+			</if>
+		</if>
+			ORDER BY REG_DTTM DESC
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="cprMemberList"	parameterType="memberMgmtVO"	resultType="memberMgmtVO">
+	   SELECT MB.USR_SEQ,
+				MB.MB_ID,
+				<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR.USR_MPN_NO) AS USR_MPN_NO , -->
+				<!-- USR.USR_MPN_NO AS USR_MPN_NO , -->
+				CAST(AES_DECRYPT(UNHEX(USR.USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO ,
+				USR.USR_CLS_CD,
+				USR.REG_DTTM,
+				CPR.JURIR_NO AS jurirNo,
+				CPR.JURIR_FILE AS jurirFile,
+				CPR.AUTH_YN AS authYn
+		FROM spb.TB_SVC_MB MB, spb.TB_SVC_USR USR, spb.TB_SVC_USR_CPR CPR
+		WHERE MB.USR_SEQ = USR.USR_SEQ AND USR.USR_SEQ = CPR.USR_SEQ
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			<![CDATA[
+				AND USR.REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s')
+			]]>
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND USR.REG_DTTM <=  (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+		</if>
+		<if test="searchValue != null and searchValue != '' ">
+			<if test="searchParameter != null and searchParameter.equals('ID')">
+				AND MB.MB_ID LIKE  concat( #{searchValue}, '%')
+			</if>
+			<if test="searchParameter != null and searchParameter.equals('PHONE')">
+				<!-- AND USR.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+				<!-- AND USR.USR_MPN_NO = #{searchValue} -->
+				AND USR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+			</if>
+		</if>
+			ORDER BY REG_DTTM DESC
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="cprMemberListCnt" parameterType="memberMgmtVO"	resultType="int">
+	SELECT COUNT(*)
+	FROM spb.TB_SVC_MB MB, spb.TB_SVC_USR USR, spb.TB_SVC_USR_CPR CPR
+	WHERE MB.USR_SEQ = USR.USR_SEQ AND USR.USR_SEQ = CPR.USR_SEQ
+	<if test="searchStartDate!='' and searchStartDate!=null">
+		<![CDATA[
+			AND USR.REG_DTTM  >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s')
+			]]>
+	</if>
+	<if test="searchEndDate!='' and searchEndDate!=null">
+			 <![CDATA[
+				AND USR.REG_DTTM <=  (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+			 ]]>
+	</if>
+	<if test="searchValue != null and searchValue != '' ">
+		<if test="searchParameter != null and searchParameter.equals('ID')">
+			AND MB.MB_ID LIKE concat( #{searchValue}, '%')
+		</if>
+		<if test="searchParameter != null and searchParameter.equals('PHONE')">
+			<!-- AND USR.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+			<!-- AND USR.USR_MPN_NO = #{searchValue} -->
+			AND USR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+		</if>
+	</if>
+	</select>
+	
+	<update id="memberCprConfirm" parameterType="memberMgmtVO">
+	UPDATE TB_SVC_USR_CPR
+	SET AUTH_YN='Y'
+	WHERE USR_SEQ=#{usr_seq}
+	</update>
+	
+	<select id="fileDownloadList" parameterType="memberMgmtVO" resultType="memberMgmtVO">
+		SELECT SUBSTR(JURIR_FILE,59,1000) AS attachNm , JURIR_FILE AS imgUrl,SUBSTR(JURIR_FILE,59,1000) AS imgName
+		FROM TB_SVC_USR_CPR
+		WHERE USR_SEQ=#{usr_seq}
+	</select>
+	
+	<update id="updatePaymentClsInfo"	parameterType="memberPaymentVO">
+		UPDATE TB_SVC_PAYMENT
+		SET
+			PAYMENT_CLS_CD = #{payment_cls_cd}
+		WHERE 
+			PAYMENT_SEQ = ${payment_seq}
+	</update>
+	
+	<update id="updateVoucherClsInfo"	parameterType="memberPaymentVO">
+		UPDATE TB_SVC_VOUCHER
+		SET
+			PAYMENT_CLS_CD = #{payment_cls_cd}
+		WHERE 
+			PAYMENT_SEQ = ${payment_seq}
+	</update>
+	
+	<select id="getRentType" resultType="MemberPaymentVO">
+		SELECT CD.COM_CD AS rentCd,
+		 	   ML.MLANG_COM_CD_NAME AS rentName
+		FROM TB_SYS_COM_CD CD LEFT JOIN TB_SYS_MLANG_COM_CD ML ON CD.COM_CD = ML.COM_CD
+		WHERE 1=1
+		AND CD.COM_UP_CD = 'RCC'
+		AND ML.LANG_CLS_CD = 'LAG_001'
+		AND CD.USE_YN = 'Y'
+	</select>
+	
+	<update id="updateRentClsInfo"	parameterType="memberPaymentVO">
+		UPDATE TB_SVC_RENT
+		SET
+			RENT_CLS_CD = #{rent_cls_cd}
+		WHERE 
+			RENT_SEQ = ${rent_hist_seq}
+	</update>
+	
+	<update id="updateRentHistClsInfo"	parameterType="memberPaymentVO">
+		UPDATE TB_SVC_RENT_HIST
+		SET
+			RENT_CLS_CD = #{rent_cls_cd}
+		WHERE 
+			RENT_HIST_SEQ = ${rent_hist_seq}
+	</update>
+	
+	<insert id="insertRentCancleInfo"	parameterType="memberPaymentVO">
+		INSERT INTO TB_SVC_RENT_CANCLE
+		( RENT_SEQ, USR_SEQ, RENT_DTTM )
+		SELECT RENT_SEQ, USR_SEQ, RENT_DTTM
+		FROM TB_SVC_RENT
+		WHERE RENT_YN ='N'
+		AND RENT_SEQ = ${rent_seq}
+	</insert>
+	
+	<delete id="deleteRentInfo"	parameterType="memberPaymentVO">
+		DELETE FROM TB_SVC_RENT WHERE RENT_YN='N' AND RENT_SEQ = ${rent_seq}
+	</delete>
+	
+	<update id="updateRackInfo"	parameterType="memberPaymentVO">
+		UPDATE TB_OPR_RACK
+		SET RACK_STUS_CD = 'RAS_003'
+		,TEMP_RESVE_DTTM = null
+		WHERE RACK_ID =  #{rent_rack_id}
+	</update>
+	
+	<insert id="insertMpnPushProc" parameterType="memberMgmtVO">
+	  INSERT INTO TB_SVC_MB_MPN_ASK
+	(USR_SEQ, MB_MPN_NO, MPN_ASK_DTTM, MB_REG_DTTM, MB_REG_YN)
+		<!-- VALUES (#{usr_seq}, dg_encrypt('TB_SVC_USR', 'USR_MPN_NO',#{usr_mpn_no}), NOW(), NOW(), 'N') -->
+		<!-- VALUES (#{usr_seq}, #{usr_mpn_no}, NOW(), NOW(), 'N') -->
+		VALUES (#{usr_seq}, HEX(AES_ENCRYPT(#{usr_mpn_no},'BRC')), NOW(), NOW(), 'N')
+	</insert>
+	<update id="resetMemberPasswordProc"	parameterType="memberMgmtVO">
+		UPDATE TB_SVC_USR
+		   <!-- SET ENC_PWD = dg_encrypt( 'TB_SVC_USR', 'ENC_PWD', '1234' ) -->
+		   <!-- SET ENC_PWD = '1234' -->
+		   SET ENC_PWD = HEX(AES_ENCRYPT('1234','BRC'))
+ 		 WHERE USR_SEQ = #{usr_seq}
+	</update>
+</mapper>

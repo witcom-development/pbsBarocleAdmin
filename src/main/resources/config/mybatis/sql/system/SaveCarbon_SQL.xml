@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.savecarbon.service.SaveCarbonMapper">
+	<!-- IFNULL(MB.MB_ID, (SELECT DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', UR.USR_MPN_NO))) AS mb_id, -->
+	<select id="getSaveCarbonList" parameterType="saveCarbonVO" 	resultType="saveCarbonVO">
+		 <![CDATA[ 
+			 SELECT carbon_seq,
+			 		usr_seq, 
+					mb_id, 
+					usingPurpose, 
+					usingMeans, 
+					reduce_co2, 
+					regDttm
+			   FROM (
+					SELECT SC.CARBON_SEQ AS carbon_seq,
+						   SC.USR_SEQ AS usr_seq,
+						   IFNULL(MB.MB_ID, (SELECT CAST(AES_DECRYPT(UNHEX(UR.USR_MPN_NO),'BRC') as CHAR))) AS mb_id,
+						  (
+							  SELECT CD_DESC1
+								FROM TB_SYS_COM_CD
+							  WHERE COM_UP_CD = 'USP'
+							   and COM_CD = SC.USING_PURPOSE
+						   ) AS usingPurpose,
+						   (
+							  SELECT CD_DESC1
+								FROM TB_SYS_COM_CD
+							  WHERE COM_UP_CD = 'USM'
+							   and COM_CD = SC.USING_MEANS
+						   ) AS usingMeans,
+						   (
+							 SELECT SUM(RH.REDUCE_CO2) 
+							   FROM TB_SVC_RENT_HIST RH
+							  WHERE RH.USR_SEQ =  SC.USR_SEQ
+								AND RH.RENT_DTTM >= SC.STR_DTTM
+								AND RH.RENT_DTTM <= SC.END_DTTM
+							) AS reduce_co2,
+						   SC.REG_DTTM AS regDttm
+							FROM TB_SYS_SAVECARBON SC LEFT JOIN TB_SVC_USR UR ON SC.USR_SEQ = UR.USR_SEQ
+								 LEFT JOIN TB_SVC_MB MB ON SC.USR_SEQ = MB.USR_SEQ
+							WHERE 1=1
+					  ]]>
+					  <if test="searchParameter != '' and searchParameter != null">
+							<if test="searchValue != '' and searchValue != null">
+								<if test="searchParameter == 'ID'">
+									AND MB.MB_ID LIKE CONCAT('%', #{searchValue}, '%')
+								</if>
+								<if test="searchParameter == 'PHONE'">
+									<!-- AND UR.USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+									AND UR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+								</if>
+							</if>
+						</if>
+						<if test="searchStartDate != '' and searchStartDate != null">
+							<![CDATA[
+								AND DATE_FORMAT(SC.REG_DTTM, '%Y-%m-%d') >= #{searchStartDate}
+							]]>
+						</if>
+						<if test="searchEndDate != '' and searchEndDate != null">
+							<![CDATA[
+								AND DATE_FORMAT(SC.REG_DTTM, '%Y-%m-%d') <= #{searchEndDate}
+							]]>
+						</if>
+						 <if test="goalCd != '' and goalCd != null">
+							<![CDATA[
+								AND SC.USING_PURPOSE = #{goalCd}
+							]]>
+						</if>
+						<if test="meansCd != '' and meansCd != null">
+							<![CDATA[
+								AND SC.USING_MEANS = #{meansCd}
+							]]>
+						</if>
+				 )A
+				 GROUP BY carbon_seq,usr_seq, mb_id, usingPurpose, usingMeans, regDttm
+				 ORDER BY regDttm DESC
+					   LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="getSaveCarbonListCnt" parameterType="saveCarbonVO" 	resultType="int">
+	<!-- IFNULL(MB.MB_ID, (SELECT DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', UR.USR_MPN_NO))) AS mb_id, -->
+		<![CDATA[ 
+				SELECT COUNT(*) AS CNT
+				 FROM (
+						 SELECT carbon_seq,
+						 		usr_seq, 
+								mb_id, 
+								usingPurpose, 
+								usingMeans, 
+								regDttm
+						   FROM (
+								SELECT SC.CARBON_SEQ AS carbon_seq,
+						   			   SC.USR_SEQ AS usr_seq,
+									   IFNULL(MB.MB_ID, (SELECT CAST(AES_DECRYPT(UNHEX(UR.USR_MPN_NO),'BRC') as CHAR))) AS mb_id,
+									  (
+										  SELECT CD_DESC1
+											FROM TB_SYS_COM_CD
+										  WHERE COM_UP_CD = 'USP'
+										   and COM_CD = SC.USING_PURPOSE
+									   ) AS usingPurpose,
+									   (
+										  SELECT CD_DESC1
+											FROM TB_SYS_COM_CD
+										  WHERE COM_UP_CD = 'USM'
+										   and COM_CD = SC.USING_MEANS
+									   ) AS usingMeans,
+									   SC.REG_DTTM AS regDttm
+										FROM TB_SYS_SAVECARBON SC LEFT JOIN TB_SVC_USR UR ON SC.USR_SEQ = UR.USR_SEQ
+											 LEFT JOIN TB_SVC_MB MB ON SC.USR_SEQ = MB.USR_SEQ
+										WHERE 1=1
+								  ]]>
+								  <if test="searchParameter != '' and searchParameter != null">
+										<if test="searchValue != '' and searchValue != null">
+											<if test="searchParameter == 'ID'">
+												AND MB.MB_ID LIKE CONCAT('%', #{searchValue}, '%')
+											</if>
+											<if test="searchParameter == 'PHONE'">
+												<!-- AND UR.USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+												AND UR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+											</if>
+										</if>
+									</if>
+									<if test="searchStartDate != '' and searchStartDate != null">
+										<![CDATA[
+											AND DATE_FORMAT(SC.REG_DTTM, '%Y-%m-%d') >= #{searchStartDate}
+										]]>
+									</if>
+									<if test="searchEndDate != '' and searchEndDate != null">
+										<![CDATA[
+											AND DATE_FORMAT(SC.REG_DTTM, '%Y-%m-%d') <= #{searchEndDate}
+										]]>
+									</if>
+									 <if test="goalCd != '' and goalCd != null">
+										<![CDATA[
+											AND SC.USING_PURPOSE = #{goalCd}
+										]]>
+									</if>
+									<if test="meansCd != '' and meansCd != null">
+										<![CDATA[
+											AND SC.USING_MEANS = #{meansCd}
+										]]>
+									</if>
+							 )A
+							 GROUP BY carbon_seq,usr_seq, mb_id, usingPurpose, usingMeans, regDttm
+					)A		 
+	</select>
+	
+	<select id="getTotalSaveCarbon" parameterType="saveCarbonVO" 	resultType="String">
+		<![CDATA[ 
+			 SELECT SUM(reduce_co2)
+			   FROM (
+					SELECT 
+						   (
+							 SELECT SUM(RH.REDUCE_CO2) 
+							   FROM TB_SVC_RENT_HIST RH
+							  WHERE RH.USR_SEQ =  SC.USR_SEQ
+								AND RH.RENT_DTTM >= SC.STR_DTTM
+								AND RH.RENT_DTTM <= SC.END_DTTM
+							) AS reduce_co2
+							FROM TB_SYS_SAVECARBON SC LEFT JOIN TB_SVC_USR UR ON SC.USR_SEQ = UR.USR_SEQ
+								 LEFT JOIN TB_SVC_MB MB ON SC.USR_SEQ = MB.USR_SEQ
+							WHERE 1=1
+					  ]]>
+					  <if test="searchParameter != '' and searchParameter != null">
+							<if test="searchValue != '' and searchValue != null">
+								<if test="searchParameter == 'ID'">
+									AND MB.MB_ID LIKE CONCAT('%', #{searchValue}, '%')
+								</if>
+								<if test="searchParameter == 'PHONE'">
+									<!-- AND UR.USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchValue}) -->
+									AND UR.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchValue},'BRC'))
+								</if>
+							</if>
+						</if>
+						<if test="searchStartDate != '' and searchStartDate != null">
+							<![CDATA[
+								AND DATE_FORMAT(SC.REG_DTTM, '%Y-%m-%d') >= #{searchStartDate}
+							]]>
+						</if>
+						<if test="searchEndDate != '' and searchEndDate != null">
+							<![CDATA[
+								AND DATE_FORMAT(SC.REG_DTTM, '%Y-%m-%d') <= #{searchEndDate}
+							]]>
+						</if>
+						 <if test="goalCd != '' and goalCd != null">
+							<![CDATA[
+								AND SC.USING_PURPOSE = #{goalCd}
+							]]>
+						</if>
+						<if test="meansCd != '' and meansCd != null">
+							<![CDATA[
+								AND SC.USING_MEANS = #{meansCd}
+							]]>
+						</if>
+				 )A
+	</select>
+	
+	<select id="getGoalList" resultType="saveCarbonVO">
+		<![CDATA[
+			SELECT COM_CD AS goalCd
+				 , CD_DESC1 AS goalNm
+			  FROM TB_SYS_COM_CD
+			WHERE COM_UP_CD = 'USP'
+		]]>
+	</select>
+	
+	<select id="getMeansList" resultType="saveCarbonVO">
+		<![CDATA[
+			SELECT COM_CD AS meansCd
+				 , CD_DESC1 AS meansNm
+			  FROM TB_SYS_COM_CD
+			WHERE COM_UP_CD = 'USM'
+		]]>
+	</select>
+
+</mapper>
+

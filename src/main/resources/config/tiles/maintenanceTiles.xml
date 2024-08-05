@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+<!--실시간 현황	-->
+
+<tiles-definitions>
+
+	<definition name="maintenanceTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 대여소 현황 -->
+	 <definition name="/admin/maintenance/check/bike/che_bike_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/check/bike/che_bike_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	 <definition name="/admin/maintenance/check/lock/che_std_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/check/lock/che_std_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/inspect/ap/che_ap_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/inspect/ap/che_ap_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/inspect/bike/che_bike_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/inspect/bike/che_bike_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/inspect/bike/che_bik_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/inspect/bike/che_bik_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/inspect/lock/che_std_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/inspect/lock/che_std_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	<definition name="/admin/maintenance/inspect/station/che_sta_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/inspect/station/che_sta_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	<definition name="/admin/maintenance/relocation/target/loc_need_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/target/loc_need_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/relocation/result/loc_state_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_state_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/relocation/result/loc_state_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_state_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/relocation/result/loc_state_bike" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_state_bike.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 2021 07 13 대여소 재배치 실적 -->
+	<definition name="/admin/maintenance/relocation/result/loc_state_station" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_state_station.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>	
+	<!--  20211130 대여소 등급별 실적 조회 -->
+	<definition name="/admin/maintenance/relocation/result/loc_state_stationMap" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_state_stationMap.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition> 
+	
+	<definition name="/admin/maintenance/relocation/result/loc_state_stationMap_excel" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_state_stationMap_excel.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition> 
+	
+	<definition name="/admin/maintenance/repair/ap/rep_ap_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/ap/rep_ap_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/ap/rep_ap_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/ap/rep_ap_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/bike/rep_bik_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/bike/rep_bik_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	<!-- 2019.03.14 바로클포 -->
+	<definition name="/admin/maintenance/repair/bike/rep_bik_mall_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/bike/rep_bik_mall_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	<!-- 2019.03.14 바로클포 -->
+	<definition name="/admin/maintenance/repair/bike/rep_bik_mall_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/bike/rep_bik_mall_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	
+	<definition name="/admin/maintenance/repair/bike/rep_bik_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/bike/rep_bik_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	<!-- 2022.01.14 분배용 고장등록 -->
+	<definition name="/admin/maintenance/repair/bike/rep_bik_detailBunBae" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/bike/rep_bik_detailBunBae.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	<definition name="/admin/maintenance/repair/lock/rep_std_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/lock/rep_std_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/lock/rep_std_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/lock/rep_std_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/lock/rep_division" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/lock/rep_division.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/lock/rep_division_udt" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/lock/rep_division_udt.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/lock/rep_division_add" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/lock/rep_division_add.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/division/rep_division" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/division/rep_division.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/division/rep_division_udt" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/division/rep_division_udt.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/division/rep_division_add" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/division/rep_division_add.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!--재고,구매 -->
+	<definition name="/admin/maintenance/stock/invent/inv_sta_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/stock/invent/inv_sta_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/stock/invent/inv_sta_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/stock/invent/inv_sta_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/stock/buy/inv_buy_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/stock/buy/inv_buy_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/stock/buy/inv_buy_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/stock/buy/inv_buy_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/rob/rob_rpt_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/rob/rob_rpt_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 장애 AP 등록 -->
+	<definition name="/admin/maintenance/inspect/ap/che_ap_reg" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/inspect/ap/che_ap_reg.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 분배일지 목록 -->
+	<definition name="/admin/maintenance/distMgmt/distributionDiary/dist_diary_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_diary_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 분배일지 상세 -->
+	<definition name="/admin/maintenance/distMgmt/distributionDiary/dist_diary_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_diary_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 분배관리 차량조회 -->
+	<definition name="/admin/maintenance/distMgmt/vcleMgmt/vcle_mgmt_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/vcleMgmt/vcle_mgmt_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 배송원 그누실적 20210723 -->
+	<definition name="/admin/maintenance/distMgmt/distributionDiary/dist_sta_mem_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_sta_mem_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 배송원 근태 목록 20210723 -->
+	<definition name="/admin/maintenance/distMgmt/distributionDiary/dist_work_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_work_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 배송원 센터  목록 20210727 -->
+	<definition name="/admin/maintenance/distMgmt/distributionDiary/center_status_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/center_status_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+ 
+ 	 <!-- 공동 근무  목록 20210903 -->
+	 <definition name="/admin/maintenance/distMgmt/distributionDiary/dist_diary_cowork" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_diary_cowork.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	 <definition name="/admin/maintenance/distMgmt/distributionDiary/dist_diary_cowork_modify" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_diary_cowork_modify.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 회수작업 목록 20210903 -->
+	 <definition name="/admin/maintenance/distMgmt/distributionDiary/dist_action_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/dist_action_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	
+	<definition name="/admin/maintenance/repair/beacon/rep_beacon_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/beacon/rep_beacon_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/beacon/rep_beacon_detail" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/repair/beacon/rep_beacon_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/repair/beacon/round_station_rep_popup" extends="maintenanceTemplate" template="/WEB-INF/views/admin/login/round/round_station_rep_popup.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	
+	<!-- 2021.12.22 빅데이터 재배치 -->
+	<definition name="/admin/maintenance/relocation/result/loc_work_order" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_work_order.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/maintenance/relocation/result/loc_work_map" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/relocation/result/loc_work_map.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	
+	<!-- 순회정비원 근태 목록 20220106 -->
+	<definition name="/admin/maintenance/distMgmt/distributionDiary/round_work_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/distributionDiary/round_work_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 순회정비원 차량조회 -->
+	<definition name="/admin/maintenance/distMgmt/vcleMgmt/round_mgmt_list" extends="maintenanceTemplate" template="/WEB-INF/views/admin/maintenance/distMgmt/vcleMgmt/round_mgmt_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+</tiles-definitions>

@@ -1,0 +1,864 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.stationmgmt.service.StationMgmtMapper">
+
+	<select id="getStationList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	 SELECT STATION_ID, STATION_NO, STATION_GRP_SEQ, STATION_CLS_CD, MOD_DTTM, DEVICE_ID, STATION_USE_YN, STATION_SE_CD,
+			MOD_ID, LANG_CLS_CD, STATION_NAME, LOCATE_CLS_CD, LOCATE_ID, STATION_GRP_NAME, STATION_CLS_CD_NAME, MEMO, REASON
+		FROM
+		(
+		SELECT STATION_ID
+			 , STATION_NO
+			 , STATION_GRP_SEQ
+			 , STATION_CLS_CD
+			 , MOD_DTTM
+			 , IFNULL(DEVICE_ID, '') DEVICE_ID
+			 , STATION_USE_YN
+			 , STATION_SE_CD
+			 , MOD_ID
+			 , LANG_CLS_CD
+			 , STATION_NAME
+			 , LOCATE_CLS_CD
+			 , LOCATE_ID
+			 , STATION_GRP_NAME
+			 , MEMO
+			 , REASON
+			 , (
+					SELECT 
+						MLANG_COM_CD_NAME 
+						FROM TB_SYS_MLANG_COM_CD 
+						WHERE COM_CD = STATION_CLS_CD 
+						AND LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang})
+				) STATION_CLS_CD_NAME
+
+		from 
+		(
+		  SELECT A.STATION_ID,
+				 A.STATION_NO,
+				 A.STATION_GRP_SEQ,
+				 A.STATION_CLS_CD,
+				 A.STATION_SE_CD,
+				 A.MOD_DTTM,
+				 A.MOD_ID,
+				 A.STATION_USE_YN,
+				 B.LANG_CLS_CD,
+				 B.STATION_NAME,
+				 C.STATION_GRP_NAME,
+				 IFNULL(A.MEMO,'0') AS MEMO,
+				 A.REASON
+		  	FROM TB_OPR_STATION A
+		  	   , TB_OPR_MLANG_STATION B
+		  	   , TB_OPR_MLANG_STATION_GRP C
+		  	WHERE A.STATION_ID = B.STATION_ID
+		  	AND A.STATION_GRP_SEQ = C.STATION_GRP_SEQ
+		  	<if test="lang != null and lang != ''">
+		  		AND B.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang})
+		  	</if>
+		  	<if test="lang != null and lang != ''">
+		  		AND C.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang})
+		  	</if>
+		  	<if test="search_gubun != null and search_gubun != ''">
+		  		AND A.STATION_CLS_CD = #{search_gubun }
+		  	</if>
+		  	<if test="searchStartDate != null and searchStartDate != ''">
+		  		<![CDATA[
+		  			AND  MOD_DTTM >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+		  		]]>
+		  	</if>
+		  	<if test="searchEndDate != null and searchEndDate != ''">
+		  		<![CDATA[
+		  			AND  MOD_DTTM <= STR_TO_DATE(#{searchEndDate } , '%Y-%m-%d') +1
+		  		]]>
+		  	</if>
+		  	<if test="search_grp != null and search_grp != ''">
+		  		AND A.STATION_GRP_SEQ = #{search_grp}
+		  	</if>
+		  	<if test="search_name != null and search_name != ''">
+		  		AND A.STATION_ID = #{search_name}
+		  	</if>
+		  	<if test="station_no != null and station_no != ''">
+		  		AND A.STATION_NO = LPAD(  #{station_no} , 5, '0') 
+		  	</if>
+		  	<if test="useYN != null and useYN != ''">
+		  		<if test="searchUse.equals('station_use_yn')">
+		  			and STATION_USE_YN  = #{useYN}
+		  		</if>
+		  	</if>
+		  	<if test="station_se_cd != null and station_se_cd != ''">
+		  		AND A.STATION_SE_CD = #{station_se_cd}
+		  	</if>
+		) a 
+		left outer join TB_IOT_AP_LOCATE_INFO b
+		   			 on a.STATION_ID  = b.LOCATE_ID
+					and b.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		) A
+			<if test="searchUse != null and searchUse.equals('station_ap_yn')">
+				<if test='useYN != null and useYN.equals("Y")'>
+					WHERE DEVICE_ID != ''
+				</if>
+				<if test='useYN != null and useYN.equals("N")'>
+					WHERE DEVICE_ID = ''
+				</if>
+			</if>
+		ORDER BY 
+		<if test="orderColumn != null and orderType != null">
+				<if test='orderColumn.equals("G")'>
+					STATION_GRP_SEQ ${orderType}
+				</if>
+				<if test='orderColumn.equals("S")'>
+					STATION_NO ${orderType}
+				</if>
+			</if>
+		<if test="orderColumn == null or orderColumn == '' or orderType == null or orderType == ''">	
+		MOD_DTTM DESC
+		</if>
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getStationGrpRemoteReturnList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	SELECT /** 대리반납정거장 목록 조회 */
+	       _RETURN.REMOTE_RETURN_SEQ
+	     , _RETURN.STATION_GRP_SEQ
+	     , _RETURN.REMOTE_LATITUDE
+	     , _RETURN.REMOTE_LOGITUDE
+	     , _RETURN.REMOTE_USE_YN
+	     , _RETURN.REMOTE_STATION_NAME
+	     , STATION_GRP_NAME 
+	  FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
+	     , TB_OPR_MLANG_STATION_GRP GRP 
+	 WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
+	   AND GRP.LANG_CLS_CD = 'LAG_001'
+<!-- 		<if test="lang != null and lang != ''"> -->
+<!-- 			AND GRP.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang}) -->
+<!-- 		</if> -->
+		<if test="remote_station_name != null and remote_station_name != ''">
+			AND _RETURN.REMOTE_STATION_NAME = #{remote_station_name}
+		</if>
+		<if test="reg_id != null and reg_id != ''">
+			AND _RETURN.REG_ID = #{reg_id}
+		</if>
+		<if test="useYN != null and useYN != ''">
+			<if test="searchUse.equals('remote_use_yn')">
+				AND _RETURN.REMOTE_USE_YN  = #{useYN}
+			</if>
+		</if>
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getStationGrpRemoteReturnList1" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	SELECT /** 대리반납정거장 목록 조회 */
+	       _RETURN.STATION_GRP_SEQ
+	     , _RETURN.REMOTE_LATITUDE
+	     , _RETURN.REMOTE_LOGITUDE
+	     , _RETURN.REMOTE_USE_YN
+	     , _RETURN.REMOTE_STATION_NAME
+	     , STATION_GRP_NAME 
+	  FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
+	     , TB_OPR_MLANG_STATION_GRP GRP 
+	 WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
+	   AND GRP.LANG_CLS_CD = 'LAG_001'
+	   AND _RETURN.STATION_GRP_SEQ = #{station_grp_seq}
+	</select>
+	
+	<select id="getStationListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
+	
+		SELECT
+			count(*)
+		FROM
+		(
+		SELECT 
+			STATION_ID 
+		from 
+		(
+			SELECT 
+				A.STATION_ID,
+				A.STATION_NO,
+				A.STATION_GRP_SEQ,
+				A.STATION_CLS_CD,
+				A.MOD_DTTM,
+				A.MOD_ID,
+				A.STATION_USE_YN,
+				B.LANG_CLS_CD,
+				B.STATION_NAME,
+				C.STATION_GRP_NAME
+		   FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B, TB_OPR_MLANG_STATION_GRP C
+		  WHERE A.STATION_ID = B.STATION_ID
+			AND A.STATION_GRP_SEQ = C.STATION_GRP_SEQ
+			<if test="lang != null and lang != ''">
+				AND B.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang})
+			</if>
+			<if test="lang != null and lang != ''">
+				AND C.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang})
+			</if>
+			<if test="searchStartDate != null and searchStartDate != ''">
+				<![CDATA[
+					AND  MOD_DTTM >= STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d')
+				]]>
+			</if>
+			<if test="searchEndDate != null and searchEndDate != ''">
+				<![CDATA[
+					AND  MOD_DTTM <= STR_TO_DATE(#{searchEndDate } , '%Y-%m-%d') +1
+				]]>
+			</if>
+			<if test="search_gubun != null and search_gubun != ''">
+				AND A.STATION_CLS_CD = #{search_gubun }
+			</if>
+			<if test="search_grp != null and search_grp != ''">
+				AND A.STATION_GRP_SEQ = #{search_grp}
+			</if>
+			<if test="search_name != null and search_name != ''">
+				AND A.STATION_ID = #{search_name}
+			</if>
+			<if test="station_no != null and station_no != ''">
+				AND A.STATION_NO = #{station_no}
+			</if>
+			<if test="useYN != null and useYN != ''">
+				<if test="searchUse.equals('station_use_yn')">
+					and STATION_USE_YN  = #{useYN}
+				</if>
+			</if>
+			<if test="station_se_cd != null and station_se_cd != ''">
+				AND A.STATION_SE_CD = #{station_se_cd}
+			</if>
+		) a 
+		left outer join TB_IOT_AP_LOCATE_INFO b
+					 on a.STATION_ID  = b.LOCATE_ID
+					and b.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		) A
+			<if test="searchUse != null and searchUse.equals('station_ap_yn')">
+				<if test='useYN != null and useYN.equals("Y")'>
+					WHERE DEVICE_ID != ''
+				</if>
+				<if test='useYN != null and useYN.equals("N")'>
+					WHERE DEVICE_ID = ''
+				</if>
+			</if>
+		
+		
+	</select>
+
+	<select id="getStationGrpRemoteReturnListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
+	SELECT /** 대리반납정거장 목록 건수 조회 */
+	       count(*) 
+	  FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
+	     , TB_OPR_MLANG_STATION_GRP GRP 
+	 WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
+	   AND GRP.LANG_CLS_CD = 'LAG_001'
+<!-- 		<if test="lang != null and lang != ''"> -->
+<!-- 			AND GRP.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang}) -->
+<!-- 		</if> -->
+		<if test="remote_station_name != null and remote_station_name != ''">
+			AND _RETURN.REMOTE_STATION_NAME = #{remote_station_name}
+		</if>
+		<if test="reg_id != null and reg_id != ''">
+			AND _RETURN.REG_ID = #{reg_id}
+		</if>
+		<if test="useYN != null and useYN != ''">
+			<if test="searchUse.equals('remote_use_yn')">
+				AND _RETURN.REMOTE_USE_YN  = #{useYN}
+			</if>
+		</if>
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getStationInfo"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	
+		SELECT 
+			  A.STATION_ID
+			, A.STATION_NO
+			, A.STATION_GRP_SEQ
+			, A.STATION_CLS_CD
+			, A.STATION_POST_NO
+			, A.STATION_ADDR1
+			, A.STATION_ADDR2
+			, A.STATION_USE_YN
+			, A.STATION_LATITUDE
+			, A.STATION_LONGITUDE
+			, A.STATION_IMG_FILE_NAME
+			, A.MEMO
+			, A.DSTNC_LT
+			, A.REASON
+<!-- 			<if test=' unuse_str_dttm == null and unuse_end_dttm == "" '>
+				,( 	SELECT DATE_FORMAT(B.UNUSE_STR_DTTM, '%Y-%m-%d') 
+				  	  FROM TB_OPR_STATION_HIST B 
+					 WHERE A.STATION_USE_YN='T' 
+				   	   AND A.STATION_USE_YN = B.STATION_USE_YN 
+				   	   AND A.STATION_ID = B.STATION_ID 
+				   	   AND B.STATION_ID = #{station_id}
+			  	  ORDER BY B.REG_DTTM DESC 
+				 	 LIMIT 1
+				 ) AS UNUSE_STR_DTTM
+				,( 	SELECT DATE_FORMAT(C.UNUSE_END_DTTM, '%Y-%m-%d') 
+				  	  FROM TB_OPR_STATION_HIST C 
+					 WHERE A.STATION_USE_YN='T' 
+					   AND A.STATION_USE_YN = C.STATION_USE_YN 
+				  	   AND A.STATION_ID = C.STATION_ID 
+					   AND C.STATION_ID = #{station_id}
+			  	  ORDER BY C.REG_DTTM DESC 
+				 	 LIMIT 1
+				 ) AS UNUSE_END_DTTM 
+			</if>
+			<if test =' unuse_str_dttm != null and unuse_str_dttm != "" '> -->
+			, DATE_FORMAT(A.UNUSE_STR_DTTM, '%Y-%m-%d') AS UNUSE_STR_DTTM
+			, DATE_FORMAT(A.UNUSE_END_DTTM, '%Y-%m-%d') AS UNUSE_END_DTTM
+<!-- 			</if> -->
+			, A.TEAM_SEQ
+			, A.STATION_SE_CD
+		 FROM TB_OPR_STATION A
+		WHERE A.STATION_ID = #{station_id}
+		
+	</select>
+	
+	<select id="getStationGrpRemoteReturnInfo" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		SELECT /** 대리반납정거장 정보 상세 */
+			   A.REMOTE_RETURN_SEQ
+			 , A.STATION_GRP_SEQ
+			 , B.STATION_GRP_NAME
+			 , A.REMOTE_LATITUDE
+			 , A.REMOTE_LOGITUDE
+			 , A.REMOTE_USE_YN
+			 , A.REMOTE_STATION_NAME
+			 , A.REG_DTTM
+			 , A.REG_ID
+		  FROM TB_OPR_STATION_GRP_REMOTE_RETURN A
+		     , TB_OPR_MLANG_STATION_GRP B
+		 WHERE 1=1
+		   AND A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+		   AND B.LANG_CLS_CD = 'LAG_001'
+		   AND A.REMOTE_RETURN_SEQ = #{remote_return_seq}
+	</select>
+	
+	<select id="getStationNameInfo" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		SELECT STATION_ID
+			 , LANG_CLS_CD
+			 , STATION_NAME
+		  FROM TB_OPR_MLANG_STATION
+		 WHERE STATION_ID = #{station_id}
+	</select>
+	
+	<select id="getStationRockCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="string">
+		SELECT count(*) 
+		  FROM TB_OPR_RACK_LOCATE_INFO 
+		 WHERE LOCATE_ID = #{station_id }
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		   AND STATION_EQUIP_ORD NOT IN ( 0, 99 )
+	</select>
+	
+	<select id="getStationDeviceID"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="string">
+	
+		SELECT DEVICE_ID 
+		  FROM TB_IOT_AP_LOCATE_INFO
+		 WHERE LOCATE_ID = #{station_id }
+		   and LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s') 
+		 limit 1
+	</select>
+	
+	<select id="getCenterId"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="string">
+	
+		SELECT MAX(CENTER_ID) CENTER_ID 
+		  FROM TB_OPR_CENTER
+		 WHERE CENTER_CLS_CD = 'CEN_001'
+	</select>
+	
+
+	<select id="stationNumberCheck"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"	resultType="int">
+		SELECT COUNT(*)
+		  FROM TB_OPR_STATION
+		 WHERE STATION_NO = #{station_no }
+	</select>
+	
+	<select id="stationDuplNameCheck"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"	resultType="int">
+		SELECT COUNT(*)
+		  FROM TB_OPR_MLANG_STATION
+		 WHERE STATION_NAME = #{station_name}
+		   AND LANG_CLS_CD = 'LAG_001' 
+	</select>
+	
+	
+	<select id="getStationNo"	resultType="int">
+		<![CDATA[
+			SELECT MAX(CONVERT(ifnull(substring(station_id,4), 0), UNSIGNED) )+1 
+			  FROM TB_OPR_STATION
+		]]>
+	</select>
+	
+	<select id="getStationGrpRemoteReturnNo" resultType="int">
+		<![CDATA[
+			SELECT MAX(CONVERT(ifnull(REMOTE_RETURN_SEQ, 0), UNSIGNED) )+1 
+			  FROM TB_OPR_STATION_GRP_REMOTE_RETURN
+		]]>
+	</select>
+	
+	<select id="getGroupStationList"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	
+		SELECT A.STATION_ID,
+			   A.STATION_NO,
+			   A.STATION_GRP_SEQ,
+			   B.STATION_NAME
+		  FROM TB_OPR_STATION A
+			 , TB_OPR_MLANG_STATION B
+		 WHERE A.STATION_ID = B.STATION_ID
+		   AND A.STATION_GRP_SEQ = #{station_grp_seq}
+		   AND A.STATION_USE_YN = 'Y'
+		   AND B.LANG_CLS_CD = (SELECT COM_CD  FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang})
+	
+	</select>
+	
+	<select id="getApList"	resultType="apVo">
+		SELECT DEVICE_ID deviceId 
+		  FROM TB_IOT_AP_LOCATE_INFO
+		 WHERE LOCATE_CLS_CD = 'C'
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+	
+	</select>
+	
+	<insert id="insertStation"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT /** 정거장 정보 등록 */
+		  INTO TB_OPR_STATION
+		(STATION_ID , STATION_NO, STATION_GRP_SEQ, STATION_CLS_CD, STATION_POST_NO, STATION_ADDR1, STATION_ADDR2, STATION_USE_YN,
+			STATION_LATITUDE, STATION_LONGITUDE,  REG_ID, STATION_IMG_FILE_NAME, MOD_ID, MEMO, TEAM_SEQ, DSTNC_LT, STATION_SE_CD)
+		VALUES
+		(#{station_id} , #{station_no}, #{station_grp_seq}, #{station_cls_cd}, #{station_post_no}, #{station_addr1}, #{station_addr2}, #{station_use_yn},
+			#{station_latitude}, #{station_longitude},  #{user} ,#{station_img_file_name}, #{user}, #{memo}, #{team_seq},#{dstnc_lt}, #{station_se_cd})
+	</insert>
+	
+	<insert id="insertStationGrpRemoteReturn" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT /** 대리반납정거장 정보 등록 */
+		  INTO TB_OPR_STATION_GRP_REMOTE_RETURN(
+		       REMOTE_RETURN_SEQ
+		     , STATION_GRP_SEQ
+		     , REMOTE_LATITUDE
+		     , REMOTE_LOGITUDE
+		     , REMOTE_USE_YN
+		     , REMOTE_STATION_NAME
+		     , REG_DTTM
+		     , REG_ID
+		     , MOD_DTTM
+		     , MOD_ID
+		     ) VALUES (
+		       #{remote_return_seq}
+		     , #{station_grp_seq}
+		     , #{remote_latitude}
+		     , #{remote_logitude}
+		     , #{remote_use_yn}
+		     , #{remote_station_name}
+		     , SYSDATE()
+		     , #{reg_id}
+		     , SYSDATE()
+		     , #{mod_id}
+		     )
+	</insert>
+	
+	<insert id="insertStationName"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT INTO TB_OPR_MLANG_STATION
+		(STATION_ID, LANG_CLS_CD, STATION_NAME )
+		VALUES
+		(#{station_id}, #{lang_cls_cd}, #{station_name} )
+	</insert>
+	
+	<update id="updateApHist" parameterType="com.dkitec.barocle.admin.manage.deviceMgmt.ap.vo.ApVO">
+	   UPDATE TB_IOT_AP_LOCATE_INFO
+		SET   LOCATE_END_DTTM = SYSDATE()
+			 ,LOCATE_END_ADMIN_ID = #{adminId}
+		WHERE DEVICE_ID = #{deviceId}
+		  AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+	</update>
+	
+	<update id="updateStation" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	 UPDATE /** 정거장 정보 수정 */
+	        TB_OPR_STATION 
+		SET STATION_GRP_SEQ = #{station_grp_seq},
+			STATION_NO = #{station_no},
+			STATION_CLS_CD = #{station_cls_cd},
+			STATION_POST_NO = #{station_post_no},
+			STATION_ADDR1 = #{station_addr1},
+			STATION_ADDR2 = #{station_addr2},
+			STATION_USE_YN = #{station_use_yn},
+			MEMO = #{memo},
+			STATION_LATITUDE = #{station_latitude },
+			STATION_LONGITUDE = #{station_longitude },
+			MOD_DTTM = SYSDATE(),
+			MOD_ID = #{user},
+			STATION_IMG_FILE_NAME = #{station_img_file_name},
+			TEAM_SEQ = #{team_seq},
+			DSTNC_LT = #{dstnc_lt},
+			STATION_SE_CD = #{station_se_cd}
+			<if test=' station_use_yn == "T" or station_use_yn == "S"'>
+				, REASON = #{reason}
+				, UNUSE_STR_DTTM = #{unuse_str_dttm}
+				, UNUSE_END_DTTM = #{unuse_end_dttm}
+			</if>
+			<!-- 20210118 대여소 사용일경우 초기화 -->
+			<if test=' station_use_yn == "Y"'>
+				, REASON 		 = ''
+				, UNUSE_STR_DTTM = '0000-00-00 00:00:00'
+				, UNUSE_END_DTTM = '0000-00-00 00:00:00'
+			</if>
+	  WHERE STATION_ID = #{station_id}
+	</update>
+
+	<update id="updateStationGrpRemoteReturn" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	 UPDATE /** 대리반납정거장 정보 수정 */
+	        TB_OPR_STATION_GRP_REMOTE_RETURN 
+		SET STATION_GRP_SEQ = #{station_grp_seq}
+		  , REMOTE_LATITUDE = #{remote_latitude}
+		  , REMOTE_LOGITUDE = #{remote_logitude}
+		  , REMOTE_USE_YN = #{remote_use_yn}
+		  , REMOTE_STATION_NAME = #{remote_station_name}
+		  , MOD_DTTM = SYSDATE()
+		  , MOD_ID = #{user}
+	  WHERE REMOTE_RETURN_SEQ = #{remote_return_seq}
+	</update>
+	
+	<update id="updateStationGrpRemoteReturnName"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	 UPDATE /** 대리반납정거장 정보 수정 */
+	        TB_OPR_STATION_GRP_REMOTE_RETURN
+		SET REMOTE_STATION_NAME = #{remote_station_name}
+		  , REMOTE_LATITUDE = #{remote_latitude}
+		  , REMOTE_LOGITUDE = #{remote_logitude}
+		  , REMOTE_USE_YN = #{remote_use_yn}
+		  , MOD_ID = #{remote_use_yn}
+		  , MOD_DTTM = #{remote_use_yn}
+	  WHERE 1=1
+	    and STATION_GRP_SEQ = #{station_grp_seq}
+		<!-- and LANG_CLS_CD = #{lang_cls_cd} -->
+	</update>
+	
+	<select id="groupStationList"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"	resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	
+		select B.STATION_NAME, A.STATION_ID
+		  FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+		 WHERE A.STATION_ID = B.STATION_ID
+		   AND A.STATION_GRP_SEQ = #{station_grp_seq }
+		<if test="station_use_yn != null and station_use_yn != ''">
+		   AND A.STATION_USE_YN = 'Y'
+		   AND STATION_CLS_CD = 'STG_002'
+		</if>
+		   AND B.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang} )
+	
+	</select>
+	
+	<delete id="deleteStation" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		DELETE /** 정거장 정보 삭제 */
+		  FROM TB_OPR_STATION
+		 WHERE 1=1
+		   AND STATION_ID = #{station_id}
+	</delete>
+	
+	<delete id="deleteStationGrpRemoteReturn" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		DELETE /** 대리반납정거장 정보 삭제 */
+		  FROM TB_OPR_STATION_GRP_REMOTE_RETURN
+		 WHERE 1=1
+		   AND REMOTE_RETURN_SEQ = #{remote_return_seq}
+	</delete>
+	
+	<delete id="deleteStationName"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		DELETE FROM TB_OPR_MLANG_STATION
+		WHERE STATION_ID = #{station_id}
+	</delete>
+	
+	<insert id="insertStationHist"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT INTO TB_OPR_STATION_HIST
+		(STATION_ID , STATION_USE_YN , REG_DTTM , REG_ID , UNUSE_STR_DTTM , UNUSE_END_DTTM )
+		VALUES
+		(#{station_id} , #{station_use_yn}, NOW(), #{user} 
+		<if test='unuse_str_dttm != null and unuse_str_dttm != "0000-00-00 00:00:00" and station_use_yn =="T"'>
+			, CONCAT(#{unuse_str_dttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+		</if>
+		<if test='unuse_str_dttm == null or unuse_str_dttm == "0000-00-00 00:00:00" or station_use_yn !="T"'>
+			,NULL
+		</if>
+		<if test='unuse_end_dttm != null and unuse_end_dttm != "0000-00-00 00:00:00" and station_use_yn =="T"'>
+			, CONCAT(#{unuse_end_dttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+		</if>
+		<if test='unuse_end_dttm == null or unuse_end_dttm == "0000-00-00 00:00:00" or station_use_yn !="T"'>
+			,NULL
+		</if>
+		)
+	</insert>
+	
+	<select id="getStationUseListCnt"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="int">
+		SELECT COUNT(*) 
+		  FROM TB_OPR_STATION_HIST 
+		 WHERE STATION_ID = #{station_id}
+		
+	</select>
+	
+	<select id="getStationUseList"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"		resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	  
+		SELECT STATION_ID
+			 , STATION_USE_YN
+			 , REG_DTTM
+			 , REG_ID
+			 , DATE_FORMAT(UNUSE_STR_DTTM,'%Y-%m-%d') AS UNUSE_STR_DTTM 
+			 , DATE_FORMAT(UNUSE_END_DTTM,'%Y-%m-%d') AS UNUSE_END_DTTM 
+		  FROM TB_OPR_STATION_HIST 
+		 WHERE STATION_ID = #{station_id}
+	  ORDER BY REG_DTTM DESC
+		 LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		
+	</select>
+	
+	<update id="updateStationVersion" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		UPDATE TB_OPR_VER_INFO 
+		   SET END_DTTM = NOW()
+		 WHERE 1=1
+		   AND VER_SE_CD = 'VER_001'
+		   AND END_DTTM = STR_TO_DATE('9999-12-31 23:59:59', '%Y-%m-%d %H:%i:%s') 
+	</update>
+	
+	<insert id="insertStationVersion"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT INTO TB_OPR_VER_INFO
+		(VER_SE_CD, VER, REG_ID, REG_DTTM, END_DTTM
+		, SEND_DTTM, SEND_YN)
+		VALUES ('VER_001'
+		,  (SELECT IFNULL(MAX(CAST(V.VER AS SIGNED)),0) + 1 FROM TB_OPR_VER_INFO V WHERE V.VER_SE_CD ='VER_001')
+		,  #{user}, NOW(),  STR_TO_DATE('9999-12-31 23:59:59', '%Y-%m-%d %H:%i:%s')
+		,  STR_TO_DATE('0000-00-00 00:00:00', '%Y-%m-%d %H:%i:%s'), '')
+	</insert>
+	
+	<insert id="insertNewStationRack1"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT INTO TB_OPR_RACK (RACK_ID, RACK_STUS_CD,NOW_LOCATE_ID,NOW_LOCATE_CLS_CD,NOW_STATION_EQUIP_ORD,REG_ID,MOD_ID,ENTRPS_CD,RACK_SE_CD)
+		VALUES (CONCAT('4580',#{station_no},'00000'), 'RAS_003',#{station_id},'S',0,#{user},#{user},#{rack_entrps_cd},'RAK_001')
+	</insert>
+	
+	<insert id="insertNewStationRack2"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		INSERT INTO TB_OPR_RACK (RACK_ID, RACK_STUS_CD,NOW_LOCATE_ID,NOW_LOCATE_CLS_CD,NOW_STATION_EQUIP_ORD,REG_ID,MOD_ID,ENTRPS_CD,RACK_SE_CD)
+		VALUES (CONCAT('4580',#{station_no},'00099'), 'RAS_003',#{station_id},'S',99,#{user},#{user},#{rack_entrps_cd},'RAK_003')
+	</insert>
+	
+	<!-- 새로 추가한 부분들  20201231 -->
+	
+	
+	<update id="updateStation05"		parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		
+	 UPDATE TB_OPR_STATION  /* 배송직원용 대여소 상세페이지  업데이트  */
+		SET 
+			STATION_USE_YN = #{station_use_yn},
+			MOD_DTTM = SYSDATE(),
+			MOD_ID = #{user}
+			<if test=' station_use_yn == "T" or station_use_yn == "S"'>
+				, REASON = #{reason}
+				, UNUSE_STR_DTTM = #{unuse_str_dttm}
+				, UNUSE_END_DTTM = #{unuse_end_dttm}
+			</if>
+			<!-- 20210118 대여소 사용일경우 초기화 -->
+			<if test=' station_use_yn == "Y"'>
+				, REASON 		 = ''
+				, UNUSE_STR_DTTM = '0000-00-00 00:00:00'
+				, UNUSE_END_DTTM = '0000-00-00 00:00:00'
+			</if>
+	  WHERE STATION_ID = #{station_id}
+	
+	</update>
+	
+	<select id="getUsrList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="SmsMessageVO">
+	SELECT * FROM ( /* 임시폐쇄 전송 대상자 : 임시폐쇄 시작일로부터 7일 이내 3회이상 이용한 이용자  */
+	  <!-- SELECT USR.USR_SEQ , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) USR_MPN_NO , COUNT(USR.USR_SEQ) AS CNT --> 
+	  <!-- SELECT USR.USR_SEQ , USR_MPN_NO USR_MPN_NO , COUNT(USR.USR_SEQ) AS CNT -->
+	  SELECT USR.USR_SEQ , CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO , COUNT(USR.USR_SEQ) AS CNT
+		FROM TB_OPR_STATION STA
+ 	  		,TB_SVC_RENT_HIST HIST
+	 		,TB_SVC_USR USR 
+	 		,TB_SVC_MB MB
+	  WHERE STA.STATION_ID = HIST.RENT_STATION_ID
+		AND USR.USR_SEQ = MB.USR_SEQ 
+		AND USR.USR_MPN_NO IS NOT NULL
+		AND MB.LEAVE_YN = 'N'
+		AND HIST.USR_SEQ = USR.USR_SEQ
+		AND HIST.RENT_DTTM > STR_TO_DATE(CONCAT(DATE_FORMAT(DATE_ADD(NOW(), INTERVAL -7 DAY),'%Y-%m-%d %I:%i'),#{unuse_str_dttm}),'%Y-%m-%d %I:%i')
+		AND STA.STATION_ID = #{station_id}
+		<!-- AND STA.STATION_NO= #{station_no} -->
+   GROUP BY USR.USR_SEQ,USR.USR_MPN_NO) A
+  	  WHERE A.CNT >= 3
+	</select>
+	
+	<insert id="addTmpCloseSmsDtl" parameterType="SmsMessageVO">
+	INSERT INTO TB_SYS_SMS_AUTH_STA_ADMIN /* 임시폐쇄 내역 통보  대상 저장 */
+			(
+				USR_SEQ, USR_MPN_NO , STATION_ID
+			)
+	VALUES (
+				#{usr_seq} , REPLACE(#{usr_mpn_no}, '-', ''), #{station_id}
+			
+			)
+	</insert>
+	
+	<insert id="addTmpCloseSms" parameterType="SmsMessageVO">
+	INSERT INTO TB_SYS_SMS_AUTH_STA /* 임시폐쇄 내역 통보 내용 저장 */
+			(
+				REQ_DTTM, REG_DTTM, CONTENT , TEMPLATE_CODE
+			)
+	VALUES (
+				#{reqdttm} ,NOW(), #{msg} , #{autoSendId}
+			)
+	</insert>
+
+	<insert id="addTmpCloseNoti" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	
+	INSERT INTO TB_COM_NOTICE /* 공지 자동 등록용 쿼리 */
+			(
+				SITE_CLS_CD, NOTICE_NO, CATE_CD,
+				NOTICE_TITLE, NOTICE_TEXT_CONTENT, NOTICE_HTML_CONTENT,
+				REPLY_YN, SORT_ORD,
+				USE_YN, 
+				POST_STR_DTTM, POST_END_DTTM, POPUP_YN,
+				POPUP_STR_DTTM, POPUP_END_DTTM, MAIN_NOTICE_YN,
+				MAIN_NOTICE_STR_DTTM, MAIN_NOTICE_END_DTTM,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID , STATION_ID 
+			)
+		SELECT  'user,admin', MAX(NOTICE_SEQ) + 1, 'NOTICE_001',
+				#{title}, #{text}, #{html}
+				,'N' , MAX(NOTICE_SEQ) + 1
+				,'Y' , 
+				#{unuse_str_dttm}, #{unuse_end_dttm}, 'N',
+				#{unuse_str_dttm}, #{unuse_end_dttm}, 'Y',
+				#{unuse_str_dttm}, #{unuse_end_dttm},
+				NOW(), #{user}, NOW(), #{user} , #{station_id}
+		   FROM TB_COM_NOTICE 	
+		<selectKey resultType="String" keyProperty="noticeSeq" order="AFTER">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+	</insert>
+	
+	<update id="editTmpCloseNoti" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	/* 공지 수정용 테이블 */
+	 UPDATE TB_COM_NOTICE A INNER JOIN TB_OPR_STATION_NOTI B  ON ( A.NOTICE_SEQ = B.NOTICE_SEQ AND B.STATION_ID = #{station_id} )
+		SET NOTICE_TITLE = #{title}
+		  , NOTICE_TEXT_CONTENT = #{text}
+		  , NOTICE_HTML_CONTENT = #{html} 
+		  , POST_STR_DTTM = #{unuse_str_dttm}
+		  , POST_END_DTTM = #{unuse_end_dttm}
+		  , POPUP_STR_DTTM = #{unuse_str_dttm}
+		  , POPUP_END_DTTM = #{unuse_end_dttm}
+		  , MAIN_NOTICE_STR_DTTM = #{unuse_str_dttm}
+		  , MAIN_NOTICE_END_DTTM = #{unuse_end_dttm}		
+		  , MOD_DTTM = NOW()
+		  , MOD_ID = #{user}
+	  WHERE A.NOTICE_SEQ = B.NOTICE_SEQ 
+		AND B.STATION_ID = #{station_id}
+	  
+	</update>
+	
+ 	<update id="NoTmpCloseNoti" parameterType="noticeVO">
+ 		/* 대여소 사용으로 전환 시 공지 해제 */
+		UPDATE TB_COM_NOTICE	 A 
+		   SET POPUP_YN	   = 'N'
+			 , POST_END_DTTM  = now()
+			 , MAIN_NOTICE_END_DTTM = now()
+			 , MOD_DTTM	   = now()
+			 , MOD_ID		 = #{user}
+		 WHERE STATION_ID	 = #{station_id}
+		   AND USE_YN		 = 'Y'
+	</update>
+	
+	<insert id="insertTmpCloseSmsAdm" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	INSERT INTO TSMS_AGENT_MESSAGE /* 관리자 임시폐쇄 알림용 문자 */
+				( 
+								SEND_MESSAGE,
+								SUBJECT,
+								BACKUP_MESSAGE, 
+								RECEIVE_MOBILE_NO,
+								JOB_TYPE,
+								SEND_DATE, 
+								REGISTER_DATE, 
+								REGISTER_BY, 
+								SEND_RESERVE_DATE, 
+								CALLBACK_NO
+				) 
+				values
+				(
+								#{msg}, 
+								'임시폐쇄 대여소 관리자 문자전송',
+								#{msg},
+								#{destno}, 
+								'R00',
+								NOW(), 
+								NOW(), 
+								'Admin', 
+								NOW(), 
+								'02-2290-4612'  
+				 )
+	</insert>
+
+	<delete id="deleteTmpCloseSms"		parameterType="SmsMessageVO">
+	/* 대여소 사용으로 전환 시  알림톡 전송내역 삭제 */
+		DELETE STA, ADM
+		  FROM TB_SYS_SMS_AUTH_STA STA 
+	INNER JOIN TB_SYS_SMS_AUTH_STA_ADMIN ADM 
+			ON STA.AUTH_SMS_SEQ = ADM.AUTH_SMS_SEQ
+		 WHERE ADM.STATION_ID =  #{station_id}
+	
+	</delete>
+	
+	<select id="getStationNotiCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
+		SELECT COUNT(1)
+		  FROM TB_OPR_STATION_NOTI
+		 WHERE STATION_ID	  =  #{station_id}
+		 <![CDATA[  
+		   AND DEL_YN		  = 'N'
+		 ]]>	
+	</select>
+	
+	 <insert id="insertTbOprStationNoti" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+				INSERT INTO TB_OPR_STATION_NOTI /* 관리자 임시폐쇄 알림용 문자 */
+				( 
+								STATION_ID
+							 , STATION_USE_YN
+							 , NOTICE_SEQ
+							 , UNUSE_STR_DTTM
+							 , REG_DTTM
+							 , DEL_YN
+				) 
+				values
+				(
+								#{station_id}
+							 , #{station_use_yn}
+							 , #{noticeSeq}	
+							 , #{unuse_str_dttm}	
+							 , now()
+							 , 'N'
+				 )
+	</insert> 
+	
+	<delete id="deleteTbOprStationNoti"		parameterType="SmsMessageVO">
+		/* 대여소 사용으로 전환 시  알림톡 전송내역 삭제 */
+		UPDATE TB_OPR_STATION_NOTI
+		   SET DEL_YN = 'Y'
+			 , DEL_DTTM = now()
+		 WHERE STATION_ID =  #{station_id}
+		   AND DEL_YN = 'N'
+	</delete>
+
+	<!-- 20210119 거치대 이력 등록용 -->
+	<insert id="insertTB_OPR_RACK_LOCATE_INFO"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+	/* 거치대 위치 이력 생성 */		
+	   INSERT INTO TB_OPR_RACK_LOCATE_INFO 
+					   (	RACK_ID
+						 ,  LOCATE_CLS_CD			 
+						 ,  LOCATE_ID			 
+						 ,  LOCATE_STR_DTTM			 
+						 ,  LOCATE_END_DTTM			 
+						 ,  STATION_EQUIP_ORD 
+						 ,  RACK_SE_CD		 
+					   ) 
+				  SELECT RACK_ID		
+					   , NOW_LOCATE_CLS_CD		
+					   , A.NOW_LOCATE_ID		
+					   , NOW()		
+					   , STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')		
+					   , A.NOW_STATION_EQUIP_ORD
+					   , RACK_SE_CD  
+					FROM TB_OPR_RACK A 
+					INNER JOIN TB_OPR_STATION B ON ( A.NOW_LOCATE_ID = B.STATION_ID )   
+					WHERE B.STATION_ID = #{station_id}
+	</insert>
+	
+	 
+</mapper>

@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.rent.service.RentStatisticsMapper">
+	
+	<select id="getRentDayCnt" parameterType="rentStatisticsVo" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM
+		(
+			SELECT STAT_DATE, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_DD A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN 
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+	</select>
+	
+	<select id="getRentDayList" parameterType="rentStatisticsVo" resultType="rentStatisticsVo">
+		SELECT 
+			IFNULL(B.STATION_GRP_NAME , '그룹명 없음')  AS stationGrpName, 
+			IFNULL(B.STATION_NAME, '대여소명 없음')	 AS stationName, 
+			A.STAT_DATE AS rentDttm, 
+			A.RENT_CNT AS rentCnt
+		FROM
+		(
+			SELECT STAT_DATE, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_DD A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN 
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+		ORDER BY A.STAT_DATE, B.STATION_GRP_NAME, B.STATION_NAME
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getRentMonthCnt" parameterType="rentStatisticsVo" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM
+		(
+			SELECT STAT_MM, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_MM A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+			AND A.STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+	</select>
+	
+	<select id="getRentMonthList" parameterType="rentStatisticsVo" resultType="rentStatisticsVo">
+		SELECT 
+			IFNULL(B.STATION_GRP_NAME , '그룹명 없음')  AS stationGrpName, 
+			IFNULL(B.STATION_NAME, '대여소명 없음')	 AS stationName, 
+			A.STAT_MM							  AS rentDttm, 
+			A.RENT_CNT							 AS rentCnt
+		FROM
+		(
+			SELECT STAT_MM, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_MM A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+			AND A.STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+		ORDER BY A.STAT_MM, B.STATION_GRP_NAME, B.STATION_NAME
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getReturnDayCnt" parameterType="rentStatisticsVo" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM
+		(
+			SELECT STAT_DATE, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_DD A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+	</select>
+	
+	<select id="getReturnDayList" parameterType="rentStatisticsVo" resultType="rentStatisticsVo">
+		SELECT 
+			IFNULL(B.STATION_GRP_NAME , '그룹명 없음')  AS stationGrpName, 
+			IFNULL(B.STATION_NAME, '대여소명 없음')	 AS stationName, 
+			A.STAT_DATE AS rentDttm, 
+			A.RETURN_CNT AS returnCnt
+		FROM
+		(
+			SELECT STAT_DATE, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_DD A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+		ORDER BY A.STAT_DATE, B.STATION_GRP_NAME, B.STATION_NAME
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getReturnMonthCnt" parameterType="rentStatisticsVo" resultType="int">
+		SELECT 
+			COUNT(*)
+		FROM
+		(
+			SELECT STAT_MM, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_MM A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+			AND A.STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+	</select>
+	
+	<select id="getReturnMonthList" parameterType="rentStatisticsVo" resultType="rentStatisticsVo">
+		SELECT 
+			IFNULL(B.STATION_GRP_NAME , '그룹명 없음')  AS stationGrpName, 
+			IFNULL(B.STATION_NAME, '대여소명 없음')	 AS stationName, 
+			A.STAT_MM AS rentDttm, 
+			A.RETURN_CNT AS returnCnt
+		FROM
+		(
+			SELECT STAT_MM, STATION_ID, RENT_CNT, RETURN_CNT
+			FROM TB_STA_STATION_RENT_MM A
+		) A LEFT OUTER JOIN
+		(
+			SELECT GRP.STATION_GRP_SEQ, GRP.STATION_GRP_NAME, ST.STATION_NAME, ST.STATION_ID
+			FROM
+			(
+				SELECT A.STATION_GRP_SEQ, B.STATION_GRP_NAME
+				FROM TB_OPR_STATION_GRP A, TB_OPR_MLANG_STATION_GRP B
+				WHERE A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) GRP LEFT OUTER JOIN
+			(
+				SELECT A.STATION_ID, A.STATION_GRP_SEQ, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) ST
+			ON GRP.STATION_GRP_SEQ = ST.STATION_GRP_SEQ
+		) B
+		ON A.STATION_ID = B.STATION_ID
+		WHERE 1=1
+		<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+			AND A.STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		</if>
+		<if test='stationGrp != "" and stationGrp != null'>
+			AND B.STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+				AND A.STATION_ID = #{stationId}
+			</if>
+		</if>
+		ORDER BY A.STAT_MM, B.STATION_GRP_NAME, B.STATION_NAME
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+</mapper>

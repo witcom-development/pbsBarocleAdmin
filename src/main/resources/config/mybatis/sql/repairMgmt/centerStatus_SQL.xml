@@ -1,0 +1,407 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.repairMgmt.centerStatus.service.CenterStatusMapper">
+	
+	<select id="getEtcDesc" parameterType="centerStatusVO" resultType="centerStatusVO">
+		SELECT ETC_DESC AS etcDesc
+		  FROM TB_MTC_REPAIR_CENTER_DESC
+		 WHERE STAT_DATE = #{searchEndDe}
+		   AND CENTER_ID = #{centerId} 
+	</select>
+	
+		
+	<insert id="insertEtcDesc"	parameterType="centerStatusVO">
+		INSERT INTO TB_MTC_REPAIR_CENTER_DESC
+			( STAT_DATE, ETC_DESC,  REG_ID, CENTER_ID )
+		VALUES
+			(#{searchEndDe},#{etcDesc}, #{adminId}, #{centerId} )
+		ON DUPLICATE KEY UPDATE ETC_DESC=#{etcDesc}	, MOD_ID = #{adminId}, MOD_DTTM = now()	
+	</insert>
+	
+	
+ 	<select id="getAdminsStatus" parameterType="centerStatusVO" resultType="centerStatusVO">
+			SELECT /* 사업소 소속 정비직원 근무시간,수리완료 */
+				   A.workAdminName
+				  ,FORMAT(sum(A.workTime),0)												AS workTime
+				  ,FORMAT(sum(A.workDtlTime),0)												AS workDtlTime
+				  ,FORMAT(sum(B.workAdminBikeCnt),0)										AS workAdminBikeCnt
+				  ,FORMAT(sum(C.workAdminTermCnt),0)										AS workAdminTermCnt
+				  <if test='searchBgnDe != null and searchBgnDe != ""'>
+				  ,A.workAdminRemark
+				  </if>
+			  FROM
+				  (
+					  SELECT 
+							 ADMIN.ADMIN_NAME												AS workAdminName
+							,SUM(REPWORK.WORK_TIME) 										AS workTime
+							,SUM(WORKDTL.DTL_TIME) 											AS workDtlTime
+							<if test='searchBgnDe != null and searchBgnDe != ""'>
+								,CASE WHEN #{searchEndDe} = #{searchBgnDe}
+									 	THEN
+									 		<![CDATA[ CASE WHEN LENGTH(WORKDTL.ETC) > 0 THEN WORKDTL.ETC ELSE DTLCD.CD_DESC1 END ]]>
+									 	ELSE
+									 		''
+									 	END													AS workAdminRemark							
+							</if>
+						FROM TB_SYS_REPAIR_WORK			 	REPWORK
+				  INNER JOIN TB_SYS_REPAIR_WORK_DTL 	 	WORKDTL  			ON REPWORK.WORK_SEQ 	   = WORKDTL.WORK_SEQ
+				  INNER JOIN TB_SYS_ADMIN			   	ADMIN 	 			ON REPWORK.ADMIN_ID		= ADMIN.ADMIN_ID
+				  INNER JOIN TB_SYS_GRP_CD					GRP					ON ADMIN.ADMIN_GRP_SEQ	   = GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)
+				  
+				  LEFT JOIN TB_SYS_COM_CD					DTLCD				ON WORKDTL.DTL_CD		   = DTLCD.COM_CD	
+			  	<choose>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+						  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+				 	</when>
+				 	<otherwise>
+						  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+				 	</otherwise>
+				</choose>					  	
+						<where>
+							REPWORK.APPROVED = 'Y'
+							AND REPWORK.CENTER_ID = CENTER.CENTER_ID
+	 						<if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND REPWORK.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</if>
+							<if test='searchBgnDe == null or searchBgnDe == ""'>
+								AND REPWORK.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</if>
+						 </where>					   		  	  
+					GROUP BY ADMIN.ADMIN_NAME
+				  ) A 
+		 LEFT JOIN 
+				  (		 
+					  SELECT
+							 ADMIN.ADMIN_NAME								AS workAdminName
+							,COUNT(DISTINCT 
+									  (
+						  				CASE WHEN REBCD.COM_CD IS NOT NULL THEN REPINFO.REPAIR_SEQ ELSE CASE WHEN PDTLCD.COM_CD IS NOT NULL THEN REPINFO.REPAIR_SEQ ELSE NULL END END	   
+									  )
+								   ) 										AS workAdminBikeCnt
+						FROM TB_MTC_REPAIR_INFO	 			REPINFO
+				  INNER JOIN TB_SYS_ADMIN			   		ADMIN 	 			ON REPINFO.MAINTC_ADMIN_ID	  = ADMIN.ADMIN_ID
+				  INNER JOIN TB_SYS_GRP_CD						GRP					ON ADMIN.ADMIN_GRP_SEQ	   		= GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)								  
+				<choose>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+						  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+				 	</when>
+				 	<otherwise>
+						  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+				 	</otherwise>
+				</choose>
+				
+				   LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON REPINFO.REPAIR_SEQ		= DETL.REPAIR_SEQ
+				   LEFT JOIN TB_SYS_COM_CD										INSPBCD									ON DETL.REPAIR_CLS_CD		= INSPBCD.COM_CD
+				   LEFT JOIN TB_SYS_COM_CD										REBCD									ON INSPBCD.ADD_VAL1			 = REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'BIKE'
+				   
+				   LEFT JOIN TB_MTC_BIKE_PART_CHNG_DETL							PDTL									ON REPINFO.REPAIR_SEQ		 = PDTL.REPAIR_SEQ
+				   LEFT JOIN TB_SYS_COM_CD										PDTLCD									ON PDTL.PART_CD				 = PDTLCD.COM_CD	AND  PDTLCD.COM_UP_CD = 'MAB'
+				   									  	
+						<where>
+							 REPINFO.REPAIR_CMPT_YN = 'Y'
+							 AND REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID
+							<if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</if>
+							<if test='searchBgnDe == null or searchBgnDe == ""'>
+								AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</if>
+						 </where>						 
+					GROUP BY ADMIN.ADMIN_NAME   
+				  ) B	 ON A.workAdminName = B.workAdminName
+		 LEFT JOIN 
+				  (		 
+					  SELECT
+							 ADMIN.ADMIN_NAME								AS workAdminName
+							,COUNT(DISTINCT TERMINFO.TERM_SEQ)				AS workAdminTermCnt 
+						FROM TB_MTC_REPAIR_TERM_INFO  			TERMINFO
+				  INNER JOIN TB_SYS_ADMIN			   		ADMIN 	 			ON TERMINFO.TERM_ADMIN_ID	  = ADMIN.ADMIN_ID
+				  INNER JOIN TB_SYS_GRP_CD						GRP					ON ADMIN.ADMIN_GRP_SEQ	   	   = GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)		
+				<choose>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+						  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+				 	</when>
+				 	<otherwise>
+						  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+				 	</otherwise>
+				</choose>					  	
+						<where>
+							 TERMINFO.TERM_CMPT_YN = 'Y'
+							 AND TERMINFO.TERM_CENTER_ID = CENTER.CENTER_ID
+							<if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND TERMINFO.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</if>
+							<if test='searchBgnDe == null or searchBgnDe == ""'>
+							   	AND TERMINFO.TERM_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							</if>
+						 </where>						 
+					GROUP BY ADMIN.ADMIN_NAME   
+				  ) C	 ON A.workAdminName = C.workAdminName
+				GROUP BY workAdminName	  
+				WITH ROLLUP		
+	</select>
+	
+ 	<select id="getCenterStatus" parameterType="centerStatusVO" resultType="centerStatusVO">
+		SELECT   /* 사업소 수리완료,근무현황 조회 */
+				 FORMAT(SUM(dayBikeCnt),0)						AS dayBikeCnt
+				,FORMAT(SUM(dayTermCnt),0)						AS dayTermCnt		
+				,FORMAT(SUM(repairBikeCnt),0)					AS repairBikeCnt
+				,FORMAT(SUM(repairTermCnt),0)					AS repairTermCnt
+				,FORMAT(MAX(repairWorkAdminsCnt),0)				AS repairWorkAdminsCnt
+				,max(repairWorkAdmins)						  AS repairWorkAdmins
+				,max(workCenterName)							AS workCenterName
+		  FROM
+			 (
+				SELECT 
+					   COUNT(DISTINCT 
+				   				(
+					  			  CASE WHEN REBCD.COM_CD IS NOT NULL THEN REPINFO.REPAIR_SEQ ELSE CASE WHEN PDTLCD.COM_CD IS NOT NULL THEN REPINFO.REPAIR_SEQ ELSE NULL END END	   
+								)
+					   		)									AS dayBikeCnt
+					,  NULL										AS dayTermCnt
+					,  NULL										AS repairBikeCnt
+					,  NULL 									AS repairTermCnt
+					,  NULL										AS repairWorkAdminsCnt
+					,  NULL 									AS repairWorkAdmins
+					,  NULL 									AS workCenterName
+
+				  FROM TB_MTC_REPAIR_INFO 					REPINFO
+			INNER JOIN TB_SYS_ADMIN			   			ADMIN 	 			ON REPINFO.MAINTC_ADMIN_ID	 = ADMIN.ADMIN_ID
+			INNER JOIN TB_SYS_GRP_CD						GRP					ON ADMIN.ADMIN_GRP_SEQ	   	   = GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)	   
+			<choose>
+		 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</when>
+			 	<otherwise>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</otherwise>
+			</choose>
+			
+			 LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON REPINFO.REPAIR_SEQ		= DETL.REPAIR_SEQ
+			 LEFT JOIN TB_SYS_COM_CD									INSPBCD									ON DETL.REPAIR_CLS_CD		= INSPBCD.COM_CD
+			 LEFT JOIN TB_SYS_COM_CD									REBCD									ON INSPBCD.ADD_VAL1			 = REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'BIKE'
+			 
+			 LEFT JOIN TB_MTC_BIKE_PART_CHNG_DETL						PDTL									ON REPINFO.REPAIR_SEQ		 = PDTL.REPAIR_SEQ
+			 LEFT JOIN TB_SYS_COM_CD									PDTLCD									ON PDTL.PART_CD				 = PDTLCD.COM_CD	AND  PDTLCD.COM_UP_CD = 'MAB'
+				
+				<where>
+			 		REPINFO.REPAIR_CMPT_YN  = 'Y'
+			  <![CDATA[   
+			 		AND REPINFO.REPAIR_CMPT_DTTM >= STR_TO_DATE(NOW(), '%Y-%m-%d')
+			  ]]>	
+			 		AND REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID			 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -1 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>	 
+		 		</where>
+		 		 						 
+			UNION ALL
+							   
+				SELECT
+			 
+					   NULL	
+					,  COUNT(DISTINCT TERMINFO.TERM_SEQ)			AS dayTermCnt
+					,  NULL
+					,  NULL
+					,  NULL
+					,  NULL
+					,  NULL
+																							
+				  FROM TB_MTC_REPAIR_TERM_INFO 				TERMINFO
+			INNER JOIN TB_SYS_ADMIN			   			ADMIN 	 			ON TERMINFO.TERM_ADMIN_ID	 = ADMIN.ADMIN_ID
+			INNER JOIN TB_SYS_GRP_CD						GRP					ON ADMIN.ADMIN_GRP_SEQ	   	  = GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)	   
+			<choose>
+		 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</when>
+			 	<otherwise>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</otherwise>
+			</choose>	
+				<where>
+			 		TERMINFO.TERM_CMPT_YN = 'Y'
+			  <![CDATA[   
+			 		AND TERMINFO.TERM_CMPT_DTTM >= STR_TO_DATE(NOW(), '%Y-%m-%d')
+			  ]]>			 		
+			 		AND TERMINFO.TERM_CENTER_ID = CENTER.CENTER_ID	 				 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND TERMINFO.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND TERMINFO.TERM_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -1 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+		 		</where> 
+		 								
+			UNION ALL
+							   
+				SELECT
+			 
+					   NULL	
+					,  NULL
+					,  COUNT(DISTINCT 
+				   				(
+					  			  CASE WHEN REBCD.COM_CD IS NOT NULL THEN REPINFO.REPAIR_SEQ ELSE CASE WHEN PDTLCD.COM_CD IS NOT NULL THEN REPINFO.REPAIR_SEQ ELSE NULL END END	   
+								)
+					   		)								AS repairBikeCnt
+					,  NULL
+					,  NULL
+					,  NULL
+					,  NULL
+																							
+				  FROM TB_MTC_REPAIR_INFO 					REPINFO
+			INNER JOIN TB_SYS_ADMIN			   			ADMIN 	 			ON REPINFO.MAINTC_ADMIN_ID	 = ADMIN.ADMIN_ID
+			INNER JOIN TB_SYS_GRP_CD						GRP					ON ADMIN.ADMIN_GRP_SEQ	   	   = GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)	   
+			<choose>
+		 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</when>
+			 	<otherwise>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</otherwise>
+			</choose>
+			
+			 LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON REPINFO.REPAIR_SEQ		= DETL.REPAIR_SEQ
+			 LEFT JOIN TB_SYS_COM_CD									INSPBCD									ON DETL.REPAIR_CLS_CD		= INSPBCD.COM_CD
+			 LEFT JOIN TB_SYS_COM_CD									REBCD									ON INSPBCD.ADD_VAL1			 = REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'BIKE'
+			 
+			 LEFT JOIN TB_MTC_BIKE_PART_CHNG_DETL						PDTL									ON REPINFO.REPAIR_SEQ		 = PDTL.REPAIR_SEQ
+			 LEFT JOIN TB_SYS_COM_CD									PDTLCD									ON PDTL.PART_CD				 = PDTLCD.COM_CD	AND  PDTLCD.COM_UP_CD = 'MAB'			
+				
+				<where>
+			 		REPINFO.REPAIR_CMPT_YN  = 'Y'
+			  <![CDATA[   
+			 		AND REPINFO.REPAIR_CMPT_DTTM >= STR_TO_DATE(NOW(), '%Y-%m-%d')
+			  ]]>			 		
+			 		AND REPINFO.REPAIR_CENTER_ID = CENTER.CENTER_ID			 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND REPINFO.REPAIR_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if> 
+		 		</where>
+		 		 	
+			UNION ALL
+							   
+				SELECT
+			 
+					   NULL	
+					,  NULL
+					,  NULL
+					,  COUNT(DISTINCT TERMINFO.TERM_SEQ)	AS repairTermCnt
+					,  NULL
+					,  NULL
+					,  NULL
+																							
+				  FROM TB_MTC_REPAIR_TERM_INFO 				TERMINFO
+			INNER JOIN TB_SYS_ADMIN			   			ADMIN 	 			ON TERMINFO.TERM_ADMIN_ID	 = ADMIN.ADMIN_ID
+			INNER JOIN TB_SYS_GRP_CD						GRP					ON ADMIN.ADMIN_GRP_SEQ	   	  = GRP.ADMIN_GRP_SEQ	AND GRP.ADMIN_GRP_SEQ	IN (4,10)	   
+			<choose>
+		 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{centerId}		AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</when>
+			 	<otherwise>
+					  INNER JOIN TB_OPR_CENTER					CENTER				ON CENTER.CENTER_ID	= #{searchCenter}	AND CENTER.CENTER_CLS_CD = 'CEN_004'  AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</otherwise>
+			</choose>	
+				<where>
+			 		TERMINFO.TERM_CMPT_YN = 'Y'
+			  <![CDATA[   
+			 		AND TERMINFO.TERM_CMPT_DTTM >= STR_TO_DATE(NOW(), '%Y-%m-%d')
+			  ]]>			 		
+			 		AND TERMINFO.TERM_CENTER_ID = CENTER.CENTER_ID	 				 
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND TERMINFO.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND TERMINFO.TERM_CMPT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+		 		</where> 	
+		 		
+		 	UNION ALL
+		 	
+		 	   SELECT
+					  NULL	
+					, NULL
+					, SUM(A.REPAIR_BIKE_TOTAL_CNT)	AS repairBikeCnt
+					, SUM(A.REPAIR_TERM_TOTAL_CNT)	AS repairTermCnt
+					, NULL
+					, NULL
+					, NULL
+		 		 FROM TB_STA_REPAIR_CENTER_DD 	A
+   			<choose>
+		 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+		  			INNER JOIN TB_OPR_CENTER 		  	B	ON B.CENTER_ID = #{centerId}
+			 	</when>
+			 	<otherwise>
+					INNER JOIN TB_OPR_CENTER 		  	B	ON B.CENTER_ID = #{searchCenter}
+			 	</otherwise>
+			</choose> 		
+		 	  <where>
+			<![CDATA[
+					A.STAT_DATE < STR_TO_DATE(NOW(), '%Y-%m-%d')
+			]]>		 	  		
+					AND A.CENTER_ID = B.CENTER_ID
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND A.STAT_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>								 	  	
+		 	  </where>
+	 		 
+		 		 
+		 	UNION ALL
+		 					  			   
+				SELECT
+					   NULL
+					  ,NULL
+					  ,NULL
+					  ,NULL
+					  ,COUNT(DISTINCT C.ADMIN_NAME)															AS repairWorkAdminsCnt
+					  ,GROUP_CONCAT(DISTINCT C.ADMIN_NAME)													AS repairWorkAdmins
+					  ,(
+					  	SELECT CENTER.CENTER_NAME 
+					  	  FROM TB_OPR_CENTER 	  CENTER
+					  	 WHERE 
+						<choose>
+					 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+								  CENTER.CENTER_ID = #{centerId}
+						 	</when>
+						 	<otherwise>
+								  CENTER.CENTER_ID = #{searchCenter}
+						 	</otherwise>
+						</choose>					  	 	   
+					  	)																					AS workCenterName
+				  FROM TB_SYS_REPAIR_WORK	 A
+			INNER JOIN TB_SYS_REPAIR_WORK_DTL B				ON A.WORK_SEQ 		= B.WORK_SEQ
+			INNER JOIN TB_SYS_ADMIN		   C	 		ON A.ADMIN_ID 		= C.ADMIN_ID
+			INNER JOIN TB_SYS_GRP_CD		  D				ON C.ADMIN_GRP_SEQ	= D.ADMIN_GRP_SEQ   AND D.ADMIN_GRP_SEQ IN (4,10)
+			<choose>
+		 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+					  INNER JOIN TB_OPR_CENTER					E				ON E.CENTER_ID	= #{centerId}		AND E.CENTER_CLS_CD = 'CEN_004'  AND E.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</when>
+			 	<otherwise>
+					  INNER JOIN TB_OPR_CENTER					E				ON E.CENTER_ID	= #{searchCenter}	AND E.CENTER_CLS_CD = 'CEN_004'  AND E.DISTRICT_CD IN ('GUG_026','GUG_027')
+			 	</otherwise>
+			</choose>	
+				 <where>
+					A.APPROVED = 'Y'
+					AND A.CENTER_ID = E.CENTER_ID
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND B.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND B.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+		 		</where> 				 
+				 	  
+			 ) A
+	</select>
+
+	
+</mapper>

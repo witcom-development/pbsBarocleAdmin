@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.donor.service.DonorMapper">
+	
+	<resultMap id="resultDonorVO" type="com.dkitec.barocle.admin.customer.donor.vo.DonorVO">
+		<result column="CNTRBTR_SEQ" property="donorSeq" />
+		<result column="CNTRBTR_NAME" property="donorName" />
+		<result column="CNTRBTR_TITLE" property="donorTitle" />
+		<result column="CNTRBTR_TEXT_CONTENT" property="donorTextContent" />
+		<result column="CNTRBTR_HTML_CONTENT" property="donorHTMLContent" />
+		<result column="CNTR_DATE" property="donorDate" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+	</resultMap>
+	
+	<resultMap id="daumEditorVO" type="com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO">
+		<result column="IMG_PATH" property="imgPath" />
+		<result column="IMG_URL" property="imgURL" />
+		<result column="IMG_NAME" property="imgName" />
+		<result column="IMG_SIZE" property="imgSize" />
+		<result column="THUMBNAIL_IMG_PATH" property="thumbnailImgPath" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgURL" />
+		<result column="THUMBNAIL_IMG_NAME" property="thumbnailImgName" />
+		<result column="THUMBNAIL_IMG_SIZE" property="thumbnailImgSize" />
+	</resultMap>
+	
+	<select id="listDonorCount" parameterType="donorVO" resultType="int">
+		SELECT	COUNT(CNTRBTR_SEQ) AS donorSeq
+		FROM	TB_COM_CNTRBTR
+		WHERE 	1=1 
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			AND (DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &gt;= #{searchStartDate} OR DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &gt;= #{searchStartDate})
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			AND (DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &lt;= #{searchEndDate} OR DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &lt;= #{searchEndDate})
+		</if>
+		<if test="searchValue!='' and searchValue!=null">
+			AND CNTRBTR_TITLE LIKE CONCAT('%',#{searchValue},'%')
+		</if>
+	</select>
+	
+	<select id="listDonor" parameterType="donorVO" resultMap="resultDonorVO">
+		SELECT
+			CNTRBTR_SEQ,
+			CNTRBTR_NAME,
+			CNTRBTR_TITLE,
+			DATE_FORMAT(CNTR_DATE, '%Y-%m-%d') AS CNTR_DATE,
+			REG_DTTM,
+			REG_ID,
+			MOD_DTTM,
+			MOD_ID
+		FROM
+			TB_COM_CNTRBTR
+		WHERE 	1=1 
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			AND (DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &gt;= #{searchStartDate} OR DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &gt;= #{searchStartDate})
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			AND (DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &lt;= #{searchEndDate} OR DATE_FORMAT(CNTR_DATE,'%Y-%m-%d') &lt;= #{searchEndDate})
+		</if>
+		<if test="searchValue!='' and searchValue!=null">
+			AND CNTRBTR_TITLE LIKE CONCAT('%',#{searchValue},'%')
+		</if>
+		ORDER BY
+			CNTRBTR_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewDonor" parameterType="donorVO" resultMap="resultDonorVO">
+		SELECT	
+				CNTRBTR_SEQ,
+				CNTRBTR_NAME,
+				CNTRBTR_TITLE,
+				CNTR_DATE,
+				CNTRBTR_TEXT_CONTENT,
+				CNTRBTR_HTML_CONTENT,
+				REG_DTTM,
+				REG_ID,
+				MOD_DTTM,
+				MOD_ID
+		FROM
+				TB_COM_CNTRBTR
+		WHERE
+				CNTRBTR_SEQ = #{donorSeq}
+	</select>
+	
+	<select id="getDaumEditorImage" parameterType="donorVO" resultMap="daumEditorVO">
+		SELECT	
+				IMG_PATH,
+				IMG_URL,
+				IMG_NAME,
+				IMG_SIZE,
+				THUMBNAIL_IMG_PATH,
+				THUMBNAIL_IMG_URL,
+				THUMBNAIL_IMG_NAME,
+				THUMBNAIL_IMG_SIZE
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{donorSeq} AND BBS_CLS_CD = #{currentMenu}
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevDonor" parameterType="donorVO" resultMap="resultDonorVO">
+		SELECT	CNTRBTR_SEQ, CNTRBTR_TITLE
+		FROM	TB_COM_CNTRBTR
+		WHERE	CNTRBTR_SEQ &lt; #{donorSeq}
+		<if test="searchValue!='' and searchValue!=null">
+			AND IA.CNTRBTR_TITLE LIKE CONCAT('%',#{searchValue},'%')
+		</if>
+		ORDER BY CNTRBTR_SEQ DESC
+		LIMIT	1
+	</select>
+	
+	<select id="nextDonor" parameterType="donorVO" resultMap="resultDonorVO">
+		SELECT	CNTRBTR_SEQ, CNTRBTR_TITLE
+		FROM	TB_COM_CNTRBTR
+		WHERE	CNTRBTR_SEQ &gt; #{donorSeq}
+		<if test="searchValue!='' and searchValue!=null">
+			AND IA.CNTRBTR_TITLE LIKE CONCAT('%',#{searchValue},'%')
+		</if>
+		ORDER BY CNTRBTR_SEQ ASC
+		LIMIT	1
+	</select>
+	
+	<insert id="insertDonor" parameterType="donorVO" useGeneratedKeys="true" keyProperty="donorSeq">
+		INSERT INTO TB_COM_CNTRBTR
+			(
+				CNTRBTR_NAME, CNTRBTR_TITLE, CNTRBTR_TEXT_CONTENT, CNTRBTR_HTML_CONTENT,
+				CNTR_DATE, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+			)
+		VALUES
+			(
+				#{donorName}, #{donorTitle}, #{donorTextContent}, #{donorHTMLContent},
+				#{donorDate}, NOW(), #{regID}, NOW(), #{regID}
+			)
+	</insert>
+	
+	<update id="updateDonor" parameterType="donorVO">
+		UPDATE 
+			TB_COM_CNTRBTR
+		SET
+			CNTRBTR_NAME = #{donorName},
+			CNTRBTR_TITLE = #{donorTitle},
+			CNTRBTR_TEXT_CONTENT = #{donorTextContent},
+			CNTRBTR_HTML_CONTENT = #{donorHTMLContent},
+			CNTR_DATE = #{donorDate},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+		WHERE
+			CNTRBTR_SEQ = #{donorSeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="donorVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = 0
+		WHERE
+			BBS_SEQ = #{donorSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="donorVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = #{donorSeq}
+		WHERE
+			BBS_CLS_CD = #{currentMenu} AND IMG_NAME IN
+			<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+	</update>
+	
+	<update id="deleteDonor" parameterType="donorVO">
+		DELETE FROM 
+			TB_COM_CNTRBTR
+		WHERE
+			CNTRBTR_SEQ = #{donorSeq}
+	</update>
+	
+</mapper>

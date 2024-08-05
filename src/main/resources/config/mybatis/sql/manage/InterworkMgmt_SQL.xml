@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.interworkMgmt.service.InterworkMgmtMapper">
+
+	<select id="listCritical" resultType="interworkMgmtVO">
+		SELECT	A.COM_CD
+			   ,MLANG_COM_CD_NAME
+			   ,ADD_VAL1
+			   ,ADD_VAL2
+			   ,ADD_VAL3
+		FROM	TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+		WHERE	A.COM_CD = B.COM_CD
+		AND		COM_UP_CD = 'CRI'
+		AND		USE_YN = 'Y'
+		AND		LANG_CLS_CD = 'LAG_001'
+		ORDER BY DSP_ORD
+	</select>
+	
+	<update id="modCritical" parameterType="interworkMgmtVO" >
+		UPDATE	TB_SYS_COM_CD
+		SET		ADD_VAL1 = #{addVal1}
+			   ,ADD_VAL2 = #{addVal2}
+			   ,ADD_VAL3 = #{addVal3}
+		WHERE	COM_CD = #{comCd}
+	</update>
+
+	<select id="listFirmware" parameterType="interworkMgmtVO" resultType="interworkMgmtVO">
+		SELECT	A.FIRMWARE_SEQ									AS firmwareSeq
+			   ,FIRMWARE_CLS_CD									AS firmwareClsCd
+			   ,MLANG_COM_CD_NAME								AS firmwareClsName
+			   ,FIRMWARE_VER									AS firmwareVer
+			   ,BIN_SIZE										AS binSize
+			   ,REG_DTTM										AS regDttm
+			   ,COUNT(CASE WHEN SUCCES_YN = 'Y' THEN 1 END) 	AS successCnt
+	  		   ,COUNT(CASE WHEN SUCCES_YN = 'N' THEN 1 END) 	AS failCnt
+	  		   ,COMPANY_CD									AS companyCd
+	  		   ,(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COMPANY_CD AND LANG_CLS_CD='LAG_001') AS companyName
+	  		   ,DEVICE_MODL_CD									AS deviceModlCd
+		FROM
+		(
+			SELECT	FIRMWARE_SEQ
+				   ,FIRMWARE_CLS_CD
+				   ,MLANG_COM_CD_NAME
+				   ,FIRMWARE_VER
+				   ,BIN_SIZE
+				   ,REG_DTTM
+				   , COMPANY_CD
+				   ,DEVICE_MODL_CD
+			FROM	TB_IOT_FIRMWARE A, TB_SYS_MLANG_COM_CD B
+			WHERE	A.FIRMWARE_CLS_CD = B.COM_CD
+			<if test='modStrDate != null and modStrDate != ""'>
+				<![CDATA[
+				AND	DATE_FORMAT(REG_DTTM, '%Y-%m-%d') >= STR_TO_DATE(#{modStrDate}, '%Y-%m-%d') 
+				]]>
+			</if>
+			<if test='modEndDate != null and modEndDate != ""'>
+				<![CDATA[
+				AND	DATE_FORMAT(REG_DTTM, '%Y-%m-%d') <= STR_TO_DATE(#{modEndDate}, '%Y-%m-%d')
+				]]>
+			</if>
+			<if test='firmwareClsCd != null and firmwareClsCd != ""'>
+				AND	FIRMWARE_CLS_CD = #{firmwareClsCd}
+			</if>
+			<if test='deviceModlCd != null and deviceModlCd != ""'>
+				AND	DEVICE_MODL_CD = #{deviceModlCd}
+			</if>
+		) A LEFT OUTER JOIN TB_IOT_FIRMWARE_UPDATE_RESULT B
+		ON		A.FIRMWARE_SEQ = B.FIRMWARE_SEQ
+		GROUP BY A.FIRMWARE_SEQ, FIRMWARE_CLS_CD, MLANG_COM_CD_NAME, FIRMWARE_VER, BIN_SIZE,REG_DTTM
+		ORDER BY REG_DTTM DESC, FIRMWARE_VER DESC, FIRMWARE_CLS_CD
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+
+	<select id="listFirmwareCount" parameterType="interworkMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_IOT_FIRMWARE A, TB_SYS_MLANG_COM_CD B
+		WHERE	A.FIRMWARE_CLS_CD = B.COM_CD
+			<if test='modStrDate != null and modStrDate != ""'>
+				<![CDATA[
+				AND	DATE_FORMAT(REG_DTTM, '%Y-%m-%d') >= STR_TO_DATE(#{modStrDate}, '%Y-%m-%d') 
+				]]>
+			</if>
+			<if test='modEndDate != null and modEndDate != ""'>
+				<![CDATA[
+				AND	DATE_FORMAT(REG_DTTM, '%Y-%m-%d') <= STR_TO_DATE(#{modEndDate}, '%Y-%m-%d')
+				]]>
+			</if>
+			<if test='firmwareClsCd != null and firmwareClsCd != ""'>
+				AND	FIRMWARE_CLS_CD = #{firmwareClsCd}
+			</if>
+			<if test='deviceModlCd != null and deviceModlCd != ""'>
+				AND	DEVICE_MODL_CD = #{deviceModlCd}
+			</if>
+	</select>
+	
+	<select id="listFirmwareUpdateResult" parameterType="interworkMgmtVO" resultType="interworkMgmtVO">
+		SELECT	DEVICE_ID				AS deviceId
+			   ,SUCCES_YN				AS successYn
+			   ,REQ_DTTM				AS reqDttm
+			   ,PROCESS_DTTM 			AS processDttm
+		FROM	TB_IOT_FIRMWARE A, TB_IOT_FIRMWARE_UPDATE_RESULT B
+		WHERE	A.FIRMWARE_SEQ = B.FIRMWARE_SEQ
+		AND		A.FIRMWARE_SEQ = #{firmwareSeq}
+		<if test='processStrDate != null and processStrDate != ""'>
+			<![CDATA[
+				AND	DATE_FORMAT(REQ_DTTM, '%Y-%m-%d') >= STR_TO_DATE(#{processStrDate}, '%Y-%m-%d') 
+			]]>
+		</if>
+		<if test='processEndDate != null and processEndDate != ""'>
+			<![CDATA[
+				AND	DATE_FORMAT(REQ_DTTM, '%Y-%m-%d') <= STR_TO_DATE(#{processEndDate}, '%Y-%m-%d')
+			]]>
+		</if>
+		<if test='successYn != null and successYn != ""'>
+			AND	SUCCES_YN = #{successYn}
+		</if>
+		<if test='deviceId != null and deviceId != ""'>
+			AND	DEVICE_ID LIKE CONCAT(#{deviceId}, '%')
+		</if>
+		ORDER BY REQ_DTTM DESC, PROCESS_DTTM DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	</select>
+	
+	<select id="listFirmwareUpdateResultCount" parameterType="interworkMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_IOT_FIRMWARE A, TB_IOT_FIRMWARE_UPDATE_RESULT B
+		WHERE	A.FIRMWARE_SEQ = B.FIRMWARE_SEQ
+		AND		A.FIRMWARE_SEQ = #{firmwareSeq}
+		<if test='processStrDate != null and processStrDate != ""'>
+			<![CDATA[
+				AND	DATE_FORMAT(REQ_DTTM, '%Y-%m-%d') >= STR_TO_DATE(#{processStrDate}, '%Y-%m-%d') 
+			]]>
+		</if>
+		<if test='processEndDate != null and processEndDate != ""'>
+			<![CDATA[
+				AND	DATE_FORMAT(REQ_DTTM, '%Y-%m-%d') <= STR_TO_DATE(#{processEndDate}, '%Y-%m-%d')
+			]]>
+		</if>
+		<if test='successYn != null and successYn != ""'>
+			AND	SUCCES_YN = #{successYn}
+		</if>
+		<if test='deviceId != null and deviceId != ""'>
+			AND	DEVICE_ID LIKE CONCAT(#{deviceId}, '%')
+		</if>
+	</select>
+	
+	<select id="getFirmware" parameterType="interworkMgmtVO" resultType="interworkMgmtVO">
+		SELECT	FIRMWARE_SEQ							AS firmwareSeq
+			   ,FIRMWARE_CLS_CD							AS firmwareClsCd
+			   ,FIRMWARE_VER							AS firmwareVer
+			   ,USE_YN									AS useYn
+			   ,UPDATE_CAN_STR_TIME						AS updateCanStrTime 
+			   ,UPDATE_CAN_END_TIME						AS updateCanEndTime
+			   ,COMPANY_CD									AS companyCd
+			   ,ALL_UPDATE_YN								AS allUpdateYn
+			   ,UPDATE_BEGIN_SERIAL_NO					AS updateBeginSerialNo
+			   ,UPDATE_END_SERIAL_NO					AS updateEndSerialNo
+			   ,DEVICE_MODL_CD							AS deviceModlCd
+		FROM	TB_IOT_FIRMWARE
+		WHERE	FIRMWARE_SEQ = #{firmwareSeq}		
+	</select>
+	
+	<select id="listFirmwareFile" parameterType="interworkMgmtVO" resultType="interworkMgmtVO">
+		SELECT	FIRMWARE_SEQ							AS firmwareSeq
+			   ,FIRMWARE_FILE_NO						AS firmwareFileNo
+			   ,FILE_SAVE_PATH							AS fileSavePath
+			   ,FILE_NAME								AS fileName
+		FROM	TB_IOT_FIRMWART_FILE
+		WHERE	FIRMWARE_SEQ = #{firmwareSeq}		
+		ORDER BY FIRMWARE_FILE_NO
+	</select>
+	
+	<select id="updateStartYn" parameterType="interworkMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_IOT_FIRMWARE A, TB_IOT_FIRMWARE_UPDATE_RESULT B
+		WHERE	A.FIRMWARE_SEQ = B.FIRMWARE_SEQ
+		AND		A.FIRMWARE_SEQ = #{firmwareSeq}
+	</select>
+	
+	<insert id="insertFirmware" parameterType="interworkMgmtVO"  useGeneratedKeys="true" keyProperty="firmware_seq">
+		INSERT INTO TB_IOT_FIRMWARE (
+				FIRMWARE_CLS_CD
+			   ,DEVICE_MODL_CD
+			   ,FIRMWARE_VER
+			   ,BIN_SIZE
+			   ,USE_YN
+			   ,UPDATE_CAN_STR_TIME
+			   ,UPDATE_CAN_END_TIME
+			   ,REG_DTTM
+			   ,COMPANY_CD
+			   ,ALL_UPDATE_YN
+			   <if test='allUpdateYn == "N"'>
+				,UPDATE_BEGIN_SERIAL_NO
+				,UPDATE_END_SERIAL_NO
+				</if>
+		) VALUES (
+				#{firmwareClsCd}
+			   ,#{deviceModlCd}
+			   ,#{firmwareVer}
+			   ,#{binSize}
+			   ,#{useYn}
+			   ,#{updateCanStrTime}
+			   ,#{updateCanEndTime}
+			   ,NOW()
+			   ,#{companyCd}
+			   ,#{allUpdateYn}
+			   <if test='allUpdateYn == "N"'>
+				,#{updateBeginSerialNo}
+				,#{updateEndSerialNo}
+				</if>
+		)
+	</insert>
+	
+	<insert id="insertFirmwareFileList" parameterType="java.util.Map">
+		INSERT INTO TB_IOT_FIRMWART_FILE (
+				FIRMWARE_SEQ
+			   ,FIRMWARE_FILE_NO
+			   ,FILE_NAME
+			   ,FILE_SAVE_PATH
+			   ,FILE_SIZE
+			   ,COMPANY_CD
+		) VALUES
+		<foreach collection="list" item="item" separator=",">  
+			( 
+				#{item.firmwareSeq}
+			   ,#{item.firmwareFileNo}
+			   ,#{item.fileName} 
+			   ,#{item.fileSavePath} 
+			   ,#{item.fileSize}
+			   ,#{item.companyCd} 
+			)  
+		</foreach>
+	</insert>
+
+	<insert id="insertFirmwareFile" parameterType="interworkMgmtVO">
+		INSERT INTO TB_IOT_FIRMWART_FILE (
+				FIRMWARE_SEQ
+			   ,FIRMWARE_FILE_NO
+			   ,FILE_NAME
+			   ,FILE_SAVE_PATH
+			   ,FILE_SIZE
+			   ,COMPANY_CD
+		) VALUES ( 
+				#{firmwareSeq}
+			   ,#{firmwareFileNo}
+			   ,#{fileName} 
+			   ,#{fileSavePath} 
+			   ,#{fileSize}
+			   ,#{companyCd}
+		)  
+	</insert>
+	
+	<update id="modFirmware" parameterType="interworkMgmtVO">
+		UPDATE	TB_IOT_FIRMWARE
+		SET		FIRMWARE_VER = #{firmwareVer}
+			   ,USE_YN = #{useYn}
+			   ,UPDATE_CAN_STR_TIME = #{updateCanStrTime}
+			   ,UPDATE_CAN_END_TIME = #{updateCanEndTime}
+			   ,REG_DTTM = NOW()
+			   ,COMPANY_CD = #{companyCd}
+			   ,DEVICE_MODL_CD = #{deviceModlCd}
+			   ,ALL_UPDATE_YN = #{allUpdateYn}
+				<if test='allUpdateYn == "N"'>
+			   ,UPDATE_BEGIN_SERIAL_NO = #{updateBeginSerialNo}
+			   ,UPDATE_END_SERIAL_NO = #{updateEndSerialNo}
+			   </if>
+	   WHERE	FIRMWARE_SEQ = #{firmwareSeq}
+	</update>
+	
+	<delete id="delFirmware" parameterType="interworkMgmtVO">
+		DELETE FROM TB_IOT_FIRMWARE
+		WHERE		FIRMWARE_SEQ = #{firmwareSeq}
+	</delete>
+	
+	<update id="modFirmwareFile" parameterType="interworkMgmtVO">
+		UPDATE	TB_IOT_FIRMWART_FILE
+		SET		FILE_NAME = #{fileName}
+			   ,FILE_SAVE_PATH = #{fileSavePath}
+			   ,FILE_SIZE = #{fileSize}
+	   WHERE	FIRMWARE_SEQ = #{firmwareSeq}
+	   AND		FIRMWARE_FILE_NO = #{firmwareFileNo}
+	</update>
+	
+	<update id="modFirmwareBinSize" parameterType="String">
+		UPDATE	TB_IOT_FIRMWARE
+		SET		BIN_SIZE = (
+			SELECT	SUM(FILE_SIZE)
+			FROM	TB_IOT_FIRMWART_FILE
+			WHERE	FIRMWARE_SEQ = #{firmwareSeq}
+		)
+		WHERE	FIRMWARE_SEQ = #{firmwareSeq}
+	</update>
+	
+	<delete id="delFirmwareFile" parameterType="interworkMgmtVO">
+		DELETE FROM TB_IOT_FIRMWART_FILE
+		WHERE		FIRMWARE_SEQ = #{firmwareSeq}
+		<if test='firmwareFileNo != null and firmwareFileNo != ""'>
+			AND			FIRMWARE_FILE_NO = #{firmwareFileNo}
+		</if>
+	</delete>
+	
+	<select id="chkFirmwareVer" parameterType="interworkMgmtVO" resultType="int">
+		SELECT	COUNT(*)
+		FROM	TB_IOT_FIRMWARE
+		WHERE	FIRMWARE_VER >= #{firmwareVer}
+		AND		FIRMWARE_CLS_CD = #{firmwareClsCd}
+		<if test='companyCd != null and companyCd != ""'>
+		AND		COMPANY_CD = #{companyCd}
+		</if>
+		<if test='firmwareSeq != null and firmwareSeq != ""'>
+			AND		FIRMWARE_SEQ != #{firmwareSeq}
+		</if>
+	</select>
+</mapper>

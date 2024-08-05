@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.repairMgmt.repairWork.service.RepairWorkMapper">
+
+ 	<insert id="insertRepairTerm" useGeneratedKeys="true" keyProperty="termSeq" parameterType="repairTermVO">
+		INSERT INTO TB_MTC_REPAIR_TERM_INFO
+				(   REPAIR_SEQ 
+		   		   ,TERM_ADMIN_ID
+		   		   ,TERM_CMPT_YN
+		   		   ,TERM_CMPT_DTTM
+		   		   ,TERM_CENTER_ID
+		   		   ,REG_ID
+		) VALUES (
+					#{repairSeq}
+		   		   ,#{termAdminId}
+		   		<if test='termCmptYn == "Y"'>
+		   		   ,'Y'
+			   	   ,NOW()
+		   		</if>
+		   		<if test='termCmptYn != "Y"'>
+		   		   ,'N'
+			   	   ,NULL
+		   		</if>
+		   		   ,#{termCenterId}
+		   		   ,#{termAdminId}
+		)
+	</insert>
+	
+	<insert id="insertRepairWorkDtl" parameterType="repairWorkVO">
+		INSERT INTO TB_SYS_REPAIR_WORK_DTL
+				(   
+					WORK_SEQ 
+		   		   ,DTL_CD
+		   		   ,ETC  
+		   		   ,DTL_TIME
+		   		   ,REG_DTTM
+		   		   ,REG_ID
+		) VALUES (
+					
+					#{workSeq}
+		   		   ,#{dtlCd}
+		   		   ,#{etc}
+		   		   ,#{dtlTime}
+		  		   ,#{regDttm}
+		 		   ,#{regId}
+		   		   
+		)
+	</insert>
+	
+	<insert id="insertRepairWork" parameterType="repairWorkVO" useGeneratedKeys="true" keyProperty="workSeq">
+		INSERT INTO TB_SYS_REPAIR_WORK
+				(   ADMIN_ID
+		   		   ,CENTER_ID
+		   		   ,WORK_DATE
+		   		   ,WORK_TIME
+		   		   ,APPROVED
+	   ) VALUES (
+		   			#{adminId}
+		   		   ,#{centerId}
+		   		   ,#{workDate}
+		   		   ,#{workTime}
+		   		   ,'N'
+	   )
+	</insert>
+	
+ 	<update id="updateRepairTerm" parameterType="repairTermVO">
+		UPDATE TB_MTC_REPAIR_TERM_INFO
+		   SET TERM_ADMIN_ID  = #{termAdminId}
+		   	  ,TERM_CMPT_YN   = #{termCmptYn}
+		   <if test='termCmptYn == "Y"'>
+		   	  ,TERM_CMPT_DTTM = NOW()
+		   </if>	  
+		   	  ,TERM_CENTER_ID = #{termCenterId}
+		 WHERE TERM_SEQ	   = #{termSeq}  	  
+	</update>
+	
+	<update id="updateRepairWorkDtl" parameterType="repairWorkVO">
+		UPDATE TB_SYS_REPAIR_WORK_DTL 
+		   SET 
+			   dtl_cd   = #{dtlCd}
+			  ,etc	  = #{etc}
+			  ,dtl_time = #{dtlTime}
+			  ,mod_dttm = #{modDttm}
+			  ,mod_id   = #{modId}
+		 where work_seq = #{workSeq}
+	</update>
+	
+	<update id="updateRepairWork" parameterType="repairWorkVO">
+		UPDATE TB_SYS_REPAIR_WORK 
+		   SET work_time = #{workTime}
+		 where work_seq  = #{workSeq}
+	</update>
+	
+	<update id="updateRepairWorkAprvd" parameterType="repairWorkVO">
+		UPDATE TB_SYS_REPAIR_WORK 
+		   SET approved 	= #{approved}
+			 , approver_id	= #{approverId} 
+		 where work_seq 	= #{workSeq}
+	</update>
+	
+ 	<select id="checkRepairWork" parameterType="repairTermVO" resultType="String">
+			SELECT /* 정비 근태 이미 저장되어있는지 확인 */
+			   	   WORK_SEQ		AS workSeq
+			  FROM TB_SYS_REPAIR_WORK 
+			 WHERE ADMIN_ID = #{adminId}
+			   AND WORK_DATE = #{workDate}  
+	</select>
+	
+ 	<select id="getRepairTermInfo" parameterType="String" resultType="repairTermVO">
+			SELECT /* 자전거 단말기 수리 정보 조회 */
+			   	   TERM_SEQ 					  AS termSeq
+			  	  ,TERM_ADMIN_ID 				  AS termAdminId
+			  	  ,admin.ADMIN_NAME 			  AS termAdminName
+			  	  ,TERM_CMPT_YN 				  AS termCmptYn
+			  	  ,TERM_CMPT_DTTM 				  AS termCmptDttm
+			  FROM TB_MTC_REPAIR_TERM_INFO	term
+		INNER JOIN TB_MTC_REPAIR_INFO 		info  ON term.repair_seq	= info.repair_seq
+		INNER JOIN TB_SYS_ADMIN				admin ON term.term_admin_id = admin.admin_id
+			 WHERE term.repair_seq = #{value}  
+	</select>
+	
+ 	<select id="getCenterNameWithCenterCode" parameterType="repairWorkVO" resultType="String">
+			SELECT /* com.dkitec.barocle.admin.repairMgmt.repairWork.service.RepairWorkMapper.getCenterNameWithCenterCode */
+			   	   CENTER_NAME
+			  FROM TB_OPR_CENTER 
+			 WHERE CENTER_ID = #{searchCenter}
+			  
+	</select>
+	
+	<select id="getAdminGrpName" parameterType="repairWorkVO" resultType="String">
+		SELECT /* 관리자 그룹 네임 조회 */
+			   b.grp_name 					AS adminGrpName
+		  FROM TB_SYS_ADMIN 		a
+	INNER JOIN TB_SYS_GRP_CD		b 		ON a.admin_grp_seq = b.admin_grp_seq
+		 WHERE ADMIN_ID = #{adminId}
+	</select>
+	
+	<select id="getInsertWrkCenterId" parameterType="repairWorkVO" resultType="String">
+		SELECT 	CASE WHEN ADMIN_GRP_SEQ IN ( 5,11,12) THEN TEAM_SEQ
+				ELSE  ASSIGN_CENTER_ID END	 			AS centerId
+		   FROM TB_SYS_ADMIN
+		  WHERE ADMIN_ID = #{adminId}
+	</select>
+	
+	<select id="getInsertWrkSeq" parameterType="repairWorkVO" resultType="String">
+		SELECT 	/* 정비원 근태 정보 일련번호 조회  FK Key 용 */
+				MAX(WORK_SEQ)
+		   FROM TB_SYS_REPAIR_WORK
+		  WHERE ADMIN_ID = #{adminId}
+	</select>
+	
+	<select id="getMaintenWrkerAttCnt" resultType="int">
+	  <![CDATA[
+	  	  SELECT COUNT(A.workSeq)
+		  ]]>
+		  FROM (						  
+					SELECT  /* 정비원 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , c.admin_name 						AS adminName
+						  , a.center_id 						AS centerId
+						  , date_format(WORK_DATE,'%m-%d')		AS workDate
+						  , work_time 							AS workTime
+						  , a.WORK_SEQ 							AS workSeq
+						  , group_concat(b.DTL_CD) 				AS dtlCd
+						  , group_concat(e.MLANG_COM_CD_NAME) 	AS dtlName						  
+						  , group_concat(b.ETC) 				AS etc
+						  , group_concat(b.DTL_TIME) 			AS dtlTime
+					   	  , approved
+						  , approver_id 						AS approverId
+						  , d.admin_name 						AS approverName
+			 		   FROM TB_SYS_REPAIR_WORK		  a 
+			LEFT OUTER JOIN TB_SYS_REPAIR_WORK_DTL	  b ON a.WORK_SEQ = b.WORK_SEQ 
+				 INNER JOIN TB_SYS_ADMIN 				c ON a.admin_id = c.admin_id
+			LEFT OUTER JOIN TB_SYS_ADMIN				d ON a.approver_id = d.admin_id
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD		 e ON b.DTL_CD = e.COM_CD 			
+		 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+		 		<choose>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비"'>
+			 			and a.admin_id = #{adminId}
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+			 		</when>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+			 			and a.center_id = #{centerId}
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>			 			
+			 		</when>
+			 		<otherwise>
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>
+						<if test='searchCenter != null and searchCenter != ""'>
+							and a.center_id = #{searchCenter}
+						</if>
+					</otherwise>	
+				</choose>
+			</trim>	
+			GROUP BY a.admin_id, a.WORK_DATE
+			ORDER BY a.WORK_DATE desc
+			) A				  
+	</select>
+	
+	
+	<select id="getMaintenWrkerAttD" parameterType="repairWorkVO" resultType="repairWorkVO">
+					SELECT  /* 정비원 당일 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , c.admin_name 						AS adminName
+						  , a.center_id 						AS centerId
+						  , date_format(WORK_DATE,'%Y-%m-%d')	AS workDate
+						  , work_time 							AS workTime
+						  , a.WORK_SEQ 							AS workSeq
+						  , group_concat(b.DTL_CD) 				AS dtlCd
+						  , group_concat(e.MLANG_COM_CD_NAME) 	AS dtlName						  
+						  , group_concat(b.ETC) 				AS etc
+						  , group_concat(b.DTL_TIME) 			AS dtlTime
+					   	  , approved
+						  , approver_id 						AS approverId
+						  , d.admin_name 						AS approverName
+			 		   FROM TB_SYS_REPAIR_WORK		  a 
+			LEFT OUTER JOIN TB_SYS_REPAIR_WORK_DTL	  b 		ON a.WORK_SEQ = b.WORK_SEQ 
+				 INNER JOIN TB_SYS_ADMIN 				c 		ON a.admin_id = c.admin_id
+			LEFT OUTER JOIN TB_SYS_ADMIN				d 		ON a.approver_id = d.admin_id
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD		 e 		ON b.DTL_CD = e.COM_CD 			
+		 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+		 		and a.admin_id = #{adminId}
+				and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		 	</trim>		
+	</select>
+	
+	<select id="getMaintenWrkerAtt" parameterType="repairWorkVO" resultType="repairWorkVO">
+					SELECT  /* 정비원 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , c.admin_name 						AS adminName
+						  , a.center_id 						AS centerId
+						  , date_format(WORK_DATE,'%Y-%m-%d')	AS workDate
+						  , work_time 							AS workTime
+						  , a.WORK_SEQ 							AS workSeq
+						  , group_concat(b.DTL_CD) 				AS dtlCd
+						  , group_concat(e.MLANG_COM_CD_NAME) 	AS dtlName						  
+						  , group_concat(b.ETC) 				AS etc
+						  , group_concat(b.DTL_TIME) 			AS dtlTime
+					   	  , approved
+						  , approver_id 						AS approverId
+						  , d.admin_name 						AS approverName
+			 		   FROM TB_SYS_REPAIR_WORK		  a 
+			LEFT OUTER JOIN TB_SYS_REPAIR_WORK_DTL	  b 		ON a.WORK_SEQ = b.WORK_SEQ 
+				 INNER JOIN TB_SYS_ADMIN 				c 		ON a.admin_id = c.admin_id
+			LEFT OUTER JOIN TB_SYS_ADMIN				d 		ON a.approver_id = d.admin_id
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD		 e 		ON b.DTL_CD = e.COM_CD 			
+		 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+		 		<choose>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비"'>
+			 			and a.admin_id = #{adminId}
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+			 		</when>
+			 		<when test= 'adminGrpName != null and adminGrpName == "정비반장"'>
+			 			and a.center_id = #{centerId}
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>			 			
+			 		</when>
+			 		<otherwise>
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>
+						<if test='searchCenter != null and searchCenter != ""'>
+							and a.center_id = #{searchCenter}
+						</if>
+					</otherwise>	
+				</choose>
+			</trim>	
+			GROUP BY a.admin_id, a.WORK_DATE
+			ORDER BY a.WORK_DATE desc
+		  <if test='pagingYn == "Y"'>
+		  	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>	
+	</select>
+	
+	
+</mapper>

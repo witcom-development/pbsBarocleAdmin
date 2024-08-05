@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.join.service.JoinStatisticsMapper">
+	<select id="getMemJoinCnt" parameterType="joinStatisticsVo" resultType="int">
+		SELECT 3 
+	</select>
+
+	<select id="getUseMiniBikeList" parameterType="joinStatisticsVo" resultType="joinStatisticsVo">
+		
+		SELECT
+			   STAT_DATE 				AS userType
+			 , IFNULL(YEAR_13, 0)  		AS totAge30
+			 , IFNULL(YEAR_14, 0)  		AS totAge40
+			 , IFNULL(YEAR_15, 0)  		AS totAge50
+			 , IFNULL(RENT_CNT, 0)  	AS totAgeTotal
+			 
+		  FROM PROC_USER.TB_STA_MINI_BIKE
+		 WHERE 1 = 1
+		 <choose>
+		 	<when test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+		 		AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}
+		 	</when>
+		  	<otherwise>
+		   		AND STAT_DATE BETWEEN ( CURDATE() - 5) AND CURDATE()
+		   	</otherwise>	
+		 </choose>
+		 ORDER BY STAT_DATE
+		 LIMIT 5
+	</select>
+	
+	<select id="getMemJoinList" parameterType="joinStatisticsVo" resultType="joinStatisticsVo">
+		SELECT CASE SEX_CD WHEN 'M' THEN '남자' WHEN 'F' THEN '여자' ELSE '' END AS userType
+			 , SUM( CASE WHEN AGES_CD='AGE_001' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge10
+			 , SUM( CASE WHEN AGES_CD='AGE_002' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge20 
+			 , SUM( CASE WHEN AGES_CD='AGE_003' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge30
+			 , SUM( CASE WHEN AGES_CD='AGE_004' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge40
+			 , SUM( CASE WHEN AGES_CD='AGE_005' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge50	 
+			 , SUM( CASE WHEN AGES_CD='AGE_006' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge60
+			 , SUM( CASE WHEN AGES_CD='AGE_007' THEN A.NEW_MB_CNT ELSE 0 END ) AS totAge70	 
+			 , SUM( CASE WHEN AGES_CD='AGE_008' THEN A.NEW_MB_CNT ELSE 0 END )  AS totEtc	 
+			 , SUM( A.NEW_MB_CNT )											 AS totAgeTotal
+			 , SUM( CASE WHEN AGES_CD='AGE_001' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge10
+			 , SUM( CASE WHEN AGES_CD='AGE_002' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge20
+			 , SUM( CASE WHEN AGES_CD='AGE_003' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge30
+			 , SUM( CASE WHEN AGES_CD='AGE_004' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge40
+			 , SUM( CASE WHEN AGES_CD='AGE_005' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge50	
+			 , SUM( CASE WHEN AGES_CD='AGE_006' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge60
+			 , SUM( CASE WHEN AGES_CD='AGE_007' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAge70   
+			 , SUM( CASE WHEN AGES_CD='AGE_008' AND STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchEtc   
+			 
+			 , SUM( CASE WHEN STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe} THEN A.NEW_MB_CNT ELSE 0 END ) AS searchAgeTotal
+		  FROM TB_STA_NEW_MB_DD A
+ 		 WHERE 1 = 1
+			<if test='userType != "" and userType != null'>
+				AND USR_CLS_CD = #{userType}
+			</if>
+			<if test="searchEndDe !='' and searchEndDe != null">
+				AND STAT_DATE <![CDATA[ <= ]]> #{searchEndDe}
+			</if>
+		 GROUP BY CASE SEX_CD WHEN 'M' THEN '남자' WHEN 'F' THEN '여자' ELSE '없음' END 
+		 ORDER BY CASE SEX_CD WHEN 'M' THEN 1 WHEN 'F' THEN 2 ELSE 3 END
+	</select>
+</mapper>

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.repair.ap.service.RepairApMapper">
+	<select id="getRepairApList" parameterType="RepairApVO" resultType="RepairApVO">
+	<![CDATA[
+		SELECT REPINFO.REPAIR_SEQ AS repairSeq 
+			, AP.DEVICE_ID AS apId
+			, REPINFO.MAINTC_ADMIN_ID AS adminId
+			, REPINFO.REPAIR_CENTER_ID AS centerId
+			, REPINFO.REPAIR_CMPT_YN AS repairCmptYn
+			, REPINFO.REG_DTTM AS repDttm
+			, REPINFO.REPAIR_CMPT_DTTM AS cmptDttm
+			, REPINFO.BIKE_REPORT AS repairApReport
+		FROM TB_MTC_REPAIR_INFO REPINFO 
+		JOIN TB_IOT_DEVICE AP ON REPINFO.EQUIPMENT_ID = AP.DEVICE_ID AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_003'
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='repairCmptYn != null and repairCmptYn != ""'>
+			  	AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+				</if>
+				<if test='division != null and division == "apId" and divisionValue != null and divisionValue != ""'>
+			  	AND AP.DEVICE_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+				<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+				AND REPINFO.MAINTC_ADMIN_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+		   </trim>	  
+		   ORDER BY REPINFO.REG_DTTM DESC, REPINFO.REPAIR_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	<select id="getRepairApListCount" parameterType="RepairApVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		FROM TB_MTC_REPAIR_INFO REPINFO 
+		JOIN TB_IOT_DEVICE AP ON REPINFO.EQUIPMENT_ID = AP.DEVICE_ID AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_003'
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REPINFO.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REPINFO.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='repairCmptYn != null and repairCmptYn != ""'>
+			  	AND REPINFO.REPAIR_CMPT_YN = #{repairCmptYn}
+				</if>
+				<if test='division != null and division == "apId" and divisionValue != null and divisionValue != ""'>
+			  	AND AP.DEVICE_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+				<if test='division != null and division == "adminId" and divisionValue != null and divisionValue != ""'>
+				AND REPINFO.MAINTC_ADMIN_ID LIKE CONCAT('',#{divisionValue},'%')  
+				</if>
+		   </trim>
+	</select>
+	<select id="getRepairApInfo" parameterType="RepairApVO" resultType="RepairApVO">
+		<![CDATA[
+			SELECT REPINFO.REPAIR_SEQ AS repairSeq 
+			, AP.DEVICE_ID AS apId
+			, REPINFO.MAINTC_ADMIN_ID AS adminId
+			, REPINFO.REPAIR_CENTER_ID AS centerId
+			, (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = REPINFO.FAULT_SEQ) AS deviceStatusName
+			, REPINFO.REPAIR_CMPT_YN AS repairCmptYn
+			, REPINFO.REG_DTTM AS repDttm
+			, REPINFO.REPAIR_CMPT_DTTM AS cmptDttm
+			, REPINFO.BIKE_REPORT AS repairApReport
+			, REPINFO.REPAIR_REPORT AS repairReport
+			, (SELECT FAULT.REG_ID FROM TB_MTC_FAULT_DETL FAULT WHERE REPINFO.FAULT_SEQ = FAULT.FAULT_SEQ) AS regId
+			FROM TB_MTC_REPAIR_INFO REPINFO 
+			JOIN TB_IOT_DEVICE AP ON REPINFO.EQUIPMENT_ID = AP.DEVICE_ID
+			WHERE REPINFO.REPAIR_SEQ = #{repairSeq} AND AP.DEVICE_ID = #{apId} AND REPINFO.EQUIPMENT_CLS_CD = 'DEV_003'
+		]]>
+	</select>
+	
+	<select id="getRepairCodeList" parameterType="String" resultType="String">
+		<![CDATA[
+			SELECT REPAIR_CLS_CD FROM TB_MTC_REPAIR_DETL
+			WHERE REPAIR_SEQ = #{repairSeq}
+		]]>
+	</select>
+	
+	<update id="updateApStatus" parameterType="repairApVo">
+		UPDATE TB_IOT_DEVICE SET 
+		<if test='repairCmptYn == "Y"'>
+			DEVICE_STUS_CD = 'APS_003'
+		</if>	
+		<if test='repairCmptYn == "N"'>
+			DEVICE_STUS_CD = 'APS_005'
+		</if>
+		WHERE DEVICE_ID = #{apId}
+	</update>
+	
+	<select id="getApMoveYn" parameterType="repairApVo" resultType="String">
+		SELECT CASE WHEN COUNT(*) > 0 THEN 'N' ELSE 'Y' END moveYn FROM TB_IOT_AP_LOCATE_INFO 
+		WHERE DEVICE_ID = #{apId}
+		AND LOCATE_ID = #{centerId}
+		AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+	</select>
+	
+	<insert id="insertApMoveHistory" parameterType="repairApVo">
+		INSERT INTO TB_IOT_AP_LOCATE_INFO(DEVICE_ID, LOCATE_CLS_CD, LOCATE_ID, LOCATE_STR_DTTM, LOCATE_END_DTTM, LOCATE_ADMIN_ID, LOCATE_END_ADMIN_ID)
+		VALUES (#{apId}, 'C', #{centerId}, DATE_ADD(now() ,interval 1 second), STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S'), #{adminId}, #{adminId})
+	</insert>
+	
+	<update id="updateApMoveHistory" parameterType="repairApVo">
+		<selectKey resultType="string" keyProperty="histSeq" order="BEFORE">
+			SELECT LOCATE_HIST_SEQ FROM TB_IOT_AP_LOCATE_INFO WHERE DEVICE_ID = #{apId} ORDER BY LOCATE_STR_DTTM DESC LIMIT 1
+		</selectKey>
+		UPDATE TB_IOT_AP_LOCATE_INFO 
+		SET	LOCATE_END_DTTM = STR_TO_DATE(now(),'%Y-%m-%d %H:%i:%S')
+		WHERE LOCATE_HIST_SEQ = #{histSeq}
+	</update>
+	
+	<update id="updateFaultAp" parameterType="repairApVo">
+ 		UPDATE TB_MTC_FAULT_INFO SET READ_CLS_CD = 'H' WHERE FAULT_SEQ = #{faultSeq}
+	</update>
+	
+	<insert id="insertRepairAp" parameterType="repairApVo">
+		INSERT INTO TB_MTC_REPAIR_INFO(
+		<if test='faultSeq != null and faultSeq !=""'>
+			FAULT_SEQ,
+		</if>
+			EQUIPMENT_CLS_CD, 
+			EQUIPMENT_ID, 
+			MAINTC_ADMIN_ID, 
+			REPAIR_CMPT_YN, 
+		<if test='repairCmptYn == "Y"'>
+			REPAIR_CMPT_DTTM,
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			REPAIR_CENTER_ID, 
+		</if>
+			REG_DTTM, 
+			MOD_DTTM,
+			BIKE_REPORT,
+			REPAIR_REPORT
+			)
+		VALUES(
+		<if test='faultSeq != null and faultSeq !=""'>
+			#{faultSeq},
+		</if>	
+			'DEV_003', 
+			#{apId}, 
+			#{adminId}, 
+			#{repairCmptYn}, 
+		<if test='repairCmptYn == "Y"'>
+			NOW(),
+		</if>	
+		<if test='centerId != null and centerId !=""'>
+			#{centerId}, 
+		</if>	
+			NOW(), 
+			NOW(),
+			#{repairApReport},
+			#{repairReport}
+		)
+		<selectKey keyProperty="repairSeq" resultType="String">
+			SELECT LAST_INSERT_ID();
+		</selectKey>
+	</insert>   
+	
+	<update id="updateRepairAp" parameterType="repairApVo">
+		UPDATE TB_MTC_REPAIR_INFO SET 
+		EQUIPMENT_ID = #{apId},
+		MAINTC_ADMIN_ID = #{adminId},
+		REPAIR_CMPT_YN = #{repairCmptYn},
+		BIKE_REPORT = #{repairApReport},
+		REPAIR_REPORT = #{repairReport},
+		<if test='repairCmptYn == "Y"'>
+			REPAIR_CMPT_DTTM = NOW(),
+		</if>	
+		<if test='repairCmptYn == "N"'>
+			REPAIR_CMPT_DTTM = NULL,
+		</if>
+		<if test='centerId != null and centerId !=""'>
+			REPAIR_CENTER_ID = #{centerId}, 
+		</if>	
+		MOD_DTTM = NOW()
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</update>
+	
+	<delete id="deleteRepairAp" parameterType="repairApVo">
+		DELETE FROM TB_MTC_REPAIR_INFO
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>
+	
+	<insert id="insertRepairApDetail" parameterType="repairApVo">
+		INSERT INTO TB_MTC_REPAIR_DETL (
+		   	REPAIR_SEQ, REPAIR_CLS_CD
+			) VALUES (
+			  #{repairSeq}
+			 ,#{repairCode}
+			)
+	</insert>
+	
+	<delete id="deleteRepairApDetail" parameterType="repairApVo">
+		DELETE FROM TB_MTC_REPAIR_DETL
+		WHERE REPAIR_SEQ = #{repairSeq}
+	</delete>	
+	
+	<select id="getRegId" parameterType="repairApVo"  resultType="String">
+		SELECT 
+		REG_ID AS regId
+		FROM TB_MTC_FAULT_DETL
+		WHERE FAULT_SEQ = #{faultSeq}
+	</select>
+</mapper>

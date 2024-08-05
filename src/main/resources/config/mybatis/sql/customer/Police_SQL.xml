@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.police.service.PoliceMapper">
+	<select id="listPoliceCount" parameterType="policeVO" resultType="int">
+		SELECT	COUNT(POL_REQ_SEQ) AS policeSeq
+		FROM	TB_COM_POL_REQ
+		WHERE 	1=1 
+   <if test='searchStartDate != null and searchStartDate != ""'>
+   <![CDATA[  AND STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d')  <= POL_REQ_REQ_DTTM  ]]>
+   </if>
+   <if test='searchEndDate != null and searchEndDate != ""'>
+   <![CDATA[  AND POL_REQ_REQ_DTTM <=  STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+   </if>
+   <if test="searchValue!='' and searchValue!=null">
+			AND POL_REQ_INSTISTUTION_NAME LIKE CONCAT('%',#{searchValue},'%')
+   </if>   							
+	</select>
+	
+	
+	<select id="listPolice" parameterType="policeVO" resultType="policeVO">
+		SELECT p.POL_REQ_SEQ 											AS polReqSeq
+			 , p.POL_REQ_REQ_DTTM 										AS polReqReqDttm
+			 , p.POL_REQ_INSTISTUTION_NAME 								AS polReqInstitutionName
+			 , p.POL_REQ_NAME 											AS polReqName
+			 , p.POL_REQ_ISSUE_DTTM 									AS polReqIssueDttm
+			 , p.POL_REQ_CONTENT 										AS polReqContent
+			 , p.FROM_DT 												AS fromDate
+			 , p.TO_DT 													AS toDate
+			 , p.FROM_HOUR 												AS fromHour
+			 , p.TO_HOUR 												AS toHour
+			 , p.STATION_ID 											AS stationId
+			 , p.BIKE_NO												AS bikeNo
+			 , s.STATION_NAME										   AS stationName
+			 , CASE WHEN LENGTH( p.BIKE_NO ) > 1 THEN '2' ELSE '1' END
+																		AS checkType 
+		  FROM TB_COM_POL_REQ p
+		  LEFT JOIN TB_OPR_MLANG_STATION s ON ( 
+													  p.STATION_ID = s.STATION_ID
+												  AND s.LANG_CLS_CD ='LAG_001'
+		  									   )
+		  WHERE 1=1 
+   		<if test='searchStartDate != null and searchStartDate != ""'>
+		  <![CDATA[  AND STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d')  <= POL_REQ_REQ_DTTM  ]]>
+		</if>
+		<if test='searchEndDate != null and searchEndDate != ""'>
+		  <![CDATA[  AND POL_REQ_REQ_DTTM <=  STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+		</if>
+		<if test='polReqSeq != null and polReqSeq != ""'>
+		  AND POL_REQ_SEQ = #{polReqSeq}
+		</if>
+		<if test="searchValue !='' and searchValue !=null">
+		  AND POL_REQ_INSTISTUTION_NAME LIKE CONCAT('%',#{searchValue},'%')
+		</if>
+
+		  ORDER BY REG_DTTM DESC
+		  
+		<if test='pagingYn == "Y"'>
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>			 			  
+	</select>
+	
+	<insert id="insertPolice" parameterType="policeVO">
+		INSERT INTO TB_COM_POL_REQ
+				(
+					POL_REQ_REQ_DTTM , POL_REQ_INSTISTUTION_NAME, POL_REQ_NAME , POL_REQ_CONTENT , FROM_DT , TO_DT , FROM_HOUR , TO_HOUR , STATION_ID , BIKE_NO , REG_ID , REG_DTTM
+				)	
+		VALUES
+				(
+					CURDATE(),  #{polReqInstitutionName}, #{polReqName}, #{polReqContent} , #{fromDate} , #{toDate} , #{fromHour} , #{toHour} , #{stationId} , #{bikeNo} , #{regID} , now()
+				)
+		<selectKey keyProperty="polReqSeq" resultType="String">
+			SELECT LAST_INSERT_ID();
+		</selectKey>				
+	</insert> 	
+	
+	
+
+
+
+
+	<!-- '대여소 번호/ID' 로 '대여 대여소 기준' 혹은 '반납 대여소 기준'으로 셀렉트 하는 쿼리 -->
+	<!-- 1) 대여 대여소로 셀렉트 -->
+	<select id="listPoliceExcel" parameterType="policeVO" resultType="policeVO">
+	SELECT
+		 A.BIKE_NO 																AS bikeNo 
+   		,IFNULL(M.MB_ID ,'비회원')												AS mbId 
+   		<!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO)				  	AS mpnNo  -->
+   		<!-- ,USR_MPN_NO				  	AS mpnNo -->
+   		,CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS mpnNo
+   		,E.STATION_NAME  														AS rentStationName
+   		,F.STATION_NAME  														AS returnStationName
+   		,DATE_FORMAT(H.RENT_DTTM , '%Y.%m.%d %H:%i:%s') 						AS rentDttm
+   		,DATE_FORMAT(H.RETURN_DTTM, '%Y.%m.%d %H:%i:%s')					   	AS returnDttm
+	 FROM	 spb.TB_SVC_RENT_HIST H 
+   INNER JOIN spb.TB_SVC_USR	   U	 ON H.USR_SEQ  = U.USR_SEQ
+   INNER JOIN spb.TB_OPR_BIKE	  A	 ON A.BIKE_ID  = H.RENT_BIKE_ID
+	LEFT JOIN spb.TB_SVC_MB		M	 ON M.USR_SEQ  = U.USR_SEQ
+   INNER JOIN spb.TB_OPR_MLANG_STATION E ON ( H.RENT_STATION_ID = E.STATION_ID AND E.LANG_CLS_CD = 'LAG_001' )
+  
+	LEFT JOIN spb.TB_OPR_MLANG_STATION F ON ( H.RETURN_STATION_ID = F.STATION_ID AND F.LANG_CLS_CD = 'LAG_001' )
+  
+   INNER JOIN TB_COM_POL_REQ	   P	 ON ( 	  P.POL_REQ_SEQ = #{polReqSeq} 
+																	 AND H.RENT_STATION_ID  = P.STATION_ID 
+									 								 AND H.RENT_YMD   BETWEEN FROM_DT AND TO_DT 
+							 		 								 AND H.RENT_DTTM  BETWEEN DATE_ADD( FROM_DT, INTERVAL FROM_HOUR HOUR ) 
+														  								  AND DATE_ADD( TO_DT  , INTERVAL TO_HOUR HOUR ) 
+												   	 )
+	</select>
+	
+	<!-- 2) 반납 대여소로 셀렉트 -->
+	<select id="listPoliceExcel2" parameterType="policeVO" resultType="policeVO">
+	SELECT
+		 A.BIKE_NO 																AS bikeNo 
+   		,IFNULL(M.MB_ID ,'비회원')												AS mbId 
+   		<!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO)				  	AS mpnNo  -->
+   		<!-- ,USR_MPN_NO				  	AS mpnNo -->
+   		,CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS mpnNo
+   		,E.STATION_NAME  														AS rentStationName
+   		,F.STATION_NAME  														AS returnStationName
+   		,DATE_FORMAT(H.RENT_DTTM , '%Y.%m.%d %H:%i:%s') 						AS rentDttm
+   		,DATE_FORMAT(H.RETURN_DTTM, '%Y.%m.%d %H:%i:%s')						AS returnDttm
+	 FROM	 spb.TB_SVC_RENT_HIST H 
+   INNER JOIN spb.TB_SVC_USR	   U	 ON H.USR_SEQ  = U.USR_SEQ
+   INNER JOIN spb.TB_OPR_BIKE	  A	 ON A.BIKE_ID  = H.RENT_BIKE_ID
+	LEFT JOIN spb.TB_SVC_MB		M	 ON M.USR_SEQ  = U.USR_SEQ
+	LEFT JOIN spb.TB_OPR_MLANG_STATION E ON ( H.RENT_STATION_ID = E.STATION_ID AND E.LANG_CLS_CD = 'LAG_001' )
+  
+   INNER JOIN spb.TB_OPR_MLANG_STATION F ON ( H.RETURN_STATION_ID = F.STATION_ID AND F.LANG_CLS_CD = 'LAG_001' )
+  
+   INNER JOIN TB_COM_POL_REQ	   P	 ON ( 	  P.POL_REQ_SEQ = #{polReqSeq} 
+																	 AND H.RETURN_STATION_ID  = P.STATION_ID 
+									 								 AND H.RENT_YMD   BETWEEN FROM_DT AND TO_DT 
+							 		 								 AND H.RENT_DTTM  BETWEEN DATE_ADD( FROM_DT, INTERVAL FROM_HOUR HOUR ) 
+														  								  AND DATE_ADD( TO_DT  , INTERVAL TO_HOUR HOUR ) 
+												   	 )
+	</select>
+
+	<!-- 자전거 번호를 기준으로 조회하는 쿼리 -->
+	<select id="listPoliceExcel3" parameterType="policeVO" resultType="policeVO">
+		SELECT
+			 A.BIKE_NO 															AS bikeNo 
+	   		,IFNULL(M.MB_ID ,'비회원')											AS mbId 
+	   		<!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO)		   		AS mpnNo  -->
+	   		<!-- ,USR_MPN_NO		   		AS mpnNo -->
+	   		,CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS mpnNo
+	   		,E.STATION_NAME  													AS rentStationName
+	   		,F.STATION_NAME  													AS returnStationName
+	   		,DATE_FORMAT(H.RENT_DTTM , '%Y.%m.%d %H:%i:%s') 					AS rentDttm
+	   		,DATE_FORMAT(H.RETURN_DTTM, '%Y.%m.%d %H:%i:%s')					AS returnDttm
+		 FROM	 spb.TB_SVC_RENT_HIST H 
+	  INNER JOIN spb.TB_SVC_USR		U	 ON H.USR_SEQ  = U.USR_SEQ
+	  INNER JOIN spb.TB_OPR_BIKE	   A	 ON A.BIKE_ID  = H.RENT_BIKE_ID
+	   LEFT JOIN spb.TB_SVC_MB		 M	 ON M.USR_SEQ		 = U.USR_SEQ
+	   LEFT JOIN spb.TB_OPR_MLANG_STATION E ON ( H.RENT_STATION_ID = E.STATION_ID AND E.LANG_CLS_CD = 'LAG_001' )
+	  
+	   LEFT JOIN spb.TB_OPR_MLANG_STATION F ON ( H.RETURN_STATION_ID = F.STATION_ID AND F.LANG_CLS_CD = 'LAG_001' )
+	  
+	  INNER JOIN TB_COM_POL_REQ	   P	 ON ( 		P.POL_REQ_SEQ = #{polReqSeq} 
+														AND A.BIKE_NO = CONCAT( 'BRC-', P.BIKE_NO )
+																		 AND H.RENT_YMD   BETWEEN FROM_DT AND TO_DT 
+								 		 								 AND H.RENT_DTTM  BETWEEN DATE_ADD( FROM_DT, INTERVAL FROM_HOUR HOUR ) 
+															  								  AND DATE_ADD( TO_DT  , INTERVAL TO_HOUR HOUR )
+													)
+	</select>
+
+	<!-- 엑셀 다운시 시간 기록 -->
+	<update id="updateIssueDttm" parameterType="policeVO">
+		UPDATE   TB_COM_POL_REQ
+		SET	  POL_REQ_ISSUE_DTTM	 = now()
+		WHERE	POL_REQ_SEQ			= #{polReqSeq}
+	</update>
+
+
+
+
+	<delete id="deletePolice" parameterType="policeVO">
+		DELETE FROM TB_COM_POL_REQ  
+		WHERE POL_REQ_SEQ = #{polReqSeq}
+	</delete>
+
+
+
+	<update id="updatePolice" parameterType="policeVO">
+		UPDATE TB_COM_POL_REQ 
+		   SET  POL_REQ_INSTISTUTION_NAME 	= #{polReqInstitutionName}
+			  , POL_REQ_NAME 				= #{polReqName}
+			  , POL_REQ_CONTENT 			= #{polReqContent}
+			  , FROM_DT 					= #{fromDate}
+			  , TO_DT 						= #{toDate}
+			  , FROM_HOUR 					= #{fromHour}
+			  , TO_HOUR 					= #{toHour}
+			  , STATION_ID 					= #{stationId}
+			  , BIKE_NO 					= #{bikeNo}
+			  , MOD_DTTM					= now()
+			  , MOD_ID					  = #{modID}
+		  WHERE 
+		  		POL_REQ_SEQ					= #{polReqSeq}
+	</update>
+
+	
+</mapper>

@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?> 
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:context="http://www.springframework.org/schema/context"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xmlns:mvc="http://www.springframework.org/schema/mvc"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						   http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.2.xsd
+						   http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+						   http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd">
+
+	<context:component-scan base-package="com.dkitec.barocle">
+		<context:exclude-filter type="annotation" expression="org.springframework.stereotype.Controller"/>
+		<context:exclude-filter type="annotation" expression="org.springframework.web.bind.annotation.ControllerAdvice"/>
+	</context:component-scan>
+	
+	<bean id="validator" class="com.dkitec.cfood.core.validator.ValidatorChain">
+		<property name="validators"> 
+			<util:list>
+				<bean class="org.springframework.validation.beanvalidation.LocalValidatorFactoryBean"/>
+				<bean class="com.dkitec.barocle.util.validator.SearchDateValidator"/>
+			</util:list>
+		</property>
+	</bean>
+	
+	<bean id="messageSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames">
+			<util:list>
+				<!-- barocle -->
+				<value>classpath:config/message/message-sample</value>
+				<value>classpath:config/message/message-prop</value>
+				<!-- e -->
+				<value>classpath:/egovframework/rte/fdl/property/messages/properties</value>
+			</util:list>
+		</property>
+		<property name="cacheSeconds" value="5"/>
+	</bean>
+	
+	<util:properties id="exceptionProps" location="classpath:config/properties/exception.xml"/>
+
+	<bean id="errorSource" class="org.springframework.context.support.ReloadableResourceBundleMessageSource">
+		<property name="basenames" value="classpath:config/message/error"/>
+		<property name="cacheSeconds" value="5"/>
+	</bean>
+
+	<bean class="com.dkitec.cfood.core.ExceptionMessageBuilder">
+		<property name="messageSource" ref="errorSource"/>
+	</bean>
+
+	<bean id="leaveaTrace" class="egovframework.rte.fdl.cmmn.trace.LeaveaTrace">
+		<property name="traceHandlerServices">
+			<bean class="egovframework.rte.fdl.cmmn.trace.manager.DefaultTraceHandleManager">
+				<property name="reqExpMatcher">
+					<bean class="org.springframework.util.AntPathMatcher"/>
+				</property>
+				<property name="patterns" value="*"/>
+				<property name="handlers">
+					<bean class="egovframework.com.cmm.EgovComTraceHandler"/>
+				</property>
+			</bean>
+		</property>
+	</bean>
+
+</beans>

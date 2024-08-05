@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.paymentmgmt.mileage.service.MileageMapper">
+
+	<select id="getMileageHistList" parameterType="mileageVO" resultType="mileageVO">
+		SELECT
+			 IF(A.RENT_HIST_SEQ IS NULL ,'-', D.RENT_DTTM) AS rentDttm 
+			,A.REG_DTTM									AS regDttm
+			,B.MB_ID									   AS userId
+			,C.MLANG_COM_CD_NAME						   AS mileageClsCd
+			,A.MILEAGE_POINT							   AS mileagePoint
+		FROM TB_SVC_MILEAGE A 
+		LEFT OUTER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ
+		LEFT OUTER JOIN TB_SYS_MLANG_COM_CD C ON A.MILEAGE_CLS_CD = C.COM_CD
+		LEFT OUTER JOIN TB_SVC_RENT_HIST D ON  A.RENT_HIST_SEQ = D.RENT_HIST_SEQ
+		WHERE 1 = 1
+		<if test='searchStrDate != null and searchStrDate != "" and searchEndDate != null and searchEndDate != ""'>
+		AND A.REG_DTTM BETWEEN STR_TO_DATE(#{searchStrDate}, '%Y-%m-%d') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='searchStrDate == null or searchStrDate == ""'>
+		AND A.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='mileageClsCd != null and mileageClsCd != ""'>
+		AND A.MILEAGE_CLS_CD = #{mileageClsCd}
+		</if>
+		<if test='userId != null and userId != ""'>
+		AND B.MB_ID LIKE CONCAT(#{userId}, '%') 
+		</if>
+		ORDER BY A.REG_DTTM DESC, A.MILEAGE_CLS_CD
+		<if test='pagingYn == "Y"'>
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getMileageHistCount" parameterType="mileageVO" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SVC_MILEAGE A 
+		LEFT OUTER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ
+		LEFT OUTER JOIN TB_SYS_MLANG_COM_CD C ON A.MILEAGE_CLS_CD = C.COM_CD
+		LEFT OUTER JOIN TB_SVC_RENT_HIST D ON  A.RENT_HIST_SEQ = D.RENT_HIST_SEQ
+		WHERE 1 = 1
+		<if test='searchStrDate != null and searchStrDate != "" and searchEndDate != null and searchEndDate != ""'>
+		AND A.REG_DTTM BETWEEN STR_TO_DATE(#{searchStrDate}, '%Y-%m-%d') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='searchStrDate == null or searchStrDate == ""'>
+		AND A.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='mileageClsCd != null and mileageClsCd != ""'>
+		AND A.MILEAGE_CLS_CD = #{mileageClsCd}
+		</if>
+		<if test='userId != null and userId != ""'>
+		AND B.MB_ID LIKE CONCAT(#{userId}, '%') 
+		</if>
+	</select>
+	
+	<select id="getMileageHistTotalSum" parameterType="mileageVO" resultType="int">
+		SELECT A.MILEAGE_POINT FROM 
+		(
+			SELECT 
+				IFNULL(SUM(MILEAGE_POINT), 0) AS MILEAGE_POINT
+			FROM TB_SVC_MILEAGE A 
+			LEFT OUTER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD C ON A.MILEAGE_CLS_CD = C.COM_CD
+			WHERE 1 = 1
+			<if test='searchStrDate != null and searchStrDate != "" and searchEndDate != null and searchEndDate != ""'>
+			AND A.REG_DTTM BETWEEN STR_TO_DATE(#{searchStrDate}, '%Y-%m-%d') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='searchStrDate == null or searchStrDate == ""'>
+			AND A.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='mileageClsCd != null and mileageClsCd != ""'>
+			AND A.MILEAGE_CLS_CD = #{mileageClsCd}
+			</if>
+			<if test='userId != null and userId != ""'>
+			AND B.MB_ID LIKE CONCAT(#{userId}, '%') 
+			</if>
+		) A
+	</select>
+</mapper>

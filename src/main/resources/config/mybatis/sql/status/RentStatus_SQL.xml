@@ -1,0 +1,978 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.status.rentStatus.service.RentStatusMapper">
+	
+	<select id="getRentStatusList" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		 SELECT H.RENT_SEQ												AS rentSeq
+				,(SELECT BIKE_NO 
+					FROM TB_OPR_BIKE
+				   WHERE BIKE_ID = H.RENT_BIKE_ID	   )				 AS rentBikeNo	   
+				,H.RENT_STATION_ID										AS rentStationId
+				, H.RENT_BIKE_ID										  AS rentBikeId
+				,U.USR_SEQ												  AS usrSeq
+				,(SELECT STATION_NAME
+					FROM  spb.TB_OPR_MLANG_STATION
+				   WHERE STATION_ID = H.RENT_STATION_ID
+					 AND LANG_CLS_CD = 'LAG_001' )						AS rentStationName
+				,(SELECT IF((SELECT MB_ID FROM TB_SVC_MB WHERE USR_SEQ = H.USR_SEQ) IS NULL,
+							(SELECT SERIAL_NO FROM TB_SVC_SERIAL_NO_HIST WHERE USR_SEQ = H.USR_SEQ AND VOUCHER_SEQ = H.VOUCHER_SEQ),
+							(SELECT MB_ID FROM TB_SVC_MB WHERE USR_SEQ = H.USR_SEQ))
+				  )	   AS mbId
+				,H.VOUCHER_SEQ											  AS voucherSeq
+				,U.USR_CLS_CD											  AS usrClsCd
+				,H.RENT_CLS_CD											AS rentClsCd
+				, (SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = H.RENT_CLS_CD 
+					 AND LANG_CLS_CD = 'LAG_001' )	 					  AS rentClsCdName	
+				, IFNULL((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = H.RENT_MTH_CD 
+					 AND LANG_CLS_CD = 'LAG_001')  ,'S' )				  AS returnRackId
+				, DATE_FORMAT(H.RENT_DTTM   ,'%m-%d %H:%i')				AS rentDttm
+					<!-- 2017.07.03_JHN_비회원 이용 절차 개선 -->
+				, CASE U.USR_CLS_CD WHEN 'USR_002' THEN '외국인'
+				  ELSE
+					   <!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO ) -->
+					   CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR)
+				  END	 
+						  AS usrMpnNo	
+				, TIMESTAMPDIFF(MINUTE,RENT_DTTM, now())				  AS elapseTime  
+			FROM spb.TB_SVC_RENT H 
+		   INNER JOIN spb.TB_SVC_USR U 	ON H.USR_SEQ = U.USR_SEQ
+		 <if test='usrMpnNo != null and usrMpnNo !=""'>   		
+				AND U.USR_MPN_NO = 
+<!--			 	dg_encrypt('TB_SVC_USR','USR_MPN_NO', ( CASE WHEN LENGTH(trim(#{usrMpnNo})) = 11 THEN REGEXP_REPLACE( trim(#{usrMpnNo}) ,'(.{3})(.{4})(.{4})', '\\1-\\2-\\3') -->
+<!-- 															ELSE trim(#{usrMpnNo}) -->
+<!-- 															END -->
+<!-- 													   ) -->
+<!-- 						  ) -->
+				HEX(AES_ENCRYPT(( CASE WHEN LENGTH(trim(#{usrMpnNo})) = 11 THEN REGEXP_REPLACE( trim(#{usrMpnNo}) ,'(.{3})(.{4})(.{4})', '\\1-\\2-\\3')
+															ELSE trim(#{usrMpnNo})
+															END
+													   ),'BRC'))
+						
+		 </if>   	
+		 <if test='mbId != null and mbId !=""'>
+		 INNER JOIN spb.TB_SVC_MB  I 	ON H.USR_SEQ = I.USR_SEQ AND I.MB_ID = #{mbId}
+		 </if>
+		 <if test='rentBikeNo != null and rentBikeNo !=""'>
+		 INNER JOIN spb.TB_OPR_BIKE  I 	ON  
+		 		BIKE_NO = ( CASE WHEN LENGTH(#{rentBikeNo}) BETWEEN 1 AND 5 THEN  CONCAT('BRC-',LPAD(#{rentBikeNo},5,'0'))
+							ELSE #{rentBikeNo}
+							END			
+						  ) 
+		 		AND H.RENT_BIKE_ID = I.BIKE_ID
+		 </if>
+		 WHERE H.RENT_YN = 'Y' 
+		  <if test='searchWord != null and searchWord !=""'> 
+		   AND U.USR_SEQ = (SELECT USR_SEQ 
+							  FROM TB_SVC_SERIAL_NO_HIST 
+							 WHERE USR_SEQ = H.USR_SEQ 
+							   AND VOUCHER_SEQ = H.VOUCHER_SEQ 
+							   AND SERIAL_NO   =  #{searchWord} 
+							)
+		   
+		  </if> 
+		   <if test='longTermChk != null and longTermChk !="" and longTermChk =="Y"'>
+		   <![CDATA[AND TIME_TO_SEC(timediff(now(),RENT_DTTM)) >= CAST((SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD ='MSI_012') AS UNSIGNED)* 60]]>
+		   </if>	  
+		   ORDER BY H.RENT_DTTM DESC
+		   <if test='pageYn =="Y"'>
+		   LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		   </if>	
+	</select>
+	
+	<select id="getRentStatusAllCnt" parameterType="bikeRentalVo" resultType="int">
+		SELECT COUNT(*)
+		  FROM spb.TB_SVC_RENT H 
+		 INNER JOIN spb.TB_SVC_USR U 	ON H.USR_SEQ = U.USR_SEQ
+		<if test='usrMpnNo != null and usrMpnNo !=""'>   		
+				AND U.USR_MPN_NO = 
+<!--			 	dg_encrypt('TB_SVC_USR','USR_MPN_NO', ( CASE WHEN LENGTH(trim(#{usrMpnNo})) = 11 THEN REGEXP_REPLACE( trim(#{usrMpnNo}) ,'(.{3})(.{4})(.{4})', '\\1-\\2-\\3') -->
+<!-- 															ELSE trim(#{usrMpnNo}) -->
+<!-- 															END -->
+<!-- 													   ) -->
+<!-- 						  ) -->
+				HEX(AES_ENCRYPT(( CASE WHEN LENGTH(trim(#{usrMpnNo})) = 11 THEN REGEXP_REPLACE( trim(#{usrMpnNo}) ,'(.{3})(.{4})(.{4})', '\\1-\\2-\\3')
+															ELSE trim(#{usrMpnNo})
+															END
+													   ),'BRC'))
+				
+		 </if>   	
+		 <if test='mbId != null and mbId !=""'>
+		 INNER JOIN spb.TB_SVC_MB  I 	ON H.USR_SEQ = I.USR_SEQ AND I.MB_ID = #{mbId}
+		 </if>
+		 <if test='rentBikeNo != null and rentBikeNo !=""'>
+		 INNER JOIN spb.TB_OPR_BIKE  I 	ON  
+		 		BIKE_NO = ( CASE WHEN LENGTH(#{rentBikeNo}) BETWEEN 1 AND 5 THEN  CONCAT('BRC-',LPAD(#{rentBikeNo},5,'0'))
+							ELSE #{rentBikeNo}
+							END			) 
+		 		AND H.RENT_BIKE_ID = I.BIKE_ID
+		 </if>
+		 WHERE H.RENT_YN = 'Y' 
+		  <if test='searchWord != null and searchWord !=""'> 
+		   AND U.USR_SEQ = (SELECT USR_SEQ 
+							  FROM TB_SVC_SERIAL_NO_HIST 
+							 WHERE USR_SEQ = H.USR_SEQ 
+							   AND VOUCHER_SEQ = H.VOUCHER_SEQ 
+							   AND SERIAL_NO   =  #{searchWord} 
+							)
+		   
+		  </if> 
+		   <if test='longTermChk != null and longTermChk !="" and longTermChk =="Y"'>
+		   <![CDATA[AND TIME_TO_SEC(timediff(now(),RENT_DTTM)) >= CAST((SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD ='MSI_012') AS UNSIGNED)* 60]]>
+		   </if>	  
+			
+	</select>
+	<select id="getSmsAllUsrMpnNo" parameterType="bikeRentalVo" resultType="String">
+		  SELECT 
+		  		<!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO  )	   AS mpn_no -->
+		  		CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR) AS mpn_no
+			FROM  spb.TB_SVC_RENT H 
+		   INNER JOIN TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
+		   WHERE H.RENT_YN = 'Y'
+			<if test='rentStationId !=null and rentStationId != ""'>
+			 AND H.RENT_STATION_ID = #{rentStationId}
+			</if> 
+			<if test='rentStationGrpSeq !=null and rentStationGrpSeq != "" and  rentStationId == ""'>
+			 AND H.RENT_STATION_ID IN ( SELECT STATION_ID
+										   FROM spb.TB_OPR_STATION
+										  WHERE STATION_GRP_SEQ = #{rentStationGrpSeq})
+			</if>
+			<if test='searchType != null and searchType != ""'>
+			<choose>
+				<when test='searchType == "I"'>
+				AND H.USR_SEQ IN (SELECT USR_SEQ
+									FROM TB_SVC_MB
+								   WHERE MB_ID LIKE CONCAT(#{searchWord} ,'%'))
+				</when> 
+				<otherwise>
+				<!-- AND U.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{searchWord}) -->
+				AND U.USR_MPN_NO = HEX(AES_ENCRYPT(#{searchWord},'BRC'))
+				</otherwise>	   
+			</choose>	
+			</if>
+			<if test='rentClsCd != null and rentClsCd != ""'>
+			  AND H.RENT_CLS_CD = #{rentClsCd}
+			</if>
+			<if test='longTermChk != null and longTermChk !="" and longTermChk =="Y"'>
+			  <![CDATA[AND TIME_TO_SEC(timediff(now(),RENT_DTTM)) >= CAST((SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD ='MSI_010') AS UNSIGNED)* 60]]>
+			</if>   
+	</select>
+	<select id="getRentStatusInfo" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		 SELECT H.RENT_SEQ												AS rentSeq
+			   ,H.RENT_CLS_CD											 AS rentClsCd
+			   ,CONCAT((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = H.RENT_CLS_CD 
+					 AND LANG_CLS_CD = 'LAG_001') 
+					 	,' | '
+					 	,IFNULL((SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = H.RENT_MTH_CD 
+					 AND LANG_CLS_CD = 'LAG_001')
+							   ,(SELECT MLANG_COM_CD_NAME
+					FROM spb.TB_SYS_MLANG_COM_CD
+					WHERE COM_CD = 'CHN_001'
+					 AND LANG_CLS_CD = 'LAG_001') ))	AS rentClsCdName
+			   ,(SELECT BIKE_NO 
+				   FROM spb.TB_OPR_BIKE
+				  WHERE BIKE_ID = H.RENT_BIKE_ID	   )				  AS rentBikeNo	
+			   ,H.RENT_BIKE_ID											AS rentBikeId
+			   ,(SELECT TERMINAL_ID
+				   FROM TB_OPR_BIKE
+				  WHERE BIKE_ID = H.RENT_BIKE_ID	   )				  AS terminalId
+			   ,(SELECT STATION_NAME
+				   FROM spb.TB_OPR_MLANG_STATION
+				  WHERE STATION_ID = H.RENT_STATION_ID
+					AND LANG_CLS_CD =#{lang}		   )				  AS rentStationName
+			   ,(SELECT NOW_STATION_EQUIP_ORD
+				   FROM spb.TB_OPR_RACK
+				  WHERE RACK_ID = H.RENT_RACK_ID			)			 AS rentRackId	
+			   ,DATE_FORMAT(H.RENT_DTTM   ,'%Y-%m-%d %H:%i' )			 AS rentDttm
+			   ,(SELECT IFNULL(MB_ID,'GUEST')
+				   FROM spb.TB_SVC_MB
+				  WHERE USR_SEQ = H.USR_SEQ				 )			 AS mbId
+			   ,H.USR_SEQ												 AS userSeq
+			   <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO)	  AS usrMpnNo  -->
+			   ,CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
+			   ,DATE_FORMAT(V.VOUCHER_STR_DTTM ,'%Y-%m-%d %H:%i')		 AS voucherStrDttm
+			   ,DATE_FORMAT(V.VOUCHER_END_DTTM ,'%Y-%m-%d %H:%i')		 AS voucherEndDttm
+			   ,U.RENT_ENC_PWD											AS rentEncPwd  
+			   ,TIMESTAMPDIFF(MINUTE,H.RENT_DTTM, now())				  AS elapseTime  
+		   FROM  spb.TB_SVC_RENT H INNER JOIN spb.TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
+		   LEFT OUTER JOIN TB_SVC_VOUCHER V ON H.VOUCHER_SEQ = V.VOUCHER_SEQ
+		 WHERE H.RENT_SEQ = #{rentSeq}
+	</select>  
+	
+	<!-- 강제반납에 의한 초과요금 발생 수정_20160826_JJH_START -->
+	<!-- 
+	<select id="getCurrentRentData" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		SELECT R.RENT_SEQ										 AS rentSeq
+			  ,R.RENT_CLS_CD									  AS rentClsCd
+			  ,R.RENT_STATION_ID								  AS rentStationId
+			  ,R.RENT_BIKE_ID									 AS rentBikeId
+			  ,(SELECT BIKE_NO
+				  FROM spb.TB_OPR_BIKE
+				 WHERE BIKE_ID = R.RENT_BIKE_ID)				  AS rentBikeNo
+			  ,R.RENT_RACK_ID									 AS rentRackId	
+			  ,DATE_FORMAT(R.RENT_DTTM   ,'%Y-%m-%d %H:%i:%s' )   AS rentDttm
+			  ,R.USR_SEQ										  AS usrSeq
+			  ,R.VOUCHER_SEQ									  AS voucherSeq
+			  ,V.PAYMENT_CLS_CD								   AS paymentClsCd
+			  ,(SELECT ADD_VAL1
+				  FROM spb.TB_SYS_COM_CD
+				  WHERE COM_CD = 'MSI_011'	   )				  AS baseRentTime
+			  ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO) AS usrMpnNo
+		  FROM spb.TB_SVC_RENT R INNER JOIN  spb.TB_SVC_VOUCHER V ON R.VOUCHER_SEQ = V.VOUCHER_SEQ
+			   INNER JOIN spb.TB_SVC_USR U ON R.USR_SEQ = U.USR_SEQ 
+		  <where>
+			  <if test='rentBikeId != null and rentBikeId != ""'>
+				  R.RENT_BIKE_ID = #{rentBikeId}  
+			  </if>
+			  <if  test='rentSeq != null and rentSeq != ""'>
+				  R.RENT_SEQ = #{rentSeq}  
+			  </if>
+		  </where>	
+	</select>
+	 -->
+	<select id="getCurrentRentData" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		SELECT R.RENT_SEQ										 AS rentSeq
+			  ,R.RENT_CLS_CD									  AS rentClsCd
+			  ,R.RENT_STATION_ID								  AS rentStationId
+			  ,R.RENT_BIKE_ID									 AS rentBikeId
+			  ,(SELECT BIKE_NO
+				  FROM spb.TB_OPR_BIKE
+				 WHERE BIKE_ID = R.RENT_BIKE_ID)				  AS rentBikeNo
+			  ,R.RENT_RACK_ID									 AS rentRackId	
+			  ,DATE_FORMAT(R.RENT_DTTM   ,'%Y-%m-%d %H:%i:%s' )   AS rentDttm
+			  ,R.USR_SEQ										  AS usrSeq
+			  ,R.VOUCHER_SEQ									  AS voucherSeq
+			  ,V.PAYMENT_CLS_CD								   AS paymentClsCd
+			  ,CASE
+			  		WHEN LEFT(CD.ADD_VAL1, 7) = 'PREMIUM'
+			  		THEN (SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD = 'MSI_022')
+			  		ELSE (SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD = 'MSI_011')
+			  	END														  AS baseRentTime
+			  <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO) AS usrMpnNo -->
+			  ,CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
+		  FROM spb.TB_SVC_RENT R INNER JOIN  spb.TB_SVC_VOUCHER V ON R.VOUCHER_SEQ = V.VOUCHER_SEQ
+			   INNER JOIN spb.TB_SVC_USR U ON R.USR_SEQ = U.USR_SEQ,
+			   TB_SYS_COM_CD CD
+		  WHERE 1=1
+		  AND V.PAYMENT_CLS_CD = CD.COM_CD
+	  <if test='rentBikeId != null and rentBikeId != ""'>
+		  AND R.RENT_BIKE_ID = #{rentBikeId}  
+	  </if>
+	  <if  test='rentSeq != null and rentSeq != ""'>
+		  AND R.RENT_SEQ = #{rentSeq}  
+	  </if>
+	</select> 
+	<!-- 강제반납에 의한 초과요금 발생 수정_20160826_JJH_END -->
+	 
+	<select id="getCompulsionInfo" parameterType ="bikeRentalVo" resultType="bikeRentalVo">
+		SELECT RENT_SEQ								 AS rentSeq
+			  ,TIMESTAMPDIFF(MINUTE,RENT_DTTM, now())   AS elapseTime
+			  ,VOUCHER_SEQ							  AS voucherSeq
+			  ,RENT_CLS_CD							  AS rendClsCd
+			  ,USR_SEQ								  AS userSeq
+			  ,RENT_BIKE_ID							 AS rentBikeId
+			  ,(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID=RENT_BIKE_ID) AS rentBikeNo
+		  FROM spb.TB_SVC_RENT 
+		 WHERE RENT_SEQ = #{rentSeq}	   
+	</select>	  
+	<delete id="delCurrnetRentData" parameterType="bikeRentalVo">
+		DELETE FROM spb.TB_SVC_RENT WHERE RENT_BIKE_ID = #{rentBikeId}  
+	</delete>  
+	<insert id="addRentHistory" parameterType="bikeRentalVo">  
+		INSERT INTO spb.TB_SVC_RENT_HIST (
+					RENT_DTTM
+					<!-- 대여 Index 추가 (년월일)_cms_20161209 -->
+				   ,RENT_YMD 
+				   ,USR_SEQ
+				   ,VOUCHER_SEQ
+				   ,RENT_STATION_ID
+				   ,RENT_RACK_ID
+				   ,RENT_BIKE_ID
+				   ,RENT_CLS_CD
+				   ,RETURN_STATION_ID
+				   ,RETURN_RACK_ID
+				   ,RETURN_DTTM
+				   <!-- 반납 Index 추가 (년-월-일)_cms_20161209 -->
+				   ,RETURN_YMD
+				   ,USE_MI
+				   ,OVER_FEE_YN
+				   ,USE_DIST
+				   ,TRANSFER_YN
+				   ,CONSUME_CAL
+				   ,REDUCE_CO2
+				   ,TERMINAL_CARD_REG_YN
+				   <!-- 강제반납 관리자 ID INSERT_20160602_JJH_START -->
+				   ,RETURN_ADMIN_ID
+				   <!-- 강제반납 관리자 ID INSERT_20160602_JJH_END -->
+				   ,RENT_MTH_CD
+					
+			 )VALUES (
+					STR_TO_DATE(#{rentDttm}, '%Y-%m-%d %H:%i:%S')
+					<!-- 대여 Index 추가 (년월일)_cms_20161209 -->
+				   ,DATE_FORMAT(#{rentDttm}, '%Y-%m-%d') 
+				   ,#{usrSeq}
+				   ,#{voucherSeq}
+				   ,#{rentStationId}
+				   ,#{rentRackId}
+				   ,#{rentBikeId}
+				   ,#{rentClsCd}
+				   ,#{returnStationId}
+				   ,#{returnRackId}
+				   ,NOW()
+				   <!-- 반납 Index 추가 (년-월-일)_cms_20161209 -->
+				   ,DATE_FORMAT(NOW(), '%Y-%m-%d') 
+				   <if test='useMi != null and useMi !=""'>
+				   ,#{useMi}
+				   </if>
+				   <if test='useMi == null or useMi ==""'>
+				   ,0
+				   </if>
+				   ,#{overFeeYn}
+				   ,0
+				   ,'N'
+				   ,NULL
+				   ,NULL
+				   ,'N'
+				   <!-- 강제반납 관리자 ID INSERT_20160602_JJH_START -->
+				   ,#{adminId}
+				   <!-- 강제반납 관리자 ID INSERT_20160602_JJH_END -->
+				   ,(SELECT RENT.RENT_MTH_CD 
+					   FROM TB_SVC_RENT RENT 
+					  WHERE RENT.USR_SEQ = #{usrSeq} 
+						AND RENT.VOUCHER_SEQ = #{voucherSeq}
+						AND RENT.RENT_BIKE_ID = #{rentBikeId}
+					  LIMIT 1)
+			)
+	   <selectKey resultType="string" keyProperty="rentHistSeq" order="AFTER">
+		   SELECT LAST_INSERT_ID() 
+		</selectKey> 
+		
+	</insert>   
+	<insert id="addOverFeeInfo" parameterType="bikeRentalVo">
+		INSERT INTO TB_SVC_RENT_OVER_FEE
+		(
+			RENT_HIST_SEQ, RENT_DTTM, OVER_MI, OVER_FEE, OVER_FEE_PAYMENT_YN, OVER_FEE_PROCESS_CLS_CD 
+		)
+		VALUES
+		(
+			#{rentHistSeq}, #{rentDttm}, #{overMi}, CASE WHEN CAST(#{overFee} AS SIGNED) > '30000' THEN '30000' ELSE #{overFee} END, 'N', 'OPD_002'
+		)
+	</insert> 
+	<select id="getOverFeePolicy"   parameterType="java.util.HashMap"   resultType="java.util.HashMap"> 
+		SELECT *
+		FROM TB_SVC_ADD_FEE
+		WHERE ADD_FEE_CLS = #{ADD_FEE_CLS}
+		<choose>
+		<when test='POLICY_TYPE == "Max"'>
+		  AND OVER_END_MI = 0
+		</when>
+		<otherwise>
+		<![CDATA[
+			AND OVER_END_MI <> 0
+		]]>
+		</otherwise>	
+		</choose>
+	</select>
+	<update id="setRentTempPwSend" parameterType="bikeRentalVo">
+		UPDATE TB_SVC_USR
+		   <!-- SET RENT_ENC_PWD = dg_hash('TB_SVC_USR', 'RENT_ENC_PWD', #{rentEncPwd}) -->
+		   <!-- SET RENT_ENC_PWD = #{rentEncPwd} -->
+		   SET RENT_ENC_PWD = SHA2(#{rentEncPwd}, 512)
+		 <!-- WHERE USR_MPN_NO = dg_encrypt('TB_SVC_USR','USR_MPN_NO',#{usrMpnNo}) -->
+		 <!-- WHERE USR_MPN_NO = #{usrMpnNo} -->
+		 WHERE USR_MPN_NO = HEX(AES_ENCRYPT(#{usrMpnNo},'BRC'))
+		   AND AUTH_DI_VAL != '-'
+	</update>
+	<insert id="addExeImpulseReturnHistory" parameterType="bikeRentalVo">
+		INSERT INTO TB_SVC_ENFRC_RETURN_HIST
+			(STATION_ID, DEVICE_CNNC_CD, ENFRC_RETURN_CD, PARKING_LOCATION, PHOTO_YN
+			, EMRGNCY_YN, SMS_YN, RENT_BIKE_ID, AGENT_ID, PARKING_LOCATION_YN
+			, LATITUDE, LONGITUDE, NEAR_STATION_ID, PARKING_LOCATION_REASON, PARKING_LOCATION_DESC
+			, ENFRC_RETURN_DESC, ADDR, ENFRC_GUBUN_CD
+			, TEAM_SEQ
+		<if test='lostBikeYn =="Y"'>
+			, COMPT_CD
+			, REG_ID
+			, COMPT_DTTM 		
+		</if>
+			)
+		VALUES
+		(
+			#{enfrcReturnStationId}, #{deviceCnncCd}, #{enfrcReturnCd}, #{parkingLocation},  #{photoYn}
+			,  #{emrgncyYn}, 'N', #{rentBikeId}, #{adminId}, #{parkingLocationYn}
+			
+			<choose>
+			<when test='latitude != null and latitude !=""'>
+			, #{latitude}, #{longitude}, 
+			  (SELECT NEAR.STATION_ID FROM (
+				   SELECT STATION_ID,distance_between(#{latitude}, #{longitude}, STATION_LATITUDE, STATION_LONGITUDE) AS DIS 
+			   FROM TB_OPR_STATION 
+			   WHERE STATION_USE_YN  IN ('Y','T','S')
+			   ORDER BY DIS LIMIT 1		)NEAR 
+			   )
+			 </when>
+			 <otherwise>
+			 , '0.000000',  '0.000000', 
+			''
+			 </otherwise>
+			 </choose>
+			 , #{parkingLocationReason}, #{parkingLocationDesc}
+			 , #{enfrcReturnDesc}, #{addr}, #{enfrcGubunCd}
+			 <choose>
+			 	<when test='enfrcReturnStationId != null and enfrcReturnStationId !=""'>
+			 , ( SELECT TEAM_SEQ FROM TB_OPR_STATION 
+				 WHERE STATION_ID = #{enfrcReturnStationId})	
+			 	</when>
+			 	<otherwise>
+			 , ( SELECT TEAM_SEQ FROM TB_OPR_STATION 
+				 WHERE STATION_ID = ( SELECT NEAR.STATION_ID 
+										FROM ( SELECT STATION_ID,distance_between(#{latitude}, #{longitude}, STATION_LATITUDE, STATION_LONGITUDE) AS DIS 
+										   	   FROM TB_OPR_STATION 
+											   WHERE STATION_USE_YN  IN ('Y','T','S')
+											   ORDER BY DIS LIMIT 1		
+											  )NEAR 
+									)
+			 
+			 	)	
+			 	</otherwise>
+			 </choose>
+			 <if test='lostBikeYn =="Y"'>
+			 , '5'
+			 , #{adminId}
+			 , NOW()
+			 </if>
+			 
+		)
+		<selectKey resultType="String" keyProperty="enfrcReturnHistSeq" order="AFTER">
+			  SELECT LAST_INSERT_ID()
+		</selectKey>
+		  
+	</insert>
+	<select id="getExeImpulseReturnList" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+	SELECT A.ENFRC_RETURN_HIST_SEQ AS enfrcReturnHistSeq 
+		,A.STATION_ID AS enfrcReturnStationId
+		, CASE WHEN PARKING_LOCATION_REASON = '4' THEN CONCAT( ADDR ,  '\r\n', PARKING_LOCATION ) 
+		  ELSE
+		( SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = A.STATION_ID AND LANG_CLS_CD = 'LAG_001')
+		  END
+			 AS stationName
+		,A.DEVICE_CNNC_CD AS deviceCnncCd 
+		,A.ENFRC_RETURN_CD AS enfrcReturnCd
+		, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.ENFRC_RETURN_CD AND LA.LANG_CLS_CD = 'LAG_001') 
+		as deviceReturnCdNm
+		,A.PARKING_LOCATION AS parkingLocation
+		,A.PHOTO_YN AS photoYn
+		,A.EMRGNCY_YN AS emrgncyYn
+		,A.SMS_YN AS smsYn 
+		,A.RENT_BIKE_ID AS rentBikeId
+		,(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID = A.RENT_BIKE_ID) AS rentBikeNo
+		,A.REG_DTTM AS regDttm
+		,A.COMPT_CD AS comptCd
+		,A.COMPT_CD AS procCd
+		,(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = C.BIKE_STUS_CD) AS rentBikeStat
+		, A.ADDR AS addr
+		, A.PARKING_LOCATION_DESC AS parkingLocationDesc
+		, A.PARKING_LOCATION_REASON AS parkingLocationReason
+		, A.ENFRC_RETURN_DESC AS enfrcReturnDesc
+		, A.ENFRC_GUBUN_CD AS enfrcGubunCd
+		, A.TEAM_SEQ as teamSeq
+		, CASE WHEN  A.LATITUDE='0.000000' THEN (SELECT STA.STATION_LATITUDE FROM TB_OPR_STATION STA WHERE STA.STATION_ID=A.STATION_ID) 
+			   WHEN A.LATITUDE!='0.000000' THEN A.LATITUDE
+		  END AS latitude
+		, CASE WHEN  A.LONGITUDE='0.000000' THEN (SELECT STA.STATION_LONGITUDE FROM TB_OPR_STATION STA WHERE STA.STATION_ID=A.STATION_ID) 
+			   WHEN A.LONGITUDE!='0.000000' THEN A.LONGITUDE
+		  END AS longitude 
+	FROM TB_SVC_ENFRC_RETURN_HIST A LEFT OUTER JOIN  TB_OPR_STATION B ON A.STATION_ID = B.STATION_ID
+	LEFT OUTER JOIN TB_OPR_BIKE C ON A.RENT_BIKE_ID = C.BIKE_ID
+	LEFT OUTER JOIN TB_SYS_TEAM_INFO D ON A.TEAM_SEQ = D.TEAM_SEQ
+	LEFT OUTER JOIN TB_OPR_MLANG_STATION MS ON (A.STATION_ID=MS.STATION_ID AND MS.LANG_CLS_CD = 'LAG_001')
+	WHERE 1=1
+	<!-- <if test='teamSeq != null and teamSeq != ""'>
+		AND B.TEAM_SEQ=#{teamSeq}
+	</if> -->
+	  <if test='searchStartDate != null and searchStartDate !=""'>
+	   AND A.REG_DTTM  BETWEEN STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d')  AND  STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND
+	  </if>
+	  <if test='searchStartDate == null or searchStartDate ==""'>
+		AND A.REG_DTTM BETWEEN DATE_FORMAT(NOW(), '%Y-%m-%d') AND  DATE_FORMAT(NOW(), '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND
+	  </if>
+	   <if test='centerId != null and centerId !=""'>
+			AND D.CENTER_ID = #{centerId}
+		</if>
+		 <if test='teamId != null and teamId !=""'>
+			AND D.TEAM_ID = #{teamId}
+		</if>
+		<if test='enfrcReturnCd != null and enfrcReturnCd !=""'>
+		  AND A.ENFRC_RETURN_CD = #{enfrcReturnCd}
+		</if>
+		<if test='searchWord != null and searchWord !="" and bikeNoYn != "N"'> 	
+		 AND (
+				(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID = A.RENT_BIKE_ID)  LIKE CONCAT('%',#{searchWord},'%')
+				or MS.STATION_NAME like CONCAT('%',#{searchWord},'%') 
+				or A.ADDR like CONCAT('%',#{searchWord},'%')
+				or A.PARKING_LOCATION like CONCAT('%',#{searchWord},'%')
+			<if test='parkingLocationReason != null and parkingLocationReason =="4"'>	
+				or ( SELECT MB_ID FROM TB_SVC_MB M WHERE  M.USR_SEQ = A.AGENT_ID)  LIKE CONCAT('%',#{searchWord},'%')
+			</if>	  			
+			)				   	  	
+		</if>
+		
+		<if test='bikeNoYn == "N"'>
+		  AND A.RENT_BIKE_ID = ""
+		</if>
+		<if test='bikeMYIDYn == "N"'>
+		  AND ( A.REG_ID = #{bikeMYID} or A.AGENT_ID =#{bikeMYID} )
+		</if>
+		<choose>
+			<when test='comptCd =="1"'>
+			AND A.COMPT_CD != '0'
+			</when>
+			<when test='comptCd != null and comptCd !=""'>
+			AND A.COMPT_CD = #{comptCd}
+			</when>
+		</choose>
+		<if test='procCd != null and procCd !=""'>
+		  AND A.COMPT_CD = #{procCd}
+		</if>
+		<if test='parkingLocationReason != null and parkingLocationReason !=""'>
+		  AND A.PARKING_LOCATION_REASON = #{parkingLocationReason}
+		</if>
+		<!-- 팀SEQ 추가 20200131 -->
+		<if test='usrSeq != null and usrSeq !=""'>
+		  AND A.TEAM_SEQ = #{usrSeq}
+		</if>
+	  ORDER BY COMPT_CD, ENFRC_RETURN_HIST_SEQ DESC
+	  <if test='recordCountPerPage != null and recordCountPerPage != 0'>
+	  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+	  </if>
+	</select>
+	
+	 <select id="getExeImpulseReturnListCnt" parameterType="bikeRentalVo" resultType="int">
+	SELECT COUNT(*)
+	FROM TB_SVC_ENFRC_RETURN_HIST A LEFT OUTER JOIN  TB_OPR_STATION B ON A.STATION_ID = B.STATION_ID
+	LEFT OUTER JOIN TB_OPR_BIKE C ON A.RENT_BIKE_ID = C.BIKE_ID
+	LEFT OUTER JOIN TB_SYS_TEAM_INFO D ON A.TEAM_SEQ = D.TEAM_SEQ
+	LEFT OUTER JOIN TB_OPR_MLANG_STATION MS ON (A.STATION_ID=MS.STATION_ID AND MS.LANG_CLS_CD = 'LAG_001')
+	WHERE 1=1
+	<!-- 	
+	<if test='teamSeq != null and teamSeq != ""'>
+		AND B.TEAM_SEQ=#{teamSeq}
+	</if> -->
+	<if test='searchStartDate != null and searchStartDate !=""'>
+	   AND A.REG_DTTM  BETWEEN STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d')  AND  STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND
+	  </if>
+	  <if test='searchStartDate == null or searchStartDate ==""'>
+		AND A.REG_DTTM BETWEEN DATE_FORMAT(NOW(), '%Y-%m-%d') AND  DATE_FORMAT(NOW(), '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND
+	  </if>
+		 <if test='centerId != null and centerId !=""'>
+			AND D.CENTER_ID = #{centerId}
+		</if>
+		 <if test='teamId != null and teamId !=""'>
+			AND D.TEAM_ID = #{teamId}
+		</if>
+		<if test='enfrcReturnCd != null and enfrcReturnCd !=""'>
+		  AND A.ENFRC_RETURN_CD = #{enfrcReturnCd}
+		</if>
+		<if test='searchWord != null and searchWord !="" and bikeNoYn != "N"'>		  
+		AND (
+				(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID = A.RENT_BIKE_ID)  LIKE CONCAT('%',#{searchWord},'%')
+				or MS.STATION_NAME like CONCAT('%',#{searchWord},'%')
+				or A.ADDR like CONCAT('%',#{searchWord},'%')
+				or A.PARKING_LOCATION like CONCAT('%',#{searchWord},'%')
+			)	 
+		</if>
+		
+		<if test='bikeNoYn == "N"'>
+		  AND A.RENT_BIKE_ID = ""
+		</if>
+		<if test='bikeMYIDYn == "N"'>
+		  AND ( A.REG_ID = #{bikeMYID} or A.AGENT_ID =#{bikeMYID} )
+		</if>
+		<choose>
+			<when test='comptCd =="1"'>
+			AND A.COMPT_CD != '0'
+			</when>
+			<when test='comptCd != null and comptCd !=""'>
+			AND A.COMPT_CD = #{comptCd}
+			</when>
+		</choose>
+		<if test='procCd != null and procCd !=""'>
+		  AND A.COMPT_CD = #{procCd}
+		</if>
+		<if test='parkingLocationReason != null and parkingLocationReason !=""'>
+		  AND A.PARKING_LOCATION_REASON = #{parkingLocationReason}
+		</if>
+	</select>
+	
+	<update id="compExeImpulseProc" parameterType="bikeRentalVo">
+		UPDATE TB_SVC_ENFRC_RETURN_HIST
+		   SET COMPT_CD = CASE WHEN #{comptCd} IS NULL THEN '0'
+						  ELSE #{comptCd}
+						  END	
+			 , REG_ID   = CASE WHEN #{comptCd} IS NULL THEN null
+							   WHEN #{comptCd} = '0' THEN null
+						  ELSE  #{regId} 
+						  END
+			 , COMPT_DTTM =  CASE WHEN #{comptCd} IS NULL THEN null
+								  WHEN #{comptCd} = '0' THEN null
+							 ELSE now()
+							 END
+		 WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq}
+		   
+	</update>
+	
+	<select id="getExeImpulseCntInfo" parameterType ="bikeRentalVo" resultType="bikeRentalVo">
+		SELECT (
+			SELECT COUNT(*) 
+			FROM TB_SVC_ENFRC_RETURN_HIST
+			WHERE COMPT_CD = '0' OR COMPT_CD = '') AS empCnt
+			,(SELECT COUNT(*)
+			FROM TB_SVC_ENFRC_RETURN_HIST A
+			WHERE (A.COMPT_CD = '0' OR A.COMPT_CD = '')
+			AND A.STATION_ID IN 
+				  (SELECT DISTINCT(SERH.STATION_ID) FROM TB_SVC_ENFRC_RETURN_HIST SERH ,TB_OPR_STATION OS, TB_SYS_TEAM_INFO TI
+					WHERE SERH.STATION_ID = OS.STATION_ID
+					AND OS.TEAM_SEQ = TI.TEAM_SEQ
+					AND TI.CENTER_ID = (SELECT CENTER_ID FROM TB_SYS_TEAM_INFO TI2 WHERE TI2.TEAM_SEQ=#{teamSeq})
+					) 
+			 ) AS centerCnt
+			,(SELECT COUNT(*)
+			FROM TB_SVC_ENFRC_RETURN_HIST A
+			WHERE (A.COMPT_CD = '0' OR A.COMPT_CD = '')
+			AND A.STATION_ID IN 
+				  (SELECT DISTINCT(SERH.STATION_ID) FROM TB_SVC_ENFRC_RETURN_HIST SERH ,TB_OPR_STATION OS, TB_SYS_TEAM_INFO TI
+					WHERE SERH.STATION_ID = OS.STATION_ID
+					AND OS.TEAM_SEQ = TI.TEAM_SEQ
+					AND TI.TEAM_ID = (SELECT TEAM_ID FROM TB_SYS_TEAM_INFO TI2 WHERE TI2.TEAM_SEQ=#{teamSeq})
+					)  
+			) as teamCnt
+			FROM DUAL	 
+	</select>
+	
+	<select id="getExeImpulseReturnInfo" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+	SELECT /* RentStatus_SQL.getExeImpulseReturnInfo */
+		   ENFRC_RETURN_HIST_SEQ AS enfrcReturnHistSeq
+		,(SELECT BIKE_NO FROM TB_OPR_BIKE WHERE BIKE_ID = A.RENT_BIKE_ID) AS rentBikeNo
+		,(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = B.BIKE_STUS_CD) AS rentBikeStat
+		, STATION_ID AS enfrcReturnStationId
+		, ( SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = A.STATION_ID AND LANG_CLS_CD = 'LAG_001') AS stationName
+		, PARKING_LOCATION AS parkingLocation
+		, A.REG_DTTM AS regDttm
+		, ENFRC_RETURN_CD AS enfrcReturnCd
+		, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.ENFRC_RETURN_CD AND LA.LANG_CLS_CD = 'LAG_001') AS deviceReturnCdNm
+		, PHOTO_YN AS photoYn
+		, EMRGNCY_YN AS emrgncyYn
+		, SMS_YN AS smsYn
+		, COMPT_CD AS comptCd
+		, CASE WHEN PARKING_LOCATION_REASON = 4 THEN ( SELECT CONCAT( MB_ID, '(시민 )' ) FROM TB_SVC_MB C, TB_SVC_USR D WHERE  C.USR_SEQ = A.AGENT_ID AND C.USR_SEQ = D.USR_SEQ ) ELSE A.AGENT_ID END AS agentId
+		, A.COMPT_DTTM AS comptDttm
+		, A.REG_ID as regId
+		, A.LATITUDE AS latitude
+		, A.LONGITUDE AS longitude
+		, A.ADDR AS addr
+		, A.ENFRC_GUBUN_CD AS enfrcGubunCd
+		, A.ENFRC_RETURN_DESC AS enfrcReturnDesc
+		, A.DEVICE_CNNC_CD AS deviceCnncCd
+		, A.PARKING_LOCATION_DESC AS parkingLocationDesc
+		, A.PARKING_LOCATION_REASON AS parkingLocationReason
+		, A.TEAM_SEQ AS teamSeq
+		, ( SELECT TEAM_NAME 
+			FROM TB_SYS_TEAM_INFO 
+			WHERE TEAM_SEQ = A.TEAM_SEQ
+		  ) AS teamName
+			
+	FROM TB_SVC_ENFRC_RETURN_HIST A LEFT JOIN TB_OPR_BIKE B ON A.RENT_BIKE_ID = B.BIKE_ID
+	WHERE A.ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq}
+	</select>
+	
+	<select id="chkTeamSeq" parameterType="bikeRentalVo" resultType="int">
+		SELECT COUNT() FROM TB_SYS_TEAM_INFO WHERE CENTER_ID = #{centerId} AND TEAM_ID = #{teamId}
+	</select>
+	
+	<update id="updateExeImpulseProc" parameterType="bikeRentalVo">
+	 UPDATE TB_SVC_ENFRC_RETURN_HIST
+		SET STATION_ID = #{enfrcReturnStationId}
+		 , ADDR = #{addr}
+		 , PARKING_LOCATION = #{parkingLocation}
+		 , PARKING_LOCATION_YN = #{parkingLocationYn}
+		 , PARKING_LOCATION_DESC = #{parkingLocationDesc}
+		 , PARKING_LOCATION_REASON = #{parkingLocationReason}
+		 , PARKING_LOCATION_DESC = #{parkingLocationDesc}
+		 , ENFRC_RETURN_CD = #{enfrcReturnCd}
+		 , ENFRC_RETURN_DESC = #{enfrcReturnDesc}
+		 , PHOTO_YN = #{photoYn}
+		 , DEVICE_CNNC_CD = #{deviceCnncCd}
+	  <choose>
+		<when test='latitude != null and latitude !="" and latitude !="0.000000"'>
+		 , LATITUDE = #{latitude}
+		 , LONGITUDE = #{longitude}
+		 , NEAR_STATION_ID = (SELECT NEAR.STATION_ID 
+	 					 	  FROM (
+									SELECT STATION_ID,distance_between(#{latitude}, #{longitude}, STATION_LATITUDE, STATION_LONGITUDE) AS DIS 
+							   		FROM TB_OPR_STATION 
+							   		WHERE STATION_USE_YN IN ('Y','T','S')
+							   		ORDER BY DIS LIMIT 1		
+							   		) NEAR 
+							   )
+		</when>
+		<otherwise>
+		, LATITUDE = '0.000000'
+		, LONGITUDE = '0.000000' 
+		, NEAR_STATION_ID = '' 
+		</otherwise>
+	  </choose>
+		 
+		 
+		 , EMRGNCY_YN = #{emrgncyYn}
+		
+		 
+	  <if test='centerId != null and centerId != "" and teamId != null and teamId != ""'>
+		 , TEAM_SEQ = (SELECT TEAM_SEQ FROM TB_SYS_TEAM_INFO WHERE CENTER_ID = #{centerId} AND TEAM_ID = #{teamId})
+		 , COMPT_CD = 0
+		 , REG_ID = null
+		 , COMPT_DTTM = null
+	  </if> 
+		 
+		WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq}
+	</update>
+	
+	<insert id="insertEnfrcFileList" parameterType="java.util.Map">
+		INSERT INTO TB_ENFRC_FILE (
+				ENFRC_RETURN_HIST_SEQ
+			   ,ENFRC_FILE_NO
+			 
+			   ,FILE_NAME
+			   ,FILE_ORI_NAME
+			   ,FILE_SAVE_PATH
+			   ,FILE_SIZE
+		) VALUES
+		<foreach collection="list" item="item" separator=",">  
+			( 
+				#{item.enfrcReturnHistSeq}
+			   ,#{item.enfrcFileNo}
+			   ,#{item.fileName}
+			   ,#{item.fileOriName}
+			   ,#{item.fileSavePath} 
+			   ,#{item.fileSize} 
+			)  
+		</foreach>
+	</insert>
+	
+	<select id="chkEnfrcFile" parameterType="bikeRentalVo" resultType="int">
+		SELECT COUNT(*) 
+		FROM TB_ENFRC_FILE 
+		WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq}
+		AND ENFRC_FILE_NO = #{enfrcFileNo}
+	</select>
+	
+	<update id="updateEnfrcFile" parameterType="bikeRentalVo">
+		 UPDATE TB_ENFRC_FILE
+		   SET FILE_NAME = #{fileName}
+		   , FILE_ORI_NAME = #{fileOriName}
+		   , FILE_SAVE_PATH = #{fileSavePath}
+		   , FILE_SIZE = #{fileSize}
+		 WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq}
+		 AND ENFRC_FILE_NO = #{enfrcFileNo}
+	</update>
+	
+	<select id="getEnfrcViewInfo" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+	 SELECT SERH.ENFRC_RETURN_HIST_SEQ 
+	   ,CASE  WHEN SERH.PARKING_LOCATION_REASON = '4' THEN SERH.LATITUDE 
+			  WHEN SERH.STATION_ID!='' THEN (SELECT STA.STATION_LATITUDE FROM TB_OPR_STATION STA WHERE STA.STATION_ID=SERH.STATION_ID) 
+			  WHEN SERH.STATION_ID='' THEN SERH.LATITUDE
+		END AS LATITUDE
+	   ,CASE  WHEN SERH.PARKING_LOCATION_REASON = '4' THEN SERH.LONGITUDE
+			  WHEN  SERH.STATION_ID!='' THEN (SELECT STA.STATION_LONGITUDE FROM TB_OPR_STATION STA WHERE STA.STATION_ID=SERH.STATION_ID) 
+			  WHEN SERH.STATION_ID='' THEN SERH.LONGITUDE
+		END AS LONGITUDE
+		,CASE  WHEN SERH.PARKING_LOCATION_REASON = '4' THEN SERH.ADDR
+			   WHEN  SERH.STATION_ID!='' THEN (SELECT STA.STATION_ADDR1 FROM TB_OPR_STATION STA WHERE STA.STATION_ID=SERH.STATION_ID) 
+			   WHEN SERH.STATION_ID='' THEN SERH.ADDR
+		END AS ADDR
+		,CASE  WHEN SERH.PARKING_LOCATION_REASON = '4' THEN SERH.PARKING_LOCATION
+			   WHEN  SERH.STATION_ID!='' THEN (SELECT STA.STATION_ADDR2 FROM TB_OPR_STATION STA WHERE STA.STATION_ID=SERH.STATION_ID) 
+			   WHEN SERH.STATION_ID='' THEN SERH.PARKING_LOCATION
+		END AS parkingLocation
+	FROM TB_SVC_ENFRC_RETURN_HIST SERH
+	WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq} 
+	</select>
+	
+	<select id="listEnfrcFile" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		SELECT	ENFRC_RETURN_HIST_SEQ					AS enfrcReturnHistSeq
+			   ,ENFRC_FILE_NO							AS enfrcFileNo
+			   ,FILE_SAVE_PATH							AS fileSavePath
+			   ,FILE_NAME								AS fileName
+			   ,FILE_ORI_NAME							AS fileOriName
+		FROM	TB_ENFRC_FILE
+		WHERE	ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq}		
+		ORDER BY ENFRC_FILE_NO
+	</select>
+	
+	<select id="checkBikeStatus" parameterType="bikeRentalVo" resultType="String">
+		SELECT BIKE_STUS_CD AS rentStatusCd FROM TB_OPR_BIKE WHERE BIKE_ID = #{rentBikeId}
+	</select>
+	
+	<select id="checkEnfrcInfo" parameterType="bikeRentalVo" resultType="String">
+		SELECT ENFRC_RETURN_HIST_SEQ AS enfrcReturnHistSeq
+		FROM TB_SVC_ENFRC_RETURN_HIST
+		WHERE RENT_BIKE_ID = 
+			(SELECT  BIKE_ID FROM TB_OPR_BIKE
+			WHERE TERMINAL_ID = #{rentBikeId})
+		ORDER BY ENFRC_RETURN_HIST_SEQ DESC LIMIT 1
+	</select>
+	
+	  <select id="getTeamName" parameterType="bikeRentalVo" resultType="String">
+			   SELECT	/*com.dkitec.barocle.admin.status.rentStatus.service.RentStatusMapper.getTeamName*/ 
+			   		TEAM_NAME 
+				FROM TB_SYS_TEAM_INFO 
+				WHERE TEAM_SEQ = (  SELECT NEAR.TEAM_SEQ 
+											FROM (
+											   SELECT STATION_ID,TEAM_SEQ,distance_between(#{latitude}, #{longitude}, STATION_LATITUDE, STATION_LONGITUDE) AS DIS 
+											   FROM TB_OPR_STATION 
+											   WHERE STATION_USE_YN  IN ('Y','T','S')
+												 AND TEAM_SEQ > 0 
+											   ORDER BY DIS LIMIT 1 )NEAR 
+									  ) 
+	</select>
+	
+	<insert id="addBikeRobbedHistory" parameterType="bikeRentalVo">  
+		INSERT INTO TB_OPR_BIKE_ROB (
+					  BIKE_ID
+					, RENT_HIST_SEQ
+					, MANAGE_CENTER
+					, REPORT_DATE
+					, REPORT_CD
+					, REPORT_NM
+					, REPORT_PNO
+					, REPORT_DETAIL
+					, PROCESS_YN
+					, REG_ID
+					, REG_DTTM
+			 )VALUES (
+					  #{rentBikeId}
+				  <if test='rentHistSeq == null or rentHistSeq == ""'>
+				  	 , ( SELECT MAX(RENT_HIST_SEQ)
+						FROM TB_SVC_RENT_HIST
+						WHERE RENT_BIKE_ID = #{rentBikeId}
+						  AND RENT_DTTM BETWEEN NOW() - INTERVAL 3 DAY AND NOW()
+					   )
+				  </if>
+				  <if test='rentHistSeq != null and rentHistSeq != ""'>
+				  	, #{rentHistSeq} 
+				  </if>
+					, #{manageCenter}
+				  <if test='reportDate != null or reportDate != ""'>
+				  	, DATE_FORMAT(#{reportDate}, '%Y-%m-%d')
+				  </if>
+				  <if test='reportDate == null and reportDate == ""'>
+					, null
+				  </if>
+					, #{reportCd}
+					, #{reportNm}
+					, #{reportPno}
+					, #{reportDetail}
+					, 'N'
+					, #{adminId}
+					, NOW()
+			  )
+	</insert>   
+	
+	<insert id="addBikeRtrvlHistory" parameterType="bikeRentalVo">  
+		INSERT INTO TB_OPR_BIKE_RTRVL (
+				 	  BIKE_ID
+					, RTRVL_DATE
+					, RTRVL_NM
+					, RTRVL_PLACE
+					, RTRVL_DETAIL
+					, RTRVL_CD
+					, REG_ID
+					, REG_DTTM
+			 )VALUES (
+					  #{rentBikeId}
+				  <if test='rtrvlDate != null or reportDate != ""'>
+				  	, DATE_FORMAT(#{rtrvlDate}, '%Y-%m-%d')
+				  </if>
+				  <if test='rtrvlDate == null and reportDate == ""'>
+					, null
+				  </if>
+					, #{rtrvlNm}
+					, #{rtrvlPlace}
+					, #{rtrvlDetail}
+					, #{rtrvlCd}
+					, #{adminId}
+					, NOW()
+			  )
+	</insert>   
+
+	<select id="getSearchBikeNo" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+	 	SELECT 
+		 	  B.BIKE_ID	  AS rentBikeId
+			, B.BIKE_NO	  AS rentBikeNo
+			, A.RENT_SEQ	 AS rentHistSeq
+			, B.BIKE_STUS_CD AS rentStatusCd
+			, (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = BIKE_STUS_CD) AS rentBikeStat
+			,  IFNULL( A.RENT_STATION_ID , D.NOW_LOCATE_ID ) AS rentStationId
+			, (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE LANG_CLS_CD = 'LAG_001' AND STATION_ID = IFNULL( A.RENT_STATION_ID , D.NOW_LOCATE_ID ) ) AS stationName
+			, CASE WHEN BIKE_NO >='BRC-30000' THEN B.USE_CNT
+			  ELSE (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = B.BIKE_BATTERY_STUS_CD AND LANG_CLS_CD ='LAG_001' ) 
+			  END  AS bikeSeCd
+			, E.FAULT_SEQ								AS faultSeq			  
+			, GROUP_CONCAT(G.MLANG_COM_CD_NAME) 		AS faultName  			  
+			, ( SELECT MAX(Z.REG_DTTM) FROM TB_OPR_QR_LOG Z WHERE Z.BIKE_NO = B.BIKE_NO ) AS regDttm
+		FROM TB_OPR_BIKE B LEFT JOIN TB_SVC_RENT A ON (A.RENT_BIKE_ID = B.BIKE_ID )
+		LEFT JOIN TB_OPR_BIKE_PARKING C ON ( C.BIKE_ID = B.BIKE_ID )
+		LEFT JOIN TB_OPR_RACK		 D ON ( C.RACK_ID = D.RACK_ID )
+		LEFT JOIN TB_MTC_FAULT_INFO   E ON ( B.BIKE_ID = E.EQUIPMENT_ID AND E.READ_CLS_CD = 'S' )
+		LEFT JOIN TB_MTC_FAULT_DETL   F ON ( E.FAULT_SEQ = F.FAULT_SEQ )
+		LEFT JOIN TB_SYS_MLANG_COM_CD G ON ( F.FAULT_CLS_CD = G.COM_CD AND G.LANG_CLS_CD = 'LAG_001' )		
+		WHERE 1=1
+		<![CDATA[
+		AND B.BIKE_NO = CASE WHEN LENGTH(#{searchWord}) <= 5 THEN CONCAT('BRC-',LPAD(#{searchWord}, 5, '0'))
+						ELSE UPPER(#{searchWord})
+						END
+		]]>		
+	</select>
+	<select id="getBikeMapInfo" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+	<![CDATA[	
+		SELECT YPOS as longitude
+			 , XPOS as latitude
+		  FROM TB_OPR_QR_LOG
+		 	 WHERE XPOS > 0 AND YPOS > 0
+	]]>
+		   AND DEVICE_ID = #{rentBikeId} ORDER BY QR_LOG_SEQ DESC LIMIT 1
+	</select>
+	
+ 	<insert id="insertParkingInfo" parameterType="bikeRentalVo">
+		INSERT INTO TB_OPR_BIKE_PARKING
+		(
+			RACK_ID, BIKE_ID, CASCADE_YN, CASCADE_BIKE_ID, REG_DTTM 
+		)
+		VALUES
+		(
+			'45800999900000'  
+		  , ( SELECT RENT_BIKE_ID FROM TB_SVC_ENFRC_RETURN_HIST  WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq} )
+		  , 'N'
+		  , ''
+		  , SYSDATE()
+		)
+	</insert>
+	
+	
+	<update id="updateBikeStatus"		parameterType="bikeRentalVo">
+		UPDATE TB_OPR_BIKE A INNER JOIN TB_SVC_ENFRC_RETURN_HIST B ON ( A.BIKE_ID = B.RENT_BIKE_ID AND ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq} )
+		  SET A.BIKE_STUS_CD = 'BKS_003'
+			, A.LOST_YN = 'N'
+			, A.LOST_DATE = null
+			, A.MOD_DTTM  = now() 
+		WHERE A.BIKE_ID = B.RENT_BIKE_ID
+	
+	</update>
+	
+</mapper>

@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.deviceMgmt.arm.service.ArmMapper">
+	
+	<select id="getStation" parameterType="String" resultType="String">
+		SELECT STATION_ID   AS stationId
+		  FROM TB_OPR_STATION
+		 WHERE STATION_GRP_SEQ = #{stationGrpSeq}	 
+	</select>
+	<select id="getArmList" parameterType="armVo" resultType="armVo">
+		  SELECT RACK_ID																		   AS rackId
+				,NOW_LOCATE_CLS_CD																AS locateClsCd
+				,IF(NOW_LOCATE_CLS_CD   ='S',CONCAT('(s)',(SELECT STATION_NAME
+														  FROM spb.TB_OPR_MLANG_STATION
+														 WHERE STATION_ID = NOW_LOCATE_ID
+														   AND LANG_CLS_CD = #{lang} )), '')	AS stationName
+				,IF(NOW_LOCATE_CLS_CD  ='C', CONCAT('(c)',(SELECT CENTER_NAME
+														   FROM spb.TB_OPR_CENTER
+														  WHERE CENTER_ID = NOW_LOCATE_ID)) ,'')   AS centerName
+				,RACK_STUS_CD																	  AS rackStatusCd
+				,(SELECT A.MLANG_COM_CD_NAME
+					FROM TB_SYS_MLANG_COM_CD  A, TB_SYS_COM_CD B
+				   WHERE A.COM_CD = B.COM_CD 
+					 AND A.COM_CD = RACK_STUS_CD
+					 AND B.COM_UP_CD = 'RAS'  
+					 AND A.LANG_CLS_CD = #{lang}	)											  AS rackStatusName
+				,IF(EXISTS(SELECT RACK_ID
+							  FROM spb.TB_OPR_BIKE_PARKING 
+							 WHERE RACK_ID = A.RACK_ID), (SELECT DISTINCT 'Y'
+															FROM spb.TB_OPR_BIKE_PARKING 
+														   WHERE RACK_ID = A.RACK_ID
+															 AND CASCADE_YN ='Y')  ,'N')		  AS cascadeYn
+				,DATE_FORMAT(REG_DTTM  ,'%Y-%m-%d')											   AS regDttm
+				,DATE_FORMAT(LAST_CHK_DTTM  ,'%Y-%m-%d')										  AS lastChkDttm
+		   		,IF(A.NOW_STATION_EQUIP_ORD = 0 ,'0', LPAD(A.NOW_STATION_EQUIP_ORD,3,0))		  AS stationEquipOrder
+				,DATEDIFF(DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_008') DAY), '%Y-%m-%d'), DATE_FORMAT(now(), '%Y-%m-%d') ) AS lastChkRemainDay
+				,ENTRPS_CD	  AS entrpsCd
+				,(SELECT L.MLANG_COM_CD_NAME
+							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							WHERE COM_UP_CD = 'ENT'
+							  AND L.LANG_CLS_CD = 'LAG_001'
+							  AND S.COM_CD = ENTRPS_CD) AS entrpsCdNm 
+			FROM  spb.TB_OPR_RACK AS A
+		  <trim prefix="WHERE" prefixOverrides="AND |OR ">
+			  <if test='searchBgnDe != null and searchBgnDe != ""'>
+			  <![CDATA[  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= REG_DTTM  ]]>
+			  </if>
+			  <if test='searchEndDe != null and searchEndDe != ""'>
+			  <![CDATA[ AND REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+			  </if>
+			  <if test='stationId != null and stationId != ""'>
+			  AND NOW_LOCATE_ID = #{stationId}
+			  </if>
+			  <if test='stationGrpSeq != null and stationGrpSeq != ""'>
+			  AND NOW_LOCATE_ID in (SELECT STATION_ID
+										  FROM spb.TB_OPR_STATION
+										 WHERE STATION_GRP_SEQ = #{stationGrpSeq})
+			  </if>
+			  <if test='rackStatusCd != null and rackStatusCd != ""'>
+			  AND RACK_STUS_CD  = #{rackStatusCd}
+			  </if>
+			  <if test='rglChkSearch != null and rglChkSearch != ""'>
+			  AND DATE_FORMAT(NOW(), '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL((SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_008') - #{rglChkSearch}) DAY), '%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_008') DAY), '%Y-%m-%d')
+			  </if>
+			  
+			  AND A.NOW_STATION_EQUIP_ORD IN ( 0, 99 )
+			 
+		  </trim>
+			ORDER BY REG_DTTM DESC, RACK_ID DESC
+		  <if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>			  
+	</select>
+	
+	<select id="getArmListCount" parameterType="armVo" resultType="int">
+		  SELECT COUNT(RACK_ID)
+			FROM  spb.TB_OPR_RACK 
+			<trim prefix="WHERE" prefixOverrides="AND |OR ">
+			  <if test='searchBgnDe != null and searchBgnDe != ""'>
+			  <![CDATA[  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= REG_DTTM  ]]>
+			  </if>
+			  <if test='searchEndDe != null and searchEndDe != ""'>
+			  <![CDATA[ AND REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND]]>
+			  </if>
+			  <if test='stationId != null and stationId != ""'>
+			  AND NOW_LOCATE_ID = #{stationId}
+			  </if>
+			  <if test='stationGrpSeq != null and stationGrpSeq != ""'>
+			  AND NOW_LOCATE_ID in (SELECT STATION_ID
+									  FROM spb.TB_OPR_STATION
+									 WHERE STATION_GRP_SEQ = #{stationGrpSeq})
+			  </if>
+			  <if test='rackStatusCd != null and rackStatusCd != ""'>
+			  AND RACK_STUS_CD  = #{rackStatusCd}
+			  </if>
+			  <if test='rglChkSearch != null and rglChkSearch != ""'>
+			  AND DATE_FORMAT(NOW(), '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL((SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_008') - #{rglChkSearch}) DAY), '%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_008') DAY), '%Y-%m-%d')
+			  </if>
+		  </trim>
+	</select>
+	
+	<select id="getArmInfo" parameterType="armVo" resultType="armVo">
+		SELECT T.rackId
+			  ,T.rackStatusCd
+			  ,T.lastChkDttm
+			  ,T.locateClsCd
+			  ,(
+				CASE 
+					WHEN T.locateClsCd = 'S' THEN ( SELECT concat(STATION_GRP_SEQ ,'/',STATION_ID)	 
+													  FROM spb.TB_OPR_STATION
+													 WHERE STATION_ID =  T.locateId	)								  
+					WHEN T.locateClsCd = 'C' THEN T.locateId
+					ELSE ''								  
+				 END   
+			   ) AS locateId
+			   ,IF(T.stationEquipOrder = 0 , '' , T.stationEquipOrder) AS stationEquipOrder
+			   ,T.regDttm
+			   ,T.entrpsCd
+			FROM  (
+				  SELECT  RACK_ID								  AS rackId
+						,RACK_STUS_CD							 AS rackStatusCd
+						,NOW_LOCATE_CLS_CD							AS locateClsCd
+						,NOW_LOCATE_ID								AS locateId
+						,DATE_FORMAT( LAST_CHK_DTTM ,'%Y-%m-%d')  AS lastChkDttm
+						,NOW_STATION_EQUIP_ORD					  AS stationEquipOrder
+						,DATE_FORMAT(REG_DTTM  ,'%Y-%m-%d')		 AS regDttm
+						,ENTRPS_CD	  							AS entrpsCd
+				   FROM  spb.TB_OPR_RACK  
+				  WHERE RACK_ID = #{rackId}  
+				 ) AS T	 
+	</select>
+	
+	<select id="isChkIdDup" parameterType="String" resultType="int">
+		SELECT COUNT(RACK_ID)
+		  FROM TB_OPR_RACK
+		 WHERE RACK_ID = #{rackId}  
+	</select>
+	<insert id="addArmDevice" parameterType="armVo">
+		INSERT INTO TB_OPR_RACK
+		(	RACK_ID
+			,RACK_STUS_CD
+			,LAST_CHK_DTTM
+			,NOW_LOCATE_ID
+			,NOW_LOCATE_CLS_CD
+			,NOW_STATION_EQUIP_ORD
+			,REG_DTTM
+			,REG_ID
+			,MOD_DTTM
+			,MOD_ID
+			,ENTRPS_CD
+		) VALUES (
+			#{rackId}
+		   ,#{rackStatusCd}
+		   ,now()
+		   ,#{locateId}
+		   ,#{locateClsCd}
+		   ,#{stationEquipOrder}
+		   ,now()
+		   ,#{adminId}
+		   ,now()
+		   ,#{adminId}
+		   ,#{entrpsCd}	  
+		)
+		
+	</insert>
+	<insert id="addArmLocateHistory" parameterType="armVo">
+		INSERT INTO TB_OPR_RACK_LOCATE_INFO
+		(	RACK_ID
+			,LOCATE_CLS_CD
+			,LOCATE_ID
+			,LOCATE_STR_DTTM
+			,LOCATE_END_DTTM
+			,STATION_EQUIP_ORD
+						   
+		)  VALUES		  
+		(
+		   #{rackId}
+		  ,#{locateClsCd}
+		  ,#{locateId}
+		  ,date_add(now() ,interval 1 second)
+		  ,STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+		  ,#{stationEquipOrder}
+		)
+	</insert>
+	<update id="setArmLocateHistory" parameterType="armVo"> 
+		UPDATE TB_OPR_RACK_LOCATE_INFO
+		   SET STATION_EQUIP_ORD = #{stationEquipOrder} 
+			  ,LOCATE_END_DTTM = NOW()
+		 WHERE LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+		   AND RACK_ID = #{rackId}
+	</update>
+	
+	<update id="setArmDevice" parameterType="armVo">
+		UPDATE TB_OPR_RACK
+		   SET LAST_CHK_DTTM = CONCAT(#{lastChkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+			  ,NOW_LOCATE_ID = #{locateId}
+			  ,NOW_LOCATE_CLS_CD = #{locateClsCd} 
+			  ,NOW_STATION_EQUIP_ORD = #{stationEquipOrder} 
+			  ,MOD_DTTM = now()
+			  ,MOD_ID   = #{adminId}
+			  <if test='rackStatusCd != null and rackStatusCd !=""'>
+			  ,RACK_STUS_CD = #{rackStatusCd}
+			  </if>   
+		 WHERE RACK_ID = #{rackId}
+	</update>
+	
+	<select id="chkIsParkingInfo" parameterType="String" resultType="int">
+		SELECT COUNT(RACK_ID)
+		  FORM TB_OPR_BIKE_PARKING
+		 WHERE RACK_ID = #{rackId}
+	</select>
+	
+	<select id="getArmLocateInfo" parameterType="String" resultType="armVo">
+		SELECT NOW_LOCATE_CLS_CD		 AS locateClsCd
+			  ,NOW_STATION_EQUIP_ORD	 AS stationEquipOrder
+			  ,NOW_LOCATE_ID			 AS locateId
+			  ,RACK_ID				   AS rackId
+		  FROM spb.TB_OPR_RACK	
+		 WHERE RACK_ID = #{rackId}	 
+	</select>
+	
+	<select id="isEquipExist" parameterType="armVo" resultType="int">
+		SELECT COUNT(NOW_STATION_EQUIP_ORD)
+		  FROM spb.TB_OPR_RACK 
+		 WHERE NOW_LOCATE_CLS_CD = 'S'
+		   AND NOW_LOCATE_ID = #{locateId}
+		   AND NOW_STATION_EQUIP_ORD = #{stationEquipOrder}	 
+	</select>
+</mapper>

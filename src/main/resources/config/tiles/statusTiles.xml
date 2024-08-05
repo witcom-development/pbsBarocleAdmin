@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+<!--실시간 현황	-->
+
+<tiles-definitions>
+
+	<definition name="statusTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 대여소 현황 -->
+	<definition name="/admin/status/stationStatus/pre_sta_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/stationStatus/pre_sta_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/status/stationStatus/pre_sta_detail" extends="statusTemplate" template="/WEB-INF/views/admin/status/stationStatus/pre_sta_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 대여현황 -->
+	<definition name="/admin/status/rentStatus/pre_rent_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentStatus/pre_rent_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 대여이력 -->
+	<definition name="/admin/status/rentHistory/pre_rent_his" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentHistory/pre_rent_his.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 대여이력 -->
+	<definition name="/admin/status/rentHistory/pre_rent_detail" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentHistory/pre_rent_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 재배치 차량 현황 -->
+	<definition name="/admin/status/relocationBikeStatus/pre_loc_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/relocationBikeStatus/pre_loc_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 실시간 현황 관리 -->
+	<definition name="/admin/status/stationStatus/pre_real_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/stationStatus/pre_real_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 대여소 목록 -->
+	<definition name="/admin/status/stationStatus/pre_sta_list" extends="statusTemplate" template="/WEB-INF/views/admin/status/stationStatus/pre_sta_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	 <!-- QR 분실 도난 현황 -->
+	<definition name="/admin/status/stationStatus/pre_qr_lost_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/stationStatus/pre_qr_lost_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 강제반납 관리 -->
+	<definition name="/admin/status/rentStatus/exe_impulse_list" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentStatus/exe_impulse_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 강제반납 관리 -->
+	<definition name="/admin/status/rentStatus/exe_impulse_detail" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentStatus/exe_impulse_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 대여신청현황 -->
+	<definition name="/admin/status/rentReqStatus/pre_rent_req_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentReqStatus/pre_rent_req_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 도난분실 상세조회 -->
+	<definition name="/admin/status/rentStatus/exe_robLost_list" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentStatus/exe_robLost_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	 <!-- 도난분실조회 -->
+	<definition name="/admin/status/rentStatus/exe_robLostHist_list" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentStatus/exe_robLostHist_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	 <!-- 회수조회 -->
+	<definition name="/admin/status/rentStatus/exe_rtrvlHist_list" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentStatus/exe_rtrvlHist_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 자전거 위치 조회 -->
+	<definition name="/admin/status/stationStatus/pre_misBik_list" extends="statusTemplate" template="/WEB-INF/views/admin/status/missingBike/pre_misBik_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+</tiles-definitions>

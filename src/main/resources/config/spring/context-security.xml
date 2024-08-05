@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:beans="http://www.springframework.org/schema/beans"
+	xmlns:context="http://www.springframework.org/schema/context"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+						http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd">
+
+	<!-- 공통 리소스 예외 처리 -->
+	<http pattern="/favicon.ico" security="none" />
+	<http pattern="/css/**" security="none" />
+	<http pattern="/daumeditor/**" security="none" />
+	<http pattern="/upload/**" security="none" />
+	<http pattern="/fonts/**" security="none" />
+	<http pattern="/images/**" security="none" />
+	<http pattern="/js/**" security="none" />
+	<http pattern="/session_expired.do" security="none" />
+	<http pattern="/login.do" security="none" />
+	<http pattern="/login_fail.do" security="none" />
+	<http pattern="/error.do" security="none" />
+	
+	<!-- 테스트시 예외 처리 -->
+	<!-- <http pattern="/admin/customer/notice/**" security="none" /> -->
+
+<!-- 	<http auto-config="true" use-expressions="true" -->
+<!-- 		access-denied-page="/login_denied.do"> -->
+	<http auto-config="true" use-expressions="true"
+		access-denied-page="/main.do">
+		
+		<intercept-url pattern="/login.do" access="permitAll" />
+		<intercept-url pattern="/admin/manage/interworkMgmt/listFirmware.do" access="isAuthenticated()" />
+		<intercept-url pattern="/admin/manage/interworkMgmt/listFirmwareUpdateResult.do" access="isAuthenticated()" />
+		<intercept-url pattern="/admin/manage/interworkMgmt/**" access="hasAnyRole('2')" />
+		<intercept-url pattern="/main.do" access="isAuthenticated()" />
+		<intercept-url pattern="/**" access="isAuthenticated()" />
+
+		<form-login login-page="/login.do" default-target-url="/main.do"
+			authentication-success-handler-ref="authenticationSuccessHandler"
+			authentication-failure-handler-ref="authenticationFailureHandler" />
+
+		<logout logout-url="/j_spring_security_logout"
+			logout-success-url="/login.do?logout=true" invalidate-session="true"
+			delete-cookies="JSESSIONID" />
+
+		<custom-filter after="FORM_LOGIN_FILTER" ref="sessionCheckFilter" />
+		<custom-filter after="CONCURRENT_SESSION_FILTER" ref="concurrencyFilter" />
+
+		<remember-me token-validity-seconds="1209600"
+			remember-me-parameter="remember-me" data-source-ref="masterDataSource" />
+
+		<session-management invalid-session-url="/login.do"
+			session-fixation-protection="newSession">
+			<concurrency-control max-sessions="10"
+				error-if-maximum-exceeded="false" />
+		</session-management>
+	</http>
+
+	<beans:bean id="loginService"
+		class="com.dkitec.barocle.admin.login.service.impl.LoginServiceImpl" />
+	<beans:bean id="mySqlPasswordEncoder"
+		class="com.dkitec.barocle.admin.login.security.encoder.MySqlPasswordEncoder" />
+	<beans:bean id="sha512PasswordEncoder"
+		class="com.dkitec.barocle.admin.login.security.encoder.Sha512PasswordEncoder" />
+
+	<beans:bean id="DGuardPasswordEncoder"
+		class="com.dkitec.barocle.admin.login.security.encoder.DGuardPasswordEncoder" />
+		
+	<beans:bean id="sessionCheckFilter"
+		class="com.dkitec.barocle.admin.login.security.filter.CustomSessionCheckFilter" />
+
+	<!--session management -->
+	<beans:bean id="sessionRegistry"
+		class="org.springframework.security.core.session.SessionRegistryImpl" />
+	<beans:bean id="concurrencyFilter"
+		class="org.springframework.security.web.session.ConcurrentSessionFilter">
+		<beans:constructor-arg name="sessionRegistry" ref="sessionRegistry" />
+		<beans:constructor-arg name="expiredUrl" value="/sessionExpired.do" />
+	</beans:bean>
+
+	<beans:bean id="authenticationSuccessHandler"
+		class="com.dkitec.barocle.admin.login.security.handler.CustomAuthenticationSuccessHandler">
+		<beans:property name="targetUrlParameter" value="loginRedirect" />
+		<beans:property name="useReferer" value="false" />
+		<beans:property name="defaultUrl" value="/main.do" />
+	</beans:bean>
+
+	<beans:bean id="authenticationFailureHandler"
+		class="com.dkitec.barocle.admin.login.security.handler.CustomAuthenticationFailureHandler">
+		<beans:property name="loginidname" value="j_username" />
+		<beans:property name="loginpasswdname" value="j_password" />
+		<beans:property name="loginredirectname" value="loginRedirect" />
+		<beans:property name="exceptionmsgname" value="securityexceptionmsg" />
+		<beans:property name="defaultFailureUrl" value="/login.do?fail=true" />
+	</beans:bean>
+
+	<authentication-manager alias="authenticationManager">
+		<authentication-provider user-service-ref="loginService">
+			<password-encoder ref="DGuardPasswordEncoder" />
+		</authentication-provider>
+	</authentication-manager>
+</beans:beans>

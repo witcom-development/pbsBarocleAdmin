@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.teammgmt.service.TeamMgmtMapper">
+
+	
+	
+	<select id="getTeamList" parameterType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO" resultType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO">
+	
+		<![CDATA[
+			SELECT
+				A.TEAM_SEQ as teamSeq
+				, A.CENTER_ID as centerId
+			 	, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.CENTER_ID AND LA.LANG_CLS_CD = 'LAG_001') as centerNm
+			 	, A.TEAM_ID as teamId
+			 	, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.TEAM_ID AND LA.LANG_CLS_CD = 'LAG_001') as teamNm
+			 	, DATE_FORMAT(A.MOD_DTTM,'%Y-%m-%d %H:%i:%s') as modDate
+			 	, MOD_ID as modId
+ 			 	, (SELECT COUNT(*) FROM TB_SYS_ADMIN WHERE TEAM_SEQ = A.TEAM_SEQ) as adminCount
+ 			 	, (SELECT COUNT(*) FROM TB_OPR_RELOCATE_CAR WHERE TEAM_SEQ = A.TEAM_SEQ) as carCount
+		  FROM TB_SYS_TEAM_INFO A
+		 WHERE 1 = 1
+		]]>
+		<if test="teamId != '' and teamId != null">
+			   AND A.TEAM_ID = #{teamId}
+		</if>
+		<if test="centerId != '' and centerId != null">
+			   AND A.CENTER_ID = #{centerId}
+		</if>
+			ORDER BY A.MOD_DTTM DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		
+	</select>
+	
+	
+	
+		
+	<select id="getTeamCount" parameterType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO" resultType="int">
+	
+		<![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_SYS_TEAM_INFO A
+		 WHERE 1 = 1
+		]]>
+		<if test="teamId != '' and teamId != null">
+			   AND A.TEAM_ID = #{teamId}
+		</if>
+		<if test="centerId != '' and centerId != null">
+			   AND A.CENTER_ID = #{centerId}
+		</if>
+		
+	</select>
+	
+	<select id="getTeamInfo" parameterType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO" resultType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO">
+		<![CDATA[
+		SELECT
+			A.TEAM_SEQ as teamSeq  
+			,A.CENTER_ID as centerId
+			, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.CENTER_ID AND LA.LANG_CLS_CD = 'LAG_001') as centerNm
+			, A.TEAM_ID as teamId
+			, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.TEAM_ID AND LA.LANG_CLS_CD = 'LAG_001') as teamNm
+			, MPN_NO1 as mpnNo1
+			, MPN_NO2 as mpnNo2
+			, DATE_FORMAT(A.MOD_DTTM,'%Y-%m-%d %H:%i:%s') as modDate
+			, mod_id
+		FROM TB_SYS_TEAM_INFO A
+		WHERE 1 = 1
+		]]>
+		<if test="teamSeq != '' and teamSeq != null">
+			   AND A.TEAM_SEQ = #{teamSeq}
+		</if>
+		<if test="teamId != '' and teamId != null">
+			   AND A.TEAM_ID = #{teamId}
+		</if>
+		<if test="centerId != '' and centerId != null">
+			   AND A.CENTER_ID = #{centerId}
+		</if>
+	</select>
+	
+	<insert id="insertTeam" parameterType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO" >
+		<![CDATA[ 
+		INSERT INTO TB_SYS_TEAM_INFO (
+			CENTER_ID
+			, TEAM_ID 
+			, MPN_NO1 
+			, MPN_NO2
+			, CRE_DTTM
+			, MOD_DTTM
+			, CRE_ID
+			, MOD_ID
+		) VALUES ( 
+			#{centerId}
+			, #{teamId}
+			, #{mpnNo1}
+			, #{mpnNo2}
+			, now()
+			, now()
+			, #{creId}
+			, #{creId}
+		)
+		]]> 
+	</insert>
+		
+	<delete id="deleteTeam" parameterType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO" >
+		<![CDATA[ 
+		DELETE FROM TB_SYS_TEAM_INFO 
+		 WHERE TEAM_SEQ = #{teamSeq}
+		]]> 
+	</delete>
+	
+	<update id="updateTeam" parameterType="com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO" >
+		<![CDATA[ 
+		UPDATE TB_SYS_TEAM_INFO
+		   SET CENTER_ID = #{centerId}
+			 , TEAM_ID = #{teamId} 
+			 , MPN_NO1 = #{mpnNo1}
+			 , MPN_NO2 = #{mpnNo2}
+			 , MOD_DTTM = now()
+			 , MOD_ID = #{modId}
+		WHERE TEAM_SEQ = #{teamSeq}
+		]]> 
+	</update>
+	
+</mapper>
+

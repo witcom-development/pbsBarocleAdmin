@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+
+<tiles-definitions>
+
+	<!-- 고객센터 공통 -->
+	<definition name="managerTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 운영관리 대여소 관리 페이지 -->
+	<definition name="/admin/manage/station/*" extends="managerTemplate" template="/WEB-INF/views/admin/manage/station/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 운영관리 아파트 관리 페이지 -->
+	<definition name="/admin/manage/stationGroup/*" extends="managerTemplate" template="/WEB-INF/views/admin/manage/stationGroup/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--장치관리 AP-->
+	<definition name="/admin/manage/service/ap/opr_ap_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/ap/opr_ap_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/service/ap/opr_ap_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/ap/opr_ap_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--장치관리 Bike-->
+	<definition name="/admin/manage/service/bike/opr_bik_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/bike/opr_bik_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/service/bike/opr_bik_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/bike/opr_bik_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--장치관리 Beacon-->
+	<definition name="/admin/manage/service/beacon/opr_bea_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/beacon/opr_bea_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/service/beacon/opr_bea_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/beacon/opr_bea_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--장치관리 단말기-->
+	<definition name="/admin/manage/service/dev/opr_dev_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/dev/opr_dev_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/service/dev/opr_dev_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/dev/opr_dev_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--장치관리 거치대-->
+	<definition name="/admin/manage/service/lock/opr_std_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/lock/opr_std_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/service/lock/opr_std_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/service/lock/opr_std_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 임계치 관리 -->
+	<definition name="/admin/manage/interwork/critical/opr_cri_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/interwork/critical/opr_cri_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- F/W Update -->
+	<definition name="/admin/manage/interwork/fw/opr_fw_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/interwork/fw/opr_fw_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/interwork/fw/opr_fw_result" extends="managerTemplate" template="/WEB-INF/views/admin/manage/interwork/fw/opr_fw_result.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/interwork/fw/opr_fw_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/interwork/fw/opr_fw_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 센터 관리 -->
+	<definition name="/admin/manage/center/opr_cen_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/center/opr_cen_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/center/opr_cen_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/center/opr_cen_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 재배치 차량 -->
+	<definition name="/admin/manage/relocationCar/opr_car_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/relocationCar/opr_car_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/relocationCar/opr_car_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/relocationCar/opr_car_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 대여소 주변 상가 홍보관리 -->
+	<definition name="/admin/manage/mallPromotion/opr_sto_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/mallPromotion/opr_sto_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/mallPromotion/opr_sto_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/mallPromotion/opr_sto_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 운휴관리 -->
+	<definition name="/admin/manage/suspension/opr_res_list" extends="managerTemplate" template="/WEB-INF/views/admin/manage/suspension/opr_res_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/manage/suspension/opr_res_detail" extends="managerTemplate" template="/WEB-INF/views/admin/manage/suspension/opr_res_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+</tiles-definitions>

@@ -1,0 +1,236 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.suspension.service.SuspensionMapper">
+	
+	<resultMap id="resultSuspensionVO" type="com.dkitec.barocle.admin.manage.suspension.vo.SuspensionVO">
+		<result column="DELAY_SEQ" property="delaySeq" />
+		<result column="DELAY_STR_DATE" property="delayStrDate" />
+		<result column="DELAY_END_DATE" property="delayEndDate" />
+		<result column="TICKET_CHNG_YN" property="ticketChngYN" />
+		<result column="DELAY_REASON_DESC" property="delayReasonDesc" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="ADMIN_NAME" property="adminName" />
+	</resultMap>
+	
+	<resultMap id="resultVoucherVO" type="com.dkitec.barocle.admin.manage.suspension.vo.VoucherVO">
+		<result column="VOUCHER_SEQ" property="voucherSeq" />
+		<result column="USR_SEQ" property="usrSeq" />
+		<result column="PAYMENT_CLS_CD" property="paymentClsCD" />
+		<result column="PAYMENT_SEQ" property="paymenSeq" />
+		<result column="PAYMENT_DTTM" property="paymentDttm" />
+		<result column="COUPON_NO" property="couponNO" />
+		<result column="VOUCHER_STR_DTTM" property="voucherStrDttm" />
+		<result column="VOUCHER_END_DTTM" property="voucherEndDttm" />
+		<result column="FIRST_STR_DTTM" property="firstStrDttm" />
+		<result column="FIRST_END_DTTM" property="firstEndDttm" />
+		<result column="PARTY_USE_CNT" property="partyUseCnt" />
+		<result column="VOUCHER_USE_YN" property="voucherUseYN" />
+		<result column="DATE_DIFF" property="dateDiff" />
+		<result column="NEW_VOUCHER_END_DTTM" property="newVoucherEndDttm" />
+	</resultMap>
+	
+	<resultMap id="resultVoucherHistVO" type="com.dkitec.barocle.admin.manage.suspension.vo.VoucherHistVO">
+		<result column="VOUCHER_SEQ" property="voucherSeq" />
+		<result column="DELAY_SEQ" property="delaySeq" />
+		<result column="APPLY_DTTM" property="applyDttm" />
+		<result column="DELAY_DD_CNT" property="delayDdCnt" />
+		<result column="VOUCHER_STR_DTTM" property="voucherStrDttm" />
+		<result column="VOUCHER_END_DTTM" property="voucherEndDttm" />
+	</resultMap>
+	
+	
+	<select id="listSuspensionCount" parameterType="suspensionVO" resultType="int">
+		SELECT	COUNT(DELAY_SEQ) AS delaySeq
+		FROM	TB_OPR_DELAY T1 
+				LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+		WHERE	1=1
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(T1.DELAY_STR_DATE,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(T1.DELAY_END_DATE,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+	</select>
+	
+	<select id="listSuspension" parameterType="suspensionVO" resultMap="resultSuspensionVO">
+		SELECT
+				T1.DELAY_SEQ,
+				T1.DELAY_STR_DATE,
+				T1.DELAY_END_DATE,
+				T1.TICKET_CHNG_YN,
+				T1.DELAY_REASON_DESC,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID,
+				T2.ADMIN_NAME
+		FROM	TB_OPR_DELAY T1 
+				LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+		WHERE	1=1
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(T1.DELAY_STR_DATE,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(T1.DELAY_END_DATE,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+		ORDER BY
+				T1.REG_DTTM DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewSuspension" parameterType="suspensionVO" resultMap="resultSuspensionVO">
+		SELECT
+				T1.DELAY_SEQ,
+				T1.DELAY_STR_DATE,
+				T1.DELAY_END_DATE,
+				T1.TICKET_CHNG_YN,
+				T1.DELAY_REASON_DESC,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID,
+				T2.ADMIN_NAME
+		FROM	TB_OPR_DELAY T1 
+				LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+		WHERE	T1.DELAY_SEQ = #{delaySeq}
+	</select>
+	
+	<insert id="insertSuspension" parameterType="suspensionVO" useGeneratedKeys="true" keyProperty="delaySeq">
+		INSERT INTO TB_OPR_DELAY
+			(
+				DELAY_STR_DATE, DELAY_END_DATE, TICKET_CHNG_YN, DELAY_REASON_DESC,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+			)
+		values
+			(
+				#{delayStrDate}, #{delayEndDate}, #{ticketChngYN}, #{delayReasonDesc},
+				NOW(), #{regID}, NOW(), #{modID}
+			)
+	</insert>
+	
+	<update id="updateSuspension" parameterType="suspensionVO">
+		UPDATE	TB_OPR_DELAY
+		SET		DELAY_STR_DATE = #{delayStrDate},
+				DELAY_END_DATE = #{delayEndDate},
+				TICKET_CHNG_YN = #{ticketChngYN},
+				DELAY_REASON_DESC = #{delayReasonDesc},
+				MOD_DTTM = NOW(),
+				MOD_ID = #{modID}
+		WHERE
+			DELAY_SEQ = #{delaySeq}
+	</update>
+	
+	<select id="getDuplicateCount" parameterType="suspensionVO" resultType="int">
+		SELECT COUNT(T1.DELAY_SEQ) AS delaySeq
+		FROM (
+				SELECT TT1.DELAY_SEQ
+				FROM TB_OPR_DELAY TT1
+				WHERE TT1.DELAY_SEQ != #{delaySeq} AND
+					(	DATE_FORMAT(TT1.DELAY_STR_DATE,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND 
+						DATE_FORMAT(TT1.DELAY_END_DATE,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+			UNION DISTINCT
+				SELECT TT2.DELAY_SEQ
+				FROM TB_OPR_DELAY TT2
+				WHERE TT2.DELAY_SEQ != #{delaySeq} AND
+					(	DATE_FORMAT(TT2.DELAY_STR_DATE,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND 
+						DATE_FORMAT(TT2.DELAY_END_DATE,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+			UNION DISTINCT
+				SELECT TT3.DELAY_SEQ
+				FROM TB_OPR_DELAY TT3
+				WHERE TT3.DELAY_SEQ != #{delaySeq} AND
+					(	DATE_FORMAT(TT3.DELAY_STR_DATE,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND 
+						DATE_FORMAT(TT3.DELAY_STR_DATE,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+			UNION DISTINCT
+				SELECT TT4.DELAY_SEQ
+				FROM TB_OPR_DELAY TT4
+				WHERE TT4.DELAY_SEQ != #{delaySeq} AND
+					(	DATE_FORMAT(TT4.DELAY_END_DATE,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND 
+						DATE_FORMAT(TT4.DELAY_END_DATE,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+		) T1
+	</select>
+	
+	<select id="getVoucherList" parameterType="suspensionVO" resultMap="resultVoucherVO">
+		SELECT
+				T1.VOUCHER_SEQ,
+				T1.USR_SEQ,
+				T1.PAYMENT_CLS_CD,
+				T1.PAYMENT_SEQ,
+				T1.PAYMENT_DTTM,
+				T1.COUPON_NO,
+				T1.VOUCHER_STR_DTTM,
+				T1.VOUCHER_END_DTTM,
+				T1.FIRST_STR_DTTM,
+				T1.FIRST_END_DTTM,
+				T1.PARTY_USE_CNT,
+				T1.VOUCHER_USE_YN,
+				T1.DATE_DIFF,
+				DATE_ADD(T1.VOUCHER_END_DTTM, INTERVAL T1.DATE_DIFF DAY) AS NEW_VOUCHER_END_DTTM
+		FROM (
+				SELECT
+					VOUCHER_SEQ, USR_SEQ, PAYMENT_CLS_CD, PAYMENT_SEQ, PAYMENT_DTTM, COUPON_NO,
+					VOUCHER_STR_DTTM, VOUCHER_END_DTTM, FIRST_STR_DTTM, FIRST_END_DTTM, PARTY_USE_CNT, VOUCHER_USE_YN,
+					DATEDIFF(DATE_FORMAT(VOUCHER_STR_DTTM,'%Y-%m-%d'),DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d'))+1 AS DATE_DIFF
+				FROM TB_SVC_VOUCHER
+				WHERE DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(NOW(),'%Y-%m-%d')
+					AND (	DATE_FORMAT(VOUCHER_STR_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND
+							DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+			UNION DISTINCT
+				SELECT
+					VOUCHER_SEQ, USR_SEQ, PAYMENT_CLS_CD, PAYMENT_SEQ, PAYMENT_DTTM, COUPON_NO,
+					VOUCHER_STR_DTTM, VOUCHER_END_DTTM, FIRST_STR_DTTM, FIRST_END_DTTM, PARTY_USE_CNT, VOUCHER_USE_YN,
+					DATEDIFF(DATE_FORMAT(#{delayEndDate},'%Y-%m-%d'),DATE_FORMAT(#{delayStrDate},'%Y-%m-%d'))+1 AS DATE_DIFF
+				FROM TB_SVC_VOUCHER
+				WHERE DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(NOW(),'%Y-%m-%d')
+					AND (	DATE_FORMAT(VOUCHER_STR_DTTM,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND
+							DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+			UNION DISTINCT
+				SELECT
+					VOUCHER_SEQ, USR_SEQ, PAYMENT_CLS_CD, PAYMENT_SEQ, PAYMENT_DTTM, COUPON_NO,
+					VOUCHER_STR_DTTM, VOUCHER_END_DTTM, FIRST_STR_DTTM, FIRST_END_DTTM, PARTY_USE_CNT, VOUCHER_USE_YN,
+					DATEDIFF(DATE_FORMAT(#{delayEndDate},'%Y-%m-%d'),DATE_FORMAT(VOUCHER_STR_DTTM,'%Y-%m-%d'))+1 AS DATE_DIFF
+				FROM TB_SVC_VOUCHER
+				WHERE DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(NOW(),'%Y-%m-%d')
+					AND (	DATE_FORMAT(VOUCHER_STR_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND
+							DATE_FORMAT(VOUCHER_STR_DTTM,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+			UNION DISTINCT
+				SELECT
+					VOUCHER_SEQ, USR_SEQ, PAYMENT_CLS_CD, PAYMENT_SEQ, PAYMENT_DTTM, COUPON_NO,
+					VOUCHER_STR_DTTM, VOUCHER_END_DTTM, FIRST_STR_DTTM, FIRST_END_DTTM, PARTY_USE_CNT, VOUCHER_USE_YN,
+					DATEDIFF(DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d'),DATE_FORMAT(#{delayStrDate},'%Y-%m-%d'))+1 AS DATE_DIFF
+				FROM TB_SVC_VOUCHER
+				WHERE DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(NOW(),'%Y-%m-%d')
+					AND (	DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &gt;= DATE_FORMAT(#{delayStrDate},'%Y-%m-%d') AND
+							DATE_FORMAT(VOUCHER_END_DTTM,'%Y-%m-%d') &lt;= DATE_FORMAT(#{delayEndDate},'%Y-%m-%d') )
+		) T1
+	</select>
+	
+	<insert id="insertVoucherHist" parameterType="voucherHistVO">
+		INSERT INTO TB_SVC_VOUCHER_DELAY_HIST
+			( VOUCHER_SEQ, DELAY_SEQ, APPLY_DTTM, DELAY_DD_CNT, VOUCHER_STR_DTTM, VOUCHER_END_DTTM )
+		VALUES
+			( #{voucherSeq}, #{delaySeq}, NOW(), #{delayDdCnt}, #{voucherStrDttm}, #{voucherEndDttm} )
+	</insert>
+	
+	<update id="updateVoucherHist" parameterType="voucherHistVO">
+		UPDATE	TB_SVC_VOUCHER_DELAY_HIST
+		SET		APPLY_DTTM = NOW(),
+				DELAY_DD_CNT = #{delayDdCnt},
+				VOUCHER_STR_DTTM = #{voucherStrDttm},
+				VOUCHER_END_DTTM = #{voucherEndDttm}
+		WHERE	VOUCHER_SEQ = #{voucherSeq} AND DELAY_SEQ = #{delaySeq}
+	</update>
+	
+	<update id="updateVoucher" parameterType="voucherVO">
+		UPDATE	TB_SVC_VOUCHER
+		SET		VOUCHER_END_DTTM = #{newVoucherEndDttm}
+		WHERE	VOUCHER_SEQ = #{voucherSeq}
+	</update>
+	
+	<delete id="deleteSuspension" parameterType="suspensionVO">
+		DELETE FROM TB_OPR_DELAY WHERE DELAY_SEQ = #{delaySeq}
+	</delete>
+
+</mapper>

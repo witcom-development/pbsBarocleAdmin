@@ -1,0 +1,767 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.maintain.service.MaintainStatisticsMapper">
+	<select id="getFaultStateCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+		<if test='deviceType == "DEV_001"'>
+			AND A.COM_UP_CD = ('ERB')
+		</if>
+		<if test='deviceType == "DEV_003"'>
+			AND A.COM_UP_CD = ('ERA')
+		</if>
+		<if test='deviceType == "DEV_004"'>
+			AND A.COM_UP_CD = ('ERR')
+		</if>
+			AND A.COM_CD = B.COM_CD
+			AND B.LANG_CLS_CD = 'LAG_001'
+	</select>
+	
+	<select id="getRepairStateCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+		<if test='deviceType == "DEV_001"'>
+			AND A.COM_UP_CD = ('REB')
+		</if>
+		<if test='deviceType == "DEV_003"'>
+			AND A.COM_UP_CD = ('REA')
+		</if>
+		<if test='deviceType == "DEV_004"'>
+			AND A.COM_UP_CD = ('REL')
+		</if>
+			AND A.COM_CD = B.COM_CD
+			AND B.LANG_CLS_CD = 'LAG_001'
+	</select>
+	<!-- 장애 리스트  -->
+	<select id="getFaultDayCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT CNT FROM (
+			SELECT IFNULL(COUNT(*), 0) AS CNT FROM 
+			(
+			SELECT A.STAT_DATE, B.COM_CD, B.FAULT_NAME
+				FROM
+				(
+					SELECT A.STAT_DATE
+					FROM TB_STA_FAULT_DD A
+					WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+					GROUP BY STAT_DATE
+				) A,
+				(
+					SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME FAULT_NAME
+					FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+					WHERE 1 = 1
+					<if test='deviceType == "DEV_001"'>
+						AND A.COM_UP_CD = ('ERB')
+					</if>
+					<if test='deviceType == "DEV_003"'>
+						AND A.COM_UP_CD = ('ERA')
+					</if>
+					<if test='deviceType == "DEV_004"'>
+						AND A.COM_UP_CD = ('ERR')
+					</if>
+					AND A.COM_CD = B.COM_CD
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STAT_DATE, FAULT_CLS_CD, FAULT_CNT
+				FROM TB_STA_FAULT_DD A
+				WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			) B ON(A.STAT_DATE = B.STAT_DATE AND A.COM_CD = B.FAULT_CLS_CD)
+			LEFT OUTER JOIN (
+				SELECT STAT_DATE, FAULT_CLS_CD, SUM(FAULT_CNT) TOTAL_CNT 
+				FROM TB_STA_FAULT_DD 
+				WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY STAT_DATE
+			) C ON A.STAT_DATE = C.STAT_DATE
+			ORDER BY A.STAT_DATE, A.COM_CD
+		) D 
+	</select>
+	
+	<select id="getFaultDayList" parameterType="maintainStatisticsVo" resultType="maintainStatisticsVo">
+		SELECT 
+			A.STAT_DATE AS faultDttm, 
+			A.FAULT_NAME AS faultName, 
+			IF(B.FAULT_CNT IS NULL, 0, B.FAULT_CNT) AS faultCnt,
+			C.TOTAL_CNT AS faultTotal
+		FROM
+		(
+		SELECT A.STAT_DATE, B.COM_CD, B.FAULT_NAME
+			FROM
+			(
+				SELECT A.STAT_DATE
+				FROM TB_STA_FAULT_DD A
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+				GROUP BY STAT_DATE
+			) A,
+			(
+				SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME FAULT_NAME
+				FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+			<if test='deviceType == "DEV_001"'>
+				AND A.COM_UP_CD = ('ERB')
+			</if>
+			<if test='deviceType == "DEV_003"'>
+				AND A.COM_UP_CD = ('ERA')
+			</if>
+			<if test='deviceType == "DEV_004"'>
+				AND A.COM_UP_CD = ('ERR')
+			</if>
+				AND A.COM_CD = B.COM_CD
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B
+		) A LEFT OUTER JOIN
+		(
+			SELECT A.STAT_DATE, FAULT_CLS_CD, FAULT_CNT
+			FROM TB_STA_FAULT_DD A
+			WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+		) B ON(A.STAT_DATE = B.STAT_DATE AND A.COM_CD = B.FAULT_CLS_CD)
+		LEFT OUTER JOIN (
+			SELECT STAT_DATE, FAULT_CLS_CD, SUM(FAULT_CNT) TOTAL_CNT 
+			FROM TB_STA_FAULT_DD 
+			WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+			GROUP BY STAT_DATE
+		) C ON A.STAT_DATE = C.STAT_DATE
+		ORDER BY A.STAT_DATE, A.COM_CD 
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getFaultMonthCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT CNT FROM (
+			SELECT IFNULL(COUNT(*), 0) AS CNT FROM 
+			(
+			SELECT A.STAT_MM, B.COM_CD, B.FAULT_NAME
+				FROM
+				(
+					SELECT A.STAT_MM
+					FROM TB_STA_FAULT_MM A
+					WHERE 1 = 1
+					AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+					GROUP BY STAT_MM
+				) A,
+				(
+					SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME FAULT_NAME
+					FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+					WHERE 1 = 1
+					<if test='deviceType == "DEV_001"'>
+						AND A.COM_UP_CD = ('ERB')
+					</if>
+					<if test='deviceType == "DEV_003"'>
+						AND A.COM_UP_CD = ('ERA')
+					</if>
+					<if test='deviceType == "DEV_004"'>
+						AND A.COM_UP_CD = ('ERR')
+					</if>
+					AND A.COM_CD = B.COM_CD
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STAT_MM, FAULT_CLS_CD, FAULT_CNT
+				FROM TB_STA_FAULT_MM A
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.FAULT_CLS_CD)
+			LEFT OUTER JOIN (
+				SELECT STAT_MM, FAULT_CLS_CD, SUM(FAULT_CNT) TOTAL_CNT 
+				FROM TB_STA_FAULT_MM 
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY STAT_MM
+			) C ON A.STAT_MM = C.STAT_MM
+			ORDER BY A.STAT_MM, A.COM_CD 
+		) D
+	</select>
+	
+	<select id="getFaultMonthList" parameterType="maintainStatisticsVo" resultType="maintainStatisticsVo">
+		SELECT 
+			A.STAT_MM AS faultDttm, 
+			A.FAULT_NAME AS faultName, 
+			IF(B.FAULT_CNT IS NULL, 0, B.FAULT_CNT) AS faultCnt,
+			C.TOTAL_CNT AS faultTotal
+		FROM
+		(
+		SELECT A.STAT_MM, B.COM_CD, B.FAULT_NAME
+			FROM
+			(
+				SELECT A.STAT_MM
+				FROM TB_STA_FAULT_MM A
+				WHERE 1 = 1
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+				GROUP BY STAT_MM
+			) A,
+			(
+				SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME FAULT_NAME
+				FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+			<if test='deviceType == "DEV_001"'>
+				AND A.COM_UP_CD = ('ERB')
+			</if>
+			<if test='deviceType == "DEV_003"'>
+				AND A.COM_UP_CD = ('ERA')
+			</if>
+			<if test='deviceType == "DEV_004"'>
+				AND A.COM_UP_CD = ('ERR')
+			</if>
+				AND A.COM_CD = B.COM_CD
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B
+		) A LEFT OUTER JOIN
+		(
+			SELECT A.STAT_MM, FAULT_CLS_CD, FAULT_CNT
+			FROM TB_STA_FAULT_MM A
+			WHERE 1 = 1
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+		) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.FAULT_CLS_CD)
+		LEFT OUTER JOIN (
+			SELECT STAT_MM, FAULT_CLS_CD, SUM(FAULT_CNT) TOTAL_CNT 
+			FROM TB_STA_FAULT_MM
+			WHERE 1 = 1
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+			GROUP BY STAT_MM
+		) C ON A.STAT_MM = C.STAT_MM
+		ORDER BY A.STAT_MM, A.COM_CD 
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getFaultYearCnt" parameterType="maintainStatisticsVo" resultType="int"> 
+		SELECT CNT FROM (
+			SELECT  IFNULL(COUNT(*), 0) AS CNT FROM 
+			(
+			SELECT A.STAT_MM, B.COM_CD, B.FAULT_NAME
+				FROM
+				(
+					SELECT A.STAT_MM
+					FROM TB_STA_FAULT_MM A
+					WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+					GROUP BY SUBSTR(A.STAT_MM, 1, 4)
+				) A,
+				(
+					SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME FAULT_NAME
+					FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+					WHERE 1 = 1
+					<if test='deviceType == "DEV_001"'>
+						AND A.COM_UP_CD = ('ERB')
+					</if>
+					<if test='deviceType == "DEV_003"'>
+						AND A.COM_UP_CD = ('ERA')
+					</if>
+					<if test='deviceType == "DEV_004"'>
+						AND A.COM_UP_CD = ('ERR')
+					</if>
+					AND A.COM_CD = B.COM_CD
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STAT_MM, FAULT_CLS_CD, FAULT_CNT
+				FROM TB_STA_FAULT_MM A
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.FAULT_CLS_CD)
+			LEFT OUTER JOIN (
+				SELECT STAT_MM, FAULT_CLS_CD, SUM(FAULT_CNT) TOTAL_CNT 
+				FROM TB_STA_FAULT_MM A 
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY A.STAT_MM
+			) C ON A.STAT_MM = C.STAT_MM
+			ORDER BY A.STAT_MM, A.COM_CD 
+		) D 
+	</select>
+	
+	<select id="getFaultYearList" parameterType="maintainStatisticsVo" resultType="maintainStatisticsVo">
+		SELECT 
+			SUBSTR(A.STAT_MM, 1, 4) AS faultDttm, 
+			A.FAULT_NAME AS faultName, 
+			IF(SUM(B.FAULT_CNT) IS NULL, 0, SUM(B.FAULT_CNT)) AS faultCnt,
+			SUM(C.TOTAL_CNT) AS faultTotal
+		FROM
+		(
+		SELECT A.STAT_MM, B.COM_CD, B.FAULT_NAME
+			FROM
+			(
+				SELECT A.STAT_MM
+				FROM TB_STA_FAULT_MM A
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY STAT_MM
+			) A,
+			(
+				SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME FAULT_NAME
+				FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+				<if test='deviceType == "DEV_001"'>
+					AND A.COM_UP_CD = ('ERB')
+				</if>
+				<if test='deviceType == "DEV_003"'>
+					AND A.COM_UP_CD = ('ERA')
+				</if>
+				<if test='deviceType == "DEV_004"'>
+					AND A.COM_UP_CD = ('ERR')
+				</if>
+				AND A.COM_CD = B.COM_CD
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B
+		) A LEFT OUTER JOIN
+		(
+			SELECT A.STAT_MM, FAULT_CLS_CD, FAULT_CNT
+			FROM TB_STA_FAULT_MM A
+			WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+		) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.FAULT_CLS_CD)
+		LEFT OUTER JOIN (
+			SELECT STAT_MM, FAULT_CLS_CD, SUM(FAULT_CNT) TOTAL_CNT 
+			FROM TB_STA_FAULT_MM
+			WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			GROUP BY STAT_MM
+		) C ON A.STAT_MM = C.STAT_MM
+		GROUP BY SUBSTR(A.STAT_MM, 1, 4), A.COM_CD 
+		ORDER BY A.STAT_MM, A.COM_CD 
+	</select>
+	
+	<!-- 수리 리스트  -->
+	<select id="getRepairDayCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT CNT FROM (
+			SELECT IFNULL(COUNT(*), 0) AS CNT FROM 
+			(
+			SELECT A.STAT_DATE, B.COM_CD, B.REPAIR_NAME
+				FROM
+				(
+					SELECT A.STAT_DATE
+					FROM TB_STA_REPAIR_DD A
+					WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+					GROUP BY STAT_DATE
+				) A,
+				(
+					SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME REPAIR_NAME
+					FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+					WHERE 1 = 1
+					<if test='deviceType == "DEV_001"'>
+						AND A.COM_UP_CD = ('REB')
+					</if>
+					<if test='deviceType == "DEV_003"'>
+						AND A.COM_UP_CD = ('REA')
+					</if>
+					<if test='deviceType == "DEV_004"'>
+						AND A.COM_UP_CD = ('REL')
+					</if>
+					AND A.COM_CD = B.COM_CD
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STAT_DATE, REPAIR_CLS_CD, REPAIR_CNT
+				FROM TB_STA_REPAIR_DD A
+				WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			) B ON(A.STAT_DATE = B.STAT_DATE AND A.COM_CD = B.REPAIR_CLS_CD)
+			LEFT OUTER JOIN (
+				SELECT STAT_DATE, REPAIR_CLS_CD, SUM(REPAIR_CNT) TOTAL_CNT 
+				FROM TB_STA_REPAIR_DD 
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+				GROUP BY STAT_DATE
+		) C ON A.STAT_DATE = C.STAT_DATE
+			ORDER BY A.STAT_DATE, A.COM_CD 
+		) D
+	</select>
+	
+	<select id="getRepairDayList" parameterType="maintainStatisticsVo" resultType="maintainStatisticsVo">
+		SELECT 
+			A.STAT_DATE AS repairDttm, 
+			A.REPAIR_NAME AS repairName, 
+			IF(B.REPAIR_CNT IS NULL, 0, B.REPAIR_CNT) AS repairCnt,
+			C.TOTAL_CNT AS repairTotal
+		FROM
+		(
+		SELECT A.STAT_DATE, B.COM_CD, B.REPAIR_NAME
+			FROM
+			(
+				SELECT A.STAT_DATE
+				FROM TB_STA_REPAIR_DD A
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+				GROUP BY STAT_DATE
+			) A,
+			(
+				SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME REPAIR_NAME
+				FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+			<if test='deviceType == "DEV_001"'>
+				AND A.COM_UP_CD = ('REB')
+			</if>
+			<if test='deviceType == "DEV_003"'>
+				AND A.COM_UP_CD = ('REA')
+			</if>
+			<if test='deviceType == "DEV_004"'>
+				AND A.COM_UP_CD = ('REL')
+			</if>
+				AND A.COM_CD = B.COM_CD
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B
+		) A LEFT OUTER JOIN
+		(
+			SELECT A.STAT_DATE, REPAIR_CLS_CD, REPAIR_CNT
+			FROM TB_STA_REPAIR_DD A
+			WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+		) B ON(A.STAT_DATE = B.STAT_DATE AND A.COM_CD = B.REPAIR_CLS_CD)
+		LEFT OUTER JOIN (
+			SELECT STAT_DATE, REPAIR_CLS_CD, SUM(REPAIR_CNT) TOTAL_CNT 
+			FROM TB_STA_REPAIR_DD 
+			WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+			GROUP BY STAT_DATE
+		) C ON A.STAT_DATE = C.STAT_DATE
+		ORDER BY A.STAT_DATE, A.COM_CD 
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getRepairMonthCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT CNT FROM (
+			SELECT IFNULL(COUNT(*), 0) AS CNT FROM 
+			(
+			SELECT A.STAT_MM, B.COM_CD, B.REPAIR_NAME
+				FROM
+				(
+					SELECT A.STAT_MM
+					FROM TB_STA_REPAIR_MM A
+					WHERE 1 = 1
+					AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+					GROUP BY STAT_MM
+				) A,
+				(
+					SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME REPAIR_NAME
+					FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+					WHERE 1 = 1
+					<if test='deviceType == "DEV_001"'>
+						AND A.COM_UP_CD = ('REB')
+					</if>
+					<if test='deviceType == "DEV_003"'>
+						AND A.COM_UP_CD = ('REA')
+					</if>
+					<if test='deviceType == "DEV_004"'>
+						AND A.COM_UP_CD = ('REL')
+					</if>
+					AND A.COM_CD = B.COM_CD
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STAT_MM, REPAIR_CLS_CD, REPAIR_CNT
+				FROM TB_STA_REPAIR_MM A
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.REPAIR_CLS_CD)
+			LEFT OUTER JOIN (
+				SELECT STAT_MM, REPAIR_CLS_CD, SUM(REPAIR_CNT) TOTAL_CNT 
+				FROM TB_STA_REPAIR_MM 
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY STAT_MM
+			) C ON A.STAT_MM = C.STAT_MM
+			ORDER BY A.STAT_MM, A.COM_CD 
+		)D
+	</select>
+	
+	<select id="getRepairMonthList" parameterType="maintainStatisticsVo" resultType="maintainStatisticsVo">
+		SELECT 
+			A.STAT_MM AS repairDttm, 
+			A.REPAIR_NAME AS repairName, 
+			IF(B.REPAIR_CNT IS NULL, 0, B.REPAIR_CNT) AS repairCnt,
+			C.TOTAL_CNT AS repairTotal
+		FROM
+		(
+		SELECT A.STAT_MM, B.COM_CD, B.REPAIR_NAME
+			FROM
+			(
+				SELECT A.STAT_MM
+				FROM TB_STA_REPAIR_MM A
+				WHERE 1 = 1
+				AND STAT_MM BETWEEN #{searchBgnYe} AND #{searchEndMt}
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+				GROUP BY STAT_MM
+			) A,
+			(
+				SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME REPAIR_NAME
+				FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+			<if test='deviceType == "DEV_001"'>
+				AND A.COM_UP_CD = ('REB')
+			</if>
+			<if test='deviceType == "DEV_003"'>
+				AND A.COM_UP_CD = ('REA')
+			</if>
+			<if test='deviceType == "DEV_004"'>
+				AND A.COM_UP_CD = ('REL')
+			</if>
+				AND A.COM_CD = B.COM_CD
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B
+		) A LEFT OUTER JOIN
+		(
+			SELECT A.STAT_MM, REPAIR_CLS_CD, REPAIR_CNT
+			FROM TB_STA_REPAIR_MM A
+			WHERE 1 = 1
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+		) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.REPAIR_CLS_CD)
+		LEFT OUTER JOIN (
+			SELECT STAT_MM, REPAIR_CLS_CD, SUM(REPAIR_CNT) TOTAL_CNT 
+			FROM TB_STA_REPAIR_MM
+			WHERE 1 = 1
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			<if test='deviceType != "" and deviceType != null'>
+				AND EQUIPMENT_CLS_CD = #{deviceType}
+			</if>
+			GROUP BY STAT_MM
+		) C ON A.STAT_MM = C.STAT_MM
+		ORDER BY A.STAT_MM, A.COM_CD 
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getRepairYearCnt" parameterType="maintainStatisticsVo" resultType="int">
+		SELECT CNT FROM (
+			SELECT  IFNULL(COUNT(*), 0) AS CNT FROM 
+			(
+			SELECT A.STAT_MM, B.COM_CD, B.REPAIR_NAME
+				FROM
+				(
+					SELECT A.STAT_MM
+					FROM TB_STA_REPAIR_MM A
+					WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY SUBSTR(A.STAT_MM, 1, 4)
+				) A,
+				(
+					SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME REPAIR_NAME
+					FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+					WHERE 1 = 1
+					<if test='deviceType == "DEV_001"'>
+						AND A.COM_UP_CD = ('REB')
+					</if>
+					<if test='deviceType == "DEV_003"'>
+						AND A.COM_UP_CD = ('REA')
+					</if>
+					<if test='deviceType == "DEV_004"'>
+						AND A.COM_UP_CD = ('REL')
+					</if>
+					AND A.COM_CD = B.COM_CD
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STAT_MM, REPAIR_CLS_CD, REPAIR_CNT
+				FROM TB_STA_REPAIR_MM A
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.REPAIR_CLS_CD)
+			LEFT OUTER JOIN (
+				SELECT STAT_MM, REPAIR_CLS_CD, SUM(REPAIR_CNT) TOTAL_CNT 
+				FROM TB_STA_REPAIR_MM A 
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY SUBSTR(A.STAT_MM, 1, 4)
+			) C ON A.STAT_MM = C.STAT_MM
+			ORDER BY A.STAT_MM, A.COM_CD 
+		) D 
+	</select>
+	
+	<select id="getRepairYearList" parameterType="maintainStatisticsVo" resultType="maintainStatisticsVo">
+		SELECT 
+			SUBSTR(A.STAT_MM, 1, 4) AS repairDttm, 
+			A.REPAIR_NAME AS repairName, 
+			IF(SUM(B.REPAIR_CNT) IS NULL, 0, SUM(B.REPAIR_CNT)) AS repairCnt,
+			SUM(C.TOTAL_CNT) AS repairTotal
+		FROM
+		(
+		SELECT A.STAT_MM, B.COM_CD, B.REPAIR_NAME
+			FROM
+			(
+				SELECT A.STAT_MM
+				FROM TB_STA_REPAIR_MM A
+				WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+				GROUP BY STAT_MM
+			) A,
+			(
+				SELECT A.COM_UP_CD, A.COM_CD, B.MLANG_COM_CD_NAME REPAIR_NAME
+				FROM TB_SYS_COM_CD A, TB_SYS_MLANG_COM_CD B
+			WHERE 1 = 1
+				<if test='deviceType == "DEV_001"'>
+					AND A.COM_UP_CD = ('REB')
+				</if>
+				<if test='deviceType == "DEV_003"'>
+					AND A.COM_UP_CD = ('REA')
+				</if>
+				<if test='deviceType == "DEV_004"'>
+					AND A.COM_UP_CD = ('REL')
+				</if>
+				AND A.COM_CD = B.COM_CD
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B
+		) A LEFT OUTER JOIN
+		(
+			SELECT A.STAT_MM, REPAIR_CLS_CD, REPAIR_CNT
+			FROM TB_STA_REPAIR_MM A
+			WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+		) B ON(A.STAT_MM = B.STAT_MM AND A.COM_CD = B.REPAIR_CLS_CD)
+		LEFT OUTER JOIN (
+			SELECT STAT_MM, REPAIR_CLS_CD, SUM(REPAIR_CNT) TOTAL_CNT 
+			FROM TB_STA_REPAIR_MM
+			WHERE 1 = 1
+					AND STAT_MM BETWEEN CONCAT(#{searchBgnYe}, '01') AND CONCAT(#{searchEndYe}, '12')
+				<if test='deviceType != "" and deviceType != null'>
+					AND EQUIPMENT_CLS_CD = #{deviceType}
+				</if>
+			GROUP BY STAT_MM
+		) C ON A.STAT_MM = C.STAT_MM
+		GROUP BY SUBSTR(A.STAT_MM, 1, 4), A.COM_CD 
+		ORDER BY A.STAT_MM, A.COM_CD 
+	</select>
+</mapper>

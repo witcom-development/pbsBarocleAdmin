@@ -1,0 +1,1260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.use.service.UseStatisticsMapper">
+	
+	<select id="getUseMemberMaxPeriod" resultType="int">
+		SELECT 
+			TIMESTAMPDIFF(DAY, MIN(STAT_DATE), MAX(STAT_DATE))+1
+		FROM TB_STA_BIKE_USE_DD
+	</select>
+	
+	<select id="getDayPeriod" parameterType="useStatisticsVo" resultType="int">
+		SELECT 
+			TIMESTAMPDIFF(DAY, #{searchBgnDe}, #{searchEndDe})+1 
+		FROM DUAL
+	</select>
+	
+	<select id="getMonthPeriod" parameterType="useStatisticsVo" resultType="int">
+		SELECT 
+			TIMESTAMPDIFF(MONTH, CONCAT(#{searchBgnMt},'01'), CONCAT(#{searchEndMt},'01'))+1 
+		FROM DUAL
+	</select>
+	
+	<select id="getUseMemberCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(A.cnt) FROM (
+		   	SELECT 
+				COUNT(*) AS cnt
+			FROM TB_SVC_RENT_HIST H
+			LEFT OUTER JOIN TB_SVC_VOUCHER V ON H.VOUCHER_SEQ = V.VOUCHER_SEQ
+			LEFT OUTER JOIN TB_SVC_USR U  ON U.USR_SEQ = H.USR_SEQ
+			LEFT OUTER JOIN TB_SVC_MB M ON U.USR_SEQ = M.USR_SEQ 
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD C ON V.PAYMENT_CLS_CD = C.COM_CD AND C.LANG_CLS_CD = 'LAG_001'
+			WHERE 1 = 1
+			<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+				AND H.RENT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+				AND H.RENT_DTTM BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
+			</if>
+				 AND H.RENT_HIST_SEQ  IN ( SELECT RENT_HIST_SEQ 
+										FROM TB_SVC_RENT_HIST X1
+										   WHERE X1.RENT_HIST_SEQ = H.RENT_HIST_SEQ
+<!-- 											<![CDATA[AND (  H.USE_MI >= 2 OR (H.USE_MI > 2  AND X1.RENT_STATION_ID <> X1.RETURN_STATION_ID )   )]]> --><!-- 2017.07.18_비회원 이용개선의 따른 수정 -->
+											<![CDATA[AND (  H.USE_MI >= 2 OR (H.USE_MI < 2  AND X1.RENT_STATION_ID <> X1.RETURN_STATION_ID )   )]]>
+										)
+			GROUP BY V.PAYMENT_CLS_CD, V.USR_SEQ
+		) A
+	</select>
+	
+	<select id="getUseMemberList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		
+		SELECT REG_YMD AS comCd
+			 , MEMBER_CNT  AS useCntSum
+			 , BICYCLE_CNT  AS useCntAvg
+		  FROM TB_SVC_CORONA
+		 WHERE 1 = 1
+		 <choose>
+		 	<when test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+		 		AND REG_YMD BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		 	</when>
+		 	<when test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+		 		AND REG_YMD BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
+		 	</when>
+		  	<otherwise>
+		   		AND REG_YMD BETWEEN ( CURDATE() - 5) AND CURDATE()
+		   	</otherwise>	
+		 </choose>
+		<!-- SELECT 
+			C.MLANG_COM_CD_NAME AS paymentType,
+			U.USR_CLS_CD AS userType,
+			IFNULL(M.MB_ID, 'Guest') AS userId, 
+			U.SEX_CD AS userGender,
+			CAST(dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO ) AS CHAR) AS userMob,
+			count(H.USR_SEQ) AS rentCnt 
+		FROM TB_SVC_RENT_HIST H
+		LEFT OUTER JOIN TB_SVC_VOUCHER V ON H.VOUCHER_SEQ = V.VOUCHER_SEQ
+		LEFT OUTER JOIN TB_SVC_USR U  ON U.USR_SEQ = H.USR_SEQ
+		LEFT OUTER JOIN TB_SVC_MB M ON U.USR_SEQ = M.USR_SEQ 
+		LEFT OUTER JOIN TB_SYS_MLANG_COM_CD C ON V.PAYMENT_CLS_CD = C.COM_CD AND C.LANG_CLS_CD = 'LAG_001'
+		WHERE 1 = 1
+		<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+			AND H.RENT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+			AND H.RENT_DTTM BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
+		</if>
+		AND H.RENT_HIST_SEQ  IN ( SELECT RENT_HIST_SEQ 
+									FROM TB_SVC_RENT_HIST X1
+									   WHERE X1.RENT_HIST_SEQ = H.RENT_HIST_SEQ
+									   <![CDATA[AND (  H.USE_MI >= 2 OR (H.USE_MI > 2  AND X1.RENT_STATION_ID <> X1.RETURN_STATION_ID )   )]]>2017.07.18_비회원 이용개선의 따른 수정
+									   <![CDATA[AND (  H.USE_MI >= 2 OR (H.USE_MI < 2  AND X1.RENT_STATION_ID <> X1.RETURN_STATION_ID )   )]]>
+									)
+		GROUP BY  V.PAYMENT_CLS_CD, V.USR_SEQ
+		<if test='sortType == "A" or sortType == null or sortType == ""'>
+			ORDER BY count(H.USR_SEQ) ASC, V.PAYMENT_CLS_CD ASC
+		</if>
+		<if test='sortType == "D" and sortType != null'>
+			ORDER BY count(H.USR_SEQ) DESC, V.PAYMENT_CLS_CD ASC
+		</if>
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if> -->
+		
+		
+	</select>
+	
+	<select id="getUseMemberRentTypeSumData" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			A.COM_CD AS comCd,
+			A.MLANG_COM_CD_NAME AS mLangComCd,
+			IF(B.RENT_CLS_CD IS NULL, 0, B.USE_CNT) AS useCntSum
+		FROM
+		(
+			SELECT
+				CD.COM_CD AS COM_CD,
+				MCD.MLANG_COM_CD_NAME AS MLANG_COM_CD_NAME,
+				CD.DSP_ORD AS DSP_ORD
+			FROM TB_SYS_COM_CD CD JOIN TB_SYS_MLANG_COM_CD MCD
+			WHERE CD.COM_CD = MCD.COM_CD
+			AND CD.COM_UP_CD = 'RCC'
+			AND MCD.LANG_CLS_CD = 'LAG_001'
+		) A LEFT OUTER JOIN
+		(
+			SELECT CASE WHEN RENT_CLS_CD IN ('RCC_001', 'RCC_006' ) THEN 'RCC_001'
+						WHEN RENT_CLS_CD IN ('RCC_002', 'RCC_005' ) THEN 'RCC_002'
+				   ELSE RENT_CLS_CD
+				   END AS RENT_CLS_CD
+				 , SUM(USE_CNT) USE_CNT
+			<if test='dateType == "D" or dateType == null'>
+			FROM TB_STA_BIKE_USE_DD
+			</if>
+			<if test='dateType == "M" and dateType != null'>
+			FROM TB_STA_BIKE_USE_MM
+			</if>
+			WHERE 1 = 1
+			<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchBgnDe != null and searchEndDe != "" and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchBgnMt != null and searchEndMt != "" and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+		   GROUP BY CASE WHEN RENT_CLS_CD IN ('RCC_001', 'RCC_006' ) THEN 'RCC_001'
+			  			 WHEN RENT_CLS_CD IN ('RCC_002', 'RCC_005' ) THEN 'RCC_002'
+						 ELSE RENT_CLS_CD
+						 END
+		) B ON(A.COM_CD = B.RENT_CLS_CD)
+	</select>
+	<!-- START_2017.07.18_비회원 이용 절차 개선의 따른 이용자별의 성별 통계 수정 -->
+	<!-- <select id="getUseMemberGenderSumData" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			A.COM_CD AS comCd,
+			A.COM_CD_NAME AS mLangComCd,
+			IF(B.SEX_CD IS NULL, 0, B.CNT) AS useCntSum,
+			IF(B.SEX_CD IS NULL, 0, B.MOVE_DIST_SUM) AS moveDistSum,
+			IF(B.SEX_CD IS NULL, 0, B.USE_MI_SUM) AS useMinuteSum
+		FROM
+		(
+			SELECT 'F' AS COM_CD, '여' AS COM_CD_NAME
+			UNION ALL
+			SELECT 'M', '남' FROM DUAL
+		) A LEFT OUTER JOIN
+		(
+			SELECT SEX_CD, SUM(USE_CNT) CNT, SUM(MOVE_DIST) MOVE_DIST_SUM, SUM(USE_MI) USE_MI_SUM
+			<if test='dateType == "D" or dateType == null'>
+			FROM TB_STA_BIKE_USE_DD
+			</if>
+			<if test='dateType == "M" and dateType != null'>
+			FROM TB_STA_BIKE_USE_MM
+			</if>
+			WHERE 1 = 1
+			<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchBgnDe != null and searchEndDe != "" and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchBgnMt != null and searchEndMt != "" and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+			GROUP BY SEX_CD
+		) B ON(A.COM_CD = B.SEX_CD)
+	</select> -->
+	<select id="getUseMemberGenderSumData" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+			SELECT 
+				IF(SUM(USE_CNT) IS NULL, 0, SUM(USE_CNT))		 AS useCntSum
+				, IF(SUM(MOVE_DIST) IS NULL, 0, SUM(MOVE_DIST)) AS moveDistSum
+				, IF(SUM(USE_MI)IS NULL, 0, SUM(USE_MI)) useMinuteSum
+			<if test='dateType == "D" or dateType == null'>
+			FROM TB_STA_BIKE_USE_DD
+			</if>
+			<if test='dateType == "M" and dateType != null'>
+			FROM TB_STA_BIKE_USE_MM
+			</if>
+			WHERE 1 = 1
+			<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchBgnDe != null and searchEndDe != "" and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchBgnMt != null and searchEndMt != "" and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+	</select>
+	<!-- END_2017.07.18_비회원 이용 절차 개선의 따른 이용자별의 성별 통계 수정 -->
+	
+	<select id="getUseHourlyCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(cnt) FROM (
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+			(
+				SELECT
+					B.STATION_GRP_SEQ,
+					B.STATION_ID,
+					B.STATION_NAME,
+					A.STAT_HH,
+					IF(A.STAT_HH = '00', A.USE_CNT, 0) USE_CNT_00, IF(A.STAT_HH = '01', A.USE_CNT, 0) USE_CNT_01,
+					IF(A.STAT_HH = '02', A.USE_CNT, 0) USE_CNT_02, IF(A.STAT_HH = '03', A.USE_CNT, 0) USE_CNT_03,
+					IF(A.STAT_HH = '04', A.USE_CNT, 0) USE_CNT_04, IF(A.STAT_HH = '05', A.USE_CNT, 0) USE_CNT_05,
+					IF(A.STAT_HH = '06', A.USE_CNT, 0) USE_CNT_06, IF(A.STAT_HH = '07', A.USE_CNT, 0) USE_CNT_07,
+					IF(A.STAT_HH = '08', A.USE_CNT, 0) USE_CNT_08, IF(A.STAT_HH = '09', A.USE_CNT, 0) USE_CNT_09,
+					IF(A.STAT_HH = '10', A.USE_CNT, 0) USE_CNT_10, IF(A.STAT_HH = '11', A.USE_CNT, 0) USE_CNT_11,
+					IF(A.STAT_HH = '12', A.USE_CNT, 0) USE_CNT_12, IF(A.STAT_HH = '13', A.USE_CNT, 0) USE_CNT_13,
+					IF(A.STAT_HH = '14', A.USE_CNT, 0) USE_CNT_14, IF(A.STAT_HH = '15', A.USE_CNT, 0) USE_CNT_15,
+					IF(A.STAT_HH = '16', A.USE_CNT, 0) USE_CNT_16, IF(A.STAT_HH = '17', A.USE_CNT, 0) USE_CNT_17,
+					IF(A.STAT_HH = '18', A.USE_CNT, 0) USE_CNT_18, IF(A.STAT_HH = '19', A.USE_CNT, 0) USE_CNT_19,
+					IF(A.STAT_HH = '20', A.USE_CNT, 0) USE_CNT_20, IF(A.STAT_HH = '21', A.USE_CNT, 0) USE_CNT_21,
+					IF(A.STAT_HH = '22', A.USE_CNT, 0) USE_CNT_22, IF(A.STAT_HH = '23', A.USE_CNT, 0) USE_CNT_23
+				FROM
+				(
+					SELECT
+						STAT_DATE,
+						STAT_HH,
+						STATION_ID,
+						USE_CNT
+					FROM TB_STA_BIKE_USE_HH_RE
+					WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+					AND RENT_CLS_CD IN
+					<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+						#{item}
+					</foreach>
+				</if>
+				) A LEFT OUTER JOIN
+				(
+					SELECT 
+					A.STATION_GRP_SEQ,
+					A.STATION_ID, 
+					B.STATION_NAME
+					FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+					WHERE A.STATION_ID = B.STATION_ID
+					AND B.LANG_CLS_CD = 'LAG_001'
+				) B 
+				ON(B.STATION_ID = A.STATION_ID)
+			) A
+			<if test='stationGrp != "" and stationGrp != null'>
+				WHERE STATION_GRP_SEQ = #{stationGrp}
+				<if test='stationId != "" and stationId != null'>
+				AND STATION_ID = #{stationId}
+				</if>
+			</if>
+			GROUP BY STATION_ID, STATION_NAME
+			ORDER BY STATION_NAME, STAT_HH
+		) A
+	</select>
+	
+	<select id="getUseHourlyList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			STATION_GRP_SEQ,
+			STATION_ID AS stationId,
+			STATION_NAME AS stationName,
+			SUM(USE_CNT_00) AS useCntTime00, SUM(USE_CNT_01) AS useCntTime01,
+			SUM(USE_CNT_02) AS useCntTime02, SUM(USE_CNT_03) AS useCntTime03,
+			SUM(USE_CNT_04) AS useCntTime04, SUM(USE_CNT_05) AS useCntTime05,
+			SUM(USE_CNT_06) AS useCntTime06, SUM(USE_CNT_07) AS useCntTime07,
+			SUM(USE_CNT_08) AS useCntTime08, SUM(USE_CNT_09) AS useCntTime09,
+			SUM(USE_CNT_10) AS useCntTime10, SUM(USE_CNT_11) AS useCntTime11,
+			SUM(USE_CNT_12) AS useCntTime12, SUM(USE_CNT_13) AS useCntTime13,
+			SUM(USE_CNT_14) AS useCntTime14, SUM(USE_CNT_15) AS useCntTime15,
+			SUM(USE_CNT_16) AS useCntTime16, SUM(USE_CNT_17) AS useCntTime17,
+			SUM(USE_CNT_18) AS useCntTime18, SUM(USE_CNT_19) AS useCntTime19,
+			SUM(USE_CNT_20) AS useCntTime20, SUM(USE_CNT_21) AS useCntTime21,
+			SUM(USE_CNT_22) AS useCntTime22, SUM(USE_CNT_23) AS useCntTime23,
+			SUM(USE_CNT_00) + SUM(USE_CNT_01) + SUM(USE_CNT_02) + SUM(USE_CNT_03) + 
+			SUM(USE_CNT_04) + SUM(USE_CNT_05) + SUM(USE_CNT_06) + SUM(USE_CNT_07) + 
+			SUM(USE_CNT_08) + SUM(USE_CNT_09) + SUM(USE_CNT_10) + SUM(USE_CNT_11) + 
+			SUM(USE_CNT_12) + SUM(USE_CNT_13) + SUM(USE_CNT_14) + SUM(USE_CNT_15) + 
+			SUM(USE_CNT_16) + SUM(USE_CNT_17) + SUM(USE_CNT_18) + SUM(USE_CNT_19) + 
+			SUM(USE_CNT_20) + SUM(USE_CNT_21) + SUM(USE_CNT_22) + SUM(USE_CNT_23) AS useCntTimeTotal
+		FROM
+		(
+			SELECT
+				B.STATION_GRP_SEQ,
+				B.STATION_ID,
+				B.STATION_NAME,
+				A.STAT_HH,
+				IF(A.STAT_HH = '00', A.USE_CNT, 0) USE_CNT_00, IF(A.STAT_HH = '01', A.USE_CNT, 0) USE_CNT_01,
+				IF(A.STAT_HH = '02', A.USE_CNT, 0) USE_CNT_02, IF(A.STAT_HH = '03', A.USE_CNT, 0) USE_CNT_03,
+				IF(A.STAT_HH = '04', A.USE_CNT, 0) USE_CNT_04, IF(A.STAT_HH = '05', A.USE_CNT, 0) USE_CNT_05,
+				IF(A.STAT_HH = '06', A.USE_CNT, 0) USE_CNT_06, IF(A.STAT_HH = '07', A.USE_CNT, 0) USE_CNT_07,
+				IF(A.STAT_HH = '08', A.USE_CNT, 0) USE_CNT_08, IF(A.STAT_HH = '09', A.USE_CNT, 0) USE_CNT_09,
+				IF(A.STAT_HH = '10', A.USE_CNT, 0) USE_CNT_10, IF(A.STAT_HH = '11', A.USE_CNT, 0) USE_CNT_11,
+				IF(A.STAT_HH = '12', A.USE_CNT, 0) USE_CNT_12, IF(A.STAT_HH = '13', A.USE_CNT, 0) USE_CNT_13,
+				IF(A.STAT_HH = '14', A.USE_CNT, 0) USE_CNT_14, IF(A.STAT_HH = '15', A.USE_CNT, 0) USE_CNT_15,
+				IF(A.STAT_HH = '16', A.USE_CNT, 0) USE_CNT_16, IF(A.STAT_HH = '17', A.USE_CNT, 0) USE_CNT_17,
+				IF(A.STAT_HH = '18', A.USE_CNT, 0) USE_CNT_18, IF(A.STAT_HH = '19', A.USE_CNT, 0) USE_CNT_19,
+				IF(A.STAT_HH = '20', A.USE_CNT, 0) USE_CNT_20, IF(A.STAT_HH = '21', A.USE_CNT, 0) USE_CNT_21,
+				IF(A.STAT_HH = '22', A.USE_CNT, 0) USE_CNT_22, IF(A.STAT_HH = '23', A.USE_CNT, 0) USE_CNT_23
+			FROM
+			(
+				SELECT
+					STAT_DATE,
+					STAT_HH,
+					STATION_ID,
+					USE_CNT
+				FROM TB_STA_BIKE_USE_HH_RE
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+				AND RENT_CLS_CD IN
+				<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+					#{item}
+				</foreach>
+			</if>
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, A.STATION_ID, B.STATION_NAME
+				FROM TB_OPR_STATION A
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION B	  
+				ON A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B 
+			ON(B.STATION_ID = A.STATION_ID)
+		) A
+		<if test='stationGrp != "" and stationGrp != null'>
+			WHERE STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+			AND STATION_ID = #{stationId}
+			</if>
+		</if>
+		GROUP BY STATION_ID, STATION_NAME
+		ORDER BY STATION_NAME, STAT_HH
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getUseAgeGroupCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(cnt) FROM (
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+			(
+				SELECT
+				B.STATION_GRP_SEQ,
+				B.STATION_ID,
+				B.STATION_NAME,
+				A.AGES_CD,
+				A.SEX_CD,
+				IF(A.AGES_CD='AGE_001', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_001_M,
+				IF(A.AGES_CD='AGE_001', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_001_F,
+				IF(A.AGES_CD='AGE_002', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_002_M,
+				IF(A.AGES_CD='AGE_002', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_002_F,
+				IF(A.AGES_CD='AGE_003', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_003_M,
+				IF(A.AGES_CD='AGE_003', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_003_F,
+				IF(A.AGES_CD='AGE_004', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_004_M,
+				IF(A.AGES_CD='AGE_004', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_004_F,
+				IF(A.AGES_CD='AGE_005', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_005_M,
+				IF(A.AGES_CD='AGE_005', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_005_F,
+				IF(A.AGES_CD='AGE_006', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_006_M,
+				IF(A.AGES_CD='AGE_006', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_006_F,
+				IF(A.AGES_CD='AGE_007', IF(A.SEX_CD='M', A.USE_CNT, 0), 0) AGE_007_M,
+				IF(A.AGES_CD='AGE_007', IF(A.SEX_CD='F', A.USE_CNT, 0), 0) AGE_007_F
+			FROM
+			<!--
+			(
+				SELECT A.STATION_GRP_SEQ, A.STATION_ID, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			) B LEFT OUTER JOIN
+			(
+				SELECT
+					STAT_DATE,
+					AGES_CD,
+					STATION_ID,
+					SEX_CD,
+					USE_CNT
+				FROM TB_STA_BIKE_USE_DD
+				WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rentType != "" and rentType != null'>
+					AND RENT_CLS_CD IN(#{rentType})
+				</if>
+				) A
+			-->
+			<!-- 집계 테이블 기준으로 변경 _cms_20161121 -->
+			(
+				SELECT
+					STAT_DATE,
+					AGES_CD,
+					STATION_ID,
+					SEX_CD,
+					USE_CNT
+				FROM TB_STA_BIKE_USE_DD
+				WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+					AND RENT_CLS_CD IN
+					<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+						#{item}
+					</foreach>
+				</if>
+				AND RENT_CLS_CD NOT IN('RCC_003')<!-- 2017.07.18_비회원 이용절차에 의한 비회원 통계 정보 제외 -->
+				) A LEFT OUTER JOIN
+			 (
+				SELECT A.STATION_GRP_SEQ, A.STATION_ID, B.STATION_NAME
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+				WHERE A.STATION_ID = B.STATION_ID
+				AND B.LANG_CLS_CD = 'LAG_001'
+			 ) B 
+				ON(B.STATION_ID = A.STATION_ID)
+			) A
+			<if test='stationGrp != "" and stationGrp != null'>
+				WHERE STATION_GRP_SEQ = #{stationGrp}
+				<if test='stationId != "" and stationId != null'>
+				AND STATION_ID = #{stationId}
+				</if>
+			</if>
+			GROUP BY STATION_ID, STATION_NAME
+			ORDER BY STATION_NAME, AGES_CD, SEX_CD
+		) A
+	</select>
+	
+	<select id="getUseAgeGroupList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT CASE WHEN BIKE_SE_CD IN ('BIK_001' , 'BIK_002' ) THEN '일반'
+			   ELSE '새싹'
+			   END	  AS bikeType
+			 , CASE SEX_CD WHEN 'M' THEN '남자'
+						   WHEN 'F' THEN '여자'
+						   ELSE '미입력' END   AS sexCd
+			 , SUM( CASE AGES_CD WHEN 'AGE_001' THEN USE_CNT ELSE 0 END ) AS age1 
+			 , SUM( CASE AGES_CD WHEN 'AGE_002' THEN USE_CNT ELSE 0 END ) AS age2
+			 , SUM( CASE AGES_CD WHEN 'AGE_003' THEN USE_CNT ELSE 0 END ) AS age3
+			 , SUM( CASE AGES_CD WHEN 'AGE_004' THEN USE_CNT ELSE 0 END ) AS age4	  		   
+			 , SUM( CASE AGES_CD WHEN 'AGE_005' THEN USE_CNT ELSE 0 END ) AS age5
+			 , SUM( CASE AGES_CD WHEN 'AGE_006' THEN USE_CNT ELSE 0 END ) AS age6
+			 , SUM( CASE AGES_CD WHEN 'AGE_007' THEN USE_CNT ELSE 0 END ) AS age7	  		   
+			 , SUM( CASE AGES_CD WHEN 'AGE_008' THEN USE_CNT ELSE 0 END ) AS age8  
+			 , SUM( USE_CNT ) AS ageTotal
+		 FROM TB_STA_RENT_MM
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			WHERE STAT_MM BETWEEN SUBSTR( #{searchBgnDe}, 1,7 ) AND SUBSTR(#{searchEndDe}, 1, 7)
+		</if> 
+		GROUP BY CASE WHEN BIKE_SE_CD IN ('BIK_001' , 'BIK_002' ) THEN '일반'
+				 ELSE '새싹'
+				 END
+			   , CASE SEX_CD WHEN 'M' THEN '남자'
+						  WHEN 'F' THEN '여자'
+						  ELSE '미입력' END
+		ORDER BY BIKE_SE_CD, SEX_CD DESC				  
+		
+	</select>
+	
+	<select id="getUseRanDayCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(cnt) FROM (
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+			(
+				SELECT
+					A.STAT_DATE,
+					A.AGES_CD,
+					IF(A.AGES_CD='AGE_001', A.MVM_QUNT, 0) AGE_001_MVM, 
+					IF(A.AGES_CD='AGE_001', A.CO2_QUNT, 0) AGE_001_CO2, 
+					IF(A.AGES_CD='AGE_001', A.USE_CNT,  0) AGE_001_CNT,
+					IF(A.AGES_CD='AGE_002', A.MVM_QUNT, 0) AGE_002_MVM, 
+					IF(A.AGES_CD='AGE_002', A.CO2_QUNT, 0) AGE_002_CO2, 
+					IF(A.AGES_CD='AGE_002', A.USE_CNT,  0) AGE_002_CNT,
+					IF(A.AGES_CD='AGE_003', A.MVM_QUNT, 0) AGE_003_MVM, 
+					IF(A.AGES_CD='AGE_003', A.CO2_QUNT, 0) AGE_003_CO2, 
+					IF(A.AGES_CD='AGE_003', A.USE_CNT,  0) AGE_003_CNT,
+					IF(A.AGES_CD='AGE_004', A.MVM_QUNT, 0) AGE_004_MVM, 
+					IF(A.AGES_CD='AGE_004', A.CO2_QUNT, 0) AGE_004_CO2, 
+					IF(A.AGES_CD='AGE_004', A.USE_CNT,  0) AGE_004_CNT,
+					IF(A.AGES_CD='AGE_005', A.MVM_QUNT, 0) AGE_005_MVM, 
+					IF(A.AGES_CD='AGE_005', A.CO2_QUNT, 0) AGE_005_CO2, 
+					IF(A.AGES_CD='AGE_005', A.USE_CNT,  0) AGE_005_CNT,
+					IF(A.AGES_CD='AGE_006', A.MVM_QUNT, 0) AGE_006_MVM, 
+					IF(A.AGES_CD='AGE_006', A.CO2_QUNT, 0) AGE_006_CO2, 
+					IF(A.AGES_CD='AGE_006', A.USE_CNT,  0) AGE_006_CNT,
+					IF(A.AGES_CD='AGE_007', A.MVM_QUNT, 0) AGE_007_MVM, 
+					IF(A.AGES_CD='AGE_007', A.CO2_QUNT, 0) AGE_007_CO2, 
+					IF(A.AGES_CD='AGE_007', A.USE_CNT,  0) AGE_007_CNT
+				FROM
+				(
+					SELECT
+						STAT_DATE,
+						AGES_CD,
+						USE_CNT,
+						MVM_QUNT,
+						CO2_QUNT
+					FROM TB_STA_BIKE_USE_DD
+					WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+					AND RENT_CLS_CD IN
+					<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+						#{item}
+					</foreach>
+				</if>
+				AND RENT_CLS_CD NOT IN('RCC_003')<!-- 2017.07.18_비회원 이용절차에 의한 비회원 통계 정보 제외 -->
+				) A
+			) A
+			GROUP BY A.STAT_DATE
+			ORDER BY A.STAT_DATE
+		) A
+	</select>
+	
+	<select id="getUseRanDayList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			A.STAT_DATE AS statisticsDate,
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_MVM)/SUM(AGE_001_CNT)) AS useCntAgeMvm_10, 
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_CO2)/SUM(AGE_001_CNT)) AS useCntAgeCo2_10,
+			IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_MVM)/SUM(AGE_002_CNT)) AS useCntAgeMvm_20, 
+			IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_CO2)/SUM(AGE_002_CNT)) AS useCntAgeCo2_20,
+			IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_MVM)/SUM(AGE_003_CNT)) AS useCntAgeMvm_30, 
+			IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_CO2)/SUM(AGE_003_CNT)) AS useCntAgeCo2_30,
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_MVM)/SUM(AGE_004_CNT)) AS useCntAgeMvm_40, 
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_CO2)/SUM(AGE_004_CNT)) AS useCntAgeCo2_40,
+			IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_MVM)/SUM(AGE_005_CNT)) AS useCntAgeMvm_50, 
+			IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_CO2)/SUM(AGE_005_CNT)) AS useCntAgeCo2_50,
+			IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_MVM)/SUM(AGE_006_CNT)) AS useCntAgeMvm_60, 
+			IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_CO2)/SUM(AGE_006_CNT)) AS useCntAgeCo2_60,
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_MVM)/SUM(AGE_007_CNT)) AS useCntAgeMvm_70, 
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_CO2)/SUM(AGE_007_CNT)) AS useCntAgeCo2_70,
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_MVM)/SUM(AGE_001_CNT)) + IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_MVM)/SUM(AGE_002_CNT)) + IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_MVM)/SUM(AGE_003_CNT)) +
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_MVM)/SUM(AGE_004_CNT)) + IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_MVM)/SUM(AGE_005_CNT)) + IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_MVM)/SUM(AGE_006_CNT)) +
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_MVM)/SUM(AGE_007_CNT)) AS useCntAgeMvm_Total,
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_CO2)/SUM(AGE_001_CNT)) + IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_CO2)/SUM(AGE_002_CNT)) + IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_CO2)/SUM(AGE_003_CNT)) +
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_CO2)/SUM(AGE_004_CNT)) + IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_CO2)/SUM(AGE_005_CNT)) + IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_CO2)/SUM(AGE_006_CNT)) +
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_CO2)/SUM(AGE_007_CNT)) AS useCntAgeCo2_Total
+		FROM
+		(
+			SELECT
+				A.STAT_DATE,
+				A.AGES_CD,
+				IF(A.AGES_CD='AGE_001', A.MVM_QUNT, 0) AGE_001_MVM, 
+				IF(A.AGES_CD='AGE_001', A.CO2_QUNT, 0) AGE_001_CO2, 
+				IF(A.AGES_CD='AGE_001', A.USE_CNT,  0) AGE_001_CNT,
+				IF(A.AGES_CD='AGE_002', A.MVM_QUNT, 0) AGE_002_MVM, 
+				IF(A.AGES_CD='AGE_002', A.CO2_QUNT, 0) AGE_002_CO2, 
+				IF(A.AGES_CD='AGE_002', A.USE_CNT,  0) AGE_002_CNT,
+				IF(A.AGES_CD='AGE_003', A.MVM_QUNT, 0) AGE_003_MVM, 
+				IF(A.AGES_CD='AGE_003', A.CO2_QUNT, 0) AGE_003_CO2, 
+				IF(A.AGES_CD='AGE_003', A.USE_CNT,  0) AGE_003_CNT,
+				IF(A.AGES_CD='AGE_004', A.MVM_QUNT, 0) AGE_004_MVM, 
+				IF(A.AGES_CD='AGE_004', A.CO2_QUNT, 0) AGE_004_CO2, 
+				IF(A.AGES_CD='AGE_004', A.USE_CNT,  0) AGE_004_CNT,
+				IF(A.AGES_CD='AGE_005', A.MVM_QUNT, 0) AGE_005_MVM, 
+				IF(A.AGES_CD='AGE_005', A.CO2_QUNT, 0) AGE_005_CO2, 
+				IF(A.AGES_CD='AGE_005', A.USE_CNT,  0) AGE_005_CNT,
+				IF(A.AGES_CD='AGE_006', A.MVM_QUNT, 0) AGE_006_MVM, 
+				IF(A.AGES_CD='AGE_006', A.CO2_QUNT, 0) AGE_006_CO2, 
+				IF(A.AGES_CD='AGE_006', A.USE_CNT,  0) AGE_006_CNT,
+				IF(A.AGES_CD='AGE_007', A.MVM_QUNT, 0) AGE_007_MVM, 
+				IF(A.AGES_CD='AGE_007', A.CO2_QUNT, 0) AGE_007_CO2, 
+				IF(A.AGES_CD='AGE_007', A.USE_CNT,  0) AGE_007_CNT
+			FROM
+			(
+				SELECT
+					STAT_DATE,
+					AGES_CD,
+					USE_CNT,
+					MVM_QUNT,
+					CO2_QUNT
+				FROM TB_STA_BIKE_USE_DD
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+				AND RENT_CLS_CD IN
+				<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+					#{item}
+				</foreach>
+			</if>
+			) A
+		) A
+		GROUP BY A.STAT_DATE
+		ORDER BY A.STAT_DATE
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getUseRanWeekCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT
+			COUNT(*)
+		FROM
+		(
+			SELECT '1' DAY_OF_WEEK, '일' DAY_NAME
+			UNION ALL
+			SELECT '2' DAY_OF_WEEK, '월' DAY_NAME
+			UNION ALL
+			SELECT '3' DAY_OF_WEEK, '화' DAY_NAME
+			UNION ALL
+			SELECT '4' DAY_OF_WEEK, '수' DAY_NAME
+			UNION ALL
+			SELECT '5' DAY_OF_WEEK, '목' DAY_NAME
+			UNION ALL
+			SELECT '6' DAY_OF_WEEK, '금' DAY_NAME
+			UNION ALL
+			SELECT '7' DAY_OF_WEEK, '토' DAY_NAME
+		) A LEFT OUTER JOIN
+		(
+			SELECT
+				A.DAY_OF_WEEK,
+				IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_MVM)/SUM(AGE_001_CNT)) AGE_001_MVM, IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_CO2)/SUM(AGE_001_CNT)) AGE_001_CO2,
+				IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_MVM)/SUM(AGE_002_CNT)) AGE_002_MVM, IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_CO2)/SUM(AGE_002_CNT)) AGE_002_CO2,
+				IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_MVM)/SUM(AGE_003_CNT)) AGE_003_MVM, IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_CO2)/SUM(AGE_003_CNT)) AGE_003_CO2,
+				IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_MVM)/SUM(AGE_004_CNT)) AGE_004_MVM, IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_CO2)/SUM(AGE_004_CNT)) AGE_004_CO2,
+				IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_MVM)/SUM(AGE_005_CNT)) AGE_005_MVM, IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_CO2)/SUM(AGE_005_CNT)) AGE_005_CO2,
+				IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_MVM)/SUM(AGE_006_CNT)) AGE_006_MVM, IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_CO2)/SUM(AGE_006_CNT)) AGE_006_CO2,
+				IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_MVM)/SUM(AGE_007_CNT)) AGE_007_MVM, IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_CO2)/SUM(AGE_007_CNT)) AGE_007_CO2
+			FROM
+			(
+				SELECT
+					A.STAT_DATE,
+					A.DAY_OF_WEEK,
+					A.AGES_CD,
+					IF(A.AGES_CD='AGE_001', A.MVM_QUNT, 0) AGE_001_MVM, IF(A.AGES_CD='AGE_001', A.CO2_QUNT, 0) AGE_001_CO2, IF(A.AGES_CD='AGE_001', A.USE_CNT, 0) AGE_001_CNT,
+					IF(A.AGES_CD='AGE_002', A.MVM_QUNT, 0) AGE_002_MVM, IF(A.AGES_CD='AGE_002', A.CO2_QUNT, 0) AGE_002_CO2, IF(A.AGES_CD='AGE_002', A.USE_CNT, 0) AGE_002_CNT,
+					IF(A.AGES_CD='AGE_003', A.MVM_QUNT, 0) AGE_003_MVM, IF(A.AGES_CD='AGE_003', A.CO2_QUNT, 0) AGE_003_CO2, IF(A.AGES_CD='AGE_003', A.USE_CNT, 0) AGE_003_CNT,
+					IF(A.AGES_CD='AGE_004', A.MVM_QUNT, 0) AGE_004_MVM, IF(A.AGES_CD='AGE_004', A.CO2_QUNT, 0) AGE_004_CO2, IF(A.AGES_CD='AGE_004', A.USE_CNT, 0) AGE_004_CNT,
+					IF(A.AGES_CD='AGE_005', A.MVM_QUNT, 0) AGE_005_MVM, IF(A.AGES_CD='AGE_005', A.CO2_QUNT, 0) AGE_005_CO2, IF(A.AGES_CD='AGE_005', A.USE_CNT, 0) AGE_005_CNT,
+					IF(A.AGES_CD='AGE_006', A.MVM_QUNT, 0) AGE_006_MVM, IF(A.AGES_CD='AGE_006', A.CO2_QUNT, 0) AGE_006_CO2, IF(A.AGES_CD='AGE_006', A.USE_CNT, 0) AGE_006_CNT,
+					IF(A.AGES_CD='AGE_007', A.MVM_QUNT, 0) AGE_007_MVM, IF(A.AGES_CD='AGE_007', A.CO2_QUNT, 0) AGE_007_CO2, IF(A.AGES_CD='AGE_007', A.USE_CNT, 0) AGE_007_CNT
+				FROM
+				(
+					SELECT
+						STAT_DATE,
+						DAYOFWEEK(STAT_DATE) DAY_OF_WEEK,
+						AGES_CD,
+						USE_CNT,
+						MVM_QUNT,
+						CO2_QUNT
+					FROM TB_STA_BIKE_USE_DD
+					WHERE 1 = 1
+				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rentType != "" and rentType != null'>
+					AND RENT_CLS_CD IN(#{rentType})
+				</if>
+				) A
+			) A
+			GROUP BY A.DAY_OF_WEEK
+		) B
+		ON(A.DAY_OF_WEEK = B.DAY_OF_WEEK)
+	</select>
+	
+	<select id="getUseRanWeekList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			A.DAY_NAME AS statisticsDate,
+			A.DAY_OF_WEEK,
+			IF(B.AGE_001_MVM IS NULL, 0, B.AGE_001_MVM) AS useCntAgeMvm_10,
+			IF(B.AGE_001_CO2 IS NULL, 0, B.AGE_001_CO2) AS useCntAgeCo2_10,
+			IF(B.AGE_002_MVM IS NULL, 0, B.AGE_002_MVM) AS useCntAgeMvm_20,
+			IF(B.AGE_002_CO2 IS NULL, 0, B.AGE_002_CO2) AS useCntAgeCo2_20,
+			IF(B.AGE_003_MVM IS NULL, 0, B.AGE_003_MVM) AS useCntAgeMvm_30,
+			IF(B.AGE_003_CO2 IS NULL, 0, B.AGE_003_CO2) AS useCntAgeCo2_30,
+			IF(B.AGE_004_MVM IS NULL, 0, B.AGE_004_MVM) AS useCntAgeMvm_40,
+			IF(B.AGE_004_CO2 IS NULL, 0, B.AGE_004_CO2) AS useCntAgeCo2_40,
+			IF(B.AGE_005_MVM IS NULL, 0, B.AGE_005_MVM) AS useCntAgeMvm_50,
+			IF(B.AGE_005_CO2 IS NULL, 0, B.AGE_005_CO2) AS useCntAgeCo2_50,
+			IF(B.AGE_006_MVM IS NULL, 0, B.AGE_006_MVM) AS useCntAgeMvm_60,
+			IF(B.AGE_006_CO2 IS NULL, 0, B.AGE_006_CO2) AS useCntAgeCo2_60,
+			IF(B.AGE_007_MVM IS NULL, 0, B.AGE_007_MVM) AS useCntAgeMvm_70,
+			IF(B.AGE_007_CO2 IS NULL, 0, B.AGE_007_CO2) AS useCntAgeCo2_70,
+			IF(B.AGE_001_MVM IS NULL, 0, B.AGE_001_MVM) + IF(B.AGE_002_MVM IS NULL, 0, B.AGE_002_MVM) + IF(B.AGE_003_MVM IS NULL, 0, B.AGE_003_MVM) +
+			IF(B.AGE_004_MVM IS NULL, 0, B.AGE_004_MVM) + IF(B.AGE_005_MVM IS NULL, 0, B.AGE_005_MVM) + IF(B.AGE_006_MVM IS NULL, 0, B.AGE_006_MVM) +
+			IF(B.AGE_007_MVM IS NULL, 0, B.AGE_007_MVM) AS useCntAgeMvm_Total,
+			IF(B.AGE_001_CO2 IS NULL, 0, B.AGE_001_CO2) + IF(B.AGE_002_CO2 IS NULL, 0, B.AGE_002_CO2) + IF(B.AGE_003_CO2 IS NULL, 0, B.AGE_003_CO2) +
+			IF(B.AGE_004_CO2 IS NULL, 0, B.AGE_004_CO2) + IF(B.AGE_005_CO2 IS NULL, 0, B.AGE_005_CO2) + IF(B.AGE_006_CO2 IS NULL, 0, B.AGE_006_CO2) +
+			IF(B.AGE_007_CO2 IS NULL, 0, B.AGE_007_CO2) AS useCntAgeCo2_Total
+		FROM
+		(
+			SELECT '1' DAY_OF_WEEK, '일' DAY_NAME
+			UNION ALL
+			SELECT '2' DAY_OF_WEEK, '월' DAY_NAME
+			UNION ALL
+			SELECT '3' DAY_OF_WEEK, '화' DAY_NAME
+			UNION ALL
+			SELECT '4' DAY_OF_WEEK, '수' DAY_NAME
+			UNION ALL
+			SELECT '5' DAY_OF_WEEK, '목' DAY_NAME
+			UNION ALL
+			SELECT '6' DAY_OF_WEEK, '금' DAY_NAME
+			UNION ALL
+			SELECT '7' DAY_OF_WEEK, '토' DAY_NAME
+		) A LEFT OUTER JOIN
+		(
+			SELECT
+				A.DAY_OF_WEEK,
+				IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_MVM)/SUM(AGE_001_CNT)) AGE_001_MVM, IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_CO2)/SUM(AGE_001_CNT)) AGE_001_CO2,
+				IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_MVM)/SUM(AGE_002_CNT)) AGE_002_MVM, IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_CO2)/SUM(AGE_002_CNT)) AGE_002_CO2,
+				IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_MVM)/SUM(AGE_003_CNT)) AGE_003_MVM, IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_CO2)/SUM(AGE_003_CNT)) AGE_003_CO2,
+				IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_MVM)/SUM(AGE_004_CNT)) AGE_004_MVM, IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_CO2)/SUM(AGE_004_CNT)) AGE_004_CO2,
+				IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_MVM)/SUM(AGE_005_CNT)) AGE_005_MVM, IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_CO2)/SUM(AGE_005_CNT)) AGE_005_CO2,
+				IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_MVM)/SUM(AGE_006_CNT)) AGE_006_MVM, IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_CO2)/SUM(AGE_006_CNT)) AGE_006_CO2,
+				IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_MVM)/SUM(AGE_007_CNT)) AGE_007_MVM, IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_CO2)/SUM(AGE_007_CNT)) AGE_007_CO2
+			FROM
+			(
+				SELECT
+					A.STAT_DATE,
+					A.DAY_OF_WEEK,
+					A.AGES_CD,
+					IF(A.AGES_CD='AGE_001', A.MVM_QUNT, 0) AGE_001_MVM, IF(A.AGES_CD='AGE_001', A.CO2_QUNT, 0) AGE_001_CO2, IF(A.AGES_CD='AGE_001', A.USE_CNT, 0) AGE_001_CNT,
+					IF(A.AGES_CD='AGE_002', A.MVM_QUNT, 0) AGE_002_MVM, IF(A.AGES_CD='AGE_002', A.CO2_QUNT, 0) AGE_002_CO2, IF(A.AGES_CD='AGE_002', A.USE_CNT, 0) AGE_002_CNT,
+					IF(A.AGES_CD='AGE_003', A.MVM_QUNT, 0) AGE_003_MVM, IF(A.AGES_CD='AGE_003', A.CO2_QUNT, 0) AGE_003_CO2, IF(A.AGES_CD='AGE_003', A.USE_CNT, 0) AGE_003_CNT,
+					IF(A.AGES_CD='AGE_004', A.MVM_QUNT, 0) AGE_004_MVM, IF(A.AGES_CD='AGE_004', A.CO2_QUNT, 0) AGE_004_CO2, IF(A.AGES_CD='AGE_004', A.USE_CNT, 0) AGE_004_CNT,
+					IF(A.AGES_CD='AGE_005', A.MVM_QUNT, 0) AGE_005_MVM, IF(A.AGES_CD='AGE_005', A.CO2_QUNT, 0) AGE_005_CO2, IF(A.AGES_CD='AGE_005', A.USE_CNT, 0) AGE_005_CNT,
+					IF(A.AGES_CD='AGE_006', A.MVM_QUNT, 0) AGE_006_MVM, IF(A.AGES_CD='AGE_006', A.CO2_QUNT, 0) AGE_006_CO2, IF(A.AGES_CD='AGE_006', A.USE_CNT, 0) AGE_006_CNT,
+					IF(A.AGES_CD='AGE_007', A.MVM_QUNT, 0) AGE_007_MVM, IF(A.AGES_CD='AGE_007', A.CO2_QUNT, 0) AGE_007_CO2, IF(A.AGES_CD='AGE_007', A.USE_CNT, 0) AGE_007_CNT
+				FROM
+				(
+					SELECT
+						STAT_DATE,
+						DAYOFWEEK(STAT_DATE) DAY_OF_WEEK,
+						AGES_CD,
+						USE_CNT,
+						MVM_QUNT,
+						CO2_QUNT
+					FROM TB_STA_BIKE_USE_DD
+					WHERE 1 = 1
+					<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+						AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+						AND RENT_CLS_CD IN
+						<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+							#{item}
+						</foreach>
+					</if>
+				) A
+			) A
+			GROUP BY A.DAY_OF_WEEK
+		) B
+		ON(A.DAY_OF_WEEK = B.DAY_OF_WEEK)
+		ORDER BY A.DAY_OF_WEEK
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getUseRanMonthCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(cnt) FROM (
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+			(
+				SELECT
+				A.STAT_MM,
+				A.AGES_CD,
+				IF(A.AGES_CD='AGE_001', A.MVM_QUNT, 0) AGE_001_MVM, 
+				IF(A.AGES_CD='AGE_001', A.CO2_QUNT, 0) AGE_001_CO2, 
+				IF(A.AGES_CD='AGE_001', A.USE_CNT,  0) AGE_001_CNT,
+				IF(A.AGES_CD='AGE_002', A.MVM_QUNT, 0) AGE_002_MVM, 
+				IF(A.AGES_CD='AGE_002', A.CO2_QUNT, 0) AGE_002_CO2, 
+				IF(A.AGES_CD='AGE_002', A.USE_CNT,  0) AGE_002_CNT,
+				IF(A.AGES_CD='AGE_003', A.MVM_QUNT, 0) AGE_003_MVM, 
+				IF(A.AGES_CD='AGE_003', A.CO2_QUNT, 0) AGE_003_CO2, 
+				IF(A.AGES_CD='AGE_003', A.USE_CNT,  0) AGE_003_CNT,
+				IF(A.AGES_CD='AGE_004', A.MVM_QUNT, 0) AGE_004_MVM, 
+				IF(A.AGES_CD='AGE_004', A.CO2_QUNT, 0) AGE_004_CO2, 
+				IF(A.AGES_CD='AGE_004', A.USE_CNT,  0) AGE_004_CNT,
+				IF(A.AGES_CD='AGE_005', A.MVM_QUNT, 0) AGE_005_MVM, 
+				IF(A.AGES_CD='AGE_005', A.CO2_QUNT, 0) AGE_005_CO2, 
+				IF(A.AGES_CD='AGE_005', A.USE_CNT,  0) AGE_005_CNT,
+				IF(A.AGES_CD='AGE_006', A.MVM_QUNT, 0) AGE_006_MVM, 
+				IF(A.AGES_CD='AGE_006', A.CO2_QUNT, 0) AGE_006_CO2, 
+				IF(A.AGES_CD='AGE_006', A.USE_CNT,  0) AGE_006_CNT,
+				IF(A.AGES_CD='AGE_007', A.MVM_QUNT, 0) AGE_007_MVM, 
+				IF(A.AGES_CD='AGE_007', A.CO2_QUNT, 0) AGE_007_CO2, 
+				IF(A.AGES_CD='AGE_007', A.USE_CNT,  0) AGE_007_CNT
+			FROM
+			(
+				SELECT
+					STAT_MM,
+					AGES_CD,
+					USE_CNT,
+					MVM_QUNT,
+					CO2_QUNT
+				FROM TB_STA_BIKE_USE_MM
+				WHERE 1 = 1
+			<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+			<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+				AND RENT_CLS_CD IN
+				<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+					#{item}
+				</foreach>
+			</if>
+			) A
+		) A
+		GROUP BY A.STAT_MM
+		ORDER BY A.STAT_MM
+	) A
+	</select>
+	
+	<select id="getUseRanMonthList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			A.STAT_MM AS statisticsDate,
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_MVM)/SUM(AGE_001_CNT)) AS useCntAgeMvm_10, 
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_CO2)/SUM(AGE_001_CNT)) AS useCntAgeCo2_10,
+			IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_MVM)/SUM(AGE_002_CNT)) AS useCntAgeMvm_20, 
+			IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_CO2)/SUM(AGE_002_CNT)) AS useCntAgeCo2_20,
+			IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_MVM)/SUM(AGE_003_CNT)) AS useCntAgeMvm_30, 
+			IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_CO2)/SUM(AGE_003_CNT)) AS useCntAgeCo2_30,
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_MVM)/SUM(AGE_004_CNT)) AS useCntAgeMvm_40, 
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_CO2)/SUM(AGE_004_CNT)) AS useCntAgeCo2_40,
+			IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_MVM)/SUM(AGE_005_CNT)) AS useCntAgeMvm_50, 
+			IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_CO2)/SUM(AGE_005_CNT)) AS useCntAgeCo2_50,
+			IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_MVM)/SUM(AGE_006_CNT)) AS useCntAgeMvm_60, 
+			IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_CO2)/SUM(AGE_006_CNT)) AS useCntAgeCo2_60,
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_MVM)/SUM(AGE_007_CNT)) AS useCntAgeMvm_70, 
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_CO2)/SUM(AGE_007_CNT)) AS useCntAgeCo2_70,
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_MVM)/SUM(AGE_001_CNT)) + IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_MVM)/SUM(AGE_002_CNT)) + IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_MVM)/SUM(AGE_003_CNT)) +
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_MVM)/SUM(AGE_004_CNT)) + IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_MVM)/SUM(AGE_005_CNT)) + IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_MVM)/SUM(AGE_006_CNT)) +
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_MVM)/SUM(AGE_007_CNT)) AS useCntAgeMvm_Total,
+			IF(SUM(AGE_001_CNT)=0, 0, SUM(AGE_001_CO2)/SUM(AGE_001_CNT)) + IF(SUM(AGE_002_CNT)=0, 0, SUM(AGE_002_CO2)/SUM(AGE_002_CNT)) + IF(SUM(AGE_003_CNT)=0, 0, SUM(AGE_003_CO2)/SUM(AGE_003_CNT)) +
+			IF(SUM(AGE_004_CNT)=0, 0, SUM(AGE_004_CO2)/SUM(AGE_004_CNT)) + IF(SUM(AGE_005_CNT)=0, 0, SUM(AGE_005_CO2)/SUM(AGE_005_CNT)) + IF(SUM(AGE_006_CNT)=0, 0, SUM(AGE_006_CO2)/SUM(AGE_006_CNT)) +
+			IF(SUM(AGE_007_CNT)=0, 0, SUM(AGE_007_CO2)/SUM(AGE_007_CNT)) AS useCntAgeCo2_Total
+		FROM
+		(
+			SELECT
+				A.STAT_MM,
+				A.AGES_CD,
+				IF(A.AGES_CD='AGE_001', A.MVM_QUNT, 0) AGE_001_MVM, 
+				IF(A.AGES_CD='AGE_001', A.CO2_QUNT, 0) AGE_001_CO2, 
+				IF(A.AGES_CD='AGE_001', A.USE_CNT,  0) AGE_001_CNT,
+				IF(A.AGES_CD='AGE_002', A.MVM_QUNT, 0) AGE_002_MVM, 
+				IF(A.AGES_CD='AGE_002', A.CO2_QUNT, 0) AGE_002_CO2, 
+				IF(A.AGES_CD='AGE_002', A.USE_CNT,  0) AGE_002_CNT,
+				IF(A.AGES_CD='AGE_003', A.MVM_QUNT, 0) AGE_003_MVM, 
+				IF(A.AGES_CD='AGE_003', A.CO2_QUNT, 0) AGE_003_CO2, 
+				IF(A.AGES_CD='AGE_003', A.USE_CNT,  0) AGE_003_CNT,
+				IF(A.AGES_CD='AGE_004', A.MVM_QUNT, 0) AGE_004_MVM, 
+				IF(A.AGES_CD='AGE_004', A.CO2_QUNT, 0) AGE_004_CO2, 
+				IF(A.AGES_CD='AGE_004', A.USE_CNT,  0) AGE_004_CNT,
+				IF(A.AGES_CD='AGE_005', A.MVM_QUNT, 0) AGE_005_MVM, 
+				IF(A.AGES_CD='AGE_005', A.CO2_QUNT, 0) AGE_005_CO2, 
+				IF(A.AGES_CD='AGE_005', A.USE_CNT,  0) AGE_005_CNT,
+				IF(A.AGES_CD='AGE_006', A.MVM_QUNT, 0) AGE_006_MVM, 
+				IF(A.AGES_CD='AGE_006', A.CO2_QUNT, 0) AGE_006_CO2, 
+				IF(A.AGES_CD='AGE_006', A.USE_CNT,  0) AGE_006_CNT,
+				IF(A.AGES_CD='AGE_007', A.MVM_QUNT, 0) AGE_007_MVM, 
+				IF(A.AGES_CD='AGE_007', A.CO2_QUNT, 0) AGE_007_CO2, 
+				IF(A.AGES_CD='AGE_007', A.USE_CNT,  0) AGE_007_CNT
+			FROM
+			(
+				SELECT
+					STAT_MM,
+					AGES_CD,
+					USE_CNT,
+					MVM_QUNT,
+					CO2_QUNT
+				FROM TB_STA_BIKE_USE_MM
+				WHERE 1 = 1
+			<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+			<if test='rentType != "" and rentType != null'>
+<!-- 				AND RENT_CLS_CD IN(#{rentType}) -->
+				AND RENT_CLS_CD IN
+				<foreach collection="rentTypeArray" item="item" index="index" separator="," open="(" close=")">
+					#{item}
+				</foreach>
+			</if>
+			) A
+		) A
+		GROUP BY A.STAT_MM
+		ORDER BY A.STAT_MM
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getUseForeignDayCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(cnt) FROM (
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+			(
+				SELECT
+					B.STATION_GRP_SEQ,
+					B.STATION_GRP_NAME,
+					B.STATION_ID,
+					B.STATION_NAME,
+					A.STAT_DATE,
+					A.RENT_CNT,
+					A.RETURN_CNT
+				FROM
+				(
+				SELECT
+					STAT_DATE,
+					STATION_ID,
+					RENT_CNT,
+					RETURN_CNT
+				FROM TB_STA_FOREIGN_RENT_DD
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+				) A LEFT OUTER JOIN
+				(
+					SELECT A.STATION_GRP_SEQ, C.STATION_GRP_NAME, A.STATION_ID, B.STATION_NAME
+					FROM TB_OPR_STATION A 
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION B ON A.STATION_ID = B.STATION_ID AND B.LANG_CLS_CD = 'LAG_001'
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP C ON A.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD = 'LAG_001'
+				) B 
+				ON(A.STATION_ID = B.STATION_ID)
+			) A
+			WHERE 1=1
+			<if test='stationGrp != "" and stationGrp != null'>
+				AND STATION_GRP_SEQ = #{stationGrp}
+				<if test='stationId != "" and stationId != null'>
+				AND STATION_ID = #{stationId}
+				</if>
+			</if>
+			GROUP BY STATION_ID, STATION_NAME
+			ORDER BY STATION_NAME, STAT_DATE
+		) A
+	</select>
+	
+	<select id="getUseForeignDayList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			IFNULL(STATION_GRP_NAME, '그룹명 없음') AS stationGrpName,
+			STATION_ID							  AS stationId,
+			IFNULL(STATION_NAME, '대여소명 없음')   AS stationName,
+			STAT_DATE AS rentDttm,
+			RENT_CNT AS rentCnt,
+			RETURN_CNT AS returnCnt
+		FROM
+		(
+			SELECT
+				B.STATION_GRP_SEQ,
+				B.STATION_GRP_NAME,
+				B.STATION_ID,
+				B.STATION_NAME,
+				A.STAT_DATE,
+				A.RENT_CNT,
+				A.RETURN_CNT
+			FROM
+			(
+				SELECT
+					STAT_DATE,
+					STATION_ID,
+					RENT_CNT,
+					RETURN_CNT
+				FROM TB_STA_FOREIGN_RENT_DD
+				WHERE 1 = 1
+			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</if>
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, C.STATION_GRP_NAME, A.STATION_ID, B.STATION_NAME
+				FROM TB_OPR_STATION A 
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION B ON A.STATION_ID = B.STATION_ID AND B.LANG_CLS_CD = 'LAG_001'
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP C ON A.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD = 'LAG_001'
+			) B 
+			ON(A.STATION_ID = B.STATION_ID)
+		) A
+		WHERE 1=1
+			<if test='stationGrp != "" and stationGrp != null'>
+			AND STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+			AND STATION_ID = #{stationId}
+			</if>
+		</if>
+		GROUP BY STATION_ID, STATION_NAME
+		ORDER BY STATION_NAME, STAT_DATE
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	<select id="getUseForeignMonthCnt" parameterType="useStatisticsVo" resultType="int">
+		SELECT COUNT(cnt) FROM (
+			SELECT
+				COUNT(*) AS cnt
+			FROM
+			(
+				SELECT
+					B.STATION_GRP_SEQ,
+					B.STATION_GRP_NAME,
+					B.STATION_ID,
+					B.STATION_NAME,
+					A.STAT_MM,
+					A.RENT_CNT,
+					A.RETURN_CNT
+				FROM
+				(
+				SELECT
+					STAT_MM,
+					STATION_ID,
+					RENT_CNT,
+					RETURN_CNT
+				FROM TB_STA_FOREIGN_RENT_MM
+				WHERE 1 = 1
+			<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+				) A LEFT OUTER JOIN
+				(
+					SELECT A.STATION_GRP_SEQ, C.STATION_GRP_NAME, A.STATION_ID, B.STATION_NAME
+					FROM TB_OPR_STATION A 
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION B ON A.STATION_ID = B.STATION_ID AND B.LANG_CLS_CD = 'LAG_001'
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP C ON A.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD = 'LAG_001'
+				) B 
+				ON(A.STATION_ID = B.STATION_ID)
+			) A
+			WHERE 1=1
+			<if test='stationGrp != "" and stationGrp != null'>
+				AND STATION_GRP_SEQ = #{stationGrp}
+				<if test='stationId != "" and stationId != null'>
+				AND STATION_ID = #{stationId}
+				</if>
+			</if>
+			GROUP BY STATION_ID, STATION_NAME
+			ORDER BY STATION_NAME, STAT_MM
+		) A
+	</select>
+	
+	<select id="getUseForeignMonthList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
+		SELECT
+			IFNULL(STATION_GRP_NAME, '그룹명 없음') AS stationGrpName,
+			STATION_ID							  AS stationId,
+			IFNULL(STATION_NAME, '대여소명 없음')   AS stationName,
+			STAT_MM AS rentDttm,
+			RENT_CNT AS rentCnt,
+			RETURN_CNT AS returnCnt
+		FROM
+		(
+			SELECT
+				B.STATION_GRP_SEQ,
+				B.STATION_GRP_NAME,
+				B.STATION_ID,
+				B.STATION_NAME,
+				A.STAT_MM,
+				A.RENT_CNT,
+				A.RETURN_CNT
+			FROM
+			(
+				SELECT
+					STAT_MM,
+					STATION_ID,
+					RENT_CNT,
+					RETURN_CNT
+				FROM TB_STA_FOREIGN_RENT_MM
+				WHERE 1 = 1
+			<if test='searchBgnMt != "" and searchEndMt != "" and searchBgnMt != null and searchEndMt != null'>
+				AND STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+			</if>
+			) A LEFT OUTER JOIN
+			(
+				SELECT A.STATION_GRP_SEQ, C.STATION_GRP_NAME, A.STATION_ID, B.STATION_NAME
+				FROM TB_OPR_STATION A 
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION B ON A.STATION_ID = B.STATION_ID AND B.LANG_CLS_CD = 'LAG_001'
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP C ON A.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD = 'LAG_001'
+			) B 
+			ON(A.STATION_ID = B.STATION_ID)
+		) A
+		WHERE 1=1
+			<if test='stationGrp != "" and stationGrp != null'>
+			AND STATION_GRP_SEQ = #{stationGrp}
+			<if test='stationId != "" and stationId != null'>
+			AND STATION_ID = #{stationId}
+			</if>
+		</if>
+		GROUP BY STATION_ID, STATION_NAME
+		ORDER BY STATION_NAME, STAT_MM
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+	
+	
+	
+	
+	
+
+	<!-- // 월간운영현황 -->
+	<select id="listUseStatisticsBoardCount" parameterType="useStatisticsBoardVO" resultType="int">
+		SELECT	COUNT(STATIC_SEQ) AS staticSeq
+		FROM	TB_SYS_STATIC_BOARD
+		WHERE	1=1
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			AND DATE_FORMAT(REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			AND DATE_FORMAT(REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+		</if>
+		<if test="searchValue!='' and searchValue!=null">
+			AND ( STATIC_TITLE LIKE CONCAT('%',#{searchValue},'%') OR STATIC_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+		</if>
+	</select>
+	
+	<select id="listUseStatisticsBoard" parameterType="useStatisticsBoardVO" resultType="useStatisticsBoardVO">
+		SELECT	STATIC_SEQ AS staticSeq,
+				STATIC_TITLE AS staticTitle,
+				STATIC_TEXT_CONTENT AS staticTEXTContent,
+				STATIC_HTML_CONTENT AS staticHTMLContent,
+				REG_DTTM AS regDttm,
+				REG_ID AS regID,
+				MOD_DTTM AS modDttm,
+				MOD_ID AS modID
+		FROM	
+				(
+					SELECT
+							STATIC_SEQ,
+							STATIC_TITLE,
+							STATIC_TEXT_CONTENT,
+							STATIC_HTML_CONTENT,
+							REG_DTTM,
+							REG_ID,
+							MOD_DTTM,
+							MOD_ID
+					FROM	TB_SYS_STATIC_BOARD
+					WHERE	1=1
+					<if test="searchStartDate!='' and searchStartDate!=null">
+						AND DATE_FORMAT(REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						AND DATE_FORMAT(REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+					</if>
+					<if test="searchValue!='' and searchValue!=null">
+						AND ( STATIC_TITLE LIKE CONCAT('%',#{searchValue},'%') OR STATIC_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+					</if>
+				) A
+		 ORDER BY STATIC_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewUseStatisticsBoard" parameterType="useStatisticsBoardVO" resultType="useStatisticsBoardVO">
+	  SELECT  A.STATIC_SEQ AS staticSeq,
+			  A.STATIC_TITLE AS staticTitle,
+			  A.STATIC_TEXT_CONTENT AS staticTEXTContent,
+			  A.STATIC_HTML_CONTENT AS staticHTMLContent,
+			  A.READ_CNT AS readCnt,
+			  A.USE_YN AS useYn,
+			  A.ATCH_FILE_ID AS atchFileID,
+			  A.REG_DTTM AS regDttm,
+			  A.REG_ID AS regID,
+			  A.MOD_DTTM AS modDttm,
+			  A.MOD_ID AS modID ,
+			  B.ADMIN_GRP_SEQ  AS adminGrpSeq 
+ 		 FROM TB_SYS_STATIC_BOARD A
+  		 LEFT JOIN TB_SYS_ADMIN B ON ( A.REG_ID = B.ADMIN_ID )
+		WHERE STATIC_SEQ = #{staticSeq}
+	</select>
+	
+	
+	<insert id="insertUseStatisticsBoard" parameterType="useStatisticsBoardVO" useGeneratedKeys="true" keyProperty="staticSeq">
+		INSERT INTO TB_SYS_STATIC_BOARD (
+				STATIC_TITLE, STATIC_TEXT_CONTENT, STATIC_HTML_CONTENT, USE_YN, 
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+		) 
+		VALUES (
+				#{staticTitle}, #{staticTEXTContent}, #{staticHTMLContent},	'Y',
+				NOW(), #{regID}, NOW(), #{regID}
+		)
+	</insert>
+	
+	<update id="updateUseStatisticsBoard" parameterType="useStatisticsBoardVO">
+		UPDATE TB_SYS_STATIC_BOARD
+		   SET
+				STATIC_TITLE 		= #{staticTitle},
+				STATIC_TEXT_CONTENT = #{staticTEXTContent},
+				STATIC_HTML_CONTENT = #{staticHTMLContent},
+				USE_YN = #{useYn},
+				MOD_DTTM = NOW(),
+				MOD_ID = #{modID}
+		WHERE STATIC_SEQ = #{staticSeq}
+	</update>
+	
+	<delete id="deleteUseStatisticsBoard" parameterType="useStatisticsBoardVO">
+		DELETE FROM TB_SYS_STATIC_BOARD
+		WHERE STATIC_SEQ = #{staticSeq}
+	</delete>
+	
+
+
+	<select id="getDaumEditorImage" parameterType="useStatisticsBoardVO" resultType="daumEditorVO">
+		SELECT	
+				IMG_PATH AS imgPath,
+				IMG_URL AS imgURL,
+				IMG_NAME AS imgName,
+				REPLACE(IMG_NAME,(RIGHT(SUBSTR(IMG_NAME,1,(INSTR(IMG_NAME,REPLACE(SUBSTR(RIGHT(IMG_NAME,5),2,(INSTR(IMG_NAME,'.')+4)),'.',''))-2)),15)),'') AS imgNm,
+				IMG_SIZE AS imgSize,
+				IMG_SEQ  AS imgSeq,
+				THUMBNAIL_IMG_PATH AS thumbnailImgPath,
+				THUMBNAIL_IMG_URL AS thumbnailImgURL,
+				THUMBNAIL_IMG_NAME AS thumbnailImgName,
+				THUMBNAIL_IMG_SIZE AS thumbnailImgSize
+		FROM 	TB_COM_EDITOR_IMG
+		WHERE	BBS_CLS_CD = #{currentMenu} AND BBS_SEQ = #{staticSeq}
+		ORDER BY IMG_SEQ ASC
+	</select>
+
+
+
+	<update id="deleteDaumEditorImage" parameterType="useStatisticsBoardVO">
+		UPDATE TB_COM_EDITOR_IMG
+			SET BBS_SEQ = 0
+		WHERE BBS_CLS_CD = #{currentMenu} 
+		AND   BBS_SEQ = #{staticSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="useStatisticsBoardVO">
+		UPDATE TB_COM_EDITOR_IMG
+			SET BBS_SEQ = #{staticSeq}
+		WHERE BBS_CLS_CD = #{currentMenu} 
+			<if test="fileList!=null">
+				AND IMG_NAME IN
+				<foreach item="filelist" index="index" collection="fileList" open="(" close=")" separator=",">#{filelist}</foreach>
+			</if>
+			<if test="fileList!=null">
+				AND IMG_NAME IN
+				<foreach item="filelist" index="index" collection="fileList" open="(" close=")" separator=",">#{filelist}</foreach>
+			</if>
+	</update>
+
+	<!-- 월간운영현황파일목록 -->
+	<select id="staticFileDownloadList" parameterType="useStatisticsBoardVO" resultType="useStatisticsBoardVO">
+		SELECT SUBSTR(IMG_URL,21,1000) AS attachNm , IMG_URL AS imgUrl, 
+			REPLACE(IMG_NAME,(RIGHT(SUBSTR(IMG_NAME,1,(INSTR(IMG_NAME,REPLACE(SUBSTR(RIGHT(IMG_NAME,5),2,(INSTR(IMG_NAME,'.')+4)),'.',''))-2)),15)),'') AS imgName
+		FROM TB_COM_EDITOR_IMG
+		WHERE BBS_CLS_CD = #{currentMenu} 
+		AND   IMG_SEQ = #{imgSeq}
+	</select>
+	
+	
+</mapper>

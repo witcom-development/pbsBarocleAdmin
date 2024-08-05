@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<!-- entry key="cronTrigger1">*/10 * * * * ?</entry-->
+	<entry key="cronTrigger1">0 0 12 * * ? </entry>
+</properties>

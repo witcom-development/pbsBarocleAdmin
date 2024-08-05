@@ -1,0 +1,299 @@
+
+/******************************************************************
+ * #700px ~ 960px 해상도 전용 Main
+******************************************************************/
+/******************************************************************
+ * #basic, layout
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+body {min-width:320px;}
+img {width:100%}
+#header {position:fixed;z-index:90;min-width:320px;}
+#body {background:none;margin-bottom:-35px;}
+#footer {height:35px;}
+.foot {margin-top:8px;}
+.leftmenu {display:none}
+.cont {padding-top:60px;padding-bottom:0;width:inherit}
+.content {width:95%;position:relative;left:0;padding-top:2%;padding-left:2%;padding-bottom:25%}
+#body.logined .content {width:95%;position:relative;left:0;padding-top:2%;padding-left:2%;padding-bottom:25%}
+.login {display:none}
+.loginedBox {width:90%;margin:0 auto;margin-top:50px}
+.menu {display:none}
+.menuBox {width:100%;text-align:center}
+
+.head span {float:none;display:block;text-align:left;}
+
+.menuButton {position:absolute;top:0;left:0;overflow:hidden;display:block;width:100%;}
+.menuButton img {display:block}
+.menuButton button {width:50px;height:50px;float:right;}
+.menuButton button:first-child {float:left;border:none}
+.menuArea {height:50px;background:#1cb36e}
+
+.lyLoginStatue {background:#2dd288;overflow:hidden; position:relative}
+.lyLoginStatue span {display:inline-block; vertical-align:middle;font-size:1.0em;color:#fff;margin-left:5%;padding-left:20px;background:url("/images/bul_login2.png") no-repeat 0 center ;background-size:15px 15px; line-height:3}
+.lyLoginStatue button.btntype {background:#2d9265;color:#fff;font-family:-webkit-text-size-adjust:none; font-family:NanumGothic,’나눔고딕’,ng,sans-serif;font-size:0.9em; line-height:2; padding:0 10px; margin-left:10px}
+.lyLoginStatue button.close {margin-right:20px; position:absolute; right:0; top:7px}
+.layerMenuArea {position:absolute;top:0;left:0;width:100%;height:100%;z-index:990;display:none} 
+.layerMenu {min-height:100%}
+.dim {position:absolute;top:0;left:0;width:100%;height:100%;background: url(/images/tranBg.png) 0 0;}
+.layerMenu {position:absolute;top:0;right:-100%;width:300px;background:#fff;overflow:auto;box-shadow:-1px -3px 2px 3px rgba(0,0,0,0.1); height:100%}
+.dep1 > li > span {font-weight:bold;color:#474747;font-size:0.938em;display:block;border-bottom:2px solid #dbdbdb;padding:3% 0 3% 5%}
+.dep2 {display:none}
+.dep2 > li {border-bottom:1px solid #dbdbdb;font-size:0.875em;padding:3% 0 3% 7%;background:#eee;color:#464646;}
+.dep2 > li.more {border-bottom:none; padding:3% 0 0 0;}
+.dep2 > li > span {display:block;padding:0 0 3% 7%;color:#464646;border-bottom:1px solid #dbdbdb; height:100%}
+.dep3 {display:none}
+.dep3 > li {border-bottom:1px solid #dbdbdb;font-size:1em;padding:3% 10%;background:#ccc;color:#464646;}
+.dep3 > li > span {padding-left:3%;background:url("/images/bul_hyphen.png") no-repeat 0 8px;}
+
+.logo {width:120px;margin:0 auto;margin-top:10px;float:none;background:url("/images/logo_m.png") no-repeat 0 0;background-size:100%;height:25px}
+.logo img {display:none}
+.menuButton button img {width:100%}
+.subject {padding-bottom:2%;margin-bottom:5%;}
+.pageTitle {font-size:1.2em;}
+.subject em {font-size:1.0em}
+.subject span {margin-top:11px;display:none}
+
+.laType {font-size:0.825em}
+.loginArea input {width:200px;height:50px}
+.loginArea .loginImg {width:60%;display:block;margin:0 auto}
+.loginArea .loging {width:200px;}
+.loginArea p {font-size:16px}
+/******************************************************************
+ * #검색 조건
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.shBox_m {display:block;background:#f1f1f1;width:100%}
+/* .shBox {display:none;border:1px solid #cecece;background:#f9f9f9;padding:2% 0; border-top:none; z-index:9;;position:absolute;margin-top:0px} */
+.shBox {display:none;border:1px solid #cecece;background:#f9f9f9;padding:2% 0; border-top:none; z-index:9;;position:relative;margin-top:0px}
+.shBox form {margin:0 2%}
+.shBox .shBoxSection {display:block;}
+.shBox .repos {padding-top:5px; height:25px}
+.downtitle {width:100%;}
+.downtitle .title {font-size:1.0em;font-weight:bold;overflow:hidden;display:block;border:1px solid #d7d7d7; margin-right:1px}
+.downtitle .title.on {border-bottom:1px solid #d1d1d1;padding-bottom:3%;}
+.downtitle .title span {float:right;width:18px;display:block;padding-left:5px;border-left:1px solid #d7d7d7;padding:3% 3%}
+.downtitle .title p {display:inline-block;padding:3% 2%}
+.shBoxSection .section {display:inline-block;margin-bottom:10px;height:30px; margin-bottom:2%; margin-right:1px; width:300px}
+.shBoxSection .pright {float:left; text-align:left}
+.shBoxSection .pright.etccase1 {text-align:center }
+.etccase2 .fwselect {width:150px; text-align:left}
+.etccase3 select {width:175px}
+.mdbtncase1 {top:10%;}
+/******************************************************************
+ * #표스타일
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.tb_type01 {font-size:12px}
+.tb_type01 th {text-align:center;padding:3% 0;}
+.tb_type01 td {text-align:left;padding:3% 0}
+.tb_type01.typeEx td {padding:10px 2px}
+
+.tb_type02 td, 
+.tb_type02 th {padding:2% 2%}
+.tb_type02 th {background:#eff5f8;color:#33335a}
+.editor {height:200px;padding:0 !important;}
+.resdayarea {display:block; margin-top:10px; margin-left:0}
+.tb_type02 td .input-datepick02 {width:95px;}
+.tb_type02 td .input-datepick02 input {width:70px}
+.pwtableblock {display:block; margin-top:5px}
+
+/******************************************************************
+ * #게시판 타입
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.photoArea {margin-top:5%}
+.photoBord {width:100%}
+.photoBord li {width:47%;background:#fafafa;display:inline-block;margin-right:3%;margin-bottom:2%;border:1px solid #fafafa}
+.photoBord li.last {margin-right:3%}
+.photoBord li:nth-child(2n) {margin-right:0}
+.photoBord li span {display:block}
+.photoBord li .img img {width:100%}
+.photoBord li .title {font-size:0.9em;color:#000;margin-top:2%;margin-left:2%}
+.photoBord li .data {font-size:0.825em;color:#717171;margin-top:1%;margin-left:2%;margin-bottom:2%}
+
+
+/******************************************************************
+ * #탭스타일
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.tabWrap.type3 {position:relative;z-index:10;margin-top:20px}
+.tabWrap.type3 .tabBox {}
+.tabWrap.type3 .tabBox:after {display:block; clear:both; content:""}
+.tabWrap.type3 .tab {float:left;margin-right:-1px}
+.tabWrap.type3 .tab.on {border-bottom:1px solid #fff}
+.tabWrap.type3 .tab button {display:block;padding:10px 20px;width:120px;background:#f8f8f8;border:none;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:16px;color:#383838;font-weight:bold}
+.tabWrap.type3 .tab.on button {background:#49627f;border:none;color:#fff}
+.tabWrap.type3 .tabCon {display:none;position:relative;z-index:5;padding:15px 0;width:100%;}
+.tabWrap.type3 .tabCon.on {display:block}
+.tabWrap.type3 .tabCon .moreBtn {position:absolute;right:0;top:-20px;font-size:12px}
+
+.tablist {display:none}
+.tablist_m {display:block;}
+/******************************************************************
+ * #질문 layout
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.questionBox {border:1px solid #e6e6e6;background:#fefefe;padding-top:8%;position:relative;margin-top:10%}
+.answerBox {border:1px solid #e6e6e6;background:#fefefe;position:relative;margin-top:10%}
+
+.questionBoxWrap {display:block;overflow:hidden}
+.answerBoxWrap {display:block;overflow:hidden}
+.layTb {table-layout:fixed;width:99%}
+.layTb td {padding:10px;font-size:0.825em;font-family:NanumGothic,"나눔고딕",dotum,"돋움";color:#33335a;font-weight:bold;}
+.layTb td label {font-size:1.0em;font-family:NanumGothic,"나눔고딕",dotum,"돋움";color:#000;font-weight:normal;text-align:left}
+.input-text06 input {width:86%}
+.tb_type01.addSt th {border-left:none;border-right:none;border-bottom:1px solid #e6e6e6;padding:3% 2%;font-size:1.1em}
+.tb_type01.addSt th:first-child {border-right:1px solid #e6e6e6}
+.tb_type01.addSt td {border:none;border-bottom:1px solid #e6e6e6}
+.tb_type01.addSt td:first-child {border-right:1px solid #e6e6e6}
+.tb_type01.addSt td.sd, .tb_type01.addSt th.sd {padding-right:3%}
+.tb_type01.addSt td.last, .tb_type01.addSt th.last {padding-left:0;padding-right:0} 
+/******************************************************************
+ * #2단 구조
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.didBox {margin-top:20px}
+.didBox .leftBox {width:99%;float:left;margin-right:18px;border:1px solid #dedede}
+.didBox .rightBox {width:100%;float:left;margin-top:20px}
+.didBox.pop .leftBox {width:99%}
+.didBox.pop .rightBox {width:100%}
+/******************************************************************
+ * #플레이스 홀더
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.pholder {display:block;overflow:hidden;position:relative;z-index:10}
+.pholder label {display:block;position:absolute;left:0;top:0;z-index:10;width:100%;height:100%;line-height:28px;text-indent:7px;font-size:12px}
+.pholder.holder label {display:none}
+
+/******************************************************************
+ * #팝업
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.allwrap.pop .page {padding:5px}
+
+/******************************************************************
+ * #input 수치
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+/*date pick*/
+.selectDate.input-datepick01 {width:45%;}
+.input-datepick01 {width:79%;font-size:0.825em}
+
+.selectDate.input-datepick02 {width:110px}
+.input-datepick02 {width:70%}
+
+.selectDate.input-datepick03 {width:36%}
+.input-datepick03 {width:70%}
+
+.selectDate.input-datepick04 {width:100px}
+.input-datepick04 {width:89%}
+
+/*select*/
+.select-category01 {width:45%;}
+.select-category06 {width:90%}
+
+.select-category03 {width:100px;}
+.select-category04 {width:100px}
+.select-category05 {width:100px}
+
+/*input-text*/
+.input-text01 {width:45%}
+.input-text02 {width:45%;margin-right:2%}
+.input-text03 {width:48%;}
+.input-text04 input {width:80%;}
+.input-text05 input {width:79%}
+.input-text07 input {width:160px}
+.input-text03p input {width:100px;}
+.input-text10 input {width:90%}
+
+/*input-ck01*/
+.input-ck01 {margin-right:2%}
+.input-ck01 input {width:8%;height:18px;vertical-align:middle}
+.input-ck01 label {font-family:nanumGothic,"나눔고딕","돋움",dotum;font-size:0.9em;color:#000;margin-left:2%}
+
+/*input-radio*/
+.input-rd01 {margin-right:2%}
+.input-rd01 input {width:8%;height:18px;vertical-align:middle}
+.input-rd01 label {font-family:nanumGothic,"나눔고딕","돋움",dotum;font-size:12px;color:#000;margin-left:2%}
+
+/*btn type*/
+.btnType01 {padding:10px 15px 12px;}
+
+.btnType02 {padding:8px 10px;background:#27bbb2;color:#fff;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:12px}
+.btnType03 {display:block;margin:0 auto;}
+.btnType06 {width:210px;}
+
+.btn-srh01 {margin-left:2%;width:100px}
+.btn-srh02 {margin-left:2%;width:30%}
+.btn-srh03 img {width:100%}
+
+.btn_addQ {margin-top:5%}
+.btn_delQ {position:absolute;right:5%;top:3%}
+
+/*label*/
+.laType02 {width:55px;margin-right:5px;display:inline-block;font-size:11px}
+
+/******************************************************************
+ * #HID
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.mhid {display:none !important}
+
+
+
+
+@media only screen and (max-device-width:708px){
+	/*only device*/
+
+
+}
+
+@media only screen and (max-width:360px){
+	.dash {margin:0;}
+	.selectDate.input-datepick04 {width:100px;}
+	.input-datepick04 {width:89%}
+	.mdbtncase1 {position:relative; top:0;float:right; margin-right:10px}
+	.usalbtn {position:relative; margin:0 0 10px 10px; text-align:left}
+	.usalbtn .btnType02 {width:90%}
+}
+@media only screen and (min-width:660px) and (max-width:1000px){
+	.shBoxSection .section {width:350px}
+}
+
+
+
+@media only screen and (max-width:360px){
+	.ie8m .dash {margin:0;}
+	.ie8m .selectDate.input-datepick04 {width:100px;}
+	.ie8m .input-datepick04 {width:89%}
+	.ie8m .mdbtncase1 {position:relative; top:0;float:right; margin-right:10px}
+	.ie8m .usalbtn {position:relative; margin:0 0 10px 10px; text-align:left}
+	.ie8m .usalbtn .btnType02 {width:90%}
+}
+@media only screen and (min-width:660px) and (max-width:1000px){
+	.ie8m .shBoxSection .section {width:350px}
+}
+

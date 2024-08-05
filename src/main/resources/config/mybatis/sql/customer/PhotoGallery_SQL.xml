@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.photogallery.service.PhotoGalleryMapper">
+	
+	<resultMap id="resultphotoGalleryVO" type="com.dkitec.barocle.admin.customer.photogallery.vo.PhotoGalleryVO">
+		<result column="PHOTO_GALLERY_SEQ" property="photoGallerySeq" />
+		<result column="CATE_CD" property="cateCD" />
+		<result column="GALLERY_NO" property="galleryNO" />
+		<result column="GALLERY_TITLE" property="galleryTitle" />
+		<result column="GALLERY_TEXT_CONTENT" property="galleryTextContent" />
+		<result column="GALLERY_HTML_CONTENT" property="galleryHTMLContent" />
+		<result column="READ_CNT" property="readCnt" />
+		<result column="DEL_YN" property="delYN" />
+		<result column="REG_ID" property="regID" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="IMG_SEQ" property="imgSeq" />
+		<result column="BBS_CLS_CD" property="bbsClsCD" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgUrl" />
+	</resultMap>
+	
+	<resultMap id="daumEditorVO" type="com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO">
+		<result column="IMG_PATH" property="imgPath" />
+		<result column="IMG_URL" property="imgURL" />
+		<result column="IMG_NAME" property="imgName" />
+		<result column="IMG_SIZE" property="imgSize" />
+		<result column="THUMBNAIL_IMG_PATH" property="thumbnailImgPath" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgURL" />
+		<result column="THUMBNAIL_IMG_NAME" property="thumbnailImgName" />
+		<result column="THUMBNAIL_IMG_SIZE" property="thumbnailImgSize" />
+	</resultMap>
+	
+	<select id="listPhotoGalleryCount" parameterType="photoGalleryVO" resultType="int">
+		SELECT	COUNT(PHOTO_GALLERY_SEQ) AS photoGallerySeq
+		FROM	TB_COM_PHOTO_GALLERY
+		WHERE	DEL_YN = 'N'
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(MOD_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(MOD_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND GALLERY_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+	</select>
+	
+	<select id="listPhotoGallery" parameterType="photoGalleryVO" resultMap="resultphotoGalleryVO">
+		SELECT	A.
+				PHOTO_GALLERY_SEQ,
+				CATE_CD,
+				GALLERY_NO,
+				GALLERY_TITLE,
+				READ_CNT,
+				DEL_YN,
+				REG_ID,
+				REG_DTTM,
+				MOD_ID,
+				MOD_DTTM,
+				IMG_SEQ,
+				BBS_CLS_CD,
+				THUMBNAIL_IMG_URL
+		FROM
+				(
+						SELECT
+								IA.PHOTO_GALLERY_SEQ,
+								IA.CATE_CD,
+								IA.GALLERY_NO,
+								IA.GALLERY_TITLE,
+								IA.READ_CNT,
+								IA.DEL_YN,
+								IA.REG_ID,
+								IA.REG_DTTM,
+								IA.MOD_ID,
+								IA.MOD_DTTM,
+								IB.IMG_SEQ,
+								IB.BBS_CLS_CD,
+								IB.THUMBNAIL_IMG_URL
+						FROM	TB_COM_PHOTO_GALLERY IA LEFT OUTER JOIN
+								(
+									SELECT	MIN(IMG_SEQ) AS IMG_SEQ, BBS_CLS_CD, BBS_SEQ, THUMBNAIL_IMG_URL 
+									FROM	TB_COM_EDITOR_IMG 
+									WHERE 	BBS_CLS_CD = #{currentMenu} 
+									GROUP BY 	BBS_SEQ
+								) IB ON IA.PHOTO_GALLERY_SEQ=IB.BBS_SEQ
+						WHERE	IA.DEL_YN = 'N'
+							<if test="searchStartDate!='' and searchStartDate!=null">
+								AND DATE_FORMAT(IA.MOD_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+							</if>
+							<if test="searchEndDate!='' and searchEndDate!=null">
+								AND DATE_FORMAT(IA.MOD_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+							</if>
+							<if test="searchValue!='' and searchValue!=null">
+								AND IA.GALLERY_TITLE LIKE CONCAT('%',#{searchValue},'%')
+							</if>
+				) A
+		ORDER BY
+				A.PHOTO_GALLERY_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewPhotoGallery" parameterType="photoGalleryVO" resultMap="resultphotoGalleryVO">
+		SELECT 
+				PHOTO_GALLERY_SEQ,
+				CATE_CD,
+				GALLERY_NO,
+				GALLERY_TITLE,
+				GALLERY_TEXT_CONTENT,
+				GALLERY_HTML_CONTENT,
+				READ_CNT,
+				DEL_YN,
+				REG_ID,
+				REG_DTTM,
+				MOD_ID,
+				MOD_DTTM
+		FROM	TB_COM_PHOTO_GALLERY
+		WHERE	DEL_YN = 'N' AND PHOTO_GALLERY_SEQ = #{photoGallerySeq}
+	</select>
+	
+	<select id="getDaumEditorImage" parameterType="photoGalleryVO" resultMap="daumEditorVO">
+		SELECT	
+				IMG_PATH,
+				IMG_URL,
+				IMG_NAME,
+				IMG_SIZE,
+				THUMBNAIL_IMG_PATH,
+				THUMBNAIL_IMG_URL,
+				THUMBNAIL_IMG_NAME,
+				THUMBNAIL_IMG_SIZE
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{photoGallerySeq} AND BBS_CLS_CD = #{currentMenu}
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevPhotoGallery" parameterType="photoGalleryVO" resultMap="resultphotoGalleryVO">
+		SELECT	PHOTO_GALLERY_SEQ, GALLERY_TITLE
+		FROM	TB_COM_PHOTO_GALLERY
+		WHERE	DEL_YN = 'N' AND PHOTO_GALLERY_SEQ &lt; #{photoGallerySeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(MOD_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(MOD_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND GALLERY_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY PHOTO_GALLERY_SEQ DESC
+		LIMIT	1
+	</select>
+	
+	<select id="nextPhotoGallery" parameterType="photoGalleryVO" resultMap="resultphotoGalleryVO">
+		SELECT	PHOTO_GALLERY_SEQ, GALLERY_TITLE
+		FROM	TB_COM_PHOTO_GALLERY
+		WHERE	DEL_YN = 'N' AND PHOTO_GALLERY_SEQ &gt; #{photoGallerySeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(MOD_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(MOD_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND GALLERY_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY PHOTO_GALLERY_SEQ ASC
+		LIMIT	1
+	</select>
+	
+	<insert id="insertPhotoGallery" parameterType="photoGalleryVO" useGeneratedKeys="true" keyProperty="photoGallerySeq">
+		INSERT INTO TB_COM_PHOTO_GALLERY
+			(
+				CATE_CD, GALLERY_NO, GALLERY_TITLE, GALLERY_TEXT_CONTENT, GALLERY_HTML_CONTENT,
+				DEL_YN, REG_ID, REG_DTTM, MOD_ID, MOD_DTTM
+			)
+		VALUES
+			(
+				#{cateCD}, (SELECT IFNULL(MAX(T1.GALLERY_NO)+1,1) AS galleryNO FROM TB_COM_PHOTO_GALLERY T1), #{galleryTitle}, #{galleryTextContent}, #{galleryHTMLContent},
+				#{delYN}, #{regID}, NOW(), #{regID}, NOW()
+			)
+	</insert>
+	
+	<update id="updatePhotoGallery" parameterType="photoGalleryVO">
+		UPDATE
+			TB_COM_PHOTO_GALLERY
+		SET
+			<!-- CATE_CD = #{cateCD}, -->
+			GALLERY_NO = #{galleryNO},
+			GALLERY_TITLE = #{galleryTitle},
+			GALLERY_TEXT_CONTENT = #{galleryTextContent},
+			GALLERY_HTML_CONTENT = #{galleryHTMLContent},
+			MOD_ID = #{modID},
+			MOD_DTTM = NOW()
+		WHERE
+			DEL_YN = 'N' AND PHOTO_GALLERY_SEQ = #{photoGallerySeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="photoGalleryVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = 0
+		WHERE
+			BBS_SEQ = #{photoGallerySeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="photoGalleryVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = #{photoGallerySeq}
+		WHERE
+			BBS_CLS_CD = #{currentMenu} AND IMG_NAME IN
+			<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+	</update>
+	
+	<update id="deletePhotoGallery" parameterType="photoGalleryVO">
+		UPDATE 
+			TB_COM_PHOTO_GALLERY
+		SET
+			DEL_YN = #{delYN}
+		WHERE
+			PHOTO_GALLERY_SEQ = #{photoGallerySeq}
+	</update>
+	
+</mapper>

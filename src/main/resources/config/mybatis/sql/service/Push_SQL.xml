@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.push.service.PushUserInfoMapper">
+
+
+
+	<select id="getUserInfo"  parameterType="pushUserInfoVO" resultType="pushUserInfoVO">
+		 SELECT  A.PNSID	   AS PNSID
+			  , A.OS_VER	   AS OS_VER
+			  , A.DEVICE_MD	AS DEVICE_MD
+			  , A.APP_VER	  AS APP_VER
+			  , A.REGDATE	  AS REGDATE
+			  , A.MODDATE	  AS MODDATE
+			  , A.USERSEQNO			 AS USERSEQNO
+		   FROM T_PUSH_USER_INFO A
+		  WHERE 1=1
+			AND A.APPID ='com.dki.barocle_android'
+			<if test='searchValue != null and searchValue != ""'>		
+		   		AND  A.CUID  =   #{searchValue} 
+		   	</if>
+		   	<if test='searchValue == null or searchValue == ""'>		
+		   		AND 1=2
+		   	</if>
+		   	ORDER BY A.MODDATE ASC
+		   LIMIT 1
+	</select>	
+
+	<select id="getPushSuccessList" parameterType="pushUserInfoVO" resultType="pushUserInfoVO">
+		SELECT B.PNSID
+			 , B.REGDATE
+			 , B.REVDATE
+			 , B.READDATE
+			 , case B.STATUS WHEN '1' THEN '발송완료'
+							 WHEN '2' THEN '수신완료'
+							 WHEN '3' THEN '읽음확인'
+			   END AS STATUS			   
+			 , A.SUB_TITLE 
+			 , SUBSTR(A.MESSAGE, 1, 50 ) AS MESSAGE
+			 , B.CUID 
+		  FROM  T_PUSH_MSG_RECV_MASTER A
+	 	 INNER JOIN T_PUSH_SUCCESS B
+		 WHERE A.SEQNO = B.SEQNO
+		  <if test='searchValue != null and searchValue != ""'>		
+		   		AND  B.CUID  =   #{searchValue} 
+		   	</if>
+		   	<if test='searchValue == null or searchValue == ""'>		
+		   		AND 1=2
+		   	</if>
+		  AND B.APPID ='com.dki.barocle_android'
+		ORDER BY A.SEQNO DESC
+		LIMIT 10
+		
+	</select>
+	<select id="getPushFailList" parameterType="pushUserInfoVO" resultType="pushUserInfoVO">
+		
+		SELECT B.PNSID
+			  , B.REGDATE
+			  , '' REVDATE
+			  , '' READDATE
+			  , B.RESULTMSG
+			  , SUBSTR(A.MESSAGE, 1, 30 ) as MESSAGE
+		 FROM  T_PUSH_MSG_RECV_MASTER A
+		INNER JOIN T_PUSH_FAIL B
+		WHERE A.SEQNO = B.SEQNO
+		<if test='searchValue != null and searchValue != ""'>		
+		 	AND  B.CUID  =   #{searchValue} 
+		 </if>
+		 <if test='searchValue == null or searchValue == ""'>		
+		 	AND 1=2
+		 </if>
+		AND B.APPID ='com.dki.barocle_android'
+		ORDER BY A.SEQNO DESC
+		
+	</select>
+
+
+	<!-- <select id="getFailPaymentList" parameterType="failPaymentVO" resultType="failPaymentVO">
+		<![CDATA[
+		SELECT A.PAYMENT_FAIL_HIST_SEQ AS paymentFailHistSeq
+			 , A.RENT_DTTM AS rentDttm
+			 , A.RENT_HIST_SEQ AS rentHistSeq
+			 , A.PAYMENT_DTTM AS paymentDttm
+			 , A.PAYMENT_METHOD_CD AS paymentMethodCd
+			 ,(SELECT MLANG_COM_CD_NAME
+			   FROM TB_SYS_MLANG_COM_CD
+			   WHERE COM_CD = A.PAYMENT_METHOD_CD   
+			   AND LANG_CLS_CD = #{lang}) AS paymentMethodCdName
+			 , A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME
+				FROM TB_SYS_MLANG_COM_CD
+				WHERE COM_CD = A.PAYMENT_CLS_CD   
+				AND LANG_CLS_CD = #{lang}) AS paymentClsCdName
+			 , A.PAYMENT_AMT AS paymentAmt
+			 , A.ERR_CD AS errCd
+			 , A.ERR_MSG AS errMsg
+		FROM TB_SVC_PAYMENT_FAIL_HIST A
+		WHERE 1=1
+		]]>
+		<if test='startPaymentDttm != null and startPaymentDttm != ""'>
+		<choose>
+			<when test='endPaymentDttm != null and endPaymentDttm != ""'>
+			AND A.PAYMENT_DTTM  BETWEEN STR_TO_DATE(#{startPaymentDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endPaymentDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</when>
+			<otherwise>
+			AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(#{startPaymentDttm}, '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</otherwise>
+		</choose>
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startPaymentDttm != null or startPaymentDttm != "" and endPaymentDttm == null and endPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='rentHistSeq != null and rentHistSeq != ""'>
+		AND A.RENT_HIST_SEQ = #{rentHistSeq}
+		</if>
+		ORDER BY A.PAYMENT_DTTM DESC   
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>
+	</select>
+	
+	<select id="getFailPaymentListCount" parameterType="failPaymentVO" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		FROM TB_SVC_PAYMENT_FAIL_HIST A
+		WHERE 1=1
+		]]>
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+		AND A.PAYMENT_DTTM  BETWEEN STR_TO_DATE(#{startPaymentDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endPaymentDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='rentHistSeq != null and rentHistSeq != ""'>
+		AND A.RENT_HIST_SEQ = #{rentHistSeq}
+		</if>
+	</select> -->
+	
+</mapper>

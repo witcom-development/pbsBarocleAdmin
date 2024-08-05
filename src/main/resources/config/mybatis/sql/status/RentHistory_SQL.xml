@@ -1,0 +1,211 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.status.rentHistory.service.RentHistoryMapper">
+	<select id="getRentHistoryList" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		  SELECT /* RentHistory_SQL.getRentHistoryList */
+				 H.RENT_HIST_SEQ												   AS rentHistSeq
+				,B.BIKE_NO														   AS rentBikeNo	   
+				,H.RENT_STATION_ID												 AS rentStationId
+				,(SELECT STATION_NAME FROM  spb.TB_OPR_MLANG_STATION WHERE STATION_ID = H.RENT_STATION_ID  AND LANG_CLS_CD = #{lang}  )
+																				   AS rentStationName
+				,H.RETURN_STATION_ID											   AS returnStationId
+				,(SELECT STATION_NAME FROM  spb.TB_OPR_MLANG_STATION WHERE STATION_ID = H.RETURN_STATION_ID AND LANG_CLS_CD = #{lang}		  )						   
+																				   AS returnStationName
+				,H.USE_MI														  AS useMi
+				<!-- 회원정보 연동(링크)하기 위해 추가. cms_20161104 -->
+				<!-- start -->
+				,U.USR_SEQ												  		   AS usrSeq
+				<!-- end -->
+				<if test='viewFlg != "excel"'>
+			   <!-- , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( dg_decrypt('TB_SVC_USR','USR_MPN_NO',U.USR_MPN_NO)  , '카드결제고객' ))) -->
+			   <!-- , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( U.USR_MPN_NO  , '카드결제고객' )))  -->
+			   , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR), '카드결제고객' ))) 
+																					AS mbId
+				,H.VOUCHER_SEQ														AS voucherSeq 
+			   , DATE_FORMAT(H.RENT_DTTM   ,'%Y-%m-%d %H:%i')					   AS rentDttm
+				,U.USR_CLS_CD														AS usrClsCd
+				<!-- 끝 -->
+				</if>
+				<if test='viewFlg == "excel"'>
+			   <!-- , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( dg_decrypt('TB_SVC_USR','USR_MPN_NO',U.USR_MPN_NO)  , '카드결제고객' ))) -->  
+			   <!-- , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( U.USR_MPN_NO  , '카드결제고객' )))   -->
+			   , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR), '카드결제고객' )))
+																					 AS mbId
+			   , ( SELECT NOW_STATION_EQUIP_ORD FROM spb.TB_OPR_RACK WHERE RACK_ID = H.RENT_RACK_ID )								 
+																				  AS rentRackId	
+			   , (SELECT NOW_STATION_EQUIP_ORD FROM spb.TB_OPR_RACK WHERE RACK_ID = H.RETURN_RACK_ID )
+																				  AS returnRackId   
+			   , DATE_FORMAT(H.RENT_DTTM   ,'%Y-%m-%d %H:%i')					 AS rentDttm
+			   , DATE_FORMAT(H.RETURN_DTTM ,'%Y-%m-%d %H:%i')					 AS returnDttm	
+			   , IFNULL((SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = U.USR_CLS_CD AND LANG_CLS_CD = #{lang}	  ),'GUEST')  
+																				  AS usrClsCdName
+				</if>  
+			   , H.RENT_CLS_CD													AS rentClsCd
+			   , ( SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = H.RENT_CLS_CD AND LANG_CLS_CD = #{lang} )
+																				  AS rentClsCdName
+			   , H.RETURN_DTTM													  AS returnDttm
+			   , B.BIKE_SE_CD													  AS bikeSeCd
+		   FROM  spb.TB_SVC_RENT_HIST H 
+		  INNER JOIN TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
+		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "PHONE"'>
+			   <!-- AND USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchWord}) -->
+			   AND USR_MPN_NO = HEX(AES_ENCRYPT(#{searchWord},'BRC'))
+		  </if>
+		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "ID"'>
+		  INNER JOIN TB_SVC_MB K ON H.USR_SEQ = K.USR_SEQ AND MB_ID = #{searchWord}
+		  </if>
+		  LEFT  JOIN TB_SVC_MB L ON  ( H.USR_SEQ = L.USR_SEQ ) 
+		  INNER JOIN TB_OPR_BIKE B ON B.BIKE_ID = H.RENT_BIKE_ID
+		  <if test='bikeSeCd != null and bikeSeCd !=""'>
+			   AND B.BIKE_SE_CD = #{bikeSeCd}
+		  </if>	
+		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "RENT_NO"'>
+		  INNER JOIN TB_SVC_SERIAL_NO_HIST Z ON ( Z.USR_SEQ = H.USR_SEQ AND U.USR_CLS_CD IN ( 'USR_002', 'USR_003') AND Z.VOUCHER_SEQ = H.VOUCHER_SEQ AND SERIAL_NO = #{searchWord} )
+		  </if>
+		  LEFT JOIN TB_SVC_SERIAL_NO_HIST  Y ON ( H.USR_SEQ AND Y.VOUCHER_SEQ = H.VOUCHER_SEQ AND U.USR_CLS_CD IN ( 'USR_002', 'USR_003')  )
+		  <if test='returnStationGrpSeq !=null and returnStationGrpSeq != "" and  returnStationId == ""'>
+		  INNER JOIN spb.TB_OPR_STATION X ON ( STATION_GRP_SEQ = #{returnStationGrpSeq} AND H.RETURN_STATION_ID = X.STATION_ID  )
+		  </if>
+		  <trim prefix="WHERE" prefixOverrides="AND|OR">
+			  <if test='returnStationId != null and returnStationId !=""'>
+				AND H.RETURN_STATION_ID = #{returnStationId}
+			  </if>	
+			  <if test='searchStartDate != null and searchStartDate !=""'>
+			   	AND <![CDATA[H.RENT_DTTM  BETWEEN STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d') AND ( STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND) ]]>
+			   	AND H.RENT_YMD BETWEEN #{searchStartDate} AND #{searchEndDate} 
+			  </if>
+			  <if test='searchStartDate == null or searchStartDate ==""'>
+				AND 1=2
+			  </if>
+		  </trim>
+		  ORDER BY H.RENT_HIST_SEQ DESC
+		  <if test='pageYn != null and pageYn == "Y"'>
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>	
+	</select>	
+	
+	<select id="getRentHistoryAllCnt" parameterType="bikeRentalVo" resultType="int">
+		  SELECT COUNT(*)
+			FROM  spb.TB_SVC_RENT_HIST H
+		   INNER JOIN TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
+		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "PHONE"'>
+			   <!-- AND USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchWord}) -->
+			   AND USR_MPN_NO = HEX(AES_ENCRYPT(#{searchWord},'BRC'))
+		  </if>
+		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "ID"'>
+		  INNER JOIN TB_SVC_MB K ON H.USR_SEQ = K.USR_SEQ AND MB_ID = #{searchWord}
+		   </if>
+		  INNER JOIN TB_OPR_BIKE B ON B.BIKE_ID = H.RENT_BIKE_ID
+		  <if test='bikeSeCd != null and bikeSeCd !=""'>
+			   AND B.BIKE_SE_CD = #{bikeSeCd}
+		  </if>	
+		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "RENT_NO"'>
+		  INNER JOIN TB_SVC_SERIAL_NO_HIST Z ON ( Z.USR_SEQ = H.USR_SEQ AND Z.VOUCHER_SEQ = H.VOUCHER_SEQ AND SERIAL_NO = #{searchWord} )
+		  </if>
+		  <if test='returnStationGrpSeq !=null and returnStationGrpSeq != "" and  returnStationId == ""'>
+		  INNER JOIN spb.TB_OPR_STATION X ON ( STATION_GRP_SEQ = #{returnStationGrpSeq} AND H.RETURN_STATION_ID = X.STATION_ID  )
+		  </if>
+		  <trim prefix="WHERE" prefixOverrides="AND|OR">
+			  <if test='returnStationId != null and returnStationId !=""'>
+			   AND H.RETURN_STATION_ID = #{returnStationId}
+			  </if>	
+			  <if test='searchStartDate != null and searchStartDate !=""'>
+			   	AND <![CDATA[H.RENT_DTTM  BETWEEN STR_TO_DATE(#{searchStartDate}, '%Y-%m-%d') AND ( STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')+ INTERVAL 1 DAY - INTERVAL 1 SECOND) ]]>
+			   	AND H.RENT_YMD BETWEEN #{searchStartDate} AND #{searchEndDate} 
+			  </if>
+			  <if test='searchStartDate == null or searchStartDate ==""'>
+				AND 1=2
+			  </if>
+		  </trim>
+	</select> 
+	<select id="getRentHistInfoDetail" parameterType="bikeRentalVo" resultType="bikeRentalVo">
+		 SELECT H.RENT_HIST_SEQ										   AS rentHistSeq
+		 <!-- 현재 대여중인 자전거 목록_20160602_JJH_START -->
+		 	   ,H.RETURN_ADMIN_ID										  AS adminId
+		 <!-- 현재 대여중인 자전거 목록_20160602_JJH_END -->
+			   ,(SELECT MLANG_COM_CD_NAME 
+				   FROM spb.TB_SYS_MLANG_COM_CD
+				  WHERE COM_CD =  H.RENT_CLS_CD  
+					AND LANG_CLS_CD =  #{lang}		 )				  AS rentClsCdName
+			   ,(SELECT BIKE_NO 
+				   FROM spb.TB_OPR_BIKE
+				  WHERE BIKE_ID = H.RENT_BIKE_ID	   )				  AS rentBikeNo	
+				  
+			   ,(SELECT MLANG_COM_CD_NAME 
+				   FROM spb.TB_SYS_MLANG_COM_CD
+				  WHERE COM_CD =  (SELECT BIKE_STUS_CD
+									 FROM spb.TB_OPR_BIKE
+									WHERE BIKE_ID = H.RENT_BIKE_ID)  
+					AND LANG_CLS_CD =  #{lang}					)	   AS rentStatusName
+			   ,(SELECT BIKE_STUS_CD
+				   FROM spb.TB_OPR_BIKE
+				  WHERE BIKE_ID = H.RENT_BIKE_ID)						 AS rentStatusCd
+			   ,H.RENT_BIKE_ID											AS rentBikeId
+			   ,(SELECT TERMINAL_ID
+				   FROM TB_OPR_BIKE
+				  WHERE BIKE_ID = H.RENT_BIKE_ID	   )				  AS terminalId
+			   ,(SELECT STATION_NAME
+				   FROM spb.TB_OPR_MLANG_STATION
+				  WHERE STATION_ID = H.RENT_STATION_ID
+					AND LANG_CLS_CD =#{lang}		   )				  AS rentStationName
+			   ,(SELECT NOW_STATION_EQUIP_ORD
+				   FROM spb.TB_OPR_RACK
+				  WHERE RACK_ID = H.RENT_RACK_ID	   )				  AS rentRackId	
+			   ,(SELECT NOW_STATION_EQUIP_ORD
+				   FROM spb.TB_OPR_RACK
+				  WHERE RACK_ID = H.RETURN_RACK_ID	 )				  AS returnRackId   
+			   ,(SELECT STATION_NAME  
+				   FROM  spb.TB_OPR_MLANG_STATION
+				  WHERE STATION_ID = H.RETURN_STATION_ID
+					AND LANG_CLS_CD =  'LAG_001'		  )			   AS returnStationName
+			   ,DATE_FORMAT(H.RENT_DTTM   ,'%Y-%m-%d %H:%i')			  AS rentDttm
+			   ,DATE_FORMAT(H.RETURN_DTTM ,'%Y-%m-%d %H:%i')			  AS returnDttm
+			   ,H.USE_MI												  AS useMi
+			   ,(SELECT IFNULL(MB_ID ,'GUEST')
+				   FROM spb.TB_SVC_MB
+				  WHERE USR_SEQ = H.USR_SEQ)							  AS mbId
+			   ,H.USR_SEQ												 AS userSeq   
+			   <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO )	 AS usrMpnNo	-->
+			   <!-- ,U.USR_MPN_NO	AS usrMpnNo -->
+			   ,CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
+			   ,H.RENT_CLS_CD											 AS rentClsCd
+			   ,(SELECT MLANG_COM_CD_NAME
+				   FROM spb.TB_SYS_MLANG_COM_CD
+				  WHERE COM_CD = H.RENT_CLS_CD 
+					AND LANG_CLS_CD = #{lang}		 )				   AS rentClsCdName
+			   ,(CASE	
+					 WHEN H.OVER_FEE_YN = 'Y' THEN (SELECT FORMAT(OVER_FEE ,0,2) 
+													  FROM spb.TB_SVC_RENT_OVER_FEE
+													 WHERE RENT_HIST_SEQ = H.RENT_HIST_SEQ)
+					 ELSE 0
+				 END)													 AS overFee
+			   ,DATE_FORMAT(V.VOUCHER_STR_DTTM ,'%Y-%m-%d %H:%i')		 AS voucherStrDttm
+			   ,DATE_FORMAT(V.VOUCHER_END_DTTM ,'%Y-%m-%d %H:%i')		 AS voucherEndDttm
+			   ,U.RENT_ENC_PWD											AS rentEncPwd
+			   ,(SELECT BIKE_SE_CD
+				   FROM spb.TB_OPR_BIKE
+				  WHERE BIKE_ID = H.RENT_BIKE_ID)						 AS bikeSeCd
+		   FROM  spb.TB_SVC_RENT_HIST H INNER JOIN spb.TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
+		   LEFT OUTER JOIN TB_SVC_VOUCHER V ON H.VOUCHER_SEQ = V.VOUCHER_SEQ
+		 WHERE H.RENT_HIST_SEQ = #{rentHistSeq}
+	</select>
+	<select id="getPenaltyList" parameterType="bikeRentalVo" resultType="penaltyVo">
+		SELECT P.PENALTY_SEQ   AS penaltySeq
+			  ,C.PENALTY_NAME  AS penaltyName
+			  ,C.PENALTY_POINT AS penaltyPoint
+			  ,C.PENALTY_CD	AS penaltyCd
+		  FROM spb.TB_SVC_PENALTY P INNER JOIN  spb.TB_SVC_PENALTY_CD C
+			ON P.PENALTY_CD = C.PENALTY_CD 
+		 <trim prefix="WHERE" prefixOverrides="AND | OR">
+			<if test='userSeq != null and userSeq != ""'>
+				P.USR_SEQ = #{userSeq}
+			</if>  
+			<if test='penaltySeq != null and penaltySeq != ""'>
+				P.PENALTY_SEQ = #{penaltySeq}
+			</if>	
+			<if test='rentHistSeq != null and rentHistSeq != ""'>
+			 AND P.RENT_HIST_SEQ = #{rentHistSeq}
+			</if> 
+		 </trim>   
+	</select>
+</mapper>

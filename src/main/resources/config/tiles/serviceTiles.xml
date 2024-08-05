@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+
+<tiles-definitions>
+
+	<!-- 고객센터 공통 -->
+	<definition name="serviceTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!-- 결제내역 -->
+	<definition name="/admin/service/payment/pay/svc_pay_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/pay/svc_pay_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 초과요금 -->
+	<definition name="/admin/service/payment/over/svc_ovr_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/over/svc_ovr_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 환불/취소내역 -->
+	<definition name="/admin/service/payment/rep/svc_rep_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/rep/svc_rep_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 환불신청내역 -->
+	<definition name="/admin/service/payment/refundReq/svc_repReq_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/refundReq/svc_repReq_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 미납내역 -->
+	<definition name="/admin/service/payment/nonpay/svc_add_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/nonpay/svc_add_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 결제실패 내역 -->
+	<definition name="/admin/service/payment/failpay/svc_pay_err" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/failpay/svc_pay_err.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 마일리지 내역 -->
+	<definition name="/admin/service/payment/mileage/svc_mil_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/mileage/svc_mil_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 초과요금 -->
+	<definition name="/admin/service/payment/reduction/svc_red_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/payment/reduction/svc_red_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 회원 관리 -->
+	<definition name="/admin/service/member/*" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/{1}.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 요금/대여 관리 -->
+	<definition name="/admin/service/policy/cha/svc_cha_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/policy/cha/svc_cha_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 벌점 관리 -->
+	<definition name="/admin/service/policy/penalty/svc_pen_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/policy/penalty/svc_pen_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/service/policy/penalty/svc_pen_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/policy/penalty/svc_pen_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 환승 관리 -->
+	<definition name="/admin/service/policy/mileage/svc_tran_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/policy/mileage/svc_tran_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<definition name="/admin/service/policy/mileage/svc_tran_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/policy/mileage/svc_tran_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 탈퇴회원 목록 -->
+	<definition name="/admin/service/member/userOut/svc_userout_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/userOut/svc_userout_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!-- 블랙리스트 회원 목록 -->
+	<definition name="/admin/service/member/black/svc_bla_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/black/svc_bla_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 추천 반납 대여소_20170113_cms -->
+	<definition name="/admin/service/member/return/svc_return_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/return/svc_return_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 추천 반납 대여소_20170113_cms -->
+	<definition name="/admin/service/member/return/svc_return_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/return/svc_return_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 대여일련번호 목록_20170511_JHN -->
+	<definition name="/admin/service/member/rentSerialNum/svc_rentSerialNum_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/rentSerialNum/svc_rentSerialNum_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 대여일련번호 상세_20170511_JHN -->
+	<definition name="/admin/service/member/rentSerialNum/svc_rentSerialNum_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/rentSerialNum/svc_rentSerialNum_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 대여일련번호 목록_20170621_JHN -->
+	<definition name="/admin/service/member/mobileSmsAuth/svc_mobileSmsAuth_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/mobileSmsAuth/svc_mobileSmsAuth_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 쿠폰내역 -->
+	<definition name="/admin/service/svccoupon/svc_cou_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_cou_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/svccoupon/svc_couBuy_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_couBuy_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/svccoupon/svc_couBuy_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_couBuy_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/svccoupon/svc_couUse_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_couUse_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/svccoupon/svc_couStat_use" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_couStat_use.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/svccoupon/svc_couStat_day" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_couStat_day.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/svccoupon/svc_couStat_bil" extends="serviceTemplate" template="/WEB-INF/views/admin/service/svccoupon/svc_couStat_bil.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<!-- 자전거인증제 관리 shoh2999 -->
+	<definition name="/admin/service/safetycert/svc_sft_cert_usr_list" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/svc_sft_cert_usr_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/sft_cert_usr_opr_ex_up" extends="serviceTemplate" template="/WEB-INF/views/admin/common/popup/sft_cert_usr_opr_ex_up.jsp">  
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/svc_sft_cert_usr_list_excel" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/svc_sft_cert_usr_list_excel.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/svc_sft_cert_usr_detail" extends="serviceTemplate" template="/WEB-INF/views/admin/service/member/svc_sft_cert_usr_detail.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/sft_cert_payment_list" extends="serviceTemplate" template="/WEB-INF/views/admin/statistics/safetyCert/sft_cert_payment_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/sft_cert_payment_list_excel" extends="serviceTemplate" template="/WEB-INF/views/admin/statistics/safetyCert/sft_cert_payment_list_excel.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/sft_cert_payment_statistics" extends="serviceTemplate" template="/WEB-INF/views/admin/statistics/safetyCert/sft_cert_payment_statistics.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	
+	<definition name="/admin/service/safetycert/sft_cert_payment_statistics_excel" extends="serviceTemplate" template="/WEB-INF/views/admin/statistics/safetyCert/sft_cert_payment_statistics_excel.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	<!-- 인증제 합격자 SMS 발송 리스트 shoh2999-->
+	<definition name="/admin/service/safetycert/sys_sft_usr_sms_send_list" extends="serviceTemplate" template="/WEB-INF/views/admin/system/sms/sys_sft_usr_sms_send_list.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+		
+</tiles-definitions>

@@ -1,0 +1,1001 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.repairMgmt.mgmtStat.service.MgmtStatMapper">
+
+
+	<select id="getMgmtRepairStatusCenter" parameterType="MgmtStatVO" resultType="mgmtStatVO">
+	 	 	  SELECT /* "getMgmtRepairStatusCenter" */ 			 
+					 FORMAT(ROUND(SUM(termCnt),1),1)  						AS termCnt
+					,FORMAT(ROUND(SUM(bellCnt),1),1)  						AS bellCnt  
+					,FORMAT(ROUND(SUM(handleCnt),1),1)   					AS handleCnt   
+					,FORMAT(ROUND(SUM(brakeCnt),1),1) 						AS brakeCnt
+					,FORMAT(ROUND(SUM(transCnt),1),1) 						AS transCnt
+					,FORMAT(ROUND(SUM(ttCnt),1),1)							AS ttCnt	
+					,FORMAT(ROUND(SUM(chainCnt),1),1)   					AS chainCnt
+					,FORMAT(ROUND(SUM(chainCvCnt),1),1) 					AS chainCvCnt
+					,FORMAT(ROUND(SUM(trghCnt),1),1)  						AS trghCnt  
+					,FORMAT(ROUND(SUM(standCnt),1),1)  						AS standCnt 
+					,FORMAT(ROUND(SUM(etcCnt),1),1)  						AS etcCnt   
+					,FORMAT(ROUND(SUM(termCnt+bellCnt+handleCnt+brakeCnt+transCnt+ttCnt+chainCnt+chainCvCnt+trghCnt+standCnt+etcCnt),1),1)  		AS sumCnt
+					,FORMAT(ROUND(SUM(bikeCnt),1),1)	 					AS bikeCnt
+					,FORMAT(ROUND(SUM(cmptTermCnt),1),1)	 				AS cmptTermCnt
+				FROM
+				( 
+					
+				  SELECT
+				  		 avgDate
+				  	   , SUM(divsnCnt)							 	AS divsnCnt
+				  	   , SUM(termCnt)							  	AS termCnt
+				  	   , SUM(bellCnt)							  	AS bellCnt
+				  	   , SUM(handleCnt)							 AS handleCnt
+				  	   , SUM(brakeCnt)							 	AS brakeCnt
+				  	   , SUM(transCnt)								AS transCnt
+				  	   , SUM(ttCnt)							 	AS ttCnt 
+				  	   , SUM(chainCnt)							 	AS chainCnt
+				  	   , SUM(chainCvCnt)							AS chainCvCnt
+				  	   , SUM(trghCnt)							 	AS trghCnt
+				  	   , SUM(standCnt)							 	AS standCnt
+				  	   , SUM(etcCnt)							 	AS etcCnt
+				  	   , SUM(bikeCnt)							 	AS bikeCnt
+				  	   , SUM(cmptTermCnt)							AS cmptTermCnt
+					FROM
+					   (
+						SELECT
+							   DATE_FORMAT(VW.REPAIR_CMPT_DTTM,'%Y-%m-%d') 						AS avgDate
+							  , 1																AS divsnCnt
+							  , 0	  		  													AS termCnt
+							  , SUM(case REBCD.CD_DESC2 when '벨' then 1 else 0 END)			AS bellCnt
+							  , SUM(case REBCD.CD_DESC2 when '핸들' then 1 else 0 END)		  AS handleCnt
+							  , SUM(case REBCD.CD_DESC2 when '브레이크' then 1 else 0 END)	  AS brakeCnt
+							  , SUM(case REBCD.CD_DESC2 when '변속기' then 1 else 0 END)		AS transCnt	   
+							  , SUM(case REBCD.CD_DESC2 when '타이어.튜브' then 1 else 0 END)   AS ttCnt	 
+							  , SUM(case REBCD.CD_DESC2 when '체인' then 1 else 0 END)		  AS chainCnt	  
+							  , SUM(case REBCD.CD_DESC2 when '체인커버' then 1 else 0 END)	  AS chainCvCnt
+							  , SUM(case REBCD.CD_DESC2 when '물받이' then 1 else 0 END)		AS trghCnt	   
+							  , SUM(case REBCD.CD_DESC2 when '스탠드' then 1 else 0 END)		AS standCnt	   
+							  , SUM(case REBCD.CD_DESC2 when '기타' then 1 else 0 END)		  AS etcCnt	   
+							  , (
+				  						 SELECT
+				  						 		COUNT( DISTINCT
+				  			  						CASE WHEN D.COM_CD IS NOT NULL THEN A.REPAIR_SEQ ELSE CASE WHEN F.COM_CD IS NOT NULL THEN A.REPAIR_SEQ ELSE NULL END END
+				  			  					)	
+				  			  			   FROM VW_TB_REPAIR									A
+				  			  			   
+					  		  	LEFT OUTER JOIN TB_MTC_REPAIR_DETL  							B	 								ON A.REPAIR_SEQ	  = B.REPAIR_SEQ
+	 							LEFT OUTER JOIN TB_SYS_COM_CD									C									ON B.REPAIR_CLS_CD   = C.COM_CD  	
+	 							LEFT OUTER JOIN TB_SYS_COM_CD									D									ON C.ADD_VAL1		 = D.COM_CD  	AND  D.ADD_VAL1 = 'BIKE'
+	
+			  					LEFT OUTER JOIN TB_MTC_BIKE_PART_CHNG_DETL						E									ON A.REPAIR_SEQ		 = E.REPAIR_SEQ
+			  					LEFT OUTER JOIN TB_SYS_COM_CD									F									ON E.PART_CD		 = F.COM_CD	AND  F.COM_UP_CD = 'MAB'		   
+						  			  	  
+						  			  	  WHERE
+								   			<![CDATA[
+						 						A.REPAIR_CMPT_DTTM >= STR_TO_DATE(NOW(), '%Y-%m-%d')
+											]]>
+											AND DATE_FORMAT(A.REPAIR_CMPT_DTTM,'%Y-%m-%d') = avgDate	
+								 ) 			 												AS 'bikeCnt'
+						  , 0 			 													AS 'cmptTermCnt'
+					 FROM VW_TB_REPAIR										VW
+			   				  
+		  		LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	  	 = DETL.REPAIR_SEQ
+		  		LEFT JOIN TB_SYS_COM_CD										INSPBCD									ON DETL.REPAIR_CLS_CD	= INSPBCD.COM_CD  	
+				LEFT JOIN TB_SYS_COM_CD										REBCD									ON INSPBCD.ADD_VAL1		 = REBCD.COM_CD  	AND  REBCD.ADD_VAL1 = 'BIKE'			  
+				   		
+				   		
+					  <![CDATA[   
+						where VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )   
+					  ]]>
+					  -- 20210203
+						  AND VW.REPAIR_CENTER_ID = #{searchCenterId}
+						  AND VW.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					 		
+				   		
+					 GROUP BY avgDate
+				   		
+				   		UNION ALL
+				   		
+				   		SELECT
+				   			  DATE_FORMAT(VW.TERM_CMPT_DTTM,'%Y-%m-%d')   					AS avgDate
+				   			 , 1 										  					AS divsnCnt
+							 , SUM(CASE WHEN REBCD.COM_CD IS NOT NULL THEN 1 ELSE 0 END)   	AS termCnt
+							 , 0			  	   						 	 				AS bellCnt 
+							 , 0			  	  						  					AS handleCnt   
+							 , 0			  							  					AS brakeCnt   
+							 , 0			  	 						  					AS transCnt	  
+							 , 0			  							  					AS ttCnt		   
+							 , 0			  	  						  					AS chainCnt	 
+							 , 0			  							  					AS chainCvCnt	 
+							 , 0			  	 						  					AS trghCnt	  
+							 , 0			  	 						  					AS standCnt	  
+							 , 0			  	  						  					AS etcCnt	   
+							 , 0  			 						  						AS bikeCnt	
+							 , COUNT(DISTINCT VW.REPAIR_SEQ)				  				AS cmptTermCnt
+						 FROM VW_TB_REPAIR_TERM									VW
+						  			 
+					LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	   = DETL.REPAIR_SEQ
+					LEFT JOIN TB_SYS_COM_CD										REBCD									ON DETL.REPAIR_CLS_CD  = REBCD.COM_CD	  AND  REBCD.ADD_VAL1 = 'TERM'
+				   		
+				   		  where
+					  <![CDATA[   
+								VW.TERM_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )
+					  ]]>			  					
+							AND VW.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+	 						-- 20210203
+	 						AND VW.TERM_CENTER_ID = #{searchCenterId}		
+					   GROUP BY avgDate
+				   		
+				   		UNION ALL
+				   		
+				   		SELECT
+					 		DATE_FORMAT(VW.REPAIR_CMPT_DTTM,'%Y-%m-%d') 					  AS avgDate
+					 		, 2			  												  AS divsnCnt
+							, 0	  		  													  AS termCnt
+							, SUM(case REBCD.CD_DESC2 when '벨' then 1 else 0 END)			AS bellCnt
+							, SUM(case REBCD.CD_DESC2 when '핸들' then 1 else 0 END)		  AS handleCnt
+							, SUM(case REBCD.CD_DESC2 when '브레이크' then 1 else 0 END)	  AS brakeCnt
+							, SUM(case REBCD.CD_DESC2 when '변속기' then 1 else 0 END)		AS transCnt	   
+							, SUM(case REBCD.CD_DESC2 when '타이어.튜브' then 1 else 0 END)   AS ttCnt	 
+							, SUM(case REBCD.CD_DESC2 when '체인' then 1 else 0 END)		  AS chainCnt	  
+							, SUM(case REBCD.CD_DESC2 when '체인커버' then 1 else 0 END)	  AS chainCvCnt
+							, SUM(case REBCD.CD_DESC2 when '물받이' then 1 else 0 END)		AS trghCnt	   
+							, SUM(case REBCD.CD_DESC2 when '스탠드' then 1 else 0 END)		AS standCnt	   
+							, SUM(case REBCD.CD_DESC2 when '기타' then 1 else 0 END)		  AS etcCnt	   
+							, 0 															  AS bikeCnt
+							, 0 															  AS cmptTermCnt
+						 FROM VW_TB_REPAIR										VW
+		 		
+				   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   = CHNG.REPAIR_SEQ
+				   
+				   INNER JOIN TB_SYS_COM_CD										MABCD									ON CHNG.PART_CD		= MABCD.COM_CD
+				   INNER JOIN TB_SYS_COM_CD										REBCD									ON MABCD.ADD_VAL1 	   = REBCD.COM_CD	  AND  REBCD.ADD_VAL1 = 'BIKE'		 			  
+			
+						where
+					  <![CDATA[   
+							  VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )   
+					  ]]>		
+						  -- 20210203
+						  AND VW.REPAIR_CENTER_ID = #{searchCenterId}  				  
+						  AND VW.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				  
+					 GROUP BY avgDate
+			  			
+			  			UNION ALL
+			  			
+			  			SELECT
+			  				  DATE_FORMAT(VW.TERM_CMPT_DTTM,'%Y-%m-%d')   AS avgDate
+			  				, 2										  	  AS divsnCnt
+							, COUNT(1)	  								  AS termCnt
+							, 0			  	   							  AS bellCnt 
+							, 0			  	  							  AS handleCnt   
+							, 0			  								  AS brakeCnt   
+							, 0			  	 							  AS transCnt	  
+							, 0			  								  AS ttCnt		   
+							, 0			  	  							  AS chainCnt	 
+							, 0			  								  AS chainCvCnt	 
+							, 0			  	 							  AS trghCnt	   
+							, 0			  	 							  AS standCnt	  
+							, 0			  	  							  AS etcCnt	   
+							, 0			 							  	  AS bikeCnt
+							, 0			 							  	  AS cmptTermCnt
+						 FROM VW_TB_REPAIR_TERM									VW
+	 				
+				   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   = CHNG.REPAIR_SEQ
+				   
+				   INNER JOIN TB_SYS_COM_CD										PARCD									ON CHNG.PART_CD		= PARCD.COM_CD
+				   INNER JOIN TB_SYS_COM_CD										REBCD									ON PARCD.ADD_VAL1 	   = REBCD.COM_CD	  AND REBCD.ADD_VAL1 = 'TERM'
+			
+						WHERE 
+					  <![CDATA[   
+							  VW.TERM_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )  
+					  ]]>		  				  
+						  AND VW.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)  			  
+						  -- 20210203
+						  AND VW.TERM_CENTER_ID = #{searchCenterId}	
+					 GROUP BY avgDate
+					 
+					 
+					UNION ALL
+					
+					   SELECT 
+							  DATE_FORMAT(STAT_DATE,'%Y-%m-%d')	AS avgDate
+							, SUM(REPAIR_DIVISION)				AS divsnCnt
+							, SUM(REPAIR_TERM_CNT)				AS termCnt
+							, SUM(REPAIR_BELL_CNT)				AS bellCnt
+							, SUM(REPAIR_HANDLE_CNT) 			AS handleCnt
+							, SUM(REPAIR_BRAKE_CNT)  			AS brakeCnt
+							, SUM(REPAIR_TRANS_CNT)				AS transCnt
+							, SUM(REPAIR_TT_CNT)				AS ttCnt
+							, SUM(REPAIR_CHAIN_CNT)				AS chainCnt
+							, SUM(REPAIR_CHAIN_CV_CNT)			AS chainCvCnt
+							, SUM(REPAIR_TRGH_CNT)				AS trghCnt
+							, SUM(REPAIR_STAND_CNT)				AS standCnt
+							, SUM(REPAIR_ETC_CNT)				AS etcCnt
+							, SUM(REPAIR_BIKE_TOTAL_CNT)		AS bikeCnt
+							, SUM(REPAIR_TERM_TOTAL_CNT)		AS cmptTermCnt
+					
+						 FROM TB_STA_REPAIR_CENTER_DD A
+				   INNER JOIN TB_OPR_CENTER			  B 		ON A.CENTER_ID = B.CENTER_ID	 AND B.CENTER_CLS_CD = 'CEN_004'						 
+					  <![CDATA[   
+						WHERE STAT_DATE < ( STR_TO_DATE(NOW(), '%Y-%m-%d') )   
+					  ]]>
+					  	  AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					  	  AND A.CENTER_ID =  #{searchCenterId}	
+					 GROUP BY avgDate
+				 
+				 )A
+				 
+				 GROUP BY avgDate
+				 					   		 		  				
+			) A
+ 
+	</select>
+
+	<select id="getMgmtRepairStatusCnt" parameterType="mgmtStatVO" resultType="mgmtStatVO">
+	 	 	  SELECT /* 누계 평균 구하기 */ 			 
+					 FORMAT(ROUND(AVG(termCnt),1),1)  						AS termCnt
+					,FORMAT(ROUND(AVG(bellCnt),1),1)  						AS bellCnt  
+					,FORMAT(ROUND(AVG(handleCnt),1),1)   					AS handleCnt   
+					,FORMAT(ROUND(AVG(brakeCnt),1),1) 						AS brakeCnt
+					,FORMAT(ROUND(AVG(transCnt),1),1) 						AS transCnt
+					,FORMAT(ROUND(AVG(ttCnt),1),1)							AS ttCnt	
+					,FORMAT(ROUND(AVG(chainCnt),1),1)   					AS chainCnt
+					,FORMAT(ROUND(AVG(chainCvCnt),1),1) 					AS chainCvCnt
+					,FORMAT(ROUND(AVG(trghCnt),1),1)  						AS trghCnt  
+					,FORMAT(ROUND(AVG(standCnt),1),1)  						AS standCnt 
+					,FORMAT(ROUND(AVG(etcCnt),1),1)  						AS etcCnt   
+					,FORMAT(ROUND(AVG(termCnt+bellCnt+handleCnt+brakeCnt+transCnt+ttCnt+chainCnt+chainCvCnt+trghCnt+standCnt+etcCnt),1),1)  		AS sumCnt
+					,FORMAT(ROUND(AVG(bikeCnt),1),1)	 					AS bikeCnt
+					,FORMAT(ROUND(AVG(cmptTermCnt),1),1)	 				AS cmptTermCnt
+				FROM
+				(
+					
+				  SELECT
+				  		 avgDate
+				  	   , SUM(divsnCnt)							 	AS divsnCnt
+				  	   , SUM(termCnt)							  	AS termCnt
+				  	   , SUM(bellCnt)							  	AS bellCnt
+				  	   , SUM(handleCnt)							 AS handleCnt
+				  	   , SUM(brakeCnt)							 	AS brakeCnt
+				  	   , SUM(transCnt)								AS transCnt
+				  	   , SUM(ttCnt)							 	AS ttCnt 
+				  	   , SUM(chainCnt)							 	AS chainCnt
+				  	   , SUM(chainCvCnt)							AS chainCvCnt
+				  	   , SUM(trghCnt)							 	AS trghCnt
+				  	   , SUM(standCnt)							 	AS standCnt
+				  	   , SUM(etcCnt)							 	AS etcCnt
+				  	   , SUM(bikeCnt)							 	AS bikeCnt
+				  	   , SUM(cmptTermCnt)							AS cmptTermCnt
+					FROM
+					   (
+						SELECT
+							   DATE_FORMAT(VW.REPAIR_CMPT_DTTM,'%Y-%m-%d') 						AS avgDate
+							  , 1																AS divsnCnt
+							  , 0	  		  													AS termCnt
+							  , SUM(case REBCD.CD_DESC2 when '벨' then 1 else 0 END)			AS bellCnt
+							  , SUM(case REBCD.CD_DESC2 when '핸들' then 1 else 0 END)		  AS handleCnt
+							  , SUM(case REBCD.CD_DESC2 when '브레이크' then 1 else 0 END)	  AS brakeCnt
+							  , SUM(case REBCD.CD_DESC2 when '변속기' then 1 else 0 END)		AS transCnt	   
+							  , SUM(case REBCD.CD_DESC2 when '타이어.튜브' then 1 else 0 END)   AS ttCnt	 
+							  , SUM(case REBCD.CD_DESC2 when '체인' then 1 else 0 END)		  AS chainCnt	  
+							  , SUM(case REBCD.CD_DESC2 when '체인커버' then 1 else 0 END)	  AS chainCvCnt
+							  , SUM(case REBCD.CD_DESC2 when '물받이' then 1 else 0 END)		AS trghCnt	   
+							  , SUM(case REBCD.CD_DESC2 when '스탠드' then 1 else 0 END)		AS standCnt	   
+							  , SUM(case REBCD.CD_DESC2 when '기타' then 1 else 0 END)		  AS etcCnt	   
+							  , (
+				  						 SELECT
+				  						 		COUNT( DISTINCT
+				  			  						CASE WHEN D.COM_CD IS NOT NULL THEN A.REPAIR_SEQ ELSE CASE WHEN F.COM_CD IS NOT NULL THEN A.REPAIR_SEQ ELSE NULL END END
+				  			  					)	
+				  			  			   FROM VW_TB_REPAIR									A
+				  			  			   
+					  		  	LEFT OUTER JOIN TB_MTC_REPAIR_DETL  							B	 								ON A.REPAIR_SEQ	  = B.REPAIR_SEQ
+	 							LEFT OUTER JOIN TB_SYS_COM_CD									C									ON B.REPAIR_CLS_CD   = C.COM_CD  	
+	 							LEFT OUTER JOIN TB_SYS_COM_CD									D									ON C.ADD_VAL1		 = D.COM_CD  	AND  D.ADD_VAL1 = 'BIKE'
+	
+			  					LEFT OUTER JOIN TB_MTC_BIKE_PART_CHNG_DETL						E									ON A.REPAIR_SEQ		 = E.REPAIR_SEQ
+			  					LEFT OUTER JOIN TB_SYS_COM_CD									F									ON E.PART_CD		 = F.COM_CD	AND  F.COM_UP_CD = 'MAB'		   
+						  			  	  
+						  			  	  WHERE
+								   			<![CDATA[
+						 						A.REPAIR_CMPT_DTTM >= STR_TO_DATE(NOW(), '%Y-%m-%d')
+											]]>
+											AND DATE_FORMAT(A.REPAIR_CMPT_DTTM,'%Y-%m-%d') = avgDate	
+								 ) 			 												AS 'bikeCnt'
+						  , 0 			 													AS 'cmptTermCnt'
+					 FROM VW_TB_REPAIR										VW
+			   				  
+		  		LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	  	 = DETL.REPAIR_SEQ
+		  		LEFT JOIN TB_SYS_COM_CD										INSPBCD									ON DETL.REPAIR_CLS_CD	= INSPBCD.COM_CD  	
+				LEFT JOIN TB_SYS_COM_CD										REBCD									ON INSPBCD.ADD_VAL1		 = REBCD.COM_CD  	AND  REBCD.ADD_VAL1 = 'BIKE'			  
+				   		
+				   		
+					  <![CDATA[   
+						where VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )   
+					  ]]>
+						  AND VW.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					 		
+				   		
+					 GROUP BY avgDate
+				   		
+				   		UNION ALL
+				   		
+				   		SELECT
+				   			  DATE_FORMAT(VW.TERM_CMPT_DTTM,'%Y-%m-%d')   					AS avgDate
+				   			 , 1 										  					AS divsnCnt
+							 , SUM(CASE WHEN REBCD.COM_CD IS NOT NULL THEN 1 ELSE 0 END)   	AS termCnt
+							 , 0			  	   						 	 				AS bellCnt 
+							 , 0			  	  						  					AS handleCnt   
+							 , 0			  							  					AS brakeCnt   
+							 , 0			  	 						  					AS transCnt	  
+							 , 0			  							  					AS ttCnt		   
+							 , 0			  	  						  					AS chainCnt	 
+							 , 0			  							  					AS chainCvCnt	 
+							 , 0			  	 						  					AS trghCnt	  
+							 , 0			  	 						  					AS standCnt	  
+							 , 0			  	  						  					AS etcCnt	   
+							 , 0  			 						  						AS bikeCnt	
+							 , COUNT(DISTINCT VW.REPAIR_SEQ)				  				AS cmptTermCnt
+						 FROM VW_TB_REPAIR_TERM									VW
+						  			 
+					LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	   = DETL.REPAIR_SEQ
+					LEFT JOIN TB_SYS_COM_CD										REBCD									ON DETL.REPAIR_CLS_CD  = REBCD.COM_CD	  AND  REBCD.ADD_VAL1 = 'TERM'
+				   		
+				   		  where
+					  <![CDATA[   
+								VW.TERM_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )
+					  ]]>			  					
+							AND VW.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+	 					 		
+					   GROUP BY avgDate
+				   		
+				   		UNION ALL
+				   		
+				   		SELECT
+					 		DATE_FORMAT(VW.REPAIR_CMPT_DTTM,'%Y-%m-%d') 					  AS avgDate
+					 		, 2			  												  AS divsnCnt
+							, 0	  		  													  AS termCnt
+							, SUM(case REBCD.CD_DESC2 when '벨' then 1 else 0 END)			AS bellCnt
+							, SUM(case REBCD.CD_DESC2 when '핸들' then 1 else 0 END)		  AS handleCnt
+							, SUM(case REBCD.CD_DESC2 when '브레이크' then 1 else 0 END)	  AS brakeCnt
+							, SUM(case REBCD.CD_DESC2 when '변속기' then 1 else 0 END)		AS transCnt	   
+							, SUM(case REBCD.CD_DESC2 when '타이어.튜브' then 1 else 0 END)   AS ttCnt	 
+							, SUM(case REBCD.CD_DESC2 when '체인' then 1 else 0 END)		  AS chainCnt	  
+							, SUM(case REBCD.CD_DESC2 when '체인커버' then 1 else 0 END)	  AS chainCvCnt
+							, SUM(case REBCD.CD_DESC2 when '물받이' then 1 else 0 END)		AS trghCnt	   
+							, SUM(case REBCD.CD_DESC2 when '스탠드' then 1 else 0 END)		AS standCnt	   
+							, SUM(case REBCD.CD_DESC2 when '기타' then 1 else 0 END)		  AS etcCnt	   
+							, 0 															  AS bikeCnt
+							, 0 															  AS cmptTermCnt
+						 FROM VW_TB_REPAIR										VW
+		 		
+				   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   = CHNG.REPAIR_SEQ
+				   
+				   INNER JOIN TB_SYS_COM_CD										MABCD									ON CHNG.PART_CD		= MABCD.COM_CD
+				   INNER JOIN TB_SYS_COM_CD										REBCD									ON MABCD.ADD_VAL1 	   = REBCD.COM_CD	  AND  REBCD.ADD_VAL1 = 'BIKE'		 			  
+			
+						where
+					  <![CDATA[   
+							  VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )   
+					  ]]>			  				  
+						  AND VW.REPAIR_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				  
+					 GROUP BY avgDate
+			  			
+			  			UNION ALL
+			  			
+			  			SELECT
+			  				  DATE_FORMAT(VW.TERM_CMPT_DTTM,'%Y-%m-%d')   AS avgDate
+			  				, 2										  	  AS divsnCnt
+							, COUNT(1)	  								  AS termCnt
+							, 0			  	   							  AS bellCnt 
+							, 0			  	  							  AS handleCnt   
+							, 0			  								  AS brakeCnt   
+							, 0			  	 							  AS transCnt	  
+							, 0			  								  AS ttCnt		   
+							, 0			  	  							  AS chainCnt	 
+							, 0			  								  AS chainCvCnt	 
+							, 0			  	 							  AS trghCnt	   
+							, 0			  	 							  AS standCnt	  
+							, 0			  	  							  AS etcCnt	   
+							, 0			 							  	  AS bikeCnt
+							, 0			 							  	  AS cmptTermCnt
+						 FROM VW_TB_REPAIR_TERM									VW
+	 				
+				   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   = CHNG.REPAIR_SEQ
+				   
+				   INNER JOIN TB_SYS_COM_CD										PARCD									ON CHNG.PART_CD		= PARCD.COM_CD
+				   INNER JOIN TB_SYS_COM_CD										REBCD									ON PARCD.ADD_VAL1 	   = REBCD.COM_CD	  AND REBCD.ADD_VAL1 = 'TERM'
+			
+						WHERE 
+					  <![CDATA[   
+							  VW.TERM_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )  
+					  ]]>		  				  
+						  AND VW.TERM_CMPT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)  			  
+				 
+					 GROUP BY avgDate
+					 
+					 
+					UNION ALL
+					
+					   SELECT 
+							  DATE_FORMAT(STAT_DATE,'%Y-%m-%d')	AS avgDate
+							, SUM(REPAIR_DIVISION)				AS divsnCnt
+							, SUM(REPAIR_TERM_CNT)				AS termCnt
+							, SUM(REPAIR_BELL_CNT)				AS bellCnt
+							, SUM(REPAIR_HANDLE_CNT) 			AS handleCnt
+							, SUM(REPAIR_BRAKE_CNT)  			AS brakeCnt
+							, SUM(REPAIR_TRANS_CNT)				AS transCnt
+							, SUM(REPAIR_TT_CNT)				AS ttCnt
+							, SUM(REPAIR_CHAIN_CNT)				AS chainCnt
+							, SUM(REPAIR_CHAIN_CV_CNT)			AS chainCvCnt
+							, SUM(REPAIR_TRGH_CNT)				AS trghCnt
+							, SUM(REPAIR_STAND_CNT)				AS standCnt
+							, SUM(REPAIR_ETC_CNT)				AS etcCnt
+							, SUM(REPAIR_BIKE_TOTAL_CNT)		AS bikeCnt
+							, SUM(REPAIR_TERM_TOTAL_CNT)		AS cmptTermCnt
+					
+						 FROM TB_STA_REPAIR_CENTER_DD A
+				   INNER JOIN TB_OPR_CENTER			  B 		ON A.CENTER_ID = B.CENTER_ID	 AND B.CENTER_CLS_CD = 'CEN_004'						 
+					  <![CDATA[   
+						WHERE STAT_DATE < ( STR_TO_DATE(NOW(), '%Y-%m-%d') )   
+					  ]]>
+					  	  AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					  	  
+					 GROUP BY avgDate
+				 
+				 )A
+				 
+				 GROUP BY avgDate
+				 					   		 		  				
+			) A
+ 
+	</select>
+	
+	<select id="getMgmtRepairStatusMCnt" parameterType="mgmtStatVO" resultType="mgmtStatVO">
+	 SELECT /* 정비현황(건) 월계 조회 */
+	 
+			FORMAT(SUM(termCnt)	,0)				   AS termCnt
+		  , FORMAT(SUM(bellCnt)	,0)				   AS bellCnt
+		  , FORMAT(SUM(handleCnt)  ,0)				   AS handleCnt
+		  , FORMAT(SUM(brakeCnt)   ,0)				   AS brakeCnt
+		  , FORMAT(SUM(transCnt)   ,0)				   AS transCnt
+		  , FORMAT(SUM(ttCnt)	  ,0)				   AS ttCnt
+		  , FORMAT(SUM(chainCnt)   ,0)				   AS chainCnt
+		  , FORMAT(SUM(chainCvCnt) ,0)				   AS chainCvCnt
+		  , FORMAT(SUM(trghCnt)	,0)				   AS trghCnt
+		  , FORMAT(SUM(standCnt)   ,0)				   AS standCnt
+		  , FORMAT(SUM(etcCnt)	 ,0)				   AS etcCnt
+		  , FORMAT(SUM(termCnt+bellCnt+handleCnt+brakeCnt+transCnt+ttCnt+chainCnt+chainCvCnt+trghCnt+standCnt+etcCnt) ,0) 
+		  												 AS sumCnt
+		  , FORMAT(SUM(bikeCnt)	   ,0)					 AS bikeCnt
+		  , FORMAT(SUM(cmptTermCnt),0)				  	 AS cmptTermCnt
+		  	 
+	   FROM
+	   	   (
+			 SELECT
+					 SUM(termCnt)													AS termCnt
+					,SUM(case REBCD when '벨' then 1 else 0 END) 					AS bellCnt  
+					,SUM(case REBCD when '핸들' then 1 else 0 END)					AS handleCnt   
+					,SUM(case REBCD when '브레이크' then 1 else 0 END) 				AS brakeCnt
+					,SUM(case REBCD when '변속기' then 1 else 0 END) 				AS transCnt
+					,SUM(case REBCD when '타이어.튜브' then 1 else 0 END)			AS ttCnt	
+					,SUM(case REBCD when '체인' then 1 else 0 END)  				AS chainCnt
+					,SUM(case REBCD when '체인커버' then 1 else 0 END) 				AS chainCvCnt
+					,SUM(case REBCD when '물받이' then 1 else 0 END)  				AS trghCnt  
+					,SUM(case REBCD when '스탠드' then 1 else 0 END)  				AS standCnt 
+					,SUM(case REBCD when '기타' then 1 else 0 END) 					AS etcCnt   
+					,(
+						SELECT COUNT(DISTINCT 
+										(
+						  				  CASE WHEN REBCD.COM_CD IS NOT NULL THEN VW.REPAIR_SEQ ELSE CASE WHEN PDTLCD.COM_CD IS NOT NULL THEN VW.REPAIR_SEQ ELSE NULL END END	   
+										)
+									)
+						  FROM VW_TB_REPAIR VW
+			   LEFT OUTER JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	  	 = DETL.REPAIR_SEQ
+			   LEFT OUTER JOIN TB_SYS_COM_CD									INSPBCD									ON DETL.REPAIR_CLS_CD	= INSPBCD.COM_CD
+			   LEFT OUTER JOIN TB_SYS_COM_CD									REBCD									ON INSPBCD.ADD_VAL1		 = REBCD.COM_CD  	AND  REBCD.ADD_VAL1 = 'BIKE'
+			   
+			   LEFT OUTER JOIN TB_MTC_BIKE_PART_CHNG_DETL						PDTL									ON VW.REPAIR_SEQ		 = PDTL.REPAIR_SEQ
+			   LEFT OUTER JOIN TB_SYS_COM_CD									PDTLCD									ON PDTL.PART_CD			 = PDTLCD.COM_CD	AND  PDTLCD.COM_UP_CD = 'MAB'						  
+					<![CDATA[	  
+						 WHERE VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') )
+					  	   AND VW.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))	
+					]]>
+						
+					 )   															AS bikeCnt
+					,SUM(cmptTermCnt)												AS cmptTermCnt 										
+				FROM
+				(
+					SELECT
+		
+							0	  		  									AS 'termCnt'
+						  , REBCD.CD_DESC2	   							AS 'REBCD'
+						  , 0												AS 'cmptTermCnt'
+						  
+					 FROM VW_TB_REPAIR										VW
+			   				  
+			   INNER JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	  	 	 = DETL.REPAIR_SEQ
+			   INNER JOIN TB_SYS_COM_CD										INSPBCD									ON DETL.REPAIR_CLS_CD	  	 = INSPBCD.COM_CD
+			   INNER JOIN TB_SYS_COM_CD										REBCD									ON INSPBCD.ADD_VAL1	  	 = REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'BIKE'
+			   		
+			   		WHERE 
+					<![CDATA[ 
+						  VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') ) 
+					]]>				   		
+		  			  AND VW.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))
+		  				
+			   		UNION ALL
+			   		
+			   		SELECT
+		
+						  SUM(CASE WHEN REBCD.COM_CD IS NOT NULL THEN 1 ELSE 0 END)	AS 'termCnt'
+						  ,0														AS 'REBCD'
+						  ,COUNT(DISTINCT VW.REPAIR_SEQ)							AS 'cmptTermCnt'
+		
+					 FROM VW_TB_REPAIR_TERM									VW
+					  			 
+				LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	   		= DETL.REPAIR_SEQ
+				LEFT JOIN TB_SYS_COM_CD										REBCD									ON DETL.REPAIR_CLS_CD	 	= REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'TERM'
+			   		
+			   		WHERE 
+					<![CDATA[ 
+						  VW.TERM_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') ) 
+					]]>				   		
+		  			  AND VW.TERM_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))
+		  				
+			   		UNION ALL
+			   		
+			   		SELECT
+		
+						  0	  		  										AS 'termCnt'
+						, REBCD.CD_DESC2									AS 'REBCD'
+						, 0													AS 'cmptTermCnt'
+							  
+					 FROM VW_TB_REPAIR										VW
+			 		
+			   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   		= CHNG.REPAIR_SEQ
+			   
+			   INNER JOIN TB_SYS_COM_CD										MABCD									ON CHNG.PART_CD			 = MABCD.COM_CD
+			   INNER JOIN TB_SYS_COM_CD										REBCD									ON MABCD.ADD_VAL1 			= REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'BIKE'			 			  
+		
+					WHERE 
+					<![CDATA[ 
+						  VW.REPAIR_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') ) 
+					]]>						
+		  			  AND VW.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))
+		  			  
+		  			UNION ALL
+		  			
+		  			SELECT
+		  			
+						  COUNT(1)	  										AS 'termCnt'
+						 ,0													AS 'REBCD'
+						 ,0													AS 'cmptTermCnt' 
+		
+					 FROM VW_TB_REPAIR_TERM									VW 				
+			   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   		= CHNG.REPAIR_SEQ
+			   
+			   INNER JOIN TB_SYS_COM_CD										PARCD									ON CHNG.PART_CD			 = PARCD.COM_CD
+			   INNER JOIN TB_SYS_COM_CD										REBCD									ON PARCD.ADD_VAL1 			= REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'TERM'
+		
+					WHERE 
+					<![CDATA[ 
+						  VW.TERM_CMPT_DTTM >= ( STR_TO_DATE(NOW(), '%Y-%m-%d') ) 
+					]]>					
+		  			  AND VW.TERM_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))
+				)A
+
+			 UNION ALL
+	
+				 SELECT 
+			 	 		SUM(REPAIR_TERM_CNT)				AS termCnt
+			 	 	  , SUM(REPAIR_BELL_CNT)				AS bellCnt
+			 	 	  , SUM(REPAIR_HANDLE_CNT) 				AS handleCnt
+			 	 	  , SUM(REPAIR_BRAKE_CNT)  				AS brakeCnt
+			 	 	  , SUM(REPAIR_TRANS_CNT)				AS transCnt
+			 	 	  , SUM(REPAIR_TT_CNT)					AS ttCnt
+			 	 	  , SUM(REPAIR_CHAIN_CNT)				AS chainCnt
+			 	 	  , SUM(REPAIR_CHAIN_CV_CNT)			AS chainCvCnt
+			 	 	  , SUM(REPAIR_TRGH_CNT)				AS trghCnt
+			 	 	  , SUM(REPAIR_STAND_CNT)				AS standCnt
+			 	 	  , SUM(REPAIR_ETC_CNT)					AS etcCnt
+			 	 	  , SUM(REPAIR_BIKE_TOTAL_CNT)			AS bikeCnt
+			 	 	  , SUM(REPAIR_TERM_TOTAL_CNT)			AS cmptTermCnt
+				 
+				   FROM TB_STA_REPAIR_CENTER_DD A
+			 INNER JOIN TB_OPR_CENTER			B 		ON A.CENTER_ID = B.CENTER_ID	 AND B.CENTER_CLS_CD = 'CEN_004'	
+				<![CDATA[ 
+				  WHERE STAT_DATE < ( STR_TO_DATE(NOW(), '%Y-%m-%d') )
+					AND STAT_DATE BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01')) 
+				]]>
+		   ) A	
+	</select>
+	
+	<select id="getMgmtRepairStatusDCnt" parameterType="mgmtStatVO" resultType="mgmtStatVO">
+	 SELECT /* 정비현황(건) 일계 조회 */
+			 FORMAT(SUM(termCnt),0)													AS termCnt
+			,FORMAT(SUM(case REBCD when '벨' then 1 else 0 END),0)  				AS bellCnt  
+			,FORMAT(SUM(case REBCD when '핸들' then 1 else 0 END),0)				AS handleCnt   
+			,FORMAT(SUM(case REBCD when '브레이크' then 1 else 0 END),0) 			AS brakeCnt
+			,FORMAT(SUM(case REBCD when '변속기' then 1 else 0 END),0) 				AS transCnt
+			,FORMAT(SUM(case REBCD when '타이어.튜브' then 1 else 0 END),0)			AS ttCnt	
+			,FORMAT(SUM(case REBCD when '체인' then 1 else 0 END),0)   				AS chainCnt
+			,FORMAT(SUM(case REBCD when '체인커버' then 1 else 0 END),0) 			AS chainCvCnt
+			,FORMAT(SUM(case REBCD when '물받이' then 1 else 0 END),0)  			AS trghCnt  
+			,FORMAT(SUM(case REBCD when '스탠드' then 1 else 0 END),0)  			AS standCnt 
+			,FORMAT(SUM(case REBCD when '기타' then 1 else 0 END),0)  				AS etcCnt   
+			,FORMAT(SUM(termCnt+case when REBCD = '벨' OR REBCD = '핸들' OR REBCD = '브레이크' OR REBCD = '변속기' OR REBCD = '타이어.튜브' OR REBCD = '체인' OR REBCD = '체인커버' OR REBCD = '물받이' OR REBCD = '스탠드' OR REBCD = '기타' 
+										then 1 ELSE 0 END),0) 						AS sumCnt
+			,FORMAT((
+				SELECT FORMAT(COUNT(DISTINCT 
+										(
+						  				  CASE WHEN REBCD.COM_CD IS NOT NULL THEN VW.REPAIR_SEQ ELSE CASE WHEN PDTLCD.COM_CD IS NOT NULL THEN VW.REPAIR_SEQ ELSE NULL END END	   
+										)	
+									),0)
+				  FROM VW_TB_REPAIR VW
+	   LEFT OUTER JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	  	 = DETL.REPAIR_SEQ
+	   LEFT OUTER JOIN TB_SYS_COM_CD									INSPBCD									ON DETL.REPAIR_CLS_CD	= INSPBCD.COM_CD
+	   LEFT OUTER JOIN TB_SYS_COM_CD									REBCD									ON INSPBCD.ADD_VAL1		 = REBCD.COM_CD  	AND  REBCD.ADD_VAL1 = 'BIKE'
+	   
+	   LEFT OUTER JOIN TB_MTC_BIKE_PART_CHNG_DETL						PDTL									ON VW.REPAIR_SEQ		 = PDTL.REPAIR_SEQ
+	   LEFT OUTER JOIN TB_SYS_COM_CD									PDTLCD									ON PDTL.PART_CD			 = PDTLCD.COM_CD	AND  PDTLCD.COM_UP_CD = 'MAB'				  
+				 WHERE VW.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(#{searchEndDe}, INTERVAL +1 DAY),'%Y-%m-%d')
+			 ),0)   																AS bikeCnt										
+			,FORMAT(SUM(cmptTermCnt),0)   											AS cmptTermCnt										
+		FROM
+		(
+			SELECT
+
+					0	  		  									AS 'termCnt'
+				  , REBCD.CD_DESC2	   							AS 'REBCD'
+				  , 0												AS 'cmptTermCnt'
+				  
+			 FROM VW_TB_REPAIR										VW
+	   				  
+	   INNER JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	  	 	 = DETL.REPAIR_SEQ
+	   INNER JOIN TB_SYS_COM_CD										INSPBCD									ON DETL.REPAIR_CLS_CD	  	 = INSPBCD.COM_CD
+	   INNER JOIN TB_SYS_COM_CD										REBCD									ON INSPBCD.ADD_VAL1	  	 = REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'BIKE'
+	   		
+	   		WHERE VW.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(#{searchEndDe}, INTERVAL +1 DAY),'%Y-%m-%d')
+  				
+	   		UNION ALL
+	   		
+	   		SELECT
+
+				   SUM(CASE WHEN REBCD.COM_CD IS NOT NULL THEN 1 ELSE 0 END)	AS 'termCnt'
+				  ,0															AS 'REBCD'
+				  ,COUNT(DISTINCT VW.REPAIR_SEQ)								AS 'cmptTermCnt'
+
+			 FROM VW_TB_REPAIR_TERM									VW
+			  			 
+		LEFT JOIN TB_MTC_REPAIR_DETL  								DETL	 								ON VW.REPAIR_SEQ	   		= DETL.REPAIR_SEQ
+		LEFT JOIN TB_SYS_COM_CD										REBCD									ON DETL.REPAIR_CLS_CD	 	= REBCD.COM_CD		AND  REBCD.ADD_VAL1 = 'TERM'
+	   		
+	   		WHERE VW.TERM_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(#{searchEndDe}, INTERVAL +1 DAY),'%Y-%m-%d')
+  				
+	   		UNION ALL
+	   		
+	   		SELECT
+
+				  0	  		  										AS 'termCnt'
+				, REBCD.CD_DESC2									AS 'REBCD'
+				, 0													AS 'cmptTermCnt'
+					  
+			 FROM VW_TB_REPAIR										VW
+	 		
+	   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   		= CHNG.REPAIR_SEQ
+	   
+	   INNER JOIN TB_SYS_COM_CD										MABCD									ON CHNG.PART_CD			 = MABCD.COM_CD
+	   INNER JOIN TB_SYS_COM_CD										REBCD									ON MABCD.ADD_VAL1 			= REBCD.COM_CD		AND REBCD.ADD_VAL1 = 'BIKE'			 			  
+
+			WHERE VW.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(#{searchEndDe}, INTERVAL +1 DAY),'%Y-%m-%d')
+  			  
+  			UNION ALL
+  			
+  			SELECT
+  			
+				  COUNT(1)	  										AS 'termCnt'
+				 ,0													AS 'REBCD'
+				 ,0													AS 'cmptTermCnt' 
+
+			 FROM VW_TB_REPAIR_TERM									VW 				
+	   INNER JOIN TB_MTC_BIKE_PART_CHNG_DETL  						CHNG	 								ON VW.REPAIR_SEQ	   		= CHNG.REPAIR_SEQ
+	   
+	   INNER JOIN TB_SYS_COM_CD										PARCD									ON CHNG.PART_CD			 = PARCD.COM_CD
+	   INNER JOIN TB_SYS_COM_CD										REBCD									ON PARCD.ADD_VAL1 			= REBCD.COM_CD		AND REBCD.ADD_VAL1 = 'TERM'
+
+			WHERE VW.TERM_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(#{searchEndDe}, INTERVAL +1 DAY),'%Y-%m-%d')
+		)A 	
+	</select>
+	
+	<select id="getMgmtRepairStatus" parameterType="mgmtStatVO" resultType="mgmtStatVO">
+		SELECT /* 정비현황(건) 조회 - 일,월,평균 제외 */
+			   A.statusCenterUp
+			  ,A.statusCenterName
+			  ,A.divsnCnt
+			  ,IFNULL(B.termCnt			, 0)	   AS termCnt
+			  ,IFNULL(B.bellCnt  		, 0)	   AS bellCnt
+			  ,IFNULL(B.handleCnt   	, 0)	   AS handleCnt
+			  ,IFNULL(B.brakeCnt		, 0)	   AS brakeCnt
+			  ,IFNULL(B.transCnt		, 0)	   AS transCnt
+			  ,IFNULL(B.ttCnt			, 0)	   AS ttCnt
+			  ,IFNULL(B.chainCnt		, 0)	   AS chainCnt
+			  ,IFNULL(B.chainCvCnt		, 0)	   AS chainCvCnt
+			  ,IFNULL(B.trghCnt  		, 0)	   AS trghCnt
+			  ,IFNULL(B.standCnt 		, 0)	   AS standCnt
+			  ,IFNULL(B.etcCnt   		, 0)	   AS etcCnt
+			  ,IFNULL(B.sumCnt			, 0)	   AS sumCnt
+			  ,IFNULL(B.bikeCnt			, 0)	   AS bikeCnt
+			  ,IFNULL(B.cmptTermCnt		, 0)	   AS cmptTermCnt	 	
+		  FROM   
+			(
+				SELECT 
+						MLANG_COM_CD_NAME   	AS statusCenterUp
+					   ,CENTER_NAME		  		AS statusCenterName
+					   ,REPAIR_DIVISION 	   	AS divsnCnt 
+				  FROM
+				  	(
+						SELECT B.MLANG_COM_CD_NAME
+							 , C.CENTER_NAME
+						  FROM TB_OPR_CENTER 					A
+					INNER JOIN TB_SYS_MLANG_COM_CD				B			ON  A.DISTRICT_CD   = B.COM_CD	  	AND B.LANG_CLS_CD = 'LAG_001'
+					INNER JOIN TB_OPR_CENTER					C			ON  A.CENTER_DESC   = C.CENTER_DESC AND C.CENTER_NAME LIKE '%정비센터%'
+					  GROUP BY MLANG_COM_CD_NAME
+							 , CENTER_NAME
+					) A
+					, ( SELECT 1 AS REPAIR_DIVISION  UNION ALL SELECT 2) B
+				   
+				UNION ALL
+			 
+			  SELECT
+					  statusCenterUp
+					 ,statusCenterName
+					 ,divsnCnt 	
+				FROM
+					  ( SELECT '총' 	AS statusCenterUp 	UNION ALL SELECT '강북' UNION ALL SELECT '강남' ) A
+					, ( SELECT '합계' 	AS statusCenterName 												) B
+					, ( SELECT 3 		AS divsnCnt 		UNION ALL SELECT 4								) C				
+
+			) A
+   LEFT JOIN
+			(
+				  SELECT 
+						 CENTER_UP_NAME			AS statusCenterUp
+						,CENTER_NAME			AS statusCenterName
+						,divsnCnt
+						,SUM(termCnt)  			AS termCnt
+						,SUM(bellCnt)  			AS bellCnt  
+						,SUM(handleCnt)   		AS handleCnt   
+						,SUM(brakeCnt) 			AS brakeCnt
+						,SUM(transCnt) 			AS transCnt
+						,SUM(ttCnt)				AS ttCnt	
+						,SUM(chainCnt)   		AS chainCnt
+						,SUM(chainCvCnt) 		AS chainCvCnt
+						,SUM(trghCnt)  			AS trghCnt  
+						,SUM(standCnt)  		AS standCnt 
+						,SUM(etcCnt)  			AS etcCnt   
+						,SUM(termCnt+bellCnt+handleCnt+brakeCnt+transCnt+ttCnt+chainCnt+chainCvCnt+trghCnt+standCnt+etcCnt)
+										  		AS sumCnt
+						,SUM(bikeCnt)	 		AS bikeCnt
+						,SUM(cmptTermCnt)  		AS cmptTermCnt
+					FROM 
+						(
+				
+						   SELECT IFNULL(C.MLANG_COM_CD_NAME, '총')		 AS CENTER_UP_NAME						
+								, IFNULL(D.CENTER_NAME, '합계')	   	 AS CENTER_NAME
+								, IFNULL(A.REPAIR_DIVISION,3)			 AS divsnCnt
+								, sum(A.REPAIR_TERM_CNT)				 AS termCnt
+								, sum(A.REPAIR_BELL_CNT)				 AS bellCnt
+								, sum(A.REPAIR_HANDLE_CNT)				 AS handleCnt
+								, sum(A.REPAIR_BRAKE_CNT)				 AS brakeCnt
+								, sum(A.REPAIR_TRANS_CNT)				 AS transCnt
+								, sum(A.REPAIR_TT_CNT)	   			 AS ttCnt
+								, sum(A.REPAIR_CHAIN_CNT)				 AS chainCnt
+								, sum(A.REPAIR_CHAIN_CV_CNT) 			 AS chainCvCnt
+								, sum(A.REPAIR_TRGH_CNT)	 			 AS trghCnt
+								, sum(A.REPAIR_STAND_CNT)				 AS standCnt
+								, sum(A.REPAIR_ETC_CNT)	  			 AS etcCnt
+								, sum(A.REPAIR_BIKE_TOTAL_CNT) 		 	 AS bikeCnt
+								, sum(A.REPAIR_TERM_TOTAL_CNT) 		 	 AS cmptTermCnt
+								
+					   		FROM TB_STA_REPAIR_CENTER_DD 		A
+					   INNER JOIN TB_OPR_CENTER			 		B	   		ON	A.CENTER_ID 	  = B.CENTER_ID 	AND B.CENTER_CLS_CD = 'CEN_004'
+					   INNER JOIN TB_SYS_MLANG_COM_CD			C			ON  B.DISTRICT_CD	 = C.COM_CD	  	AND C.LANG_CLS_CD   = 'LAG_001'
+					   INNER JOIN TB_OPR_CENTER					D			ON  B.CENTER_DESC	 = D.CENTER_DESC 	AND D.CENTER_NAME   LIKE '%정비센터%'
+					   
+					   <![CDATA[ 
+							WHERE A.STAT_DATE < STR_TO_DATE(NOW(), '%Y-%m-%d')
+					   ]]>	
+							  AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							  AND A.REPAIR_DIVISION = 1			   			   
+						 
+						 GROUP BY C.MLANG_COM_CD_NAME
+								, D.CENTER_NAME
+								, A.REPAIR_DIVISION
+								  WITH ROLLUP
+					
+					   UNION ALL 		  
+					   
+						   SELECT IFNULL(C.MLANG_COM_CD_NAME, '총')		 AS CENTER_UP_NAME						
+								, IFNULL(D.CENTER_NAME, '합계')	   	 AS CENTER_NAME
+								, IFNULL(A.REPAIR_DIVISION, 4)			 AS divsnCnt
+								, sum(A.REPAIR_TERM_CNT)				 AS termCnt
+								, sum(A.REPAIR_BELL_CNT)				 AS bellCnt
+								, sum(A.REPAIR_HANDLE_CNT)				 AS handleCnt
+								, sum(A.REPAIR_BRAKE_CNT)				 AS brakeCnt
+								, sum(A.REPAIR_TRANS_CNT)				 AS transCnt
+								, sum(A.REPAIR_TT_CNT)	   			 AS ttCnt
+								, sum(A.REPAIR_CHAIN_CNT)				 AS chainCnt
+								, sum(A.REPAIR_CHAIN_CV_CNT) 			 AS chainCvCnt
+								, sum(A.REPAIR_TRGH_CNT)	 			 AS trghCnt
+								, sum(A.REPAIR_STAND_CNT)				 AS standCnt
+								, sum(A.REPAIR_ETC_CNT)	  			 AS etcCnt
+								, sum(A.REPAIR_BIKE_TOTAL_CNT) 		 	 AS bikeCnt
+								, sum(A.REPAIR_TERM_TOTAL_CNT) 			 AS cmptTermCnt
+								
+					   		 FROM TB_STA_REPAIR_CENTER_DD 		A
+					   INNER JOIN TB_OPR_CENTER			 		B	   		ON	A.CENTER_ID 	  = B.CENTER_ID 	AND B.CENTER_CLS_CD = 'CEN_004'
+					   INNER JOIN TB_SYS_MLANG_COM_CD			C			ON  B.DISTRICT_CD	 = C.COM_CD	  	AND C.LANG_CLS_CD   = 'LAG_001'
+					   INNER JOIN TB_OPR_CENTER					D			ON  B.CENTER_DESC	 = D.CENTER_DESC 	AND D.CENTER_NAME   LIKE '%정비센터%'
+					   
+					   <![CDATA[ 
+							WHERE A.STAT_DATE < STR_TO_DATE(NOW(), '%Y-%m-%d')
+					   ]]>	
+							  AND A.STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+							  AND A.REPAIR_DIVISION = 2			   			   
+						 
+						 GROUP BY C.MLANG_COM_CD_NAME
+								, D.CENTER_NAME
+								, A.REPAIR_DIVISION
+								  WITH ROLLUP
+				
+					   ) A
+				
+				<![CDATA[ 
+				   WHERE ( CENTER_NAME = '합계' ) OR ( CENTER_NAME != '합계' AND divsnCnt < 3 )
+				]]>	
+				   
+				GROUP BY CENTER_UP_NAME
+					   , CENTER_NAME
+					   , divsnCnt
+						 
+			) B	ON A.statusCenterUp = B.statusCenterUp AND A.statusCenterName = B.statusCenterName AND A.divsnCnt = B.divsnCnt
+
+
+	GROUP BY A.statusCenterUp
+	   	   , A.statusCenterName
+		   , A.divsnCnt			
+		 
+	ORDER BY A.statusCenterUp = '총' ASC
+	   	   , A.statusCenterUp DESC
+		   , A.statusCenterName = '합계' ASC
+		   , A.statusCenterName
+		   , A.divsnCnt
+	 					 	   
+	</select>
+	
+	<select id="getMgmtRepairAdminStatus" parameterType="mgmtStatVO" resultType="mgmtStatVO">
+
+		SELECT 
+				repairCenterUp
+			 ,	repairCenterName
+			 ,	CASE WHEN repairCenterName IS NOT NULL THEN repairWorkTime ELSE 0 END		AS repairWorkTime
+			 ,	CASE WHEN repairCenterName IS NOT NULL THEN repairDtlTime ELSE 0 END		AS repairDtlTime
+			 ,	CASE WHEN repairCenterName IS NOT NULL THEN repairAdminNamesCnt ELSE 0 END	AS repairAdminNamesCnt
+		  FROM
+			  (
+			   	SELECT
+						A.repairCenterUp								AS repairCenterUp
+					  , A.repairCenterName								AS repairCenterName
+					  , IFNULL(B.repairWorkTime,0)						AS repairWorkTime
+					  , IFNULL(B.repairDtlTime,0)						AS repairDtlTime
+					  , IFNULL(B.repairAdminNamesCnt,0)					AS repairAdminNamesCnt
+				  FROM (
+						SELECT 
+							   MLANG.MLANG_COM_CD_NAME								AS repairCenterUp
+							 , UPCENTER.CENTER_NAME									AS repairCenterName	
+				  		  FROM TB_OPR_CENTER 						CENTER
+				  	INNER JOIN TB_OPR_CENTER						UPCENTER		ON CENTER.CENTER_DESC 	= UPCENTER.CENTER_ID	AND CENTER.CENTER_CLS_CD = 'CEN_004'	 
+					INNER JOIN TB_SYS_MLANG_COM_CD					MLANG			ON UPCENTER.DISTRICT_CD = MLANG.COM_CD 			AND MLANG.LANG_CLS_CD 	 = 'LAG_001'	  			 
+				  		) A
+			 LEFT JOIN (
+						SELECT  
+							   UPCENTER.CENTER_NAME									AS repairCenterName
+							 , SUM(REPWORK.WORK_TIME)								AS repairWorkTime
+							 , SUM(WORKDTL.DTL_TIME)								AS repairDtlTime
+							 , COUNT(ADMIN.ADMIN_ID)								AS repairAdminNamesCnt
+						  FROM TB_SYS_REPAIR_WORK					REPWORK
+					 LEFT JOIN TB_SYS_REPAIR_WORK_DTL				WORKDTL 		ON REPWORK.WORK_SEQ 	= WORKDTL.WORK_SEQ	   
+					 LEFT JOIN TB_SYS_ADMIN			 			ADMIN			ON REPWORK.ADMIN_ID 	= ADMIN.ADMIN_ID
+					 LEFT JOIN TB_OPR_CENTER						CENTER  		ON REPWORK.CENTER_ID 	= CENTER.CENTER_ID   	AND CENTER.CENTER_CLS_CD = 'CEN_004' AND CENTER.DISTRICT_CD IN ('GUG_026','GUG_027')
+					 LEFT JOIN TB_OPR_CENTER						UPCENTER		ON CENTER.CENTER_DESC 	= UPCENTER.CENTER_ID
+								
+						 WHERE REPWORK.APPROVED = 'Y'
+						   AND WORKDTL.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			
+					  GROUP BY UPCENTER.CENTER_NAME
+			
+						) B  ON  A.repairCenterName = B.repairCenterName
+				GROUP BY A.repairCenterUp
+					   , A.repairCenterName WITH ROLLUP
+				  HAVING A.repairCenterUp IS NOT NULL		 				 					
+			  )A	   
+	  ORDER BY repairCenterUp desc
+			 , repairCenterName IS NOT NULL ASC
+			 , repairCenterName ASC						 				 
+	</select>
+	
+	<select id="getMgmtBikeRepairStatus" parameterType="mgmtStatVO" resultType="mgmtStatVO">
+		SELECT  /* 자전거 정비 현황 */
+				FORMAT(MAX(repairCntD),0)		AS repairCntD
+			  , FORMAT(MAX(repairCntM),0)		AS repairCntM
+			  , FORMAT(MAX(repairCntY),0)		AS repairCntY
+		FROM
+			(	 
+				 SELECT  
+						  COUNT(REPAIR_SEQ) 		AS repairCntD
+						 ,NULL						AS repairCntM
+						 ,NULL						AS repairCntY  
+				   FROM VW_TB_REPAIR
+				  WHERE REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') AND DATE_FORMAT(DATE_ADD(#{searchEndDe}, INTERVAL +1 DAY),'%Y-%m-%d')
+				  
+				 UNION ALL
+				 
+				 SELECT  
+						  NULL 						AS 'repairCntD'
+						 ,COUNT(REPAIR_SEQ)			AS 'repairCntM'
+						 ,NULL						AS 'repairCntY'  
+				   FROM VW_TB_REPAIR
+				  WHERE REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchEndDe},'%Y-%m-01') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))
+					
+				 UNION ALL
+				 
+				 SELECT  
+						  NULL 						AS 'repairCntD'
+						 ,NULL						AS 'repairCntM'
+						 ,COUNT(REPAIR_SEQ)			AS 'repairCntY'  
+				   FROM VW_TB_REPAIR
+				  WHERE REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(#{searchBgnDe},'%Y-%m-%d') AND LAST_DAY(DATE_FORMAT(#{searchEndDe},'%Y-%m-01'))  		   
+			) A
+	</select>
+	
+</mapper>
+
+<!-- 
+**************************************************VW_TB_REPAIR****************************************************
+
+	SELECT 
+		   REPINFO.REPAIR_SEQ												AS REPAIR_SEQ
+		 , REPINFO.REPAIR_CMPT_DTTM											AS REPAIR_CMPT_DTTM
+		 , MLANG.MLANG_COM_CD_NAME											AS CENTER_UP_NAME
+		 , UPCENTER.CENTER_NAME	   										AS CENTER_NAME
+	  FROM TB_MTC_REPAIR_INFO								REPINFO
+INNER JOIN TB_SYS_ADMIN										REPADMIN 		ON REPINFO.MAINTC_ADMIN_ID  = REPADMIN.ADMIN_ID
+INNER JOIN TB_SYS_GRP_CD		  							REPGRP			ON REPADMIN.ADMIN_GRP_SEQ	= REPGRP.ADMIN_GRP_SEQ   AND REPGRP.ADMIN_GRP_SEQ IN (4,10)
+INNER JOIN TB_OPR_CENTER		 						 	REPCENTER 		ON REPINFO.REPAIR_CENTER_ID = REPCENTER.CENTER_ID	 AND REPCENTER.CENTER_CLS_CD = 'CEN_004'
+INNER JOIN TB_SYS_MLANG_COM_CD								MLANG			ON REPCENTER.DISTRICT_CD 	= MLANG.COM_CD 			 AND MLANG.LANG_CLS_CD 	 = 'LAG_001'
+INNER JOIN TB_OPR_CENTER		 						 	UPCENTER 		ON REPCENTER.CENTER_DESC 	= UPCENTER.CENTER_ID
+	 WHERE REPINFO.REPAIR_CMPT_YN = 'Y' 
+ 
+**************************************************VW_TB_REPAIR****************************************************
+
+**************************************************VW_TB_REPAIR_TERM****************************************************
+
+	SELECT
+		   REPINFO.REPAIR_SEQ												AS REPAIR_SEQ
+		 , TERMINFO.TERM_CMPT_DTTM											AS TERM_CMPT_DTTM
+		 , MLANG.MLANG_COM_CD_NAME											AS CENTER_UP_NAME										
+		 , UPCENTER.CENTER_NAME												AS CENTER_NAME
+	  FROM TB_MTC_REPAIR_TERM_INFO							TERMINFO
+INNER JOIN TB_MTC_REPAIR_INFO  								REPINFO			ON TERMINFO.REPAIR_SEQ	  = REPINFO.REPAIR_SEQ			   
+INNER JOIN TB_SYS_ADMIN										TERMADMIN		ON TERMINFO.TERM_ADMIN_ID   = TERMADMIN.ADMIN_ID
+INNER JOIN TB_SYS_GRP_CD		  							TERMGRP			ON TERMADMIN.ADMIN_GRP_SEQ	= TERMGRP.ADMIN_GRP_SEQ   AND TERMGRP.ADMIN_GRP_SEQ IN (4,10)	  			   
+INNER JOIN TB_OPR_CENTER		   							TERMCENTER		ON TERMINFO.TERM_CENTER_ID  = TERMCENTER.CENTER_ID	  AND TERMCENTER.CENTER_CLS_CD = 'CEN_004'
+INNER JOIN TB_SYS_MLANG_COM_CD								MLANG			ON TERMCENTER.DISTRICT_CD 	= MLANG.COM_CD 			  AND MLANG.LANG_CLS_CD 	 = 'LAG_001'
+INNER JOIN TB_OPR_CENTER									UPCENTER		ON TERMCENTER.CENTER_DESC	= UPCENTER.CENTER_ID
+	 WHERE TERMINFO.TERM_CMPT_YN = 'Y'
+ 	   
+**************************************************VW_TB_REPAIR_TERM****************************************************
+
+-->

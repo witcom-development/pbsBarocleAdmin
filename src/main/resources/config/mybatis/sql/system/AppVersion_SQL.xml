@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.appversion.service.AppVersionMapper">
+	
+	<resultMap id="resultAppVersionVO" type="com.dkitec.barocle.admin.system.appversion.vo.AppVersionVO">
+		<result column="APP_SEQ" property="appSeq" />
+		<result column="OS_CLS_CD" property="osClsCD" />
+		<result column="OS_CLS_NAME" property="osClsName" />
+		<result column="APP_VER_INFO" property="appVerInfo" />
+		<result column="UPDATE_CLS_CD" property="updateClsCD" />
+		<result column="UPDATE_CLS_NAME" property="updateClsName" />
+		<result column="DOWNLOAD_PATH" property="downloadPath" />
+		<result column="MSG_CONTENT" property="msgContent" />
+		<result column="REG_ID" property="regID" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="ADMIN_ID" property="adminID" />
+		<result column="ADMIN_NAME" property="adminName" />
+	</resultMap>
+	
+	<resultMap id="resultCategoryVO" type="com.dkitec.barocle.admin.customer.faq.vo.CategoryVO">
+		<result column="COM_CD" property="comCD" />
+		<result column="COM_UP_CD" property="comUpCD" />
+		<result column="CD_DESC1" property="cdDesc1" />
+		<result column="CD_DESC2" property="cdDesc2" />
+		<result column="DSP_ORD" property="dspOrd" />
+		<result column="ADD_VAL1" property="addVal1" />
+		<result column="ADD_VAL2" property="addVal2" />
+		<result column="ADD_VAL3" property="addVal3" />
+	</resultMap>
+	
+	<select id="listAppVersionCount" parameterType="appVersionVO" resultType="int">
+		SELECT	COUNT(APP_SEQ) AS appSeq
+		FROM	TB_SYS_APP_VER_INFO
+		WHERE	1=1
+				<if test="osClsCD!='' and osClsCD!=null">AND OS_CLS_CD = #{osClsCD}</if>
+				<if test="updateClsCD!='' and updateClsCD!=null">AND UPDATE_CLS_CD = #{updateClsCD}</if>
+	</select>
+	
+	<select id="listAppVersion" parameterType="appVersionVO" resultMap="resultAppVersionVO">
+		SELECT
+			APP_SEQ,
+			OS_CLS_CD,
+			OS_CLS_NAME,
+			APP_VER_INFO,
+			UPDATE_CLS_CD,
+			UPDATE_CLS_NAME,
+			DOWNLOAD_PATH,
+			MSG_CONTENT,
+			REG_ID,
+			REG_DTTM,
+			ADMIN_ID,
+			ADMIN_NAME
+			FROM
+				(
+					SELECT
+						T1.APP_SEQ,
+						T1.OS_CLS_CD,
+						(SELECT IT1.CD_DESC1 FROM TB_SYS_COM_CD IT1 WHERE T1.OS_CLS_CD=IT1.COM_CD) AS OS_CLS_NAME,
+						T1.APP_VER_INFO,
+						T1.UPDATE_CLS_CD,
+						(SELECT IT2.CD_DESC1 FROM TB_SYS_COM_CD IT2 WHERE T1.UPDATE_CLS_CD=IT2.COM_CD) AS UPDATE_CLS_NAME,
+						T1.DOWNLOAD_PATH,
+						T1.MSG_CONTENT,
+						T1.REG_ID,
+						T1.REG_DTTM,
+						T2.ADMIN_ID,
+						T2.ADMIN_NAME
+					FROM TB_SYS_APP_VER_INFO T1  LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+					WHERE	1=1
+						<if test="osClsCD!='' and osClsCD!=null">AND T1.OS_CLS_CD = #{osClsCD}</if>
+						<if test="updateClsCD!='' and updateClsCD!=null">AND T1.UPDATE_CLS_CD = #{updateClsCD}</if>
+				) A
+		ORDER BY 
+			A.REG_DTTM DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="getSysComCD" parameterType="categoryVO" resultMap="resultCategoryVO">
+		SELECT COM_CD,CD_DESC1 FROM TB_SYS_COM_CD WHERE COM_UP_CD = #{comUpCD}
+	</select>
+	
+	<select id="viewAppVersion" parameterType="appVersionVO" resultMap="resultAppVersionVO">
+		SELECT
+			T1.APP_SEQ,
+			T1.OS_CLS_CD,
+			(SELECT IT1.CD_DESC1 FROM TB_SYS_COM_CD IT1 WHERE T1.OS_CLS_CD=IT1.COM_CD) AS OS_CLS_NAME,
+			T1.APP_VER_INFO,
+			T1.UPDATE_CLS_CD,
+			(SELECT IT2.CD_DESC1 FROM TB_SYS_COM_CD IT2 WHERE T1.UPDATE_CLS_CD=IT2.COM_CD) AS UPDATE_CLS_NAME,
+			T1.DOWNLOAD_PATH,
+			T1.MSG_CONTENT,
+			T1.REG_ID,
+			T1.REG_DTTM,
+			T2.ADMIN_ID,
+			T2.ADMIN_NAME
+		FROM
+			TB_SYS_APP_VER_INFO T1  LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+		WHERE
+			APP_SEQ = #{appSeq}
+	</select>
+	
+	<insert id="insertAppVersion" parameterType="appVersionVO" useGeneratedKeys="true" keyProperty="appSeq">
+		INSERT INTO TB_SYS_APP_VER_INFO
+			(
+				OS_CLS_CD, APP_VER_INFO, UPDATE_CLS_CD,
+				<if test="downloadPath!='' and downloadPath!=null">
+					DOWNLOAD_PATH, 
+				</if>
+				<if test="msgContent!='' and msgContent!=null">
+					MSG_CONTENT, 
+				</if>
+				REG_ID, REG_DTTM
+			)
+		values
+			(
+				#{osClsCD}, #{appVerInfo}, #{updateClsCD},
+				<if test="downloadPath!='' and downloadPath!=null">
+					#{downloadPath}, 
+				</if>
+				<if test="msgContent!='' and msgContent!=null">
+					#{msgContent}, 
+				</if>
+				#{adminID}, NOW()
+			)
+	</insert>
+	
+	<update id="updateAppVersion" parameterType="appVersionVO">
+		UPDATE
+			TB_SYS_APP_VER_INFO
+		SET
+			<!-- OS_CLS_CD = #{osClsCD}, -->
+			APP_VER_INFO = #{appVerInfo},
+			<!-- UPDATE_CLS_CD = #{updateClsCD}, -->
+			<if test="downloadPath!='' and downloadPath!=null">
+				DOWNLOAD_PATH = #{downloadPath},
+			</if>
+			<if test="msgContent!='' and msgContent!=null">
+				MSG_CONTENT = #{msgContent},
+			</if>
+			REG_ID = #{adminID}
+		WHERE
+			APP_SEQ = #{appSeq}
+	</update>
+	
+	<delete id="deleteAppVersion" parameterType="appVersionVO">
+		DELETE	FROM	TB_SYS_APP_VER_INFO
+		WHERE			APP_SEQ = #{appSeq}
+	</delete>
+	
+	<select id="confirmAppVersion" parameterType="appVersionVO" resultMap="resultAppVersionVO">
+		SELECT	T1.APP_VER_INFO
+		FROM	TB_SYS_APP_VER_INFO T1
+		ORDER BY APP_VER_INFO DESC
+		LIMIT 1
+	</select>
+	
+	<select id="listAppVersionChk" parameterType="appVersionVO" resultMap="resultAppVersionVO">
+		SELECT
+			APP_SEQ,
+			OS_CLS_CD,
+			OS_CLS_NAME,
+			APP_VER_INFO,
+			UPDATE_CLS_CD,
+			UPDATE_CLS_NAME,
+			DOWNLOAD_PATH,
+			MSG_CONTENT,
+			REG_ID,
+			REG_DTTM
+			FROM
+				(
+					SELECT
+						TT1.APP_SEQ,
+						TT1.OS_CLS_CD,
+						(SELECT ITT1.CD_DESC1 FROM TB_SYS_COM_CD ITT1 WHERE TT1.OS_CLS_CD=ITT1.COM_CD) AS OS_CLS_NAME,
+						TT1.APP_VER_INFO,
+						TT1.UPDATE_CLS_CD,
+						(SELECT ITT2.CD_DESC1 FROM TB_SYS_COM_CD ITT2 WHERE TT1.UPDATE_CLS_CD=ITT2.COM_CD) AS UPDATE_CLS_NAME,
+						TT1.DOWNLOAD_PATH,
+						TT1.MSG_CONTENT,
+						TT1.REG_ID,
+						TT1.REG_DTTM
+					FROM TB_SYS_APP_VER_INFO TT1
+					WHERE TT1.OS_CLS_CD = #{osClsCD}
+				) T1
+		ORDER BY 
+			T1.APP_VER_INFO ASC
+	</select>
+</mapper>

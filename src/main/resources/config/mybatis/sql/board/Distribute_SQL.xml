@@ -1,0 +1,428 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.board.distribute.service.DistributeBoardMapper">
+	
+	<select id="listDistributeCount" parameterType="distributeBoardVO" resultType="int">
+		SELECT	COUNT(DIST_SEQ) AS distSeq
+		FROM	TB_BOR_DIST
+		WHERE	1=1
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+			</if>
+			<if test="searchValue!='' and searchValue!=null">
+				AND ( DIST_TITLE LIKE CONCAT('%',#{searchValue},'%') OR DIST_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+			</if>
+			<if test="popupYN=='Y'.toString()">
+				AND POPUP_YN = 'Y'
+			</if>
+			<if test="popupYN=='N'.toString()">
+				AND POPUP_YN = 'N'
+			</if>
+			<choose>
+				<when test='cateCD == "B"'>
+					AND SITE_CLS_CD REGEXP('bun')
+				</when>
+				<when test='cateCD == "S"'>
+					AND SITE_CLS_CD REGEXP('sang')
+				</when>
+				<when test='cateCD == "J"'>
+					AND SITE_CLS_CD REGEXP('jeng')
+				</when>
+			</choose>
+	</select>
+	
+	<select id="listDistributeBunBae" resultType="distributeBoardVO">
+	SELECT A.DIST_SEQ AS distSeq,
+		   A.DIST_TITLE AS distTitle,
+		   DIST_TEXT_CONTENT AS distTextContent,
+		   B.IMG_URL		AS atchFileID,
+			IFNULL( A.MOD_DTTM, A.REG_DTTM ) AS regDttm
+	  FROM TB_BOR_DIST A
+	 LEFT JOIN TB_COM_EDITOR_IMG B ON ( A.DIST_SEQ = B.BBS_SEQ )
+	 WHERE 1=1  
+	--	AND NOW() BETWEEN POST_STR_DTTM  AND POST_END_DTTM
+		AND SITE_CLS_CD REGEXP('bun')
+	ORDER BY SORT_ORD	DESC
+	LIMIT 3
+	</select>
+	
+	<select id="listDistribute" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	A.
+				DIST_SEQ AS distSeq,
+				CATE_CD AS cateCD,
+				SITE_CLS_CD AS siteClsCD,
+				DIST_NO AS distNO,
+				DIST_TITLE AS distTitle,
+				SORT_ORD AS sortOrd,
+				POST_STR_DTTM AS postStrDttm,
+				POST_END_DTTM AS postEndDttm,
+				MAIN_DIST_YN AS mainDistYN,
+				POPUP_YN AS popupYN,
+				READ_CNT AS readCnt,
+				REG_DTTM AS regDttm,
+				REG_ID AS regID,
+				MOD_DTTM AS modDttm,
+				MOD_ID AS modID
+		FROM	
+				(
+					SELECT
+							DIST_SEQ,
+							CATE_CD,
+							SITE_CLS_CD,
+							DIST_NO,
+							DIST_TITLE,
+							SORT_ORD,
+							POST_STR_DTTM,
+							POST_END_DTTM,
+							MAIN_DIST_YN,
+							POPUP_YN,
+							READ_CNT,
+							REG_DTTM,
+							REG_ID,
+							MOD_DTTM,
+							MOD_ID
+					FROM	TB_BOR_DIST
+					WHERE	1=1
+					<if test="searchStartDate!='' and searchStartDate!=null">
+						AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+					</if>
+					<if test="searchValue!='' and searchValue!=null">
+						AND ( DIST_TITLE LIKE CONCAT('%',#{searchValue},'%') OR DIST_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+					</if>
+					<if test="popupYN=='Y'.toString()">
+						AND POPUP_YN = 'Y'
+					</if>
+					<if test="popupYN=='N'.toString()">
+						AND POPUP_YN = 'N'
+					</if>
+					<choose>
+						<when test='cateCD == "B"'>
+							AND SITE_CLS_CD REGEXP('bun')
+						</when>
+						<when test='cateCD == "S"'>
+							AND SITE_CLS_CD REGEXP('sang')
+						</when>
+						<when test='cateCD == "J"'>
+							AND SITE_CLS_CD REGEXP('jeng')
+						</when>
+					</choose>
+				) A
+		 ORDER BY SORT_ORD DESC, DIST_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewDistribute" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	
+				DIST_SEQ AS noticeSeq,
+				CATE_CD AS cateCD,
+				SITE_CLS_CD AS siteClsCD,
+				DIST_NO AS distNO,
+				DIST_TITLE AS distTitle,
+				DIST_TEXT_CONTENT AS distTextContent,
+				DIST_HTML_CONTENT AS distHTMLContent,
+				REPLY_YN AS replyYN,
+				SORT_ORD AS sortOrd,
+				READ_CNT AS readCnt,
+				USE_YN AS useYN,
+				POST_STR_DTTM AS postStrDttm,
+				POST_END_DTTM AS postEndDttm,
+				ATCH_FILE_ID AS atchFileID,
+				POPUP_YN AS popupYN,
+				POPUP_STR_DTTM AS popupStrDttm,
+				POPUP_END_DTTM AS popupEndDttm,
+				MAIN_DIST_YN AS mainDistYN,
+				MAIN_DIST_STR_DTTM AS mainDistStrDttm,
+				MAIN_DIST_END_DTTM AS mainDistEndDttm,
+				REG_DTTM AS regDttm,
+				REG_ID AS regID,
+				MOD_DTTM AS modDttm,
+				MOD_ID AS modID
+		FROM	TB_BOR_DIST
+		WHERE   DIST_SEQ = #{distSeq};
+
+	</select>
+	
+	<update id="updateReadcntViewDistribute" parameterType="distributeBoardVO">
+		UPDATE TB_BOR_DIST SET  READ_CNT = IFNULL(READ_CNT, 0) + 1 WHERE   DIST_SEQ = #{distSeq};
+	</update>	
+	
+	
+	<select id="getDaumEditorImage" parameterType="distributeBoardVO" resultType="daumEditorVO">
+		SELECT	
+				IMG_PATH AS imgPath,
+				IMG_URL AS imgURL,
+				IMG_NAME AS imgName,
+				REPLACE(IMG_NAME,(RIGHT(SUBSTR(IMG_NAME,1,(INSTR(IMG_NAME,REPLACE(SUBSTR(RIGHT(IMG_NAME,5),2,(INSTR(IMG_NAME,'.')+4)),'.',''))-2)),15)),'') AS imgNm,
+				IMG_SIZE AS imgSize,
+				IMG_SEQ  AS imgSeq,
+				THUMBNAIL_IMG_PATH AS thumbnailImgPath,
+				THUMBNAIL_IMG_URL AS thumbnailImgURL,
+				THUMBNAIL_IMG_NAME AS thumbnailImgName,
+				THUMBNAIL_IMG_SIZE AS thumbnailImgSize
+		FROM	TB_COM_EDITOR_IMG
+		WHERE   BBS_CLS_CD = #{currentMenu}
+		AND		BBS_SEQ = #{distSeq} 
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevDistribute" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	DIST_SEQ AS distSeq,
+				DIST_TITLE AS distTitle
+		FROM	TB_BOR_DIST
+		WHERE	USE_YN = 'Y' AND DIST_SEQ &lt; #{distSeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND ( DIST_TITLE LIKE CONCAT('%',#{searchValue},'%') OR DIST_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+				</if>
+		ORDER BY DIST_SEQ DESC
+		LIMIT	1
+	</select>
+	
+	<select id="nextDistribute" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	DIST_SEQ AS ditsSeq,
+				DIST_TITLE AS distTitle
+		FROM	TB_BOR_DIST
+		WHERE	USE_YN = 'Y' AND DIST_SEQ &gt; #{distSeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND ( DIST_TITLE LIKE CONCAT('%',#{searchValue},'%') OR DIST_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+				</if>
+		ORDER BY DIST_SEQ ASC
+		LIMIT	1
+	</select>
+	
+	<insert id="insertDistribute" parameterType="distributeBoardVO" useGeneratedKeys="true" keyProperty="distSeq">
+		INSERT INTO TB_BOR_DIST
+		(
+				CATE_CD, SITE_CLS_CD, 
+				DIST_NO,
+				DIST_TITLE, DIST_TEXT_CONTENT, DIST_HTML_CONTENT,
+				REPLY_YN, SORT_ORD,
+				USE_YN, 
+				POST_STR_DTTM, POST_END_DTTM, POPUP_YN,
+				POPUP_STR_DTTM, POPUP_END_DTTM, MAIN_DIST_YN,
+				MAIN_DIST_STR_DTTM, MAIN_DIST_END_DTTM,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, ATCH_FILE_ID
+		)
+		SELECT 
+			#{cateCD}, #{siteClsCD}, 
+			IFNULL(MAX(DIST_SEQ), 0) + 1,
+			#{distTitle}, #{distTextContent}, #{distHTMLContent},
+			#{replyYN}, 
+			<if test="topYN == 'Y'.toString()">
+				IFNULL(MAX(DIST_SEQ), 0) + 1000001, 
+			</if>
+			<if test="topYN != 'Y'.toString()">
+				IFNULL(MAX(DIST_SEQ), 0) + 1,
+			</if> 
+			IFNULL( #{mainDistYN}, '' ), 
+			#{postStrDttm}, #{postEndDttm}, #{popupYN},
+			#{postStrDttm}, #{postEndDttm}, IFNULL( #{mainDistYN}, '' ),
+			#{postStrDttm}, #{postEndDttm},
+			NOW(), #{regID}, NOW(), #{regID}, ''
+		FROM TB_BOR_DIST
+	</insert>
+	
+	<update id="updateDistribute" parameterType="distributeBoardVO">
+		UPDATE 
+			TB_BOR_DIST
+		SET
+			CATE_CD = #{cateCD},
+			<choose>
+				<when test="siteClsCD!='' and siteClsCD!=null">
+					SITE_CLS_CD = #{siteClsCD},
+				</when>
+				<otherwise>
+					SITE_CLS_CD = NULL,
+				</otherwise>
+			</choose>
+			DIST_NO = #{distNO},
+			DIST_TITLE = #{distTitle},
+			DIST_TEXT_CONTENT = #{distTextContent},
+			DIST_HTML_CONTENT = #{distHTMLContent},
+			
+			<if test="topYN == 'Y'.toString()">
+				SORT_ORD = (SELECT 
+								CAST(T.MX as UNSIGNED) 
+							FROM (
+								SELECT 
+									CASE 
+										WHEN MAX(SORT_ORD) > 1000000
+											THEN MAX(SORT_ORD)+1
+											ELSE MAX(SORT_ORD)+1000000
+									END MX
+								FROM TB_BOR_DIST 
+								) T
+							), 
+			</if>
+			<if test="topYN != 'Y'.toString()">
+				SORT_ORD = #{sortOrd},
+			</if> 
+			
+			POST_STR_DTTM = #{postStrDttm},
+			POST_END_DTTM = #{postEndDttm},
+			POPUP_YN = #{popupYN},
+			POPUP_STR_DTTM = #{postStrDttm},
+			POPUP_END_DTTM = #{postEndDttm},
+			
+			MAIN_DIST_YN = IFNULL( #{mainDistYN}, MAIN_DIST_YN ),
+			USE_YN =	  IFNULL( #{mainDistYN}, USE_YN ),
+			
+			MAIN_DIST_STR_DTTM = #{postStrDttm},
+			MAIN_DIST_END_DTTM = #{postEndDttm},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+		WHERE
+			DIST_SEQ = #{distSeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="distributeBoardVO">
+		UPDATE TB_COM_EDITOR_IMG
+		   SET BBS_SEQ = 0
+		 WHERE BBS_CLS_CD = #{currentMenu}
+		 AND   BBS_SEQ = #{distSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="distributeBoardVO">
+		UPDATE TB_COM_EDITOR_IMG
+		   SET BBS_SEQ = #{distSeq}
+		WHERE BBS_CLS_CD = #{currentMenu}
+			<if test="imageList!=null and fileList!=null">
+				AND IMG_NAME IN
+				<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+				|| IMG_NAME IN
+				<foreach item="filelist" index="index" collection="fileList" open="(" close=")" separator=",">#{filelist}</foreach>
+			</if>
+			<if test="imageList==null and fileList!=null">
+				AND IMG_NAME IN
+				<foreach item="filelist" index="index" collection="fileList" open="(" close=")" separator=",">#{filelist}</foreach>
+			</if>
+			<if test="imageList!=null and fileList==null">
+				AND IMG_NAME IN
+				<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+			</if>
+	</update>
+	
+	<delete id="deleteDistribute" parameterType="distributeBoardVO">
+		DELETE FROM TB_BOR_DIST
+		WHERE DIST_SEQ = #{distSeq}
+	</delete>
+	
+	<select id="listDistributePopupCount" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	T1.DIST_SEQ as noticeSeq, (SELECT	COUNT(TT1.DIST_SEQ) AS COUNT FROM	TB_BOR_DIST TT1) AS distNO
+		FROM	TB_BOR_DIST T1
+		WHERE	T1.USE_YN = 'Y' AND T1.POPUP_YN = #{popupYN}
+			AND DATE_FORMAT(T1.POST_STR_DTTM,'%Y%m%d') &lt;= #{searchStartDate}
+			AND DATE_FORMAT(T1.POST_END_DTTM,'%Y%m%d') &gt;= #{searchEndDate}
+			AND ( T1.SITE_CLS_CD LIKE CONCAT('%',#{siteClsCD},'%'))
+	</select>
+	
+	<select id="listDistributePopup" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	T1.
+				DIST_SEQ AS distSeq,
+				CATE_CD AS cateCD,
+				SITE_CLS_CD AS siteClsCD,
+				DIST_NO AS distNO,
+				DIST_TITLE AS distTitle,
+				DIST_TEXT_CONTENT AS distTextContent,
+				DIST_HTML_CONTENT AS distHTMLContent
+		FROM	
+				(
+					SELECT	TT1.
+							DIST_SEQ,
+							CATE_CD,
+							SITE_CLS_CD,
+							DIST_NO,
+							DIST_TITLE,
+							DIST_TEXT_CONTENT,
+							DIST_HTML_CONTENT
+					FROM	TB_BOR_DIST TT1
+					WHERE	USE_YN = 'Y' AND POPUP_YN = #{popupYN}
+						AND DATE_FORMAT(TT1.POST_STR_DTTM,'%Y%m%d') &lt;= #{searchStartDate}
+						AND DATE_FORMAT(TT1.POST_END_DTTM,'%Y%m%d') &gt;= #{searchEndDate}
+						AND ( TT1.SITE_CLS_CD LIKE CONCAT('%',#{siteClsCD},'%'))
+				) T1
+		WHERE DIST_SEQ =#{distSeq}
+	</select>
+	
+	<!-- 업로드된 파일 리스트를 조회_cms_20161110 -->
+	<select id="fileDownloadList" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT SUBSTR(IMG_URL,26,1000) AS attachNm , IMG_URL AS imgUrl, 
+			   REPLACE(IMG_NAME,(RIGHT(SUBSTR(IMG_NAME,1,(INSTR(IMG_NAME,REPLACE(SUBSTR(RIGHT(IMG_NAME,5),2,(INSTR(IMG_NAME,'.')+4)),'.',''))-2)),15)),'') AS imgName
+		  FROM TB_COM_EDITOR_IMG
+		 WHERE IMG_SEQ = #{imgSeq}
+		   AND IMG_URL LIKE '%MANAGEBOARD%' 
+	</select>
+	
+	<insert id="insertPush" parameterType="pushVO">
+		INSERT INTO TB_PUSH_HIST
+	(PUSH_SEQ, USR_SEQ, TITLE, MESSAGE, PUSH_TYPE, TARGET_URL, SEND_YN, READ_YN, REG_DTTM, SEND_DTTM, READ_DTTM, SENDER_ID)
+	VALUES (NULL, #{usrSeq}, '0', #{message}, #{pushType}, #{pushLinkUrl}, '0', '0', NOW(), NOW(), null, 'witcom_01')
+	</insert>
+	
+	<select id="getPushTargetList" resultType="pushVO">
+		SELECT A.USR_DEVICE_ID AS usrDeviceId
+		, A.USR_DEVICE_TYPE as usrDeviceType  
+		FROM TB_SVC_USR A , TB_SVC_MB B
+		WHERE A.USR_SEQ = B.USR_SEQ 
+		AND A.PUSH_YN='Y'
+		AND B.LEAVE_YN='N'
+	</select>
+	
+	<select id="listBoardPopupCount" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	T1.DIST_SEQ as distSeq, (SELECT	COUNT(TT1.DIST_SEQ) AS COUNT FROM	TB_BOR_DIST TT1) AS distNo
+		FROM	TB_BOR_DIST T1
+		WHERE	1=1
+		  AND	T1.POPUP_YN = #{popupYN}
+		  AND 	DATE_FORMAT(T1.POST_STR_DTTM,'%Y%m%d') &lt;= #{searchStartDate}
+		  AND	DATE_FORMAT(T1.POST_END_DTTM,'%Y%m%d') &gt;= #{searchEndDate}
+
+	</select>
+	
+	<select id="listBoardPopup" parameterType="distributeBoardVO" resultType="distributeBoardVO">
+		SELECT	T1.
+				DIST_SEQ AS distSeq,
+				CATE_CD AS cateCD,
+				SITE_CLS_CD AS siteClsCD,
+				DIST_NO AS distNO,
+				DIST_TITLE AS distTitle,
+				DIST_TEXT_CONTENT AS distTextContent,
+				DIST_HTML_CONTENT AS distHTMLContent
+		FROM	
+				(
+					SELECT	TT1.
+							DIST_SEQ,
+							CATE_CD,
+							SITE_CLS_CD,
+							DIST_NO,
+							DIST_TITLE,
+							DIST_TEXT_CONTENT,
+							DIST_HTML_CONTENT
+					FROM	TB_BOR_DIST TT1
+					WHERE	1=1
+						AND POPUP_YN = #{popupYN}
+						AND DATE_FORMAT(TT1.POST_STR_DTTM,'%Y%m%d') &lt;= #{searchStartDate}
+						AND DATE_FORMAT(TT1.POST_END_DTTM,'%Y%m%d') &gt;= #{searchEndDate}
+				) T1
+		WHERE DIST_SEQ =#{distSeq}
+	</select>
+	
+	
+</mapper>

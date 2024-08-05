@@ -1,0 +1,444 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.sms.service.SmsMapper">
+	
+	<resultMap id="resultSmsVO" type="com.dkitec.barocle.admin.system.sms.vo.SmsVO">
+		<result column="SMS_SEQ" property="smsSeq" />
+		<result column="SEND_CLS_NAME" property="sendClsName" />
+		<result column="AUTO_SEND_YN" property="autoSendYN" />
+		<result column="AUTO_SEND_ID" property="autoSendID" />
+		<result column="ORIGNL_MSG" property="orignlMsg" />
+		<result column="NOTE_DESC" property="noteDesc" />
+		<result column="REG_ID" property="regID" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="ADMIN_ID" property="adminID" />
+		<result column="ADMIN_NAME" property="adminName" />
+	</resultMap>
+
+	<!-- 관리자 sms -->
+	
+	<select id="getSendAdminTelNo" parameterType="String" resultType="String">
+	
+ 	   <if test="value =='' or value ==null">
+ 			SELECT NULL 
+ 	   </if>
+	   <if test="value !='' and value !=null">				   
+			<!-- SELECT dg_decrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', ADMIN_TEL_NO) -->
+			SELECT CAST(AES_DECRYPT(UNHEX(ADMIN_TEL_NO),'BRC') as CHAR)
+			  FROM TB_SYS_ADMIN A
+			 WHERE A.ADMIN_ID = #{value}
+		</if>
+		
+	</select>
+	
+	<select id="getAdminGrpNameCnt" parameterType="String" resultType="String">
+		SELECT
+			   CONCAT(A.GRP_NAME,' ',COUNT(C.ADMIN_ID),'명')
+		  FROM TB_SYS_GRP_CD				  A
+	INNER JOIN TB_SYS_ADMIN					  B		ON A.ADMIN_GRP_SEQ = B.ADMIN_GRP_SEQ
+	INNER JOIN TB_SYS_REQ_ADMIN_SMS_DTL		  C		ON B.ADMIN_ID	  = C.ADMIN_ID
+		 WHERE
+				<if test="value !='' and value !=null">
+					REQ_SMS_SEQ = #{value}
+				</if>
+				<if test="value =='' or value ==null">
+					1 =2 
+				</if>			 		 	
+	  GROUP BY A.GRP_NAME
+	  ORDER BY A.GRP_NAME ASC
+	</select>	
+	
+	<select id="getAdminSmsAgtSendYn" parameterType="adminSmsVO" resultType="String">
+	
+		SELECT 
+			   CASE WHEN SEND_RESULT_CODE1 = 'OK' THEN SEND_RESULT_CODE1 ELSE CASE WHEN SEND_RESULT_CODE2 IS NOT NULL THEN SEND_RESULT_CODE2 ELSE NULL END END
+		  FROM TSMS_AGENT_MESSAGE_LOG
+		 WHERE REGISTER_DATE BETWEEN ( DATE_FORMAT(#{searchBgnDe},'%Y-%m-%d') + INTERVAL +1 SECOND + INTERVAL -1 SECOND ) AND ( DATE_FORMAT(#{searchEndDe},'%Y-%m-%d') + INTERVAL +1 DAY + INTERVAL -1 SECOND )
+		   AND MESSAGE_SEQNO = #{messageSeq}
+	
+	</select>
+	
+	<select id="getAdminSmsTpl" parameterType="smsSendVo" resultType="smsSendVo">
+	
+		SELECT SMS_SEQ	   AS smsSeq
+			 , ORIGNL_MSG	AS smsMsg
+			 , SEND_CLS_NAME AS sendClsName
+		  FROM TB_SYS_SMS
+		 WHERE AUTO_SEND_YN = #{autoSendYn}
+	
+	</select>
+	
+	<select id="getAdminList"  resultType="userMgmtVO">
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', USR.ADMIN_TEL_NO)		  AS phoneNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', USR.ADMIN_MPN_NO)		  AS mpnNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', USR.ADMIN_EMAIL_NAME)  AS email -->
+		<![CDATA[
+			SELECT 
+				  USR.ADMIN_ID 										AS usrId
+				, USR.ADMIN_NAME 									AS usrName
+				, CASE WHEN USR.ADMIN_ID = 'mcchun'  	THEN 14
+					   WHEN USR.ADMIN_ID = 'mirilai'  	THEN 14
+					   WHEN USR.ADMIN_ID = 'pzangsu'  	THEN 14
+					   WHEN USR.ADMIN_ID = 'iamihs1'	THEN 13
+					   WHEN USR.ADMIN_ID = 'rojodragon'	THEN 13
+					   WHEN USR.ADMIN_ID = 'ghost711'	THEN 13
+					   WHEN USR.ADMIN_ID = 'parkjm86'	THEN 13
+					   WHEN USR.ADMIN_ID = 'testadm' 	THEN 999
+					   ELSE USR.ADMIN_GRP_SEQ END					AS usrGrpCd
+				, GRP.GRP_NAME AS grpName
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_TEL_NO),'BRC') as CHAR) AS phoneNo
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_MPN_NO),'BRC') as CHAR) AS mpnNo
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_EMAIL_NAME),'BRC') as CHAR) AS email
+				, USR.DEPT_NAME deptName
+				, DATE_FORMAT(USR.CRE_DTTM, '%Y-%m-%d') as regDate
+				, DATE_FORMAT(USR.MOD_DTTM, '%Y-%m-%d') as modDate
+				, USR.USE_YN AS useYn
+			FROM TB_SYS_ADMIN AS USR
+			INNER JOIN TB_SYS_GRP_CD AS GRP
+			ON USR.ADMIN_GRP_SEQ = GRP.ADMIN_GRP_SEQ AND GRP.ADMIN_GRP_SEQ NOT IN(22,19,9,8,18,20,16,17,2,1,3)
+			WHERE 1=1
+			  AND USE_YN = 'Y'
+		]]>	
+	</select>
+	
+	<select id="getGroupNameList"  resultType="com.dkitec.barocle.admin.system.usergroupmgmt.vo.UserGroupMgmtVO">
+		 SELECT  		
+				A.ADMIN_GRP_SEQ 			   				AS usrGrpCd,
+			 	CASE WHEN A.GRP_NAME = '관리운영그룹' THEN '시스템관리팀'
+			 		 WHEN A.GRP_NAME = '안내센터조장' THEN '콜센터반장'
+			 		 WHEN A.GRP_NAME = '안내센터' 	  THEN '콜센터'
+			 		 ELSE A.GRP_NAME END 					AS grpName,
+				A.ADMIN_CLS_CD,
+				B.MLANG_COM_CD_NAME,
+				B.COM_CD,
+				CASE WHEN A.ADMIN_GRP_SEQ = 12 THEN 1
+					 WHEN A.ADMIN_GRP_SEQ = 14 THEN 2
+					 WHEN A.ADMIN_GRP_SEQ = 13 THEN 3
+					 WHEN A.ADMIN_GRP_SEQ = 15 THEN 4
+					 WHEN A.ADMIN_GRP_SEQ = 7  THEN 5
+					 WHEN A.ADMIN_GRP_SEQ = 11 THEN 6
+					 WHEN A.ADMIN_GRP_SEQ = 5  THEN 7
+					 WHEN A.ADMIN_GRP_SEQ = 10 THEN 8
+					 WHEN A.ADMIN_GRP_SEQ = 4  THEN 9
+					 WHEN A.ADMIN_GRP_SEQ = 21 THEN 10
+					 ELSE NULL END 			   				AS ordNum
+		   FROM TB_SYS_GRP_CD A, TB_SYS_MLANG_COM_CD B
+		  WHERE A.ADMIN_CLS_CD = B.COM_CD
+			AND A.ADMIN_GRP_SEQ NOT IN(22,19,9,8,18,20,16,17,2,1,3)
+	   ORDER BY ordNum IS NULL ASC
+			  , ordNum ASC
+			  , A.GRP_NAME ASC
+	</select>
+	
+	<select id="getReqAdmSmsDtlName" parameterType="String" resultType="adminSmsVO">
+		SELECT
+				A.REQ_SMS_DTL_SEQ													AS reqSmsDtlSeq
+			 ,	A.ADMIN_ID															AS adminId
+			 ,  B.ADMIN_NAME														AS adminName
+			 ,  C.GRP_NAME															AS adminGrpName
+			 <!-- ,  dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', B.ADMIN_MPN_NO)		  AS adminPno -->
+			 ,  CAST(AES_DECRYPT(UNHEX(B.ADMIN_MPN_NO),'BRC') as CHAR) AS adminPno
+			 ,	A.MESSAGE_SEQNO														AS messageSeq
+			 ,  A.SEND_RESULT_CODE													AS sendResultCd
+		  FROM TB_SYS_REQ_ADMIN_SMS_DTL			A
+	INNER JOIN TB_SYS_ADMIN						B		ON A.ADMIN_ID = B.ADMIN_ID
+	INNER JOIN TB_SYS_GRP_CD					C		ON B.ADMIN_GRP_SEQ = C.ADMIN_GRP_SEQ
+		 WHERE
+				<if test="value !='' and value !=null">
+					REQ_SMS_SEQ = #{value}
+				</if>
+				<if test="value =='' and value ==null">
+					1 =2 
+				</if>			 		 	
+	
+	</select>
+	
+	<select id="getReqAdmSmsDtl" parameterType="adminSmsVO" resultType="adminSmsVO">
+		SELECT	
+				REQ_SMS_SEQ										AS reqSmsSeq
+			  , REQ_TITLE										AS reqTitle
+			  , REQ_CONTENT										AS reqContent
+			  , REQ_SEND_TYPE									AS reqSendType
+			  , REQ_SEND_YN										AS reqSendYn
+			  , DATE_FORMAT(REQ_RES_DATE , '%Y-%m-%d %H:%i')	AS reqResDate
+			  , DATE_FORMAT(REG_DTTM , '%Y-%m-%d %H:%i')		AS regDttm
+			  , REG_ID											AS regId
+			  , ADMIN_NAME										AS adminName	
+		  FROM	TB_SYS_REQ_ADMIN_SMS			A
+	INNER JOIN  TB_SYS_ADMIN 					B		ON A.REG_ID = B.ADMIN_ID 
+		 WHERE	
+				<if test="reqSmsSeq !='' and reqSmsSeq !=null">
+					REQ_SMS_SEQ = #{reqSmsSeq}
+				</if>
+				<if test="reqSmsSeq =='' and reqSmsSeq ==null">
+					1 =2 
+				</if>			
+	</select>
+
+	<select id="getReqAdmSmsListCnt" parameterType="adminSmsVO" resultType="int">
+		SELECT	
+				COUNT(REQ_SMS_SEQ)
+		  FROM	TB_SYS_REQ_ADMIN_SMS			A
+	INNER JOIN  TB_SYS_ADMIN 					B		ON A.REG_ID = B.ADMIN_ID 		  
+		 WHERE	1=1
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					AND REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					AND REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test="searchAdmin !='' and searchAdmin !=null">
+					AND ADMIN_NAME = #{searchAdmin}
+				</if>			
+	</select>
+	
+	<select id="getReqAdmSmsList" parameterType="adminSmsVO" resultType="adminSmsVO">
+		SELECT	
+				REQ_SMS_SEQ										AS reqSmsSeq
+			  , REQ_TITLE										AS reqTitle
+			  , DATE_FORMAT(REQ_RES_DATE , '%Y-%m-%d %H:%i')	AS reqResDate
+			  , REQ_SEND_YN										AS reqSendYn
+			  , DATE_FORMAT(REG_DTTM , '%Y-%m-%d %H:%i')		AS regDttm
+			  , REG_ID											AS regId
+			  , ADMIN_NAME										AS adminName	
+		  FROM	TB_SYS_REQ_ADMIN_SMS			A
+	INNER JOIN  TB_SYS_ADMIN 					B		ON A.REG_ID = B.ADMIN_ID 
+		 WHERE	1=1
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+					AND REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+					AND REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test="searchAdmin !='' and searchAdmin !=null">
+					AND ADMIN_NAME = #{searchAdmin}
+				</if>
+	  ORDER BY 
+				REG_DTTM DESC
+		 LIMIT	#{firstRecordIndex},#{recordCountPerPage}				
+	</select>
+		
+	<insert id="sendChiefAdminLogin" parameterType="userInfoVo">
+		INSERT INTO TSMS_AGENT_MESSAGE
+			(
+				SEND_MESSAGE,
+				SUBJECT,
+				BACKUP_MESSAGE,
+				RECEIVE_MOBILE_NO,
+				JOB_TYPE,
+				SEND_DATE, 
+				TEMPLATE_CODE,
+				REGISTER_DATE,
+				REGISTER_BY,
+				SEND_RESERVE_DATE
+			)
+		SELECT
+				 '로그인 되었습니다. 본인이 아닌 경우 확인하여 주시기 바랍니다.' AS SEND_MESSAGE,
+				 '로그인알림'			  AS SUBJECT,
+				 '로그인 되었습니다. 본인이 아닌 경우 확인하여 주시기 바랍니다.' AS BACKUP_MESSAGE,
+				 <!-- REPLACE( dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', ADMIN_MPN_NO) , '-','') AS RECEIVE_MOBILE_NO, -->
+				 REPLACE( CAST(AES_DECRYPT(UNHEX(ADMIN_MPN_NO),'BRC') as CHAR), '-','') AS RECEIVE_MOBILE_NO,
+				 'R00'					 AS JOB_TYPE,
+				 NOW()					 AS SEND_DATE,
+				 NULL						 AS TEMPLATE_CODE,
+				 NOW()					 AS REGISTER_DATE,
+				'Admin'					 AS REGISTER_BY,
+				 NOW()					 AS SEND_RESERVE_DATE
+		  FROM TB_SYS_ADMIN A
+		 WHERE A.ADMIN_ID = #{usrId}
+		   AND A.ADMIN_GRP_SEQ = '12'
+	</insert>
+	
+	<insert id="insertReqAdmSmsDtl" parameterType="adminSmsVO">
+		INSERT INTO TB_SYS_REQ_ADMIN_SMS_DTL
+			(
+				REQ_SMS_SEQ
+			  , ADMIN_ID
+				
+			)
+		values
+			(
+
+			   	#{reqSmsSeq}
+			  ,	#{adminId}
+			  
+			)
+	</insert>
+	
+	<update id="updateReqAdmSendYn" parameterType="adminSmsVO">
+	
+		UPDATE	TB_SYS_REQ_ADMIN_SMS
+		   SET	REQ_SEND_YN = 'Y'
+			 ,  MOD_ID		= 'system' 
+		 WHERE  REQ_SMS_SEQ = #{reqSmsSeq}
+			  
+	</update>
+	
+	<update id="updateReqAdmDtlSendResCd" parameterType="adminSmsVO">
+	
+		UPDATE	TB_SYS_REQ_ADMIN_SMS_DTL
+		   SET	SEND_RESULT_CODE = #{sendResultCd}
+		 WHERE  REQ_SMS_DTL_SEQ = #{reqSmsDtlSeq}
+			  
+	</update>
+	
+	<update id="updateReqAdmMmsSeq" parameterType="adminSmsVO">
+	
+		UPDATE	TB_SYS_REQ_ADMIN_SMS_DTL
+		   SET	MESSAGE_SEQNO = #{messageSeq}
+		 WHERE  REQ_SMS_SEQ = #{reqSmsSeq}
+		   AND  ADMIN_ID = #{adminId}
+			  
+	</update>
+	
+	<insert id="insertReqAdmSms" parameterType="adminSmsVO" useGeneratedKeys="true" keyProperty="reqSmsSeq">
+		INSERT INTO TB_SYS_REQ_ADMIN_SMS
+			(
+				REQ_TITLE
+			  , REQ_CONTENT
+			  , REQ_RES_DATE
+			  , REQ_SEND_TYPE
+			  , REG_ID
+				
+			)
+		SELECT
+			   	#{reqTitle}
+			  ,	#{reqContent}
+			  ,	#{reqResDate}
+		<if test="reqSendType == null or reqSendType == '' ">
+			  ,	null
+		</if>
+		<if test="reqSendType != null and reqSendType != '' ">
+			 ,(
+			  	select 
+			  		   AUTO_SEND_ID
+			  	  FROM TB_SYS_SMS
+				 WHERE SMS_SEQ = #{reqSendType}
+			  	
+			  )	
+		</if>
+			  ,	#{adminId}
+			  
+	</insert>
+	
+	<!-- sms -->
+	
+	<select id="listSmsCount" parameterType="smsVO" resultType="int">
+		SELECT	COUNT(T1.SMS_SEQ) AS smsSeq
+		FROM	TB_SYS_SMS T1 LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+		WHERE	1=1
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND SEND_CLS_NAME LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+	</select>
+	
+	<select id="listSms" parameterType="smsVO" resultMap="resultSmsVO">
+		SELECT A.
+			SMS_SEQ,
+			SEND_CLS_NAME,
+			AUTO_SEND_YN,
+			AUTO_SEND_ID,
+			ORIGNL_MSG,
+			NOTE_DESC,
+			REG_ID,
+			REG_DTTM,
+			ADMIN_ID,
+			ADMIN_NAME
+			FROM
+				(
+					SELECT
+						T1.SMS_SEQ,
+						T1.SEND_CLS_NAME,
+						T1.AUTO_SEND_YN,
+						T1.AUTO_SEND_ID,
+						T1.ORIGNL_MSG,
+						T1.NOTE_DESC,
+						T1.REG_ID,
+						T1.REG_DTTM,
+						T2.ADMIN_ID,
+						T2.ADMIN_NAME
+					FROM TB_SYS_SMS T1 LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+					WHERE	1=1
+						<if test="searchStartDate!='' and searchStartDate!=null">
+							AND DATE_FORMAT(T1.REG_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+						</if>
+						<if test="searchEndDate!='' and searchEndDate!=null">
+							AND DATE_FORMAT(T1.REG_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+						</if>
+						<if test="searchValue!='' and searchValue!=null">
+							AND T1.SEND_CLS_NAME LIKE CONCAT('%',#{searchValue},'%')
+						</if>
+				) A
+		ORDER BY 
+			A.REG_DTTM DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewSms" parameterType="smsVO" resultMap="resultSmsVO">
+		SELECT
+			T1.SMS_SEQ,
+			T1.SEND_CLS_NAME,
+			T1.AUTO_SEND_YN,
+			T1.AUTO_SEND_ID,
+			T1.ORIGNL_MSG,
+			T1.NOTE_DESC,
+			T1.REG_ID,
+			T1.REG_DTTM,
+			T2.ADMIN_ID,
+			T2.ADMIN_NAME
+		FROM
+			TB_SYS_SMS T1 LEFT OUTER JOIN TB_SYS_ADMIN T2 ON T1.REG_ID=T2.ADMIN_ID
+		WHERE
+			SMS_SEQ = #{smsSeq}
+	</select>
+	
+	<select id="getNextSmsID" parameterType="smsVO" resultType="int">
+		SELECT	IFNULL(MAX(substring(AUTO_SEND_ID,-3)),0)+1 AS autoSendID
+		FROM	TB_SYS_SMS
+	</select>
+	
+	<insert id="insertSms" parameterType="smsVO" useGeneratedKeys="true" keyProperty="smsSeq">
+		INSERT INTO TB_SYS_SMS
+			(
+				SEND_CLS_NAME, AUTO_SEND_YN, AUTO_SEND_ID, ORIGNL_MSG,
+				<if test="noteDesc!='' and noteDesc!=null">
+					NOTE_DESC, 
+				</if>
+				REG_ID, REG_DTTM
+			)
+		values
+			(
+				#{sendClsName}, #{autoSendYN}, #{autoSendID}, #{orignlMsg}, 
+				<if test="noteDesc!='' and noteDesc!=null">
+					#{noteDesc}, 
+				</if>
+				#{adminID}, NOW()
+			)
+	</insert>
+	
+	<update id="updateSms" parameterType="smsVO">
+		UPDATE
+			TB_SYS_SMS
+		SET
+			SEND_CLS_NAME = #{sendClsName},
+			ORIGNL_MSG = #{orignlMsg},
+			<if test="noteDesc!='' and noteDesc!=null">
+				NOTE_DESC = #{noteDesc},
+			</if>
+			REG_ID = #{adminID}
+		WHERE
+			SMS_SEQ = #{smsSeq}
+	</update>
+	
+	<delete id="deleteSms" parameterType="smsVO">
+		DELETE	FROM	TB_SYS_SMS
+		WHERE			SMS_SEQ = #{smsSeq} AND AUTO_SEND_YN = 'N'
+	</delete>
+
+</mapper>

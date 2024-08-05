@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.check.lock.service.CheckLockMapper">
+	<select id="getCheckLockList" parameterType="CheckLockVO" resultType="CheckLockVO">
+	<![CDATA[
+			SELECT CHK.FAULT_SEQ								  AS faultSeq
+	  			,A.RACK_ID																	  AS rackId
+				,A.NOW_LOCATE_CLS_CD																AS locateClsCd
+				,IF(A.NOW_LOCATE_CLS_CD  ='S',CONCAT('(S)',(SELECT STATION_NAME
+														  FROM TB_OPR_MLANG_STATION
+														  WHERE STATION_ID = A.NOW_LOCATE_ID
+														   AND LANG_CLS_CD = #{lang} )), '')	AS stationName
+				,IF(A.NOW_LOCATE_CLS_CD  ='C', CONCAT('(C)',(SELECT CENTER_NAME
+														  FROM TB_OPR_CENTER
+														  WHERE CENTER_ID = A.NOW_LOCATE_ID)) ,'')  AS centerName
+				,A.RACK_STUS_CD																 AS rackStatusCd
+				,(SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_CHECK_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.BRKDN_STUS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = CHK.FAULT_SEQ) AS rackStatusName
+			 	,MB.MB_ID										  AS userId
+			 	,DATE_FORMAT(CHK.REG_DTTM  ,'%Y-%m-%d %H:%i')   AS regDttm
+				,A.NOW_STATION_EQUIP_ORD					  AS stationEquipOrder
+				,CHK.MOD_ID									AS modId
+				,DATE_FORMAT(CHK.MOD_DTTM  ,'%Y-%m-%d %H:%i')   AS modDttm
+			FROM TB_MTC_CHECK_INFO CHK
+			JOIN TB_OPR_RACK A ON A.RACK_ID = CHK.EQUIPMENT_ID
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON A.NOW_LOCATE_ID = ST.STATION_ID
+			LEFT OUTER JOIN TB_SVC_MB MB ON CHK.USR_SEQ = MB.USR_SEQ
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				CHK.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				CHK.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rackId !=null and rackId != ""'>
+			  	AND A.RACK_ID LIKE CONCAT('',#{rackId},'%')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND ST.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND ST.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND CHK.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND CHK.READ_CLS_CD = 'H'
+				</if>
+		   </trim>	  
+		   ORDER BY CHK.REG_DTTM DESC, CHK.FAULT_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if>
+	</select>
+	<select id="getCheckLockListCount" parameterType="CheckLockVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_MTC_CHECK_INFO CHK
+			JOIN TB_OPR_RACK A ON A.RACK_ID = CHK.EQUIPMENT_ID
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON A.NOW_LOCATE_ID = ST.STATION_ID
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				CHK.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				CHK.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rackId !=null and rackId != ""'>
+			  	AND A.RACK_ID LIKE CONCAT('',#{rackId},'%')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND ST.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND ST.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND CHK.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND CHK.READ_CLS_CD = 'H'
+				</if>
+		   </trim> 
+	</select>
+	
+	<update id="exeLockCheck" parameterType="CheckLockVO">
+		UPDATE TB_MTC_CHECK_INFO SET READ_CLS_CD = 'H', MOD_ID = #{modId}, MOD_DTTM = now() 
+		WHERE FAULT_SEQ = #{faultSeq}
+		AND READ_CLS_CD = 'S'
+		AND EQUIPMENT_CLS_CD = 'DEV_004'
+	</update>
+</mapper>

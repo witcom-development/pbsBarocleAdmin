@@ -1,0 +1,531 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.survey.service.SurveyMapper">
+	
+	<resultMap id="resultSurveyVO" type="com.dkitec.barocle.admin.customer.survey.vo.SurveyVO">
+		<result column="QUSTNR_SEQ" property="qustnrSeq" />
+		<result column="CATE_CD" property="cateCD" />
+		<result column="QUSTNR_TITLE" property="qustnrTitle" />
+		<result column="QUSTNR_PURPS" property="qustnrPurps" />
+		<result column="QUSTNR_WRITNG_GUIDE_CONTENT" property="qustnrWritngGuideContent" />
+		<result column="QUSTNR_STR_DTTM" property="qustnrStrDttm" />
+		<result column="QUSTNR_END_DTTM" property="qustnrEndDttm" />
+		<result column="ATCH_FILE_ID" property="atchFileID" />
+		<result column="DEL_YN" property="delYN" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+	</resultMap>
+	
+	<resultMap id="resultSurveyQestVO" type="com.dkitec.barocle.admin.customer.survey.vo.SurveyQestVO">
+		<result column="QUSTNR_SEQ" property="qustnrSeq" />
+		<result column="QUSTNR_QESITM_ID" property="qustnrQesitmID" />
+		<result column="QESTN_ORD" property="qestnOrd" />
+		<result column="QESTN_TYPE_CD" property="qestnTypeCD" />
+		<result column="QESTN_CONTENT" property="qestnContent" />
+		<result column="DEL_YN" property="delYN" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="ETC_YN" property="etcYn" />
+	</resultMap>
+	
+	<resultMap id="resultSurveyQestItemVO" type="com.dkitec.barocle.admin.customer.survey.vo.SurveyQestItemVO">
+		<result column="QUSTNR_SEQ" property="qustnrSeq" />
+		<result column="QUSTNR_QESITM_ID" property="qustnrQesitmID" />
+		<result column="QUSTNR_ITEM_ID" property="qustnrItemID" />
+		<result column="ITEM_ORD" property="itemOrd" />
+		<result column="ITEM_CONTENT" property="itemContent" />
+		<result column="DEL_YN" property="delYN" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+	</resultMap>
+	
+	<resultMap id="resultSurveyResultVO" type="com.dkitec.barocle.admin.customer.survey.vo.SurveyResultVO">
+		<result column="QUSTNR_SEQ" property="qustnrSeq" />
+		<result column="QUSTNR_QESITM_ID" property="qustnrQesitmID" />
+		<result column="QESTN_ORD" property="qestnOrd" />
+		<result column="QESTN_CONTENT" property="qestnContent" />
+		<result column="QUSTNR_ITEM_ID" property="qustnrItemID" />
+		<result column="ITEM_ORD" property="itemOrd" />
+		<result column="ITEM_CONTENT" property="itemContent" />
+		<result column="QUSTNR_ITEM_ID_COUNT" property="qustnrItemIDCount" />
+		<result column="SUM_QUANTITY" property="sumQuantity" />
+		<result column="PERCENT_QUANTITY" property="percentQuantity" />
+		<result column="ETC_YN" property="etcYn" />
+		<result column="ETC_CHK" property="etcChk" />
+	</resultMap>
+	
+	<resultMap id="daumEditorVO" type="com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO">
+		<result column="IMG_PATH" property="imgPath" />
+		<result column="IMG_URL" property="imgURL" />
+		<result column="IMG_NAME" property="imgName" />
+		<result column="IMG_SIZE" property="imgSize" />
+		<result column="THUMBNAIL_IMG_PATH" property="thumbnailImgPath" />
+		<result column="THUMBNAIL_IMG_URL" property="thumbnailImgURL" />
+		<result column="THUMBNAIL_IMG_NAME" property="thumbnailImgName" />
+		<result column="THUMBNAIL_IMG_SIZE" property="thumbnailImgSize" />
+	</resultMap>
+	
+	<resultMap id="resultSurveyResultExcelVO" type="com.dkitec.barocle.admin.customer.survey.vo.SurveyResultVO">
+		<result column="QUSTNR_SEQ" property="qustnrSeq" />
+		<result column="QUSTNR_RESPOND_ID" property="qustnrRespondId" />
+		<result column="QUSTNR_QESITM_ID" property="qustnrQesitmID" />
+		<result column="ETC_YN" property="etcYn" />
+		<result column="SEX_CD" property="sexCd" />
+		<result column="USR_BIRTH_DATE" property="usrBirthDate" />
+		<result column="AGE" property="age" />
+		<result column="YEARS" property="years" />
+		<result column="MB_POST_NO" property="mbPostNo" />
+		<result column="MB_ADDR1" property="mbAddr1" />
+		<result column="QESTN_ORD" property="qestnOrd" />
+		<result column="QESTN_QESITM_ID" property="qestnQesitmId" />
+		<result column="QESTN_CONTENT" property="qestnContent" />
+		<result column="ITEM_ORD" property="itemOrd" />
+		<result column="QUSTNR_ITEM_ID" property="qustnrItemID" />
+		<result column="ITEM_CONTENT" property="itemContent" />
+		<result column="COUNTA" property="counta" />
+		<result column="QUSTNR_ITEM_ID_COUNT" property="qustnrItemIDCount" />
+		<result column="SUM_QUANTITY" property="sumQuantity" />
+		<result column="PERCENT_QUANTITY" property="percentQuantity" />
+		<result column="SUM_UNRESPOND" property="sumUnrespond" />
+		<result column="SUM_TOT_RESPOND_UNRESPOND" property="sumTotRespondUnrespond" />
+	</resultMap>
+	
+	
+	<select id="listSurveyCount" parameterType="surveyVO" resultType="int">
+		SELECT	COUNT(QUSTNR_SEQ) AS QUSTNR_SEQ
+		FROM	TB_COM_QUSTNR_INFO
+		WHERE	DEL_YN = 'N'
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(QUSTNR_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(QUSTNR_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND QUSTNR_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+	</select>
+	
+	<select id="listSurvey" parameterType="surveyVO" resultMap="resultSurveyVO">
+		SELECT
+				QUSTNR_SEQ,
+				QUSTNR_TITLE,
+				QUSTNR_STR_DTTM,
+				QUSTNR_END_DTTM,
+				MOD_DTTM,
+				MOD_ID
+		FROM	TB_COM_QUSTNR_INFO
+		WHERE	DEL_YN = 'N'
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(QUSTNR_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(QUSTNR_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND QUSTNR_TITLE LIKE CONCAT('%',#{searchValue},'%')
+				</if>
+		ORDER BY
+				QUSTNR_END_DTTM DESC, QUSTNR_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewSurvey" parameterType="surveyVO" resultMap="resultSurveyVO">
+		SELECT	QUSTNR_SEQ, CATE_CD, QUSTNR_TITLE, QUSTNR_PURPS, QUSTNR_WRITNG_GUIDE_CONTENT,
+				QUSTNR_STR_DTTM, QUSTNR_END_DTTM, ATCH_FILE_ID, DEL_YN,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+		FROM 	TB_COM_QUSTNR_INFO
+		WHERE	DEL_YN = 'N' AND QUSTNR_SEQ = #{qustnrSeq}
+	</select>
+	
+	<select id="viewSurveyQest" parameterType="surveyVO" resultMap="resultSurveyQestVO">
+		SELECT	QUSTNR_SEQ, QUSTNR_QESITM_ID,
+				QESTN_ORD, QESTN_TYPE_CD, QESTN_CONTENT, DEL_YN,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, ETC_YN
+		FROM	TB_COM_QUSTNR_QESITM
+		WHERE	DEL_YN = 'N' AND QUSTNR_SEQ = #{qustnrSeq}
+		ORDER BY
+				QESTN_ORD ASC, QUSTNR_QESITM_ID ASC
+	</select>
+	
+	<select id="viewSurveyQestItem" parameterType="surveyQestVO" resultMap="resultSurveyQestItemVO">
+		SELECT	QUSTNR_SEQ, QUSTNR_QESITM_ID, QUSTNR_ITEM_ID,
+				ITEM_ORD, ITEM_CONTENT, DEL_YN,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+		FROM	TB_COM_QUSTNR_ITEM
+		WHERE	DEL_YN = 'N' AND QUSTNR_SEQ = #{qustnrSeq} AND QUSTNR_QESITM_ID = #{qustnrQesitmID}
+		ORDER BY
+				ITEM_ORD ASC, QUSTNR_ITEM_ID ASC
+	</select>
+	
+	<select id="maxOrd" parameterType="surveyVO" resultType="surveyVO">
+		SELECT MAX(QESTN_ORD) AS qestnOrd 
+  		  FROM TB_COM_QUSTNR_QESITM
+  		  WHERE	DEL_YN = 'N' AND QUSTNR_SEQ = #{qustnrSeq}
+	</select>
+	
+	<select id="maxOrdCnt" parameterType="surveyVO" resultType="int">
+		SELECT COUNT(QESTN_ORD) AS CNT
+  		  FROM TB_COM_QUSTNR_QESITM
+  		  WHERE	DEL_YN = 'N' AND QUSTNR_SEQ = #{qustnrSeq}
+	</select>
+	<!-- 설문 종료일 변경_2017.02.09_JHN -->
+	<insert id="insertSurvey" parameterType="surveyVO" useGeneratedKeys="true" keyProperty="qustnrSeq">
+		INSERT INTO TB_COM_QUSTNR_INFO
+		(
+			CATE_CD, QUSTNR_TITLE, QUSTNR_PURPS, QUSTNR_WRITNG_GUIDE_CONTENT,
+			QUSTNR_STR_DTTM, QUSTNR_END_DTTM, DEL_YN, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+		) 
+		VALUES
+		(
+			#{cateCD}, #{qustnrTitle}, #{qustnrPurps}, #{qustnrWritngGuideContent},
+			#{qustnrStrDttm}, CONCAT(LEFT(#{qustnrEndDttm},10),' 23:59:59'), #{delYN}, NOW(), #{regID}, NOW(), #{regID}
+		)
+	</insert>
+	
+	<select id="getNextQestNum" parameterType="surveyVO" resultType="int">
+		SELECT	IFNULL(MAX(substring(QUSTNR_QESITM_ID,-6)),0) AS maxQest
+		FROM	TB_COM_QUSTNR_QESITM
+		WHERE	QUSTNR_SEQ = #{qustnrSeq}
+	</select>
+	
+	<select id="getNextQestNum2" parameterType="surveyQestVO" resultType="int">
+		SELECT	IFNULL(MAX(substring(QUSTNR_QESITM_ID,-6)),0) AS maxQest
+		FROM	TB_COM_QUSTNR_QESITM
+		WHERE	QUSTNR_SEQ = #{qustnrSeq}
+		  AND QUSTNR_QESITM_ID =#{qustnrQesitmID}
+	</select>
+	
+	<select id="getNextItemNum" parameterType="surveyQestVO" resultType="int">
+		SELECT	IFNULL(MAX(substring(QUSTNR_ITEM_ID,-6)),0) AS maxItem
+		FROM	TB_COM_QUSTNR_ITEM
+		WHERE	QUSTNR_SEQ = #{qustnrSeq} AND QUSTNR_QESITM_ID =#{qustnrQesitmID}
+	</select>
+	
+	<insert id="insertSurveyQest" parameterType="surveyQestVO">
+		INSERT INTO TB_COM_QUSTNR_QESITM
+		(
+			QUSTNR_SEQ, QUSTNR_QESITM_ID, QESTN_ORD,
+			QESTN_CONTENT, DEL_YN, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, ETC_YN
+		)
+		VALUES
+		(
+			#{qustnrSeq}, #{qustnrQesitmID}, (SELECT IFNULL(MAX(T1.QESTN_ORD)+1,1) AS qestnOrd FROM TB_COM_QUSTNR_QESITM T1 WHERE T1.QUSTNR_SEQ = #{qustnrSeq}),
+			#{qestnContent}, #{delYN}, NOW(), #{regID}, NOW(), #{regID}, #{etcYn}
+		)
+	</insert>
+	
+	<insert id="insertSurveyQestItem" parameterType="surveyQestItemVO">
+		INSERT INTO TB_COM_QUSTNR_ITEM
+		(
+			QUSTNR_SEQ, QUSTNR_QESITM_ID, QUSTNR_ITEM_ID,
+			ITEM_ORD,
+			ITEM_CONTENT, DEL_YN, REG_DTTM, REG_ID, MOD_DTTM, MOD_ID
+		)
+		VALUES
+		(
+			#{qustnrSeq}, #{qustnrQesitmID}, #{qustnrItemID}, 
+			(SELECT IFNULL(MAX(T1.ITEM_ORD)+1,1) AS itemOrd FROM TB_COM_QUSTNR_ITEM T1 WHERE T1.QUSTNR_SEQ = #{qustnrSeq} AND T1.QUSTNR_QESITM_ID = #{qustnrQesitmID}),
+			#{itemContent}, #{delYN}, NOW(), #{regID}, NOW(), #{regID}
+		)
+	</insert>
+	<!-- 설문 종료일 변경_2017.02.09_JHN -->
+	<update id="updateSurvey" parameterType="surveyVO">
+		UPDATE TB_COM_QUSTNR_INFO
+		SET
+			CATE_CD = #{cateCD},
+			QUSTNR_TITLE = #{qustnrTitle},
+			QUSTNR_PURPS = #{qustnrPurps},
+			QUSTNR_WRITNG_GUIDE_CONTENT = #{qustnrWritngGuideContent},
+			QUSTNR_STR_DTTM = #{qustnrStrDttm},
+			QUSTNR_END_DTTM = CONCAT(LEFT(#{qustnrEndDttm},10),' 23:59:59'),
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+		WHERE
+			QUSTNR_SEQ = #{qustnrSeq}
+	</update>
+	
+	<update id="deleteSurveyQest" parameterType="surveyVO">
+		UPDATE TB_COM_QUSTNR_QESITM
+		SET
+			DEL_YN = #{delYN},
+			QESTN_ORD = 0
+		WHERE
+			QUSTNR_SEQ = #{qustnrSeq}
+	</update>
+	
+	<update id="deleteSurveyQestItem" parameterType="surveyVO">
+		UPDATE TB_COM_QUSTNR_ITEM
+		SET
+			DEL_YN = #{delYN},
+			ITEM_ORD = 0
+		WHERE
+			QUSTNR_SEQ = #{qustnrSeq}
+	</update>
+	
+	<update id="updateSurveyQest" parameterType="surveyVO">
+		UPDATE TB_COM_QUSTNR_QESITM
+		SET
+			DEL_YN = #{delYN},
+			QESTN_ORD = 	(SELECT INAT.qestnOrd FROM (
+								SELECT IFNULL(MAX(T1.QESTN_ORD)+1,1) AS qestnOrd 
+								FROM TB_COM_QUSTNR_QESITM T1 
+								WHERE T1.QUSTNR_SEQ = #{qustnrSeq} )
+							INAT) ,
+			QESTN_CONTENT = #{qestnContent},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID},
+			ETC_YN = #{etcYn}
+		WHERE
+			QUSTNR_SEQ = #{qustnrSeq} AND QUSTNR_QESITM_ID = #{qustnrQesitmID}
+	</update>
+	
+	<update id="updateSurveyQestItem" parameterType="surveyVO">
+		UPDATE TB_COM_QUSTNR_ITEM
+		SET
+			DEL_YN = #{delYN},
+			ITEM_ORD =	(SELECT INAT.itemOrd FROM (
+							SELECT IFNULL(MAX(T1.ITEM_ORD)+1,1) AS itemOrd 
+							FROM TB_COM_QUSTNR_ITEM T1 
+							WHERE T1.QUSTNR_SEQ = #{qustnrSeq} AND T1.QUSTNR_QESITM_ID = #{qustnrQesitmID})
+						INAT) ,
+			ITEM_CONTENT = #{itemContent},
+			MOD_DTTM = NOW(),
+			MOD_ID = #{modID}
+		WHERE
+			QUSTNR_SEQ = #{qustnrSeq} AND QUSTNR_QESITM_ID = #{qustnrQesitmID} AND QUSTNR_ITEM_ID = #{qustnrItemID}
+	</update>
+	
+	<update id="deleteSurvey" parameterType="surveyVO">
+		UPDATE TB_COM_QUSTNR_INFO
+		SET
+			DEL_YN = #{delYN}
+		WHERE
+			QUSTNR_SEQ = #{qustnrSeq}
+	</update>
+	
+	<select id="viewSurveyResult" parameterType="surveyResultVO" resultMap="resultSurveyResultVO">
+		SELECT QUSTNR_SEQ
+			  ,QESTN_ORD
+			  ,QESTN_CONTENT
+			  ,QUSTNR_QESITM_ID
+			  ,ITEM_CONTENT
+			  ,CASE WHEN ETC_CHK = 'Y' 
+					THEN SUM(QUSTNR_ITEM_ID_COUNT)
+					ELSE QUSTNR_ITEM_ID_COUNT
+					END AS QUSTNR_ITEM_ID_COUNT
+			  ,SUM_QUANTITY  
+		  ,QUSTNR_ITEM_ID 
+		  ,RNUM AS ITEM_ORD
+			  ,CASE WHEN ETC_CHK = 'Y' 
+					THEN ROUND(SUM(PERCENT_QUANTITY) / QUSTNR_ITEM_ID_COUNT,0)
+					ELSE PERCENT_QUANTITY
+					END AS PERCENT_QUANTITY
+			  ,ETC_YN
+			  ,ETC_CHK
+		  FROM (
+			  SELECT T1.QUSTNR_SEQ,
+				 (CASE @VNUM WHEN T1.QESTN_ORD THEN @ROWNUM:= @ROWNUM+1 ELSE @ROWNUM:=1 END) RNUM,
+					 T1.QUSTNR_QESITM_ID,
+					 T1.QESTN_ORD,
+					 T1.QESTN_CONTENT,	 
+					 CASE WHEN T1.ETC_CHK = 'Y' 
+						  THEN T1.QUSTNR_QESITM_ID
+						  ELSE T1.QUSTNR_ITEM_ID
+						  END QUSTNR_ITEM_ID, 
+					 CASE WHEN T1.ETC_CHK = 'Y' 
+						  THEN '기타의견'
+						  ELSE T1.ITEM_CONTENT
+						   END ITEM_CONTENT,
+					 T1.QUSTNR_ITEM_ID_COUNT,
+					 T1.SUM_QUANTITY,
+					 ROUND((T1.QUSTNR_ITEM_ID_COUNT / T1.SUM_QUANTITY) * 100)
+						AS PERCENT_QUANTITY,
+					 T1.ETC_YN,
+					 T1.ETC_CHK,
+				 (@VNUM:=T1.QESTN_ORD) VNUM
+			  FROM (SELECT TT1.QUSTNR_SEQ,
+						   TT1.QUSTNR_QESITM_ID,
+						   TT1.QESTN_ORD,
+						   TT1.QESTN_CONTENT,
+						   TT1.ETC_YN,
+						   TT2.QUSTNR_ITEM_ID,
+						   TT2.ITEM_CONTENT,
+						   COUNT(TT3.QUSTNR_ITEM_ID)   AS QUSTNR_ITEM_ID_COUNT,
+						   (SELECT COUNT(IT1.QUSTNR_ITEM_ID)
+							FROM TB_COM_QUSTNR_RSPNS_RESULT IT1
+							WHERE IT1.QUSTNR_QESITM_ID = TT1.QUSTNR_QESITM_ID)
+							  AS SUM_QUANTITY,
+						   TT2.ETC_YN				  AS ETC_CHK
+					FROM TB_COM_QUSTNR_QESITM	  TT1
+						 INNER JOIN TB_COM_QUSTNR_ITEM TT2
+							ON TT1.QUSTNR_QESITM_ID = TT2.QUSTNR_QESITM_ID
+						 LEFT OUTER JOIN TB_COM_QUSTNR_RSPNS_RESULT TT3
+							ON	 TT2.QUSTNR_QESITM_ID = TT3.QUSTNR_QESITM_ID
+							   AND TT2.QUSTNR_ITEM_ID = TT3.QUSTNR_ITEM_ID
+					WHERE TT1.DEL_YN = 'N' AND TT1.QUSTNR_SEQ = #{qustnrSeq}
+					GROUP BY TT1.QUSTNR_SEQ,
+							 TT1.QUSTNR_QESITM_ID,
+							 TT1.QESTN_ORD,
+							 TT1.QESTN_CONTENT,
+							 TT2.QUSTNR_SEQ,
+							 TT2.QUSTNR_QESITM_ID,
+							 TT2.QUSTNR_ITEM_ID,
+							 TT2.ITEM_CONTENT
+				 ) T1, (SELECT @VNUM:='', @ROWNUM:=0 FROM DUAL) RNUM
+				  )A
+				  GROUP BY A.QUSTNR_QESITM_ID, A.QUSTNR_ITEM_ID
+	</select>
+	
+	<select id="getEtcList" parameterType="surveyVO" resultType="surveyVO">
+		SELECT REG_ID AS regId, 
+			   ITEM_CONTENT AS itemContent
+		  FROM TB_COM_QUSTNR_ITEM
+		 WHERE 1=1 
+		   AND QUSTNR_QESITM_ID = #{popqustnrItemID}
+		   AND ETC_YN = 'Y'
+	</select>
+	
+	<!-- 다음에디터 이미지 추가 _ cms _20161223 -->
+	
+	<select id="getDaumEditorImage" parameterType="surveyVO" resultMap="daumEditorVO">
+		SELECT	
+				IMG_PATH,
+				IMG_URL,
+				IMG_NAME,
+				IMG_SIZE,
+				THUMBNAIL_IMG_PATH,
+				THUMBNAIL_IMG_URL,
+				THUMBNAIL_IMG_NAME,
+				THUMBNAIL_IMG_SIZE
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{qustnrSeq} AND BBS_CLS_CD = 'CTM_005'
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	<!-- AND 절 추가 및 DB 버전에 따른 KEY 값 NULL 업데이트 불가능의 따른 수정_2017.02.09_JHN -->
+	<update id="deleteDaumEditorImage" parameterType="surveyVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = 0
+		WHERE
+			BBS_SEQ = #{qustnrSeq}
+		AND BBS_CLS_CD = 'CTM_005' 
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="surveyVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = #{qustnrSeq}
+		WHERE BBS_CLS_CD = 'CTM_005' 
+		  AND IMG_NAME IN
+			<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+	</update>
+	
+	<select id="viewSurveyResultExcel" parameterType="surveyResultVO" resultMap="resultSurveyResultExcelVO">
+		<![CDATA[
+		SELECT 
+				QUSTNR_SEQ
+				,QUSTNR_RESPOND_ID
+				,IF(IFNULL(ETC_YN,'') = 'Y', '기타의견','-') AS ETC_YN
+				,IF(SEX_CD = 'M', '남', '여') AS SEX_CD
+				,USR_BIRTH_DATE
+				,DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) - 1 AS AGE
+				,CASE
+					WHEN DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) -1 < 20 THEN '10대'
+					WHEN DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) -1 < 30 THEN '20대'
+					WHEN DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) -1 < 40 THEN '30대'
+					WHEN DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) -1 < 50 THEN '40대'
+					WHEN DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) -1 < 60 THEN '50대'
+					WHEN DATE_FORMAT(NOW(),'%Y') - SUBSTRING(USR_BIRTH_DATE,1,4) -1 < 70 THEN '60대'
+					ELSE '70대 이상'
+					END AS YEARS
+				,IFNULL(MB_POST_NO,'-') AS MB_POST_NO
+				,CASE
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '서울특' 
+						THEN IF(SUBSTRING(MB_ADDR1,8,1) = '구',SUBSTRING(MB_ADDR1,1,8),
+								 IF(SUBSTRING(MB_ADDR1,9,1) = '구', SUBSTRING(MB_ADDR1,1,9), 
+								 	IF(SUBSTRING(MB_ADDR1,10,1) = '구', SUBSTRING(MB_ADDR1,1,10),
+										SUBSTRING(MB_ADDR1,1,11))))
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '세종특' THEN '세종특별자치시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '인천광' THEN '인천광역시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '부산광' THEN '부산광역시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '대구광' THEN '대구광역시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '광주광' THEN '광주광역시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '대전광' THEN '대전광역시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '울산광' THEN '울산광역시'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '충청북' THEN '충청북도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '충청남' THEN '충청남도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '경상북' THEN '경상북도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '경상남' THEN '경상남도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '전라북' THEN '전라북도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '전라남' THEN '전라남도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '경기도' THEN '경기도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '강원도' THEN '강원도'
+					WHEN SUBSTRING(MB_ADDR1,1,3) = '제주도' THEN '제주도'
+					WHEN IFNULL(MB_ADDR1,'-') = '-' THEN '주소 없음'
+					ELSE '그 외 지역'
+					END AS MB_ADDR1
+				,QESTN_ORD
+				,QUSTNR_QESITM_ID
+				,QESTN_CONTENT
+				,ITEM_ORD
+				,QUSTNR_ITEM_ID
+				,ITEM_CONTENT
+				, 1 AS COUNTA
+				,QUSTNR_ITEM_ID_COUNT
+				,SUM_QUANTITY
+				,ROUND((QUSTNR_ITEM_ID_COUNT / SUM_QUANTITY) * 100) AS PERCENT_QUANTITY
+				,SUM_UNRESPOND
+				,(SUM_QUANTITY+SUM_UNRESPOND) AS SUM_TOT_RESPOND_UNRESPOND
+		FROM (
+				SELECT 
+							RESPONSE.QUSTNR_SEQ,
+							RESPONSE.QUSTNR_RESPOND_ID,
+							RESPONSE.ETC_YN,
+							USR.SEX_CD,
+							CAST(AES_DECRYPT(UNHEX(USR.USR_BIRTH_DATE),'BRC') as CHAR) AS USR_BIRTH_DATE,
+							MB.MB_POST_NO,
+							MB.MB_ADDR1,
+							QESITM.QESTN_ORD,
+							QESITM.QUSTNR_QESITM_ID,
+							QESITM.QESTN_CONTENT,
+							ITEM.ITEM_ORD,
+							ITEM.QUSTNR_ITEM_ID,
+							ITEM.ITEM_CONTENT,
+							(SELECT COUNT(RESPONSE_COUNT.QUSTNR_ITEM_ID) 
+									FROM TB_COM_QUSTNR_RSPNS_RESULT RESPONSE_COUNT 
+									WHERE RESPONSE_COUNT.QUSTNR_ITEM_ID = RESPONSE.QUSTNR_ITEM_ID
+									AND RESPONSE_COUNT.QUSTNR_SEQ = RESPONSE.QUSTNR_SEQ)  AS QUSTNR_ITEM_ID_COUNT,
+							(SELECT COUNT(IT1.QUSTNR_ITEM_ID)
+									FROM TB_COM_QUSTNR_RSPNS_RESULT IT1
+									WHERE IT1.QUSTNR_QESITM_ID = QESITM.QUSTNR_QESITM_ID) AS SUM_QUANTITY,
+							(SELECT COUNT(RSPONDINFO.QUSTNR_RESPOND_ID)
+									FROM TB_COM_QUSTNR_RESPOND_INFO RSPONDINFO
+									WHERE RSPONDINFO.QUSTNR_SEQ = RESPONSE.QUSTNR_SEQ
+										  AND RSPONDINFO.PARTICP_YN = 'N') AS SUM_UNRESPOND
+				
+				FROM TB_COM_QUSTNR_RSPNS_RESULT RESPONSE 
+				INNER JOIN TB_COM_QUSTNR_QESITM QESITM ON RESPONSE.QUSTNR_QESITM_ID = QESITM.QUSTNR_QESITM_ID AND RESPONSE.QUSTNR_SEQ = QESITM.QUSTNR_SEQ
+				INNER JOIN TB_COM_QUSTNR_ITEM ITEM ON RESPONSE.QUSTNR_QESITM_ID = ITEM.QUSTNR_QESITM_ID AND RESPONSE.QUSTNR_ITEM_ID = ITEM.QUSTNR_ITEM_ID
+				INNER JOIN TB_SVC_MB MB ON RESPONSE.QUSTNR_RESPOND_ID = MB.MB_ID
+				INNER JOIN TB_SVC_USR USR ON MB.USR_SEQ = USR.USR_SEQ
+				AND RESPONSE.QUSTNR_SEQ = #{qustnrSeq}
+				) AS A
+		
+		ORDER BY QUSTNR_RESPOND_ID
+		]]>
+		<!-- dg_decrypt('TB_SVC_USR','USR_BIRTH_DATE',USR.USR_BIRTH_DATE) AS USR_BIRTH_DATE, -->
+		<!-- USR.USR_BIRTH_DATE AS USR_BIRTH_DATE, -->
+	</select>
+</mapper>

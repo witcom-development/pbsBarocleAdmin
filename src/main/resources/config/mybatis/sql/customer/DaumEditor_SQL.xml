@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.daumeditor.service.DaumEditorMapper">
+	
+	<insert id="insertDaumEditorImage" parameterType="daumEditorVO">
+		<selectKey keyProperty="bbsClsCD" resultType="java.lang.String" order="BEFORE">
+			SELECT	COM_CD AS bbsClsCD
+			FROM	TB_SYS_COM_CD
+			WHERE	USE_YN = 'Y' AND CD_DESC2 = #{bbsClsCD}
+		</selectKey>
+		INSERT INTO TB_COM_EDITOR_IMG
+			(
+				BBS_CLS_CD, BBS_SEQ, IMG_PATH, IMG_URL, IMG_NAME, IMG_SIZE,
+				THUMBNAIL_IMG_PATH, THUMBNAIL_IMG_URL, THUMBNAIL_IMG_NAME, THUMBNAIL_IMG_SIZE
+			)
+		VALUES
+			(
+				#{bbsClsCD}, #{bbsSeq}, #{imgPath}, #{imgURL}, #{imgName}, #{imgSize},
+				#{thumbnailImgPath}, #{thumbnailImgURL}, #{thumbnailImgName}, #{thumbnailImgSize}
+			)
+	</insert>
+	
+	<!-- 
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM',null,null,null,null,'Y',0,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_001','CTM',null,'공지사항','notice','Y',1,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_002','CTM',null,'FAQ','faq','Y',2,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_003','CTM',null,'시민의견수렴','opinionboard','Y',3,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_004','CTM',null,'포토갤러리','photogallery','Y',4,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_005','CTM',null,'모바일 설문','mobilesurvey','Y',5,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_006','CTM',null,'추천하이킹 코스','hikingcourse','Y',6,'NA',NOW(),null,null,null);
+	
+	INSERT INTO TB_SYS_COM_CD (COM_CD,COM_UP_CD,GRP_FIX,CD_DESC1,CD_DESC2,USE_YN,DSP_ORD,REG_ID,REG_DTTM,ADD_VAL1,ADD_VAL2,ADD_VAL3)
+	VALUES ('CTM_007','CTM',null,'기부자','donor','Y',7,'NA',NOW(),null,null,null);
+	 -->
+	 
+	 <!-- 파일 업로드_cms_20161108 -->
+	<insert id="insertDaumEditorFile" parameterType="daumEditorVO">
+		<selectKey keyProperty="bbsClsCD" resultType="java.lang.String" order="BEFORE">
+			SELECT	COM_CD AS bbsClsCD
+			FROM	TB_SYS_COM_CD
+			WHERE	USE_YN = 'Y' AND CD_DESC2 = #{bbsClsCD}
+		</selectKey>
+		INSERT INTO TB_COM_EDITOR_IMG
+			(
+				BBS_CLS_CD, BBS_SEQ, IMG_PATH, IMG_URL, IMG_NAME, IMG_SIZE
+			)
+		VALUES
+			(
+				#{bbsClsCD}, #{bbsSeq}, #{filePath}, #{fileURL}, #{fileName}, #{fileSize}
+			)
+	</insert> 
+	 
+</mapper>

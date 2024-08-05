@@ -1,0 +1,482 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.status.stationStatus.service.StationStatusMapper">
+	<select id="getStationStatusTotCnt" resultType="statusVo" parameterType="String">
+		{ call PROC_ADMIN.getStationStatusTotCnt() }
+	</select> 
+	<select id="getBrokenDeviceTotCnt" resultType="statusVo">
+		{ call PROC_ADMIN.getBrokenDeviceTotCnt() }
+	</select>  
+	<select id="geBikeStatusTotCnt" resultType="statusVo">
+		{ call PROC_ADMIN.geBikeStatusTotCnt() }
+	</select> 
+	<select id="getRentStatusTotCnt" resultType="statusVo"> 
+	<![CDATA[
+		{ call PROC_ADMIN.getRentStatusTotCnt() }
+	]]>		 
+	</select>  
+	<select id="getStationStautsList" resultType="statusVo" parameterType="statusVo">
+		{ call PROC_ADMIN.getStationStautsListReal_QR2( #{stationId}, #{stationGrpSeq}, #{paramSearchType}, #{paramSearchWord},#{firstRecordIndex}, #{recordCountPerPage}
+											  , #{orderColumn},#{stationOrderType},#{sharedOrderType}, #{batteryStusCd}, #{stationSeCd}
+		)}
+	</select>
+   
+	<select id="getStationStautsListNew" resultType="stationVo" parameterType="stationVo">
+		{ call PROC_ADMIN.getStationStautsListReal_NEW(  #{stationGrpSeq}, #{paramSearchWord}, #{paramCenterId}, #{paramTeamSeq}	) }
+	</select>	
+	
+	<select id="getStationStautsListRound" resultType="stationVo" parameterType="stationVo">
+		{ call PROC_ADMIN.getStationStautsListRound(  #{paramSearchWord}, #{stationNo} ) }
+	</select>	
+	
+	
+	<select id="getBikeBatLowStationList" resultType="statusVo" parameterType="statusVo">
+		<![CDATA[
+			SELECT 
+				   GROUP_CONCAT( CONCAT( B.BIKE_NO, '(', B.USE_CNT, '%', ')' ) )		AS parkingBike
+				 , GROUP_CONCAT( C.MLANG_COM_CD_NAME )							AS bikeStatusName
+				 , COUNT(1)														AS parkingBikeTotCnt
+				 , F.STATION_NAME												AS stationName
+				 , F.STATION_ID													AS stationId
+				 , G.stationLatitude											AS stationLatitude
+				 , G.stationLongitude 											AS stationLongitude
+				 
+			  FROM TB_OPR_BIKE_PARKING 						A
+		INNER JOIN TB_OPR_BIKE 								B ON ( A.BIKE_ID = B.BIKE_ID )
+		INNER JOIN TB_SYS_MLANG_COM_CD 						C ON ( B.BIKE_STUS_CD = C.COM_CD AND C.LANG_CLS_CD = 'LAG_001' )
+		INNER JOIN TB_OPR_RACK 								D ON ( A.RACK_ID = D.RACK_ID )
+		INNER JOIN TB_OPR_STATION 							E ON ( D.NOW_LOCATE_ID = E.STATION_ID )
+		INNER JOIN TB_OPR_MLANG_STATION 					F ON ( E.STATION_ID = F.STATION_ID AND F.LANG_CLS_CD = 'LAG_001' )
+		INNER JOIN PROC_ADMIN.currentStationInfo_QR 		G ON ( E.STATION_ID = G.stationId )
+		
+			 WHERE B.BIKE_SE_CD IN (  'BIK_002' )
+			   AND B.USE_CNT <= 20
+			   -- 2021 08 06 임시폐쇄 예정 추가
+			   AND E.STATION_USE_YN IN  ('Y','T','S' )
+		]]>	  	   
+			 <if test='stationId != null and stationId != ""'>
+			   AND E.STATION_ID = #{stationId}  
+			 </if>
+			 <if test='stationGrpSeq != null and stationGrpSeq != "" and stationId == ""'>
+			   AND E.STATION_ID IN (SELECT STATION_ID FROM TB_OPR_STATION WHERE STATION_GRP_SEQ = #{stationGrpSeq})
+			 </if>
+			 <if test='batteryStusCd != null and batteryStusCd != ""'>
+			   AND G.centerId = #{batteryStusCd}
+				 <if test='paramSearchType != null and paramSearchType != ""'>
+				   AND G.teamSeq = #{paramSearchType}
+				 </if>
+			 </if>			 
+			 <if test='stationSeCd != null and stationSeCd != ""'>
+			   AND E.STATION_SE_CD = #{stationSeCd}
+			 </if>
+			 <if test='paramSearchWord != null and paramSearchWord != ""'>
+			   AND F.STATION_NAME LIKE CONCAT('%',#{paramSearchWord},'%')
+			 </if>
+			 <if test='(stationGrpSeq != null and stationGrpSeq != "" and stationId == "") and (paramSearchType == "" or paramSearchType == null) and (paramSearchWord != null and paramSearchWord != "")'>
+			   AND F.STATION_NAME LIKE CONCAT('%',#{paramSearchWord},'%')
+			   OR  E.STATION_NO LIKE CONCAT('%',#{paramSearchWord},'%')
+			 </if>
+	   GROUP BY E.STATION_ID	  			   			 			 			   
+	</select>	
+	
+	<select id="getStationListCount" resultType="int" parameterType="statusVo">
+	  SELECT count(*) 
+		FROM spb.TB_OPR_STATION S INNER JOIN spb.TB_OPR_MLANG_STATION M 
+		  ON S.STATION_ID = M.STATION_ID
+	   WHERE M.LANG_CLS_CD = #{lang} 
+	   <if test='stationId != null and stationId != ""'>
+		 AND S.STATION_ID = #{stationId}  
+	   </if>
+	   <if test='stationGrpSeq != null and stationGrpSeq != "" and stationId == ""'>
+		 AND S.STATION_ID IN (SELECT STATION_ID FROM TB_OPR_STATION WHERE STATION_GRP_SEQ = #{stationGrpSeq})
+	   </if>
+	   <!-- 대여소 검색조건_20160504_JJH_START -->
+	   <if test='paramSearchType == "NAME" and paramSearchWord != null and paramSearchWord != ""'>
+		 AND M.STATION_NAME LIKE CONCAT('%',#{paramSearchWord},'%')
+	   </if>
+	   <if test='paramSearchType == "NUM" and paramSearchWord != null and paramSearchWord != ""'>
+		 AND S.STATION_NO LIKE CONCAT('%',#{paramSearchWord},'%')
+	   </if>  
+	   <if test='(stationGrpSeq != null and stationGrpSeq != "" and stationId == "") and (paramSearchType == "" or paramSearchType == null) and (paramSearchWord != null and paramSearchWord != "")'>
+		 AND M.STATION_NAME LIKE CONCAT('%',#{paramSearchWord},'%')
+		 OR S.STATION_NO LIKE CONCAT('%',#{paramSearchWord},'%')
+		 AND M.LANG_CLS_CD = #{lang}
+	   </if>
+	   <!-- 20160504_JJH_END -->
+	</select>  
+	<select id="getCurrentStationDetail" parameterType="statusVo" resultType="statusVo" >	 
+		SELECT A.STATION_ID											  AS stationId
+			  ,(SELECT STATION_NAME
+				  FROM spb.TB_OPR_MLANG_STATION
+				 WHERE STATION_ID = A.STATION_ID
+				   AND LANG_CLS_CD = #{lang}	)						AS stationName  
+			  ,INSERT(A.STATION_POST_NO,4,0,'-')						 AS stationPostNo
+			  ,CONCAT(A.STATION_ADDR1,A.STATION_ADDR2)				   AS stationAddr
+			  ,IF(exists((SELECT DELAY_SEQ
+						   FROM spb.TB_OPR_DELAY
+						  WHERE now() between DELAY_STR_DATE AND DELAY_END_DATE)),'운휴',
+								  														 case when A.STATION_USE_YN = 'T' THEN '임시폐쇄'
+								  															  when A.STATION_USE_YN = 'S' THEN '임시폐쇄 예정'
+																							  when A.STATION_USE_YN = 'N' THEN '미사용'
+																							  when A.STATION_USE_YN = 'C' THEN '폐쇄'
+																							  ELSE '운영중' END ) AS currnetStatus
+			  ,A.MEMO AS memo			
+		  FROM spb.TB_OPR_STATION A
+		 WHERE A.STATION_ID = #{stationId}
+	</select>	  
+	<select id="getStationApList" parameterType="statusVo" resultType="apVo">  
+		SELECT A.DEVICE_ID																					  AS deviceId
+			  ,(SELECT MLANG_COM_CD_NAME
+				  FROM spb.TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = D.DEVICE_STUS_CD
+				   AND LANG_CLS_CD = #{lang})																   AS deviceStatusName
+			  ,D.DEVICE_STUS_CD																				 AS deviceStatusCd
+			  ,IF(EXISTS(SELECT EQUIPMENT_ID
+						   FROM spb.TB_MTC_FAULT_INFO 
+						  WHERE EQUIPMENT_ID =  A.DEVICE_ID 
+							AND READ_CLS_CD = 'S'
+							AND EQUIPMENT_CLS_CD = 'DEV_003'), (SELECT DATE_FORMAT(REG_DTTM, '%Y-%m-%d %H:%i') 
+																  FROM spb.TB_MTC_FAULT_INFO 
+																 WHERE EQUIPMENT_ID =  A.DEVICE_ID 
+																   AND READ_CLS_CD = 'S'
+																   AND EQUIPMENT_CLS_CD = 'DEV_003'
+																 ORDER BY FAULT_SEQ DESC
+																 LIMIT 1), '-' )	 AS regDttm	
+		   FROM spb.TB_IOT_AP_LOCATE_INFO A INNER JOIN spb.TB_IOT_DEVICE D ON A.DEVICE_ID = D.DEVICE_ID
+		  WHERE A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59', '%Y-%m-%d %H:%i:%s') 
+			AND A.LOCATE_CLS_CD = 'S'
+			AND A.LOCATE_ID = #{stationId}
+	</select>   
+	
+	<!-- 20160728_JJH_START -->
+	<select id="getStationBikeList"  parameterType="statusVo" resultType="bikeVo">
+		  SELECT A.*
+			 , A.FAULT_SEQ	AS faultSeq
+			 , IFNULL(DATE_FORMAT(INFO.REG_DTTM, '%Y-%m-%d %H:%i'),'-')  AS regDttm
+			 , CASE	WHEN C.MLANG_COM_CD_NAME IS NOT NULL THEN C.MLANG_COM_CD_NAME
+					   WHEN CC.MLANG_COM_CD_NAME IS NOT NULL THEN CC.MLANG_COM_CD_NAME
+					   ELSE ''	
+			   END AS entrpsCdNm
+		  FROM
+			   (
+					 SELECT B.BIKE_ID											 AS bikeId
+						  , B.BIKE_NO											 AS bikeNo
+						  , IF(SUBSTRING(BIKE_NO,5,5) >= 30000, B.USE_CNT,(IFNULL( CD.CD_DESC1, '-')))	  AS batteryStusCd
+						  , CASE WHEN Y.BIKE_ID IS NULL THEN Z.MLANG_COM_CD_NAME	
+							ELSE CONCAT('행사용(', Y.BIKE_CENTER, ')' )
+							END													AS bikeStatusName 
+						  , B.BIKE_STUS_CD										 AS bikeStatusCd
+						  , R.NOW_STATION_EQUIP_ORD								AS stationEquipOrder
+						  , A.CASCADE_YN										   AS cascadeYn
+						  , (
+									SELECT MAX(FAULT_SEQ)
+									  FROM spb.TB_MTC_FAULT_INFO Z																
+									 WHERE EQUIPMENT_ID = A.BIKE_ID																
+									   AND READ_CLS_CD = 'S'													   
+									   AND EQUIPMENT_CLS_CD  = 'DEV_001'
+							   ) AS FAULT_SEQ
+							  , (
+									SELECT MAX(FAULT_SEQ)
+									  FROM spb.TB_MTC_CHECK_INFO Z																
+									 WHERE EQUIPMENT_ID = A.BIKE_ID																
+									   AND READ_CLS_CD = 'S'													   
+									   AND EQUIPMENT_CLS_CD  = 'DEV_001'
+							   ) AS CHECK_SEQ  
+						  , R.NOW_STATION_EQUIP_ORD
+						  , (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = R.NOW_LOCATE_ID AND LANG_CLS_CD = 'LAG_001') AS stationName
+					   FROM spb.TB_OPR_BIKE_PARKING A 
+					  INNER JOIN spb.TB_OPR_BIKE B ON A.BIKE_ID = B.BIKE_ID
+					  INNER JOIN spb.TB_OPR_RACK R ON A.RACK_ID = R.RACK_ID
+				 		LEFT JOIN spb.TB_SYS_COM_CD CD ON B.BIKE_BATTERY_STUS_CD = CD.COM_CD 
+				 		LEFT JOIN spb.TB_SYS_MLANG_COM_CD Z ON Z.COM_CD = B.BIKE_STUS_CD AND LANG_CLS_CD = 'LAG_001'
+				 		LEFT JOIN spb.TB_OPR_BIKE_EVENT   Y ON A.BIKE_ID = Y.BIKE_ID
+					   WHERE R.NOW_LOCATE_CLS_CD = 'S'
+					   AND R.NOW_LOCATE_ID   = #{stationId}
+					   
+				 ) A
+		  LEFT JOIN spb.TB_MTC_FAULT_INFO   INFO   ON ( A.FAULT_SEQ = INFO.FAULT_SEQ )
+		  LEFT JOIN spb.TB_MTC_FAULT_DETL   DETL   ON ( A.FAULT_SEQ = DETL.FAULT_SEQ )  
+		  LEFT JOIN spb.TB_SYS_MLANG_COM_CD C	  ON ( C.COM_CD	= DETL.FAULT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) 
+		  
+		  LEFT JOIN spb.TB_MTC_CHECK_INFO   C_INFO   ON ( A.CHECK_SEQ = C_INFO.FAULT_SEQ )
+		  LEFT JOIN spb.TB_MTC_CHECK_DETL   C_DETL   ON ( A.CHECK_SEQ = C_DETL.FAULT_SEQ )  
+		  LEFT JOIN spb.TB_SYS_MLANG_COM_CD CC	  ON ( CC.COM_CD	= C_DETL.BRKDN_STUS_CD AND CC.LANG_CLS_CD = 'LAG_001' ) 
+	
+		  ORDER BY bikeNo
+		  
+	</select>	 
+	<select id="getStationArmList"  parameterType="statusVo" resultType="armVo">
+		SELECT B.RACK_ID											  AS rackId
+			  ,(SELECT MLANG_COM_CD_NAME
+				  FROM spb.TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = B.RACK_STUS_CD
+				   AND LANG_CLS_CD = #{lang})						 AS rackStatusName
+			  ,IFNULL(B.RACK_STUS_CD,'-')							 AS rackStatusCd
+			  ,B.NOW_STATION_EQUIP_ORD								AS stationEquipOrder
+			 <!-- ,IFNULL(A.CASCADE_YN,'N')							   AS cascadeYn-->
+			  ,IF(EXISTS(SELECT EQUIPMENT_ID
+						   FROM spb.TB_MTC_FAULT_INFO 
+						  WHERE EQUIPMENT_ID =  B.RACK_ID
+							AND READ_CLS_CD = 'S'
+							AND EQUIPMENT_CLS_CD = 'DEV_004'), (SELECT DATE_FORMAT(REG_DTTM, '%Y-%m-%d %H:%i') 
+																  FROM spb.TB_MTC_FAULT_INFO 
+																 WHERE EQUIPMENT_ID = B.RACK_ID
+																  AND READ_CLS_CD = 'S'
+																  AND EQUIPMENT_CLS_CD= 'DEV_004'
+																 ORDER BY FAULT_SEQ DESC
+																 LIMIT 1),'-')		   AS regDttm 
+		   , C.QRTEXT	AS qrText
+		  FROM spb.TB_OPR_RACK B  LEFT OUTER JOIN spb.TB_OPR_QRCODE C ON B.RACK_ID = C.RACKID
+		  WHERE B.NOW_LOCATE_CLS_CD = 'S'
+			AND B.NOW_LOCATE_ID = #{stationId}
+ <![CDATA[  AND B.RACK_STUS_CD <> 'RAS_002'		]]>
+		  ORDER BY B.NOW_STATION_EQUIP_ORD
+	</select>
+	<select id="getStationRackTotInfo" parameterType="statusVo" resultType="armVo">	 
+		SELECT COUNT(T.RACK_ID)									AS rackTotCnt
+			  ,IFNULL(SUM(IF(EXISTS(SELECT RACK_ID
+							   FROM spb.TB_OPR_BIKE_PARKING
+							   WHERE RACK_ID = T.RACK_ID
+								 AND CASCADE_YN ='N') ,1, 0)) ,0)  AS keepBikeRackCnt
+			  ,IFNULL(SUM(IF(EXISTS(SELECT RACK_ID
+							   FROM spb.TB_OPR_BIKE_PARKING
+							  WHERE RACK_ID = T.RACK_ID
+								 AND CASCADE_YN ='Y') ,1, 0)),0)   AS cascadeRackCnt			
+		 FROM (
+			  SELECT B.RACK_ID						 
+				FROM spb.TB_OPR_RACK B
+			   WHERE B.NOW_LOCATE_CLS_CD = 'S'
+				 AND B.NOW_LOCATE_ID =  #{stationId}
+	   <![CDATA[ AND B.RACK_STUS_CD <> 'RAS_002'		]]> ) AS T
+	</select>  
+	
+  <!-- 실시간 매출현황, 홈페이지 가입현황, 자전거 재고현황_cms_20161125 -->
+	<select id="getRealStation" resultType="statusVo" parameterType="statusVo" >	 
+	  SELECT A.*
+		   ,  FORMAT( B.totCnt   ,0)  AS totCnt
+		   ,  FORMAT( B.yoilCnt  ,0)  AS yoilCnt
+<!-- 		   ,  FORMAT(
+			   			( SELECT COUNT(1)  FROM TB_SVC_RENT_HIST A 
+						   WHERE A.RENT_YMD = CURDATE()
+							 AND RENT_DTTM BETWEEN CURDATE()  AND DATE_ADD(CURDATE(), INTERVAL 1 DAY )
+						  해당 데이터는 향후
+							 AND ( A.USE_MI  &gt;= 2 OR (A.USE_MI   &lt;= 2  AND A.RENT_STATION_ID &lt;&gt;A.RETURN_STATION_ID ) )
+						 )
+					  ,0)		 AS tot -->
+<!-- 		   ,  FORMAT(( SELECT COUNT(1)  AS CNT  FROM TB_OPR_BIKE A ),0 )				  AS bikeCnt
+		   ,  FORMAT((  SELECT COUNT(1)  AS TOT_RELOCATE_CNT FROM TB_MTC_RELOCATE_HIST RH  INNER JOIN TB_OPR_STATION S ON RH.TO_STATION_ID = S.STATION_ID
+				 WHERE RH.RELOCATE_END_DTTM >= STR_TO_DATE( CONCAT(  #{searchDate}, ' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+				   AND S.STATION_GRP_SEQ NOT IN (  0, 2))   
+					  ,0)		  AS totRelocateCnt  -->
+	 FROM
+	 (				
+		  SELECT FORMAT(SUM(A.TOT_AMT),0) AS bilTot
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ( 'BIL_001', 'BIL_011' ) THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil001Amt
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ( 'BIL_002', 'BIL_012' ) THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil002Amt
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ( 'BIL_003', 'BIL_013' ) THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil003Amt
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ( 'BIL_004', 'BIL_014' ) THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil004Amt
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD IN ( 'BIL_005', 'BIL_015' ) THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil005Amt
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_006'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil006Amt 
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_007'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil007Amt	   
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_016'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil016Amt 
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_017'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil017Amt		
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_008'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil008Amt
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_009'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil009Amt	   
+			   , FORMAT(SUM(CASE WHEN A.PAYMENT_CLS_CD =	'BIL_010'			  THEN A.TOT_AMT ELSE 0 END), 0 ) AS bil010Amt
+		   FROM TB_SVC_PAYMENT A
+		  WHERE 1 = 1
+			AND PAYMENT_DTTM BETWEEN CURDATE()  AND DATE_ADD(CURDATE(), INTERVAL 1 DAY )
+			AND A.PAYMENT_CLS_CD BETWEEN 'BIL_001' AND 'BIL_019'   
+ 	) A
+ 	,
+ 	(
+ 		  SELECT COUNT(1)   AS totCnt
+ 			   , SUM( CASE WHEN B.REG_DTTM  BETWEEN  CURDATE()  AND DATE_ADD(CURDATE(), INTERVAL 1 DAY ) THEN 1 ELSE 0 END ) AS yoilCnt
+			FROM TB_SVC_MB A 
+		   INNER JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
+		   WHERE 1=1  
+			 AND A.LEAVE_YN != 'Y' 
+ 	) B
+	</select> 
+	
+	
+	<!-- 상하위 대여소_cms_20161125 -->
+	<select id="getRealStationList" resultType="statusVo" parameterType="statusVo" >	 
+	 
+	   <![CDATA[	
+		  SELECT CONCAT(RNUM,'. ',MAX(highStation)) AS highStation
+				,CONCAT(RNUM,'. ',MAX(lowStation)) AS lowStation
+			FROM (
+				SELECT  highStation,
+						lowStation
+					  , (CASE @VNUM WHEN A.GB THEN @ROWNUM:= @ROWNUM+1 ELSE @ROWNUM:=1 END) RNUM
+					  , (@VNUM:=A.GB) VNUM
+				  FROM (  
+					SELECT CASE WHEN GB = '1' THEN CONCAT(GRP_NAME, ' 전체 : ',CNT) END AS  highStation,
+						   CASE WHEN GB = '2' THEN CONCAT(GRP_NAME, ' 전체 : ',CNT) END AS  lowStation,
+						   GB
+					  FROM (
+						   SELECT GB,
+								  (SELECT CONCAT(A.STATION_NAME,' ( ',B.STATION_GRP_NAME,' )')
+											  FROM (SELECT A.STATION_GRP_SEQ, B.STATION_NAME, B.STATION_ID
+													FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION B
+													WHERE	 A.STATION_ID = B.STATION_ID
+													  AND B.LANG_CLS_CD = 'LAG_001') A,
+												   TB_OPR_MLANG_STATION_GRP	B
+											  WHERE	 A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
+													AND B.LANG_CLS_CD = 'LAG_001'
+													AND A.STATION_ID = RESI.STATION_ID) AS GRP_NAME
+								  ,CNT
+							FROM (	  
+								   (SELECT  '1' AS GB, STATION_ID ,CONCAT(MAX(CNT)+MAX(CNT2),'건 ( 대여 :',MAX(CNT),' / 반납 :',MAX(CNT2),')') AS CNT  
+								   FROM (
+										 SELECT  
+												STATION_ID,
+												IFNULL(CASE WHEN RE_GB = '1' THEN SUM(CNT) END,0) AS CNT,
+												IFNULL(CASE WHEN RE_GB = '2' THEN SUM(CNT) END,0) AS CNT2
+										   FROM (
+											   SELECT '1' AS RE_GB,A.RENT_STATION_ID AS STATION_ID, COUNT(A.RENT_STATION_ID) AS CNT
+	  											 FROM TB_SVC_RENT_HIST A
+	  												WHERE A.RENT_YMD = #{searchDate}
+	  												]]>
+	  												  AND ( A.USE_MI &gt;= 2 OR (A.USE_MI &lt; 2  AND A.RENT_STATION_ID &lt;&gt; A.RETURN_STATION_ID ) )
+													<![CDATA[							 
+												 GROUP BY RENT_STATION_ID   
+											  UNION ALL
+	  										   SELECT '2' ,A.RETURN_STATION_ID AS STATION_ID, COUNT(A.RETURN_STATION_ID) AS CNT
+	  											 FROM TB_SVC_RENT_HIST A
+	  												WHERE A.RETURN_YMD = #{searchDate}
+	  												]]>
+	  												  AND ( A.USE_MI &gt;= 2 OR (A.USE_MI &lt; 2  AND A.RENT_STATION_ID &lt;&gt; A.RETURN_STATION_ID ) )
+													<![CDATA[							  
+												 GROUP BY RETURN_STATION_ID	
+											 )A  
+											 WHERE STATION_ID IS NOT NULL 
+											 GROUP BY STATION_ID, RE_GB 
+										  )A	
+										  GROUP BY STATION_ID 
+										  ORDER BY MAX(CNT)+MAX(CNT2) DESC , MAX(CNT) DESC   
+										  LIMIT 5)
+									UNION ALL
+									(SELECT  '2' AS GB, STATION_ID ,CONCAT(MAX(CNT)+MAX(CNT2),'건 ( 대여 :',MAX(CNT),' / 반납 :',MAX(CNT2),')') AS CNT  
+								   FROM (
+										 SELECT  
+												STATION_ID,
+												IFNULL(CASE WHEN RE_GB = '1' THEN SUM(CNT) END,0) AS CNT,
+												IFNULL(CASE WHEN RE_GB = '2' THEN SUM(CNT) END,0) AS CNT2
+										   FROM (
+											   SELECT '1' AS RE_GB,A.RENT_STATION_ID AS STATION_ID, COUNT(A.RENT_STATION_ID) AS CNT
+	  											 FROM TB_SVC_RENT_HIST A
+	  												WHERE A.RENT_YMD = #{searchDate}
+	  												]]>
+	  												  AND ( A.USE_MI &gt;= 2 OR (A.USE_MI &lt; 2  AND A.RENT_STATION_ID &lt;&gt; A.RETURN_STATION_ID ) )
+													 <![CDATA[							
+												 GROUP BY RENT_STATION_ID   
+											  UNION ALL
+	  										   SELECT '2' ,A.RETURN_STATION_ID AS STATION_ID, COUNT(A.RETURN_STATION_ID) AS CNT
+	  											 FROM TB_SVC_RENT_HIST A
+	  											WHERE A.RETURN_YMD = #{searchDate}
+	  												  ]]>
+	  												   AND ( A.USE_MI &gt;= 2 OR (A.USE_MI &lt; 2  AND A.RENT_STATION_ID &lt;&gt; A.RETURN_STATION_ID ) )
+													<![CDATA[							 
+												 GROUP BY RETURN_STATION_ID	
+											 )A  
+											 WHERE STATION_ID IS NOT NULL 
+											 GROUP BY STATION_ID, RE_GB 
+										  )A	
+										  GROUP BY STATION_ID 
+										  ORDER BY MAX(CNT)+MAX(CNT2) ASC , MAX(CNT2) ASC   
+										  LIMIT 5)
+								)RESI	
+						   )A
+					   )A, (SELECT @VNUM:='', @ROWNUM:=0 FROM DUAL) RNUM  
+					)A
+					GROUP BY RNUM
+			  ]]>  
+	</select> 
+	
+	<!-- 전체 및 지역별 이용건수_cms_20161125 -->
+	<select id="getRealStationList2" resultType="statusVo" parameterType="statusVo" >  
+			
+			SELECT C.STATION_GRP_NAME AS stationGrpName
+				 , FORMAT(COUNT(1), 0 ) AS stationClsCd
+			   FROM TB_SVC_RENT_HIST A
+			   INNER JOIN TB_OPR_STATION B ON ( B.STATION_ID = A.RENT_STATION_ID )
+			   INNER JOIN TB_OPR_MLANG_STATION_GRP C ON ( B.STATION_GRP_SEQ = C.STATION_GRP_SEQ
+							 AND C.LANG_CLS_CD = 'LAG_001')
+				WHERE A.RENT_YMD = #{searchDate}	 
+				 AND ( A.USE_MI &gt;= 2 OR (A.USE_MI &lt; 2  AND A.RENT_STATION_ID &lt;&gt; A.RETURN_STATION_ID ) )
+				GROUP BY  C.STATION_GRP_NAME		  
+				ORDER BY 2 DESC
+	</select> 
+	
+	<!-- 지역별 배치현황_cms_20161125	 -->
+	<select id="getRealStationList3" resultType="statusVo">	 
+		
+			 SELECT CONCAT( RPAD( STATION_GRP_NAME, 7, ' ' ), ' : ' ,   FORMAT( COUNT(*),0)) AS stationGrpNm
+			   FROM TB_MTC_RELOCATE_HIST RH 
+			  INNER JOIN TB_OPR_STATION S ON RH.TO_STATION_ID = S.STATION_ID
+			  INNER JOIN TB_OPR_MLANG_STATION_GRP C ON ( S.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD ='LAG_001' )
+			  WHERE RH.RELOCATE_END_DTTM  &gt;= STR_TO_DATE( CONCAT(  #{searchDate}, ' 00:00:00'), '%Y-%m-%d %H:%i:%s')
+				AND S.STATION_GRP_SEQ NOT IN ( 0, 2 )
+			  GROUP BY S.STATION_GRP_SEQ 
+			  ORDER BY  COUNT(*) DESC
+							
+	</select> 
+	
+	 <!-- 운영중 자전거_cms_20161128	 -->
+	<select id="getRealBikeList" resultType="statusVo" parameterType="statusVo" >	 
+		   
+		  SELECT  CONCAT(MLANG_COM_CD_NAME,'  - ', FORMAT(  IFNULL(COUNT(1),0),0),'개') AS bikeStusCnt 
+		  ,  COUNT(1) AS CNT
+			FROM TB_OPR_BIKE  A
+			INNER JOIN TB_SYS_MLANG_COM_CD B  ON  ( B.COM_CD = A.BIKE_STUS_CD AND B.LANG_CLS_CD ='LAG_001' )
+			GROUP BY MLANG_COM_CD_NAME  
+			ORDER BY CNT DESC				
+	</select> 
+	
+	 <!-- 운영중 자전거_cms_20161128	 -->
+	<select id="getNoticeList" resultType="statusVo">	 
+		   
+		  <![CDATA[ 
+			SELECT NOTICE_SEQ AS noticeSeq, 
+					  NOTICE_TITLE AS noticeTitle,
+					  REPLACE(REPLACE(SITE_CLS_CD,'user','사용자'),'admin','관리자') AS siteClsCd,
+					  CASE WHEN MAIN_NOTICE_YN = 'Y' THEN '공개' ELSE '비공개' END mainNoticeYn,
+					  DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') as postStrDttm,
+					  DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') as postEndDttm
+				 FROM TB_COM_NOTICE A
+			   ORDER BY REG_DTTM DESC
+			   LIMIT 5
+			  ]]>				 
+	</select> 
+	
+	
+	<update id="exeRentBookingCancelProc" parameterType="armVo" >
+		UPDATE spb.TB_OPR_RACK 
+		   SET RACK_STUS_CD = #{rackStatusCd}
+			  ,TEMP_RESVE_DTTM = null
+		WHERE RACK_ID = #{rackId}
+	</update>
+
+	<update id="setCancelUsr" parameterType="armVo" >
+		DELETE FROM TB_SVC_RENT
+		 WHERE RACK_ID = #{rackId}
+	</update>
+
+	<select id="getStationNameList" resultType="statusVo" parameterType="statusVo">
+		 SELECT   b.STATION_ID		 AS stationId,
+				  a.STATION_NAME	   AS stationName,
+				  c.STATION_GRP_NAME   AS stationGrpName,
+				  d.TEAM_NAME		   AS teamNm
+		  FROM spb.TB_OPR_MLANG_STATION a, spb.TB_OPR_STATION b, spb.TB_OPR_MLANG_STATION_GRP c , TB_SYS_TEAM_INFO d
+		 WHERE a.LANG_CLS_CD = 'LAG_001' 
+			AND c.LANG_CLS_CD = 'LAG_001' 
+			AND a.STATION_ID = b.STATION_ID 
+			-- 임시폐쇄 예정
+			AND b.STATION_USE_YN IN ('Y','T','S')
+			AND c.STATION_GRP_SEQ = b.STATION_GRP_SEQ
+			AND b.TEAM_SEQ = d.TEAM_SEQ;
+	</select> 
+	  
+</mapper>

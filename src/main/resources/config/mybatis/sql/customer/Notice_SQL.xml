@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.notice.service.NoticeMapper">
+	
+	<select id="listNoticeCount" parameterType="noticeVO" resultType="int">
+		SELECT	COUNT(NOTICE_SEQ) AS noticeSeq
+		FROM	TB_COM_NOTICE
+		WHERE	1=1
+			<if test="searchStartDate!='' and searchStartDate!=null">
+				AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+			</if>
+			<if test="searchEndDate!='' and searchEndDate!=null">
+				AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+			</if>
+			<if test="searchValue!='' and searchValue!=null">
+				AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+			</if>
+			<if test="mainNoticeYN=='Y'.toString()">
+				AND MAIN_NOTICE_YN = 'Y'
+			</if>
+			<if test="mainNoticeYN=='N'.toString()">
+				AND MAIN_NOTICE_YN = 'N'
+			</if>
+	</select>
+	
+	<select id="listNotice" parameterType="noticeVO" resultType="noticeVO">
+		SELECT	A.
+				NOTICE_SEQ AS noticeSeq,
+				CATE_CD AS cateCD,
+				SITE_CLS_CD AS siteClsCD,
+				NOTICE_NO AS noticeNO,
+				NOTICE_TITLE AS noticeTitle,
+				SORT_ORD AS sortOrd,
+				POST_STR_DTTM AS postStrDttm,
+				POST_END_DTTM AS postEndDttm,
+				MAIN_NOTICE_YN AS mainNoticeYN,
+				REG_DTTM AS regDttm,
+				REG_ID AS regID,
+				MOD_DTTM AS modDttm,
+				MOD_ID AS modID
+		FROM	
+				(
+					SELECT
+							NOTICE_SEQ,
+							CATE_CD,
+							SITE_CLS_CD,
+							NOTICE_NO,
+							NOTICE_TITLE,
+							SORT_ORD,
+							POST_STR_DTTM,
+							POST_END_DTTM,
+							MAIN_NOTICE_YN,
+							REG_DTTM,
+							REG_ID,
+							MOD_DTTM,
+							MOD_ID
+					FROM	TB_COM_NOTICE
+					WHERE	1=1
+					<if test="searchStartDate!='' and searchStartDate!=null">
+						AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+					</if>
+					<if test="searchEndDate!='' and searchEndDate!=null">
+						AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+					</if>
+					<if test="searchValue!='' and searchValue!=null">
+						AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+					</if>
+					<if test="mainNoticeYN=='Y'.toString()">
+						AND MAIN_NOTICE_YN = 'Y'
+					</if>
+					<if test="mainNoticeYN=='N'.toString()">
+						AND MAIN_NOTICE_YN = 'N'
+					</if>
+				) A
+		 ORDER BY SORT_ORD DESC, NOTICE_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="viewNotice" parameterType="noticeVO" resultType="noticeVO">
+	  SELECT  A.NOTICE_SEQ AS noticeSeq,
+			  A.CATE_CD AS cateCD,
+			  A.SITE_CLS_CD AS siteClsCD,
+			  A.NOTICE_NO AS noticeNO,
+			  A.NOTICE_TITLE AS noticeTitle,
+			  A.NOTICE_TEXT_CONTENT AS noticeTextContent,
+			  A.NOTICE_HTML_CONTENT AS noticeHTMLContent,
+			  A.REPLY_YN AS replyYN,
+			  A.SORT_ORD AS sortOrd,
+			  A.READ_CNT AS readCnt,
+			  A.USE_YN AS useYN,
+			  A.POST_STR_DTTM AS postStrDttm,
+			  A.POST_END_DTTM AS postEndDttm,
+			  A.ATCH_FILE_ID AS atchFileID,
+			  A.POPUP_YN AS popupYN,
+			  A.POPUP_STR_DTTM AS popupStrDttm,
+			  A.POPUP_END_DTTM AS popupEndDttm,
+			  A.MAIN_NOTICE_YN AS mainNoticeYN,
+			  A.MAIN_NOTICE_STR_DTTM AS mainNoticeStrDttm,
+			  A.MAIN_NOTICE_END_DTTM AS mainNoticeEndDttm,
+			  A.REG_DTTM AS regDttm,
+			  A.REG_ID AS regID,
+			  A.MOD_DTTM AS modDttm,
+			  A.MOD_ID AS modID ,
+			  CASE WHEN SORT_ORD > 10000 THEN 'Y'
+			  ELSE 'N'
+			  END AS topYn	-- 20200607 최상단 여부 체크
+			, B.ADMIN_GRP_SEQ  AS adminGrpSeq 
+ 		 FROM TB_COM_NOTICE A
+  		 LEFT JOIN TB_SYS_ADMIN B ON ( A.REG_ID = B.ADMIN_ID )
+		WHERE NOTICE_SEQ = #{noticeSeq}
+	</select>
+	
+	<select id="getDaumEditorImage" parameterType="noticeVO" resultType="daumEditorVO">
+		SELECT	
+				IMG_PATH AS imgPath,
+				IMG_URL AS imgURL,
+				IMG_NAME AS imgName,
+				REPLACE(IMG_NAME,(RIGHT(SUBSTR(IMG_NAME,1,(INSTR(IMG_NAME,REPLACE(SUBSTR(RIGHT(IMG_NAME,5),2,(INSTR(IMG_NAME,'.')+4)),'.',''))-2)),15)),'') AS imgNm,
+				IMG_SIZE AS imgSize,
+				IMG_SEQ  AS imgSeq,
+				THUMBNAIL_IMG_PATH AS thumbnailImgPath,
+				THUMBNAIL_IMG_URL AS thumbnailImgURL,
+				THUMBNAIL_IMG_NAME AS thumbnailImgName,
+				THUMBNAIL_IMG_SIZE AS thumbnailImgSize
+		FROM
+				TB_COM_EDITOR_IMG
+		WHERE
+				BBS_SEQ = #{noticeSeq} AND BBS_CLS_CD = #{currentMenu}
+		ORDER BY
+				IMG_SEQ ASC
+	</select>
+	
+	<select id="prevNotice" parameterType="noticeVO" resultType="noticeVO">
+		SELECT	NOTICE_SEQ AS noticeSeq,
+				NOTICE_TITLE AS noticeTitle
+		FROM	TB_COM_NOTICE
+		WHERE	USE_YN = 'Y' AND NOTICE_SEQ &lt; #{noticeSeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+				</if>
+		ORDER BY NOTICE_SEQ DESC
+		LIMIT	1
+	</select>
+	
+	<select id="nextNotice" parameterType="noticeVO" resultType="noticeVO">
+		SELECT	NOTICE_SEQ AS noticeSeq,
+				NOTICE_TITLE AS noticeTitle
+		FROM	TB_COM_NOTICE
+		WHERE	USE_YN = 'Y' AND NOTICE_SEQ &gt; #{noticeSeq}
+				<if test="searchStartDate!='' and searchStartDate!=null">
+					AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+				</if>
+				<if test="searchEndDate!='' and searchEndDate!=null">
+					AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+				</if>
+				<if test="searchValue!='' and searchValue!=null">
+					AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+				</if>
+		ORDER BY NOTICE_SEQ ASC
+		LIMIT	1
+	</select>
+	
+	<insert id="insertNotice" parameterType="noticeVO" useGeneratedKeys="true" keyProperty="noticeSeq">
+		INSERT INTO TB_COM_NOTICE
+			(
+				CATE_CD, SITE_CLS_CD, NOTICE_NO,
+				NOTICE_TITLE, NOTICE_TEXT_CONTENT, NOTICE_HTML_CONTENT,
+				REPLY_YN, SORT_ORD,
+				USE_YN, 
+				POST_STR_DTTM, POST_END_DTTM, POPUP_YN,
+				POPUP_STR_DTTM, POPUP_END_DTTM, MAIN_NOTICE_YN,
+				MAIN_NOTICE_STR_DTTM, MAIN_NOTICE_END_DTTM,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, STATION_ID
+			)
+			SELECT 
+				#{cateCD}, #{siteClsCD}, MAX(NOTICE_SEQ) + 1,
+				#{noticeTitle}, #{noticeTextContent}, #{noticeHTMLContent},
+				#{replyYN}
+				, 
+				CASE WHEN #{topYN} = 'Y' THEN MAX(SORT_ORD) + 1
+				ELSE MAX(NOTICE_SEQ) + 1
+				END
+				, 
+				#{mainNoticeYN}, 
+				#{postStrDttm}, #{postEndDttm}, #{popupYN},
+				#{postStrDttm}, #{postEndDttm}, #{mainNoticeYN},
+				#{postStrDttm}, #{postEndDttm},
+				NOW(), #{regID}, NOW(), #{regID}, IFNULL( #{noticeStationId}, '')
+			 FROM TB_COM_NOTICE 	
+			
+	</insert>
+	
+	<update id="updateNotice" parameterType="noticeVO">
+		UPDATE TB_COM_NOTICE A  INNER JOIN ( SELECT MAX(SORT_ORD) + 1 AS SORT_ORD_MAX FROM TB_COM_NOTICE  ) B  ON ( 1=1 )
+		   SET
+				CATE_CD = #{cateCD},
+				<choose>
+					<when test="siteClsCD!='' and siteClsCD!=null">
+						SITE_CLS_CD = #{siteClsCD},
+					</when>
+					<otherwise>
+						SITE_CLS_CD = NULL,
+					</otherwise>
+				</choose>
+				NOTICE_NO 			= #{noticeNO},
+				NOTICE_TITLE 		= #{noticeTitle},
+				NOTICE_TEXT_CONTENT = #{noticeTextContent},
+				NOTICE_HTML_CONTENT = #{noticeHTMLContent},
+				SORT_ORD 			= CASE WHEN #{topYN} = 'Y' THEN B.SORT_ORD_MAX
+									  ELSE #{noticeNO}
+									  END
+				,
+				POST_STR_DTTM = #{postStrDttm},
+				POST_END_DTTM = #{postEndDttm},
+				POPUP_YN = #{popupYN},
+				POPUP_STR_DTTM = #{postStrDttm},
+				POPUP_END_DTTM = #{postEndDttm},
+				MAIN_NOTICE_YN = #{mainNoticeYN},
+				USE_YN = #{mainNoticeYN},
+				MAIN_NOTICE_STR_DTTM = #{postStrDttm},
+				MAIN_NOTICE_END_DTTM = #{postEndDttm},
+				MOD_DTTM = NOW(),
+				MOD_ID = #{modID}
+		WHERE NOTICE_SEQ = #{noticeSeq}
+	</update>
+	
+	<update id="deleteDaumEditorImage" parameterType="noticeVO">
+		UPDATE TB_COM_EDITOR_IMG
+		   SET BBS_SEQ = 0
+		 WHERE BBS_SEQ = #{noticeSeq}
+	</update>
+	
+	<update id="updateDaumEditorImage" parameterType="noticeVO">
+		UPDATE
+			TB_COM_EDITOR_IMG
+		SET
+			BBS_SEQ = #{noticeSeq}
+		WHERE BBS_CLS_CD = #{currentMenu} 
+			<if test="imageList!=null and fileList!=null">
+				AND IMG_NAME IN
+				<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+				|| IMG_NAME IN
+				<foreach item="filelist" index="index" collection="fileList" open="(" close=")" separator=",">#{filelist}</foreach>
+			</if>
+			<if test="imageList==null and fileList!=null">
+				AND IMG_NAME IN
+				<foreach item="filelist" index="index" collection="fileList" open="(" close=")" separator=",">#{filelist}</foreach>
+			</if>
+			<if test="imageList!=null and fileList==null">
+				AND IMG_NAME IN
+				<foreach item="imagelist" index="index" collection="imageList" open="(" close=")" separator=",">#{imagelist}</foreach>
+			</if>
+	</update>
+	
+	<delete id="deleteNotice" parameterType="noticeVO">
+		DELETE FROM TB_COM_NOTICE
+		WHERE NOTICE_SEQ = #{noticeSeq}
+	</delete>
+	
+	<select id="listNoticePopupCount" parameterType="noticeVO" resultType="noticeVO">
+		SELECT	T1.NOTICE_SEQ as noticeSeq, (SELECT	COUNT(TT1.NOTICE_SEQ) AS COUNT FROM	TB_COM_NOTICE TT1) AS noticeNO
+		FROM	TB_COM_NOTICE T1
+		WHERE	T1.USE_YN = 'Y' AND T1.POPUP_YN = #{popupYN}
+			AND DATE_FORMAT(T1.POST_STR_DTTM,'%Y%m%d') &lt;= #{searchStartDate}
+			AND DATE_FORMAT(T1.POST_END_DTTM,'%Y%m%d') &gt;= #{searchEndDate}
+			AND ( T1.SITE_CLS_CD LIKE CONCAT('%',#{siteClsCD},'%'))
+	</select>
+	
+	<select id="listNoticePopup" parameterType="noticeVO" resultType="noticeVO">
+		SELECT	T1.
+				NOTICE_SEQ AS noticeSeq,
+				CATE_CD AS cateCD,
+				SITE_CLS_CD AS siteClsCD,
+				NOTICE_NO AS noticeNO,
+				NOTICE_TITLE AS noticeTitle,
+				NOTICE_TEXT_CONTENT AS noticeTextContent,
+				NOTICE_HTML_CONTENT AS noticeHTMLContent
+		FROM	
+				(
+					SELECT	TT1.
+							NOTICE_SEQ,
+							CATE_CD,
+							SITE_CLS_CD,
+							NOTICE_NO,
+							NOTICE_TITLE,
+							NOTICE_TEXT_CONTENT,
+							NOTICE_HTML_CONTENT
+					FROM	TB_COM_NOTICE TT1
+					WHERE	USE_YN = 'Y' AND POPUP_YN = #{popupYN}
+						AND DATE_FORMAT(TT1.POST_STR_DTTM,'%Y%m%d') &lt;= #{searchStartDate}
+						AND DATE_FORMAT(TT1.POST_END_DTTM,'%Y%m%d') &gt;= #{searchEndDate}
+						AND ( TT1.SITE_CLS_CD LIKE CONCAT('%',#{siteClsCD},'%'))
+				) T1
+		WHERE NOTICE_SEQ =#{noticeSeq}
+	</select>
+	
+	<!-- 업로드된 파일 리스트를 조회_cms_20161110 -->
+	<select id="fileDownloadList" parameterType="noticeVO" resultType="noticeVO">
+		SELECT SUBSTR(IMG_URL,21,1000) AS attachNm , IMG_URL AS imgUrl, 
+			   REPLACE(IMG_NAME,(RIGHT(SUBSTR(IMG_NAME,1,(INSTR(IMG_NAME,REPLACE(SUBSTR(RIGHT(IMG_NAME,5),2,(INSTR(IMG_NAME,'.')+4)),'.',''))-2)),15)),'') AS imgName
+		  FROM TB_COM_EDITOR_IMG
+		 WHERE IMG_SEQ = #{imgSeq}
+		   AND IMG_URL LIKE '%NOTICE%' 
+	</select>
+	
+	<insert id="insertPush" parameterType="pushVO">
+		INSERT INTO TB_PUSH_HIST
+	(PUSH_SEQ, USR_SEQ, TITLE, MESSAGE, PUSH_TYPE, TARGET_URL, SEND_YN, READ_YN, REG_DTTM, SEND_DTTM, READ_DTTM, SENDER_ID)
+	VALUES (NULL, #{usrSeq}, '0', #{message}, #{pushType}, #{pushLinkUrl}, '0', '0', NOW(), NOW(), null, 'witcom_01')
+	</insert>
+	
+	<select id="getPushTargetList" resultType="pushVO">
+		SELECT A.USR_DEVICE_ID AS usrDeviceId
+		, A.USR_DEVICE_TYPE as usrDeviceType  
+		FROM TB_SVC_USR A , TB_SVC_MB B
+		WHERE A.USR_SEQ = B.USR_SEQ 
+		AND A.PUSH_YN='Y'
+		AND B.LEAVE_YN='N'
+	</select>
+</mapper>

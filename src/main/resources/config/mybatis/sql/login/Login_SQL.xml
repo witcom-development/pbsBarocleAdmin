@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.login.service.LoginMapper">
+	<select id="getLoginInfo" parameterType ="userInfoVo" resultType="userInfoVo">
+		<!-- , dg_decrypt('TB_SYS_ADMIN','ADMIN_MPN_NO', A.ADMIN_MPN_NO) AS mpnNo -->
+		<!-- , A.ADMIN_MPN_NO		  AS mpnNo -->
+		<![CDATA[
+		SELECT 
+			  A.ADMIN_ID			 AS usrId
+			, B.ADMIN_GRP_SEQ		AS usrGrpCd
+			, B.READ_AUTH_CD		 AS readAuthCd
+			, A.ADMIN_NAME		   AS usrName
+			, A.DEPT_NAME			AS deptName
+			, A.LOGIN_FAIL_CNT	   AS loginFailCnt
+			, B.GRP_NAME			 AS usrGrpName
+			, A.ENC_PWD				 AS encPasswd
+			, A.ACCS_CTRL_YN		  AS accCrtlYn
+			, A.ACCS_CTRL_PUBL_IP	 AS accCtrlPublIp
+			, CAST(AES_DECRYPT(UNHEX(A.ADMIN_MPN_NO),'BRC') as CHAR) AS mpnNo
+			, A.TEAM_SEQ			  AS teamSeq
+			, A.ADMIN_SEQ			 AS adminSeq
+			, (
+					SELECT MAX(SERIAL_NO)
+					  FROM TB_SYS_ADMIN_AUTH_SMS_HIST Z
+					 WHERE now() BETWEEN AUTH_FR_DT AND AUTH_TO_DT   
+					   AND A.ADMIN_ID = Z.ADMIN_ID
+			  ) AS smsNum
+			,(
+					SELECT DATEDIFF(SYSDATE(),
+						IFNULL((SELECT LOGIN_DTTM
+						 	FROM TB_SYS_ADMIN_LOGIN_HIST
+						 	WHERE admin_id=#{usrId}
+						 	ORDER BY ADMIN_LOGIN_HIST_SEQ DESC
+						 	LIMIT 1
+						),SYSDATE())) AS DF
+					 FROM DUAL
+			) AS lastLoginDate
+			, C.CENTER_ID  AS centerId	
+		FROM TB_SYS_ADMIN A 
+		INNER JOIN TB_SYS_GRP_CD	 B  ON ( A.ADMIN_GRP_SEQ = B.ADMIN_GRP_SEQ )
+		LEFT  JOIN TB_SYS_TEAM_INFO  C  ON ( A.TEAM_SEQ	  = C.TEAM_SEQ	  )
+		WHERE A.ADMIN_ID = #{usrId}
+		AND A.USE_YN = 'Y'
+		]]>
+	</select>
+	
+	<update id="setLoginFailCnt" parameterType="userInfoVo">
+		<![CDATA[
+		UPDATE TB_SYS_ADMIN 
+		SET LOGIN_FAIL_CNT = LOGIN_FAIL_CNT + 1
+		WHERE ADMIN_ID = #{usrId}
+		]]>
+	</update>
+	
+	<select id="getLoginFailCnt" parameterType="userInfoVo" resultType="int">
+		<![CDATA[
+		SELECT SUM(C.LOGIN_FAIL_CNT) AS LOGIN_FAIL_CNT
+		FROM (SELECT LOGIN_FAIL_CNT 
+			  FROM TB_SYS_ADMIN
+			  WHERE ADMIN_ID = #{usrId}
+			  UNION
+			  SELECT 0
+			  FROM DUAL) C
+		]]>
+	</select>
+	
+	<update id="setLoginFailReset" parameterType="userInfoVo">
+		<![CDATA[
+		UPDATE TB_SYS_ADMIN 
+		SET LOGIN_FAIL_CNT = 0
+		WHERE ADMIN_ID = #{usrId}
+		]]>
+	</update>
+	
+	<insert id="addLoginHistory" parameterType="userInfoVo">
+		<![CDATA[
+		INSERT INTO TB_SYS_ADMIN_LOGIN_HIST (
+			  LOGIN_DTTM
+			, ADMIN_ID
+			, ADMIN_NAME
+			, ADMIN_GRP_NAME
+			, LOGIN_IP_ADDR
+		) VALUES (
+			  NOW()
+			, #{usrId}
+			, #{usrName}
+			, #{usrGrpName}
+			, #{usrIp}
+		)
+		]]>
+	</insert>
+	
+	<select id="getLoginHistoryListCount" parameterType="userInfoVo" resultType="int">
+		SELECT	COUNT(ADMIN_LOGIN_HIST_SEQ) AS loginHistSeq
+		FROM TB_SYS_ADMIN_LOGIN_HIST
+		WHERE ADMIN_ID = #{usrId}
+	</select>
+	
+	<select id="getLoginHistoryList" parameterType ="loginHistoryVo" resultType="loginHistoryVo">
+		<![CDATA[
+		SELECT 
+			  LOGIN_DTTM	 AS loginDate
+			, ADMIN_ID	   AS usrId
+			, ADMIN_NAME	 AS usrName
+			, ADMIN_GRP_NAME AS usrGrpName
+			, LOGIN_IP_ADDR  AS usrIp
+		FROM TB_SYS_ADMIN_LOGIN_HIST
+		WHERE ADMIN_ID = #{usrId}
+		ORDER BY LOGIN_DTTM DESC
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]> 
+	</select>
+	
+	<select id="getMenuAuthList" parameterType="menuAuthVo" resultType="menuAuthVo">
+		<![CDATA[
+		SELECT A.MENU_CD				AS menuCd
+			 , A.MENU_NAME			  AS menuName
+			 , A.UP_MENU				AS upMenu
+			 , A.MENU_LEVEL			 AS menuLevel
+			 , A.MENU_DETAIL_CD		 AS menuDetailCd
+			 , A.LINK_IMG			   AS linkImg
+			 , A.MENU_IMG			   AS menuImg
+			 , A.SRC_LINK			   AS srcLink
+			 , A.MENU_ORD			   AS menuOrd
+			 , A.MENU_DESC			  AS menuDesc
+			 , A.REG_ID				 AS regUsrId
+			 , A.REG_DTTM			   AS regDate
+			 , (SELECT COUNT(MENU_CD) 
+				  FROM TB_SYS_MENU_CD 
+				 WHERE UP_MENU = A.MENU_CD 
+			   )						AS downCnt
+			 , IFNULL(B.READ_YN, 'N')   AS readYn
+			 , IFNULL(B.CRE_YN, 'N')	AS creYn
+			 , IFNULL(B.UPDATE_YN, 'N') AS updateYn
+			 , IFNULL(B.DEL_YN, 'N')	AS delYn
+		  FROM TB_SYS_MENU_CD AS A
+			   LEFT OUTER JOIN TB_SYS_GRP_AUTH_INFO AS B
+			   ON (A.MENU_CD = B.MENU_CD AND B.ADMIN_GRP_SEQ = #{usrGrpCd})
+		 WHERE A.MENU_CD != 0 AND A.HIDDEN_YN = 'N'
+		 ORDER BY A.MENU_LEVEL, A.MENU_ORD
+		]]>
+	</select>
+	
+	<select id="getMenuUrlAuth" parameterType="menuAuthVo" resultType="menuAuthVo">
+		<![CDATA[
+		SELECT adminGrpSeq AS usrGrpCd
+	 		 , menuUrl AS srcLink
+	 		 , GROUP_CONCAT(DISTINCT(CONCAT(IF(menuCRUD = 'C' AND creYn = 'Y', 'C', '') 
+	  		 , IF(menuCRUD = 'R' AND readYn = 'Y', 'R', '')
+	 		 , IF(menuCRUD = 'U' AND updateYn = 'Y', 'U', '')
+	 		 , IF(menuCRUD = 'D' AND DelYn = 'Y', 'D', ''))) SEPARATOR ',') AS type
+		  FROM (SELECT B.MENU_CD AS menuCd
+	 				 , B.MENU_NAME AS menuName
+	 				 , B.MENU_LEVEL AS menuLevel
+	 				 , C.MENU_URL AS menuUrl
+	 				 , A.ADMIN_GRP_SEQ AS adminGrpSeq
+	 				 , A.READ_YN AS readYn
+	 				 , A.CRE_YN AS creYn
+	 				 , A.UPDATE_YN AS updateYn
+	 				 , A.DEL_YN AS DelYn
+	 				 , C.MENU_CRUD AS menuCRUD
+	 				 , (SELECT COUNT(1) FROM TB_SYS_MENU_CD WHERE UP_MENU = B.MENU_CD) AS upCount
+  				  FROM TB_SYS_GRP_AUTH_INFO A
+	 				 , TB_SYS_MENU_CD B
+	 				 , TB_SYS_MENU_URL_INFO C
+ 				 WHERE A.MENU_CD = B.MENU_CD
+   				   AND B.MENU_CD = C.MENU_CD
+				   AND A.ADMIN_GRP_SEQ = #{usrGrpCd}
+   				   AND C.MENU_URL = #{srcLink}) AUTH_MENU
+		 WHERE upCount = 0
+	 	 GROUP BY adminGrpSeq, menuUrl
+		]]>
+	</select>
+	
+	<select id="getDGaurdEncodePassword" parameterType="String" resultType="String">
+		<!-- SELECT dg_encrypt('TB_SYS_ADMIN', 'ENC_PWD', #{tempPassword}) FROM DUAL -->
+		<!-- SELECT dg_hash('TB_SYS_ADMIN', 'ENC_PWD1', #{tempPassword}) FROM DUAL -->
+		<!-- SELECT #{tempPassword} FROM DUAL -->
+		SELECT SHA2(#{tempPassword}, 512) FROM DUAL
+	</select>
+	
+	<select id="getAdminHpno" parameterType ="userInfoVo" resultType="userInfoVo">
+		SELECT ADMIN_ID AS usrId,
+			<!-- dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', ADMIN_MPN_NO) AS mpnNo -->
+			<!-- ADMIN_MPN_NO AS mpnNo -->
+			CAST(AES_DECRYPT(UNHEX(ADMIN_MPN_NO),'BRC') as CHAR) AS mpnNo
+		FROM TB_SYS_ADMIN
+		WHERE ADMIN_ID = #{usrId}
+	</select>
+	
+	<insert id="setAdminSmsAuth" parameterType="userInfoVo" useGeneratedKeys="true" keyProperty="authSmsHistSeq">
+		INSERT INTO TB_SYS_SMS_AUTH_NO_HIST (
+				USR_SEQ
+				,USR_MPN_NO
+				,AUTH_NO
+				,REG_DTTM
+		) VALUES (
+				"0"
+				,#{mpnNo}
+				,#{smsKey}
+				,NOW()
+		)
+	</insert>
+</mapper>

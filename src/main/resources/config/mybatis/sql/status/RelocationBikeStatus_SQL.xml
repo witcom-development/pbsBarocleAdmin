@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.status.relocationBikeStatus.service.RelocationBikeStatusMapper">
+	<select id="getRelocationBikeStatusList" resultType="relocaBikeVo">
+		SELECT CAR_MODL_NAME	  AS carModlName
+			  ,CAR_NO			 AS carNo
+			  ,NOW_LOC_LATITUDE   AS nowLocLatitude
+			  ,NOW_LOC_LONGITUDE  AS nowLocLongitude
+			  ,DATE_FORMAT(LOC_INFO_MOD_DTTM ,'%y-%m-%d %H:%i:%s') AS locInfoModDttm
+		 FROM TB_OPR_RELOCATE_CAR
+		 WHERE CAR_USE_YN = 'Y'
+		 ORDER BY CAR_NO
+	</select>
+</mapper>

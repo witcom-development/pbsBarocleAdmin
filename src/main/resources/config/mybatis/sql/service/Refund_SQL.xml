@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.paymentmgmt.refund.service.RefundMapper">
+
+	<select id="getRefundList" parameterType="refundVO" resultType="refundVO">
+		
+		SELECT A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_CLS_CD   
+				   AND LANG_CLS_CD = #{lang}) AS paymentClsCdName
+			 , A.PAYMENT_STUS_CD AS paymentStusCd
+			 , (SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_STUS_CD   
+				   AND LANG_CLS_CD = #{lang}) AS paymentStusCdName
+			 , A.PAYMENT_CONFM_NO AS paymentConfmNo
+			 <!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ) AS usrMpnNo -->
+			 , C.USR_MPN_NO AS usrMpnNo
+			 , D.MB_ID AS mbId
+			 , IFNULL(RPAD(substr(D.MB_ID,1,2),LENGTH(D.MB_ID),'*') ,'GUEST')   AS mb_id_excel  
+			 , (CASE WHEN D.MB_ID IS NOT NULL 
+			  			THEN D.MB_ID 
+						<!-- ELSE IF(SERIALNO.SERIAL_NO IS NOT NULL, SERIALNO.SERIAL_NO,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ))  -->
+						ELSE IF(SERIALNO.SERIAL_NO IS NOT NULL, SERIALNO.SERIAL_NO,C.USR_MPN_NO ) 
+					 END ) AS usrMainId 
+<!-- 			 (CASE WHEN D.MB_ID IS NOT NULL THEN D.MB_ID ELSE dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ) END) AS usrMainId --><!-- 2017.07.03_JHN_비회원 이용 절차 개선 -->
+			 , B.REFUND_HIST_SEQ AS refundHistSeq
+			 , B.PAYMENT_SEQ AS paymentSeq
+			 , B.PAYMENT_DTTM AS paymentDttm
+			 , B.REFUND_DTTM AS refundDttm
+			 , B.REFUND_AMT AS refundAmt
+			 , B.REFUND_COMSSN_AMT AS refundComssnAmt
+			 , <![CDATA[(B.REFUND_AMT + B.REFUND_COMSSN_AMT)]]> AS totAmt
+			 , B.REFUND_REASON AS refundReason
+		<!-- , B.REFUND_ID AS refundAdminId -->
+			 , A.CANCEL_ADMIN_ID AS refundAdminId
+			 , (SELECT ADMIN_NAME
+				  FROM TB_SYS_ADMIN
+				 WHERE ADMIN_ID = B.REFUND_ID) AS refundAdminName
+		<!-- FROM TB_SVC_PAYMENT A
+		   , TB_SVC_REFUND_HIST B
+		   , TB_SVC_USR C
+		LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ --><!-- 2017.07.03_JHN_비회원 이용 절차 개선 -->
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_REFUND_HIST B ON A.PAYMENT_SEQ = B.PAYMENT_SEQ
+							  LEFT JOIN TB_SVC_USR C ON A.USR_SEQ = C.USR_SEQ
+							  LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ
+							  LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON C.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ
+		WHERE 1=1
+<!-- 		AND A.PAYMENT_SEQ = B.PAYMENT_SEQ --><!-- 2017.07.03_JHN_비회원 이용 절차 개선 -->
+		AND A.PAYMENT_DTTM = B.PAYMENT_DTTM
+		AND A.PAYMENT_STUS_CD = 'BIS_002'
+<!-- 		AND A.USR_SEQ = D.USR_SEQ --><!-- 2017.07.03_JHN_비회원 이용 절차 개선 -->
+ 		
+		<if test='startDttm != null and startDttm != "" and endDttm != null and endDttm != ""'>
+		AND B.REFUND_DTTM  BETWEEN STR_TO_DATE(#{startDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startDttm == null or startDttm == ""'>
+		AND B.REFUND_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentConfmNo != null and paymentConfmNo != ""'>
+		AND A.PAYMENT_CONFM_NO LIKE CONCAT(#{paymentConfmNo}, '%') 
+		</if>
+		ORDER BY B.REFUND_DTTM DESC, A.PAYMENT_CLS_CD
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>
+	</select>
+	
+	<select id="getRefundListCount" parameterType="refundVO" resultType="refundVO">
+		
+		SELECT COUNT(*) AS searchCount
+			 , SUM(A.TOT_AMT) AS searchTotAmt
+			 , <![CDATA[SUM(B.REFUND_AMT + B.REFUND_COMSSN_AMT)]]> AS searchRefundTotAmt
+		<!-- FROM TB_SVC_PAYMENT A
+		   , TB_SVC_REFUND_HIST B
+		   , TB_SVC_USR C
+		LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ 
+		2017.07.03_JHN_비회원 이용 절차 개선-->
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_REFUND_HIST B ON A.PAYMENT_SEQ = B.PAYMENT_SEQ
+							  LEFT JOIN TB_SVC_USR C ON A.USR_SEQ = C.USR_SEQ
+							  LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ
+							  LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON C.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ
+		WHERE 1=1
+<!-- 		AND A.PAYMENT_SEQ = B.PAYMENT_SEQ -->
+		AND A.PAYMENT_DTTM = B.PAYMENT_DTTM
+		AND A.PAYMENT_STUS_CD = 'BIS_002'
+<!-- 		AND A.USR_SEQ = D.USR_SEQ -->
+		
+		<if test='startDttm != null and startDttm != "" and endDttm != null and endDttm != ""'>
+		AND B.REFUND_DTTM  BETWEEN STR_TO_DATE(#{startDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startDttm == null or startDttm == ""'>
+		AND B.REFUND_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentConfmNo != null and paymentConfmNo != ""'>
+		AND A.PAYMENT_CONFM_NO LIKE CONCAT(#{paymentConfmNo}, '%') 
+		</if>
+	</select>
+	
+	<select id="getCancelPaymentList" parameterType="refundVO" resultType="refundVO">
+<!-- 		<![CDATA[ -->
+		SELECT A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_CLS_CD   
+				   AND LANG_CLS_CD = #{lang}) AS paymentClsCdName
+			 , A.PAYMENT_STUS_CD AS paymentStusCd
+			 , (SELECT MLANG_COM_CD_NAME
+				  FROM TB_SYS_MLANG_COM_CD
+				 WHERE COM_CD = A.PAYMENT_STUS_CD   
+				   AND LANG_CLS_CD = #{lang}) AS paymentStusCdName
+			 <!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ) AS usrMpnNo -->
+			 , C.USR_MPN_NO AS usrMpnNo
+			 , D.MB_ID AS mbId
+			 , (CASE WHEN D.MB_ID IS NOT NULL 
+			  			THEN D.MB_ID 
+						<!-- ELSE IF(SERIALNO.SERIAL_NO IS NOT NULL, SERIALNO.SERIAL_NO,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ))  -->
+						ELSE IF(SERIALNO.SERIAL_NO IS NOT NULL, SERIALNO.SERIAL_NO,C.USR_MPN_NO ) 
+					 END ) AS usrMainId 
+<!-- 			 (CASE WHEN D.MB_ID IS NOT NULL THEN D.MB_ID ELSE dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ) END) AS usrMainId --><!-- 2017.07.03_JHN_비회원 이용 절차 개선 -->
+			 , A.PAYMENT_SEQ AS paymentSeq
+			 , A.PAYMENT_DTTM AS paymentDttm
+			 , A.CANCEL_DTTM AS cancelDttm
+			 , A.CANCEL_REASON_DESC AS cancelReasonDesc
+			 , A.TOT_AMT AS totAmt
+			 , A.PAYMENT_CONFM_NO AS paymentConfmNo
+			 , A.CANCEL_ADMIN_ID AS refundAdminId
+			 , (SELECT ADMIN_NAME
+				  FROM TB_SYS_ADMIN
+				 WHERE ADMIN_ID = A.CANCEL_ADMIN_ID) AS refundAdminName
+		<!-- FROM TB_SVC_PAYMENT A
+		   , TB_SVC_USR C
+		LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ -->
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_USR C ON A.USR_SEQ = C.USR_SEQ 
+		LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ
+		LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON C.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ
+		WHERE 1=1
+		AND A.PAYMENT_STUS_CD = 'BIS_003'
+		AND A.USR_SEQ = C.USR_SEQ 
+<!-- 		]]> -->
+		<if test='startDttm != null and startDttm != "" and endDttm != null and endDttm != ""'>
+		AND A.CANCEL_DTTM  BETWEEN STR_TO_DATE(#{startDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startDttm == null or startDttm == ""'>
+		AND A.CANCEL_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentConfmNo != null and paymentConfmNo != ""'>
+		AND A.PAYMENT_CONFM_NO LIKE CONCAT(#{paymentConfmNo}, '%') 
+		</if>
+		ORDER BY A.CANCEL_DTTM DESC, A.PAYMENT_CLS_CD
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>
+	</select>
+	
+	<select id="getCancelPaymentListCount" parameterType="refundVO" resultType="refundVO">
+<!-- 		<![CDATA[ -->
+		SELECT COUNT(*) AS searchCount
+			 , SUM(A.TOT_AMT) AS searchTotAmt
+		<!-- FROM TB_SVC_PAYMENT A
+		   , TB_SVC_USR C
+		LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ -->
+		FROM TB_SVC_PAYMENT A LEFT JOIN TB_SVC_USR C ON A.USR_SEQ = C.USR_SEQ 
+		LEFT JOIN TB_SVC_MB D ON C.USR_SEQ = D.USR_SEQ
+		LEFT JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON C.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ
+		WHERE 1=1
+		AND A.PAYMENT_STUS_CD = 'BIS_003'
+		AND A.USR_SEQ = C.USR_SEQ 
+<!-- 		]]> -->
+		<if test='startDttm != null and startDttm != "" and endDttm != null and endDttm != ""'>
+		AND A.CANCEL_DTTM  BETWEEN STR_TO_DATE(#{startDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startDttm == null or startDttm == ""'>
+		AND A.CANCEL_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 30 DAY) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentConfmNo != null and paymentConfmNo != ""'>
+		AND A.PAYMENT_CONFM_NO LIKE CONCAT(#{paymentConfmNo}, '%') 
+		</if>
+	</select>
+	
+</mapper>

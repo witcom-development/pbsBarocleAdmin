@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.admlogin.service.AdmloginStatisticsMapper">
+	<select id="getAdminLoginCnt" parameterType="admloginStatisticsVo" resultType="int">
+		<!-- 날짜별 카운트 조회 조건 필요합니다. -->
+		SELECT 
+			COUNT(*) AS cnt
+		FROM TB_SYS_ADMIN_LOGIN_HIST A
+		JOIN TB_SYS_GRP_CD B ON A.ADMIN_GRP_NAME = B.GRP_NAME
+		WHERE 1 = 1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND LOGIN_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='adminType != "" and adminType != null'>
+			AND B.ADMIN_CLS_CD = #{adminType}
+		</if>
+		<if test='searchName != "" and searchName != null'>
+			AND ADMIN_NAME LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+	</select>
+
+	<select id="getAdminLoginList" parameterType="admloginStatisticsVo" resultType="admloginStatisticsVo">
+		<!-- 날짜별 카운트 조회 조건 필요합니다. -->
+		SELECT
+			A.ADMIN_GRP_NAME AS adminGrpName,
+			ADMIN_NAME AS adminName,
+			ADMIN_ID AS adminId,
+			LOGIN_DTTM AS loginDttm
+		FROM TB_SYS_ADMIN_LOGIN_HIST A
+		JOIN TB_SYS_GRP_CD B ON A.ADMIN_GRP_NAME = B.GRP_NAME
+		WHERE 1 = 1
+		<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
+			AND LOGIN_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='adminType != "" and adminType != null'>
+			AND B.ADMIN_CLS_CD = #{adminType}
+		</if>
+		<if test='searchName != "" and searchName != null'>
+			AND ADMIN_NAME LIKE CONCAT('%', #{searchName}, '%')
+		</if>
+		ORDER BY LOGIN_DTTM DESC
+		<if test='pagingYn == "Y"'>
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select>
+</mapper>

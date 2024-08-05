@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.maintenance.distMgmt.distAction.service.DistActionMapper">
+	
+	<insert id="insertDistAct" parameterType="distActionVo" useGeneratedKeys="true" keyProperty="actSeq">
+		
+		INSERT INTO TB_SYS_DIST_ACT_INFO
+				(   
+					ACT_TYPE
+		   		   ,ACT_DATE
+		   		   ,ACT_BIKE_ID
+		   		   ,ACT_CENTER_ID
+		   		   ,ACT_TEAM_SEQ
+		   		   ,LATITUDE
+		   		   ,LONGITUDE
+		   		   ,ADDR
+		   		   ,FOLLOW
+		   		   ,REG_DTTM
+		   		   ,REG_ID
+		   		)   
+		SELECT   	#{actType}
+		   		   ,NOW()
+		   		   ,#{actBikeId}
+		   		   ,B.CENTER_ID
+		   		   ,B.TEAM_SEQ
+		   		   ,#{latitude} 
+		   		   ,#{longitude}
+		   		   ,#{addr}
+		   		   ,#{follow}
+		  		   ,NOW()
+		 		   ,#{adminId}
+		  FROM   TB_SYS_ADMIN  A 
+		  LEFT   JOIN TB_SYS_TEAM_INFO B ON ( A.TEAM_SEQ = B.TEAM_SEQ )
+		 WHERE   ADMIN_ID =  #{adminId}  		   
+		  
+
+	</insert>
+	
+	<insert id="insertDistActDtl" parameterType="distActionVo" useGeneratedKeys="true" keyProperty="dtlSeq">
+		
+		INSERT INTO TB_SYS_DIST_ACT_DTL
+				(   
+					ACT_SEQ 
+		   		   ,BIKE_ID
+		   		   ,ACT_DESC
+		) VALUES (
+					
+					#{actSeq}
+		   		   ,#{bikeId}
+		   		<if test='actDesc != null and actDesc != ""'>	  
+		   		   ,#{actDesc}
+		   		</if>
+		   		<if test='actDesc == null or actDesc == ""'>	  
+		   		   ,NULL
+		   		</if>
+		   		   
+		)
+
+	</insert>
+	
+	<update id="setBikeStusCd" parameterType="distActionVo">
+		
+		UPDATE TB_OPR_BIKE
+		   SET BIKE_STUS_CD   = #{bikeStusCd} 
+		 WHERE BIKE_ID 		  = #{actBikeId}
+
+	</update>
+	
+	<select id="getBikeFault" parameterType="distActionVo" resultType="String">
+		
+		SELECT IFNULL( 
+					(
+					  SELECT A.FAULT_SEQ
+			  			FROM TB_MTC_FAULT_INFO 	A
+			 		   WHERE EQUIPMENT_CLS_CD 	= 'DEV_001'
+			   			 AND EQUIPMENT_ID  		= #{actBikeId}
+			   			 AND READ_CLS_CD 		= 'S'
+					)
+					,'N'
+				) 			AS yn
+		 FROM DUAL		
+
+	</select>
+
+	<select id="distActionSelect" parameterType="distActionListVO" resultType="distActionListVO">
+		SELECT C.ADMIN_NAME			  AS adminName
+			 , B.MLANG_COM_CD_NAME	   AS retType 
+			 , D.BIKE_NO				 AS bikeNo
+			 , A.ADDR					 AS addr
+			 , A.LATITUDE				 AS latitude
+			 , A.LONGITUDE				 AS longitude
+			 , DATE_FORMAT( A.REG_DTTM, '%Y-%m-%d %T') AS regDttm
+			 , F.MLANG_COM_CD_NAME	   AS centerName
+			 , E.TEAM_NAME				 AS teamName
+			 , G.MLANG_COM_CD_NAME	   AS followName		
+		  FROM TB_SYS_DIST_ACT_INFO A
+		 INNER JOIN TB_SYS_MLANG_COM_CD B ON ( A.ACT_TYPE = B.COM_CD AND B.LANG_CLS_CD = 'LAG_001' )
+		 INNER JOIN TB_SYS_ADMIN		C ON ( A.REG_ID   = C.ADMIN_ID   )
+		 INNER JOIN TB_OPR_BIKE		 D ON ( A.ACT_BIKE_ID = D.BIKE_ID )
+		 INNER JOIN TB_SYS_TEAM_INFO	E ON ( C.TEAM_SEQ = E.TEAM_SEQ )
+		 INNER JOIN TB_SYS_MLANG_COM_CD F ON ( E.CENTER_ID = F.COM_CD AND F.LANG_CLS_CD = 'LAG_001' )
+		 
+		 LEFT  JOIN TB_SYS_MLANG_COM_CD G ON ( A.FOLLOW	= G.COM_CD AND G.LANG_CLS_CD = 'LAG_001' )
+		 
+	   WHERE 1=1	
+		<if test='searchBgnDe != null and searchBgnDe != ""'>
+		  	AND A.REG_DTTM BETWEEN DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchEndDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )
+		</if>
+		<if test='searchBgnDe == null or searchBgnDe == ""'>
+			AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )	
+		</if>	
+		
+		<if test='centerId != null and centerId != ""'>
+			AND E.CENTER_ID = #{centerId}
+		</if>
+		<if test='searchAdminName != null and searchAdminName != ""'>
+			AND C.ADMIN_NAME = #{searchAdminName}
+		</if>
+		<if test='retType != null and retType != ""'>
+			AND A.ACT_TYPE = #{retType}
+		</if>
+		
+		
+		<if test='pagingYn == "Y"'>
+		  	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>		 			 
+	</select>
+	
+	<select id="distActionListCnt" parameterType="distActionListVO" resultType="int">
+		SELECT COUNT(1)		
+		  FROM TB_SYS_DIST_ACT_INFO A
+		 INNER JOIN TB_SYS_MLANG_COM_CD B ON ( A.ACT_TYPE = B.COM_CD AND B.LANG_CLS_CD = 'LAG_001' )
+		 INNER JOIN TB_SYS_ADMIN		C ON ( A.REG_ID   = C.ADMIN_ID   )
+		 INNER JOIN TB_OPR_BIKE		 D ON ( A.ACT_BIKE_ID = D.BIKE_ID )
+		 INNER JOIN TB_SYS_TEAM_INFO	E ON ( C.TEAM_SEQ = E.TEAM_SEQ )
+		 INNER JOIN TB_SYS_MLANG_COM_CD F ON ( E.CENTER_ID = F.COM_CD AND F.LANG_CLS_CD = 'LAG_001' )
+	  WHERE 1=1	
+		<if test='searchBgnDe != null and searchBgnDe != ""'>
+		  	AND A.REG_DTTM BETWEEN DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchEndDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )
+		</if>
+		<if test='searchBgnDe == null or searchBgnDe == ""'>
+			AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )	
+		</if>
+		
+		<if test='centerId != null and centerId != ""'>
+			AND E.CENTER_ID = #{centerId}
+		</if>
+		
+		<if test='searchAdminName != null and searchAdminName != ""'>
+			AND C.ADMIN_NAME = #{searchAdminName}
+		</if>
+		
+		<if test='retType != null and retType != ""'>
+			AND A.ACT_TYPE = #{retType}
+		</if>
+		
+				 			 
+	</select>	
+
+<!-- 
+	private String centerName;
+	private String teamName;
+	
+	private String searchCenterId;
+	private String searchAdminName;
+	private String searchBikeNo; -->
+	
+	<update id="updateFaultType" parameterType="distActionVo">
+		UPDATE TB_MTC_FAULT_INFO SET READ_CLS_CD = 'H', MOD_DTTM = now(), MOD_ID = #{adminId}
+		WHERE FAULT_SEQ = #{faultSeq}
+	</update>
+	
+</mapper>

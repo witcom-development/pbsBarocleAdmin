@@ -1,0 +1,1410 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.maintenance.distMgmt.distributionDiary.service.DistributionDiaryMapper">
+	
+	<select id="getDistMemberInfo" parameterType="distCoWorkVO" resultType="distCoWorkVO">
+		SELECT A.ADMIN_ID	 AS regId
+			 , A.ADMIN_NAME   AS coworkName  
+		  FROM TB_SYS_ADMIN A
+		 INNER JOIN TB_SYS_TEAM_INFO B ON ( A.TEAM_SEQ = B.TEAM_SEQ )
+		 WHERE B.CENTER_ID = #{workCenterId}
+		   AND A.USE_YN = 'Y'
+		   AND NOT EXISTS 
+		   (
+		   		SELECT 1
+		   		  FROM TB_MTC_DIST_COWORK_INFO X
+				 INNER JOIN TB_MTC_DIST_COWORK_DTL Y ON ( X.COWORK_INFO_SEQ = Y.COWORK_INFO_SEQ )
+				 WHERE X.WORK_DATE = CURDATE()
+				   AND A.ADMIN_ID = Y.CO_WORK_ID
+				   AND X.WORK_CENTER_ID = #{workCenterId}
+				   <if test='coworkInfoSeq != null and coworkInfoSeq != ""'>
+						AND X.COWORK_INFO_SEQ = #{coworkInfoSeq}
+				   </if>						
+		   )
+	</select>
+	
+	<select id="getDistInfo" parameterType="distributionDiaryVo" resultType="distributionDiaryVo">
+		  SELECT  /* DistributionDiary_SQL.getDistInfo */
+				  IFNULL(A.adminName	 ,'')	  AS adminName  
+				, IFNULL(A.centerName	,'')	  AS centerName
+				, IFNULL(A.teamName	  ,'')	  AS teamName  
+				, IFNULL(B.vcleNo,'정보없음')	  	   AS vcleNo
+				, IFNULL(B.bfMileage	,0)		   AS bfMileage
+				, IFNULL(B.afMileage	,0) 	   AS afMileage
+				, IFNULL(C.REPAIR_CNT	 ,0)	  AS onSiteActionCnt
+				, IFNULL(H.FAULT_CNT,	 0)	   AS bikeRobbedCnt	 -- 고장처리건수  
+				, IFNULL(G.INPUT_CNT,   0 )		AS warehousingCnt	-- 입고건수
+				, IFNULL(D.ENFRC_CNT,   0 )		AS darTp006Cnt		-- 강반건수
+				, ''	   						   AS darTp007Cnt
+				, 0	   						   AS darTp008Cnt   -- TODO 이건은 여기서 확인 불가능
+				, ''	   						   AS darTp009Cnt
+			FROM 
+				(
+					 SELECT   A.ADMIN_ID 
+					 		<!-- , CONCAT( A.ADMIN_NAME	, '(', dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', ADMIN_MPN_NO) , ')')		 AS adminName -->
+					 		<!-- , CONCAT( A.ADMIN_NAME	, '(', ADMIN_MPN_NO , ')')		 AS adminName -->
+					 		, CONCAT( A.ADMIN_NAME	, '(', CAST(AES_DECRYPT(UNHEX(ADMIN_MPN_NO),'BRC') as CHAR)  , ')')		 AS adminName
+					 		, CASE WHEN B.TEAM_NAME LIKE '%팀'
+					 				 THEN SUBSTRING(B.TEAM_NAME, 1, (INSTR(B.TEAM_NAME,'팀')-2 ))
+					 				 ELSE C.CENTER_NAME
+					 				 END																							 AS centerName
+					 		, CASE WHEN B.TEAM_NAME LIKE '%팀'
+								   THEN SUBSTRING(B.TEAM_NAME, (INSTR(B.TEAM_NAME,'팀')-1 ), LENGTH(B.TEAM_NAME) )	  
+							 	   ELSE B.TEAM_NAME
+								   END	 						 																	 AS teamName
+						FROM TB_SYS_ADMIN 	 					A
+				   LEFT JOIN TB_SYS_TEAM_INFO 					B 	ON A.TEAM_SEQ 			= B.TEAM_SEQ
+				  INNER JOIN TB_OPR_CENTER	 					C 	ON A.ASSIGN_CENTER_ID   = C.CENTER_ID
+					   WHERE A.USE_YN = 'Y'
+						 AND A.ADMIN_ID = #{adminId}
+				) A
+	   LEFT JOIN 
+				(
+					SELECT
+							  A.ADMIN_ID	
+					 		, C.VCLE_NO																								 AS vcleNo
+					 		, B.BF_MILEAGE																							 AS bfMileage
+					 		, B.AF_MILEAGE																							 AS afMileage
+				 		FROM TB_MTC_VCLE_DISPATCH				A 
+				  INNER JOIN TB_MTC_VCLE_DISPATCH_DTL			B 	ON A.VCLE_SEQ = B.VCLE_SEQ		AND A.VCLE_DATE = #{searchDate}
+				  INNER JOIN TB_SYS_VCLE_INFO					C 	ON B.VCLE_NO  = C.VCLE_NO_SEQ
+				 WHERE A.ADMIN_ID = #{adminId}
+				) B	ON A.ADMIN_ID = B.ADMIN_ID
+	   LEFT JOIN 
+				(
+					 
+					-- 경정비 실적 등록시
+					
+					SELECT ADMIN_ID , TOT_CNT  AS REPAIR_CNT
+					  FROM TB_STA_REPAIR_LIGHT_DD
+					 WHERE STAT_DD  = #{searchDate}
+					   AND ADMIN_ID = #{adminId} 
+					   AND CURDATE() != #{searchDate}
+					 
+					 UNION ALL
+				<!-- 	 
+					  경정비 실적 미등록시	
+					 SELECT  MAINTC_ADMIN_ID																															  
+						  , COUNT(REPINFO.REPAIR_SEQ)   AS REPAIR_CNT																								  
+						FROM TB_MTC_REPAIR_INFO		  REPINFO	
+					   INNER JOIN TB_MTC_REPAIR_DETL			DTL		ON REPINFO.REPAIR_SEQ			  = DTL.REPAIR_SEQ				 
+					   WHERE  1=1																																   
+			 			 AND REPINFO.REPAIR_CMPT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND ( DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY  )			 
+						 AND DTL.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' ) 
+						 AND CURDATE() = #{searchDate}  
+						 AND MAINTC_ADMIN_ID = #{adminId}														 
+			  		  GROUP BY  REPINFO.MAINTC_ADMIN_ID 
+			  		   -->
+			  		  SELECT A.MAINTC_ADMIN_ID
+						  , COUNT(1) AS FAULT_CNT
+					   FROM TB_MTC_REPAIR_INFO A
+					  INNER JOIN TB_MTC_REPAIR_DETL B ON ( A.REPAIR_SEQ = B.REPAIR_SEQ AND B.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' ) )  
+					  WHERE A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) , INTERVAL 1 DAY )
+						AND MAINTC_ADMIN_ID = #{adminId}
+						-- 경정비
+						AND EXISTS 
+							(  SELECT 1 
+								 FROM TB_MTC_REPAIR_DETL B
+								WHERE A.REPAIR_SEQ = B.REPAIR_SEQ
+								  AND B.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' )
+							)  
+					   AND  REPAIR_CENTER_ID IS NULL		 
+				 	 GROUP BY A.MAINTC_ADMIN_ID 
+			  			 
+					   
+				) C ON A.ADMIN_ID = C.ADMIN_ID
+	   LEFT JOIN 
+				(
+					SELECT REG_ID, COUNT(1) AS ENFRC_CNT 
+					  FROM  TB_SVC_ENFRC_RETURN_HIST
+					 WHERE COMPT_DTTM BETWEEN DATE_FORMAT( #{searchDate} , '%Y-%m-%d' ) AND ( DATE_FORMAT( #{searchDate} , '%Y-%m-%d' ) + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+  					   AND REG_ID = #{adminId} 
+				) D ON A.ADMIN_ID = D.REG_ID
+							 
+   		 LEFT JOIN (
+   		 <!-- 
+   		 			SELECT A.MAINTC_ADMIN_ID
+   		 				 , COUNT( DISTINCT A.REPAIR_SEQ )  AS INPUT_CNT
+   		 			  FROM TB_MTC_REPAIR_INFO A
+					 WHERE 1=1 
+						AND REG_DTTM BETWEEN  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+						AND MAINTC_ADMIN_ID = #{adminId} 
+					   AND REPAIR_CENTER_ID IS NOT NULL
+					 GROUP BY A.MAINTC_ADMIN_ID 
+					  -->
+						SELECT A.MAINTC_ADMIN_ID
+	   		 				  , SUM(INPUT_CNT) AS INPUT_CNT
+	   		 			  FROM
+	   		 			  (	   
+		   		 			SELECT A.MAINTC_ADMIN_ID
+		   		 				 , COUNT(DISTINCT A.REPAIR_SEQ)  AS INPUT_CNT
+		   		 			  FROM TB_MTC_REPAIR_INFO A
+							 WHERE 1=1 
+							  <if test='searchDate != null and searchDate != ""'>
+									AND A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+							  </if>
+							  <if test='searchDate == null or searchDate == ""'>
+									AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+							  </if>
+							  <if test='adminName != null and adminName != ""'>
+								AND MAINTC_ADMIN_ID = #{adminName}
+							  </if> 
+								AND REPAIR_CENTER_ID IS NOT NULL
+							 GROUP BY A.MAINTC_ADMIN_ID 
+							 UNION ALL
+							 SELECT A.REG_ID
+		   		 				 , COUNT(1)  AS INPUT_CNT
+		   		 			  FROM spb.TB_SYS_DIST_ACT_INFO A 
+		   		 			 WHERE 1=1 
+		   		 			 <if test='searchDate != null and searchDate != ""'>
+									AND A.ACT_DATE BETWEEN #{searchDate} AND #{searchDate}  
+							  </if>
+							  <if test='searchDate == null or searchDate == ""'>
+									AND A.ACT_DATE = CURDATE() 
+							  </if>
+							  <if test='adminName != null and adminName != ""'>
+								AND REG_ID = #{adminName}
+							  </if>   
+							GROUP BY A.REG_ID
+						 ) A
+						 GROUP BY A.MAINTC_ADMIN_ID			 
+					 
+   				  ) G ON ( A.ADMIN_ID = G.MAINTC_ADMIN_ID )  
+   		 LEFT JOIN (
+   		 
+			   		 SELECT A.MAINTC_ADMIN_ID
+						  , COUNT(1) AS FAULT_CNT
+					   FROM TB_MTC_REPAIR_INFO A
+					  WHERE A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchDate},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+						AND MAINTC_ADMIN_ID = #{adminId}
+						-- 경정비 제외
+						AND NOT EXISTS 
+							(  SELECT 1 
+								 FROM TB_MTC_REPAIR_DETL B
+								WHERE A.REPAIR_SEQ = B.REPAIR_SEQ
+								  AND B.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' )
+							)
+					   AND REPAIR_CENTER_ID IS NULL 		   
+				 	 GROUP BY A.MAINTC_ADMIN_ID
+   				  ) H ON ( A.ADMIN_ID = H.MAINTC_ADMIN_ID )
+	 
+	</select>
+	
+	<select id="getModifyDate" parameterType="distributionDiaryVo" resultType="String">
+			SELECT #{searchDate} + INTERVAL #{modifyDate} DAY
+	</select>
+	
+	
+	<select id="getDairyVcle" parameterType="distributionDiaryVo" resultType="distributionDiaryVo">
+		SELECT /* DistributionDiary_SQL.getDairyVcle */
+			   D.VCLE_NO   AS vcleNo 
+		  FROM TB_MTC_VCLE_DISPATCH		B  
+	   	  LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL	C  ON  ( B.VCLE_SEQ	  = C.VCLE_SEQ  )
+	   	  LEFT JOIN TB_SYS_VCLE_INFO			D  ON  ( C.VCLE_NO	   = D.VCLE_NO_SEQ )
+	   	 WHERE 1=1  
+	   		 <if test='searchDate != null and searchDate != ""'>
+			  AND B.VCLE_DATE = #{searchDate}
+			  </if>
+			  <if test='searchDate == null or searchDate == ""'>
+				AND B.VCLE_DATE = curdate()
+			  </if>
+ 		  AND B.ADMIN_ID = #{adminId} 
+	</select>
+	
+	<select id="getDairyReport" parameterType="distributionDiaryVo" resultType="distributionDiaryVo">
+		SELECT /* DistributionDiary_SQL.getDairyReport */
+			   A.ADMIN_ID		 AS adminId
+			 , STATION_NO		 AS stationNo
+			 , STAT_HH			AS workTime
+			 , IFNULL(MOVE_CNT ,0)			 AS moveCnt 
+			 , IFNULL(RELOCATE_CNT,0)		AS relocateCnt 
+			 , IFNULL(CO_WORK_CNT ,0)		AS etc
+			 , IFNULL(VCLE_NO,'')			AS vcleNo
+		  FROM (
+		  			
+				SELECT STAT_HH
+					 , D.VCLE_NO
+					 , E.STATION_NO
+					 , A.CO_WORK_CNT
+					 , A.MOVE_CNT
+					 , A.RELOCATE_CNT
+					 , F.TEAM_SEQ
+					 , F.ADMIN_NAME
+					 , A.ADMIN_ID
+				  FROM TB_STA_RELOCATE_HIST_HH	 A
+	   		 LEFT JOIN TB_MTC_VCLE_DISPATCH		B  ON  ( A.ADMIN_ID = B.ADMIN_ID AND A.STAT_DATE = B.VCLE_DATE )
+	   		 LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL	C  ON  ( B.VCLE_SEQ = C.VCLE_SEQ AND A.VCLE_NO_SEQ = C.VCLE_NO )
+	   		 LEFT JOIN TB_SYS_VCLE_INFO			D  ON  ( C.VCLE_NO  = D.VCLE_NO_SEQ )
+	   		 LEFT JOIN TB_OPR_STATION			  E  ON  ( A.STATION_ID = E.STATION_ID )
+	   		 LEFT JOIN TB_SYS_ADMIN				F  ON  ( A.ADMIN_ID   = F.ADMIN_ID ) 
+				 WHERE 1=1
+				  <if test='searchDate != null and searchDate != ""'>
+					AND A.STAT_DATE = #{searchDate}
+				  </if>
+				  
+				  <if test='searchDate == null or searchDate == ""'>
+					AND A.STAT_DATE = curdate()
+				  </if>
+ 				  <if test='adminId != null and adminId != ""'>
+					AND A.ADMIN_ID = #{adminId} 
+				  </if> 	   
+					 
+			   )  A
+		ORDER BY STAT_HH
+	</select>
+ 
+	<update id="updateEnfrc" parameterType="distributionDiaryVo">
+		UPDATE /* DistributionDiary_SQL.updateEnfrc */
+			   TB_SVC_ENFRC_RETURN_HIST
+		   SET COMPT_CD	 = #{comptCd}
+		 WHERE COMPT_CD	 = '0'
+		   AND RENT_BIKE_ID = #{bikeId}
+		   AND ENFRC_GUBUN_CD = '0'
+	</update>
+	
+	<update id="updateNeglect" parameterType="distributionDiaryVo">
+		UPDATE  /* DistributionDiary_SQL.updateNeglect */
+			   TB_SVC_ENFRC_RETURN_HIST
+		   SET COMPT_CD	 = #{comptCd}
+		 WHERE COMPT_CD	 = '0'
+		   AND RENT_BIKE_ID = #{bikeId}
+		   AND ENFRC_GUBUN_CD = '1'
+	</update>
+	
+	<update id="updateFault" parameterType="regularChkVo">
+	   UPDATE /* DistributionDiary_SQL.updateFault */
+			  TB_MTC_FAULT_INFO 
+		  SET READ_CLS_CD = 'H'
+			, MOD_DTTM = now()
+			, MOD_ID = #{adminId}
+		WHERE EQUIPMENT_ID = #{bikeId}
+		  AND READ_CLS_CD = 'S'
+	</update>
+	
+	<insert id="insertDairyReport" parameterType="distributionDiaryVo">
+		INSERT INTO TB_MTC_DAIRY_REPORT
+		(	 STAT_DATE
+			, WORK_PLACE
+			, WORK_TYPE
+			, BIKE_ID
+			, REG_ID
+			, REG_DTTM
+			, DETL
+		) 
+		 SELECT
+				CURDATE()
+			  , #{workPlace}
+			  , #{workClassifi}
+			  , #{bikeId} 
+			  , #{adminId}
+			  , now() 
+			  , #{etc} 
+		   FROM TB_SYS_ADMIN
+		  WHERE ADMIN_ID = #{adminId}
+			AND ADMIN_GRP_SEQ   IN ( '5', '11', '12')	-- TODO 향후 12 관리자는 삭제 필요 
+ 
+	</insert>
+	 
+	<select id="getStaMemList" parameterType="distributionDiaryVo" resultType="distributionDiaryVo">
+		SELECT /* DistributionDiary_SQL.getStaMemList */
+			   CONCAT( A.ADMIN_ID, '\n(', A.ADMIN_NAME , ')')						  AS adminName
+			 , A.STATION_NO					   AS stationNo
+			 , C.TEAM_NAME 						  AS teamName
+			 , VCLE_NO							  AS VcleNo
+			 , IFNULL(STAT_HH			  ,  '') AS workTime
+			 , ROUND( CO_WORK_CNT 				) AS etc	
+			 , IFNULL(ROUND(MOVE_CNT	, 1 )  ,   0) AS darTp001Cnt
+			 , IFNULL(ROUND(RELOCATE_CNT, 1 )  ,   0) AS darTp002Cnt
+			 , darTp003Cnt						  AS darTp003Cnt	  -- 경정비
+			 , darTp005Cnt						  AS darTp005Cnt	  -- 입고
+			 , darTp006Cnt						  AS darTp006Cnt	  -- 강반
+			 , darTp007Cnt						  AS darTp007Cnt	  -- 방치
+			 , darTp008Cnt						AS darTp008Cnt	  -- 고장처리
+			 , CASE E.WORK_DIV WHEN '1' THEN '오전'
+							   WHEN '2' THEN '오후'
+							   WHEN '3' THEN '전일' 
+							   WHEN '4' THEN '야간'
+			   ELSE '' END						AS workClassifi	   -- 근무구분
+		  FROM (
+		  			
+				SELECT A.STAT_DATE
+					 , STAT_HH
+					 , A.ADMIN_ID
+					 , D.VCLE_NO
+					 , G.STATION_NO
+					 , A.CO_WORK_CNT
+					 , SUM(A.MOVE_CNT)	 MOVE_CNT
+					 , SUM(A.RELOCATE_CNT) RELOCATE_CNT 
+					 , F.TEAM_SEQ
+					 , F.ADMIN_NAME
+					 , 0 AS darTp003Cnt				-- 경정비
+					 , 0 AS darTp005Cnt				-- 입고
+					 , 0 AS darTp006Cnt				-- 강반
+					 , 0 AS darTp007Cnt				-- 방치
+					 , 0 AS darTp008Cnt			 -- 고장처리
+				  FROM TB_STA_RELOCATE_HIST_HH	 A
+	   		 LEFT JOIN TB_MTC_VCLE_DISPATCH		B  ON  ( A.ADMIN_ID = B.ADMIN_ID AND A.STAT_DATE = B.VCLE_DATE )
+	   		 LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL	C  ON  ( B.VCLE_SEQ = C.VCLE_SEQ AND A.VCLE_NO_SEQ = C.VCLE_NO )
+	   		 LEFT JOIN TB_SYS_VCLE_INFO			D  ON  ( C.VCLE_NO  = D.VCLE_NO_SEQ )
+	   		 LEFT JOIN TB_SYS_ADMIN				F  ON  ( A.ADMIN_ID   = F.ADMIN_ID ) 
+	   		 LEFT JOIN TB_OPR_STATION			  G  ON  ( A.STATION_ID = G.STATION_ID )
+	   	  
+				 WHERE 1=1
+				  <if test='searchBgnDe != null and searchBgnDe != ""'>
+					AND A.STAT_DATE = #{searchBgnDe}
+				  </if>
+				  
+				  <if test='searchBgnDe == null or searchBgnDe == ""'>
+					AND A.STAT_DATE = curdate()
+				  </if>
+ 				  <if test='adminName != null and adminName != ""'>
+					AND A.ADMIN_ID = #{adminName}
+				  </if> 	   
+				  <if test='etc == "1"'>
+					AND 1=2
+				  </if>
+					GROUP BY A.STAT_HH, A.ADMIN_ID, D.VCLE_NO, A.STATION_ID	
+			 
+			  UNION ALL
+			  
+			  SELECT   A.STAT_DATE
+					 , 999
+					 , A.ADMIN_ID
+					 , D.VCLE_NO
+					 , ''
+					 , AVG(A.CO_WORK_CNT  )
+					 , SUM(A.MOVE_CNT	 )
+					 , SUM(A.RELOCATE_CNT )
+					 , MAX(F.TEAM_SEQ	 )
+					 , F.ADMIN_NAME
+					 , IFNULL(E.REPAIR_CNT	  ,0)  AS darTp003Cnt
+					 , IFNULL(G.INPUT_CNT	   ,0)  AS darTp005Cnt	  -- 입고건수
+					 , IFNULL(I.ENFRC_CNT	   ,0)  AS darTp006Cnt   -- 강반 방치건수
+					 , 0							 AS darTp007Cnt
+					 , IFNULL(H.FAULT_CNT	   ,0)  AS darTp008Cnt   -- 고장처리
+				  FROM TB_STA_RELOCATE_HIST_HH	 A
+	   		 LEFT JOIN TB_MTC_VCLE_DISPATCH		B  ON  ( A.ADMIN_ID = B.ADMIN_ID AND A.STAT_DATE = B.VCLE_DATE )
+	   		 LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL	C  ON  ( B.VCLE_SEQ = C.VCLE_SEQ AND A.VCLE_NO_SEQ = C.VCLE_NO )
+	   		 LEFT JOIN TB_SYS_VCLE_INFO			D  ON  ( C.VCLE_NO  = D.VCLE_NO_SEQ )
+	   		 LEFT JOIN TB_SYS_ADMIN				F  ON  ( A.ADMIN_ID   = F.ADMIN_ID ) 
+	   		 
+	   		 LEFT JOIN (
+							SELECT Z.ADMIN_ID
+								 , TOT_CNT  AS REPAIR_CNT
+							  FROM TB_STA_REPAIR_LIGHT_DD Z
+							 WHERE 1=1
+							 <if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND Z.STAT_DD  = #{searchBgnDe}
+								AND CURDATE() != #{searchBgnDe}
+							  </if>
+							  <if test='adminName != null and adminName != ""'>
+								AND ADMIN_ID = #{adminName}
+							  </if> 
+							GROUP BY Z.ADMIN_ID
+							
+							UNION ALL
+							
+							-- 경정비 실적 미등록시 ( 이전일자 )	
+							 SELECT A.MAINTC_ADMIN_ID
+								  , COUNT(1) AS FAULT_CNT
+							   FROM TB_MTC_REPAIR_INFO A
+							  INNER JOIN TB_MTC_REPAIR_DETL B ON ( A.REPAIR_SEQ = B.REPAIR_SEQ AND B.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' ) ) 
+							  WHERE 1=1 
+								AND CURDATE() = #{searchBgnDe}
+									<if test='searchBgnDe != null and searchBgnDe != ""'>
+										AND A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+								  </if>
+								  <if test='searchBgnDe == null or searchBgnDe == ""'>
+										AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+								  </if>
+								  <if test='adminName != null and adminName != ""'>
+									AND MAINTC_ADMIN_ID = #{adminName}
+								  </if> 
+								-- 경정비  
+								AND EXISTS 
+									(  SELECT 1 
+										 FROM TB_MTC_REPAIR_DETL B
+										WHERE A.REPAIR_SEQ = B.REPAIR_SEQ
+										  AND B.REPAIR_CLS_CD IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' )
+									) 
+								AND REPAIR_CENTER_ID IS NULL		  
+						 	  GROUP BY A.MAINTC_ADMIN_ID
+							 							
+						) E ON A.ADMIN_ID = E.ADMIN_ID
+	   		 LEFT JOIN (
+	   					-- 20220113 강반 방치건수 통합
+						SELECT REG_ID
+							 , DATE_ADD( CURDATE(), INTERVAL -1 DAY )
+							 , COUNT(1) AS ENFRC_CNT
+						  --   , SUM(CASE WHEN ENFRC_GUBUN_CD = 1 THEN 1 ELSE 0 END) AS NEGLECT_CNT 
+						  FROM TB_SVC_ENFRC_RETURN_HIST A
+							 , TB_SYS_ADMIN			 B  
+						 WHERE 1=1
+						  <if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND COMPT_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )
+						  </if>
+						  <if test='searchBgnDe == null or searchBgnDe == ""'>
+								AND COMPT_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+						  </if>
+						  <if test='adminName != null and adminName != ""'>
+							AND ADMIN_ID = #{adminName}
+						  </if> 
+						   AND A.REG_ID = B.ADMIN_ID
+						   AND B.ADMIN_GRP_SEQ IN ( 5, 11 )
+						 GROUP BY REG_ID	   		 
+	   				   ) I ON A.ADMIN_ID = I.REG_ID
+	   		 LEFT JOIN (
+	   		 			 
+	   		 			 SELECT A.MAINTC_ADMIN_ID
+	   		 				  , SUM(INPUT_CNT) AS INPUT_CNT
+	   		 			  FROM
+	   		 			  (	   
+		   		 			SELECT A.MAINTC_ADMIN_ID
+		   		 				 , COUNT(DISTINCT A.REPAIR_SEQ)  AS INPUT_CNT
+		   		 			  FROM TB_MTC_REPAIR_INFO A
+							 WHERE 1=1 
+							  <if test='searchBgnDe != null and searchBgnDe != ""'>
+									AND A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+							  </if>
+							  <if test='searchBgnDe == null or searchBgnDe == ""'>
+									AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+							  </if>
+							  <if test='adminName != null and adminName != ""'>
+								AND MAINTC_ADMIN_ID = #{adminName}
+							  </if> 
+								AND REPAIR_CENTER_ID IS NOT NULL
+							 GROUP BY A.MAINTC_ADMIN_ID 
+							 UNION ALL
+							 SELECT A.REG_ID
+		   		 				 , COUNT(1)  AS INPUT_CNT
+		   		 			  FROM spb.TB_SYS_DIST_ACT_INFO A 
+		   		 			 WHERE 1=1 
+		   		 			 <if test='searchBgnDe != null and searchBgnDe != ""'>
+									AND A.ACT_DATE BETWEEN #{searchBgnDe} AND #{searchBgnDe}  
+							  </if>
+							  <if test='searchBgnDe == null or searchBgnDe == ""'>
+									AND A.ACT_DATE = CURDATE() 
+							  </if>
+							  <if test='adminName != null and adminName != ""'>
+								AND REG_ID = #{adminName}
+							  </if>   
+							GROUP BY A.REG_ID
+						 ) A
+						 GROUP BY A.MAINTC_ADMIN_ID
+						 
+	   				   ) G ON ( A.ADMIN_ID = G.MAINTC_ADMIN_ID )
+	   		  
+   		 LEFT JOIN (
+				   	 SELECT A.MAINTC_ADMIN_ID
+						  , COUNT(1) AS FAULT_CNT
+					   FROM TB_MTC_REPAIR_INFO A
+					  WHERE 1=1 
+							<if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+						  </if>
+						  <if test='searchBgnDe == null or searchBgnDe == ""'>
+								AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+						  </if>
+						  <if test='adminName != null and adminName != ""'>
+							AND MAINTC_ADMIN_ID = #{adminName}
+						  </if> 
+						-- 경정비 제외
+						AND EXISTS 
+							(  SELECT 1 
+								 FROM TB_MTC_REPAIR_DETL B
+								WHERE A.REPAIR_SEQ = B.REPAIR_SEQ
+								  AND B.REPAIR_CLS_CD NOT IN ( 'REB_009' , 'REB_018', 'REB_024', 'REB_057' )
+							)	
+						AND REPAIR_CENTER_ID IS NULL	   
+				 	  GROUP BY A.MAINTC_ADMIN_ID
+				   		 
+				   		  
+	   				  ) H ON ( A.ADMIN_ID = H.MAINTC_ADMIN_ID )	   		  
+	   				   
+				 WHERE 1=1
+				  <if test='searchBgnDe != null and searchBgnDe != ""'>
+					AND A.STAT_DATE = #{searchBgnDe}
+				  </if>
+				  
+				  <if test='searchBgnDe == null or searchBgnDe == ""'>
+					AND A.STAT_DATE = curdate()
+				  </if>
+				  
+				  <if test='adminName != null and adminName != ""'>
+					AND A.ADMIN_ID = #{adminName}
+				  </if> 
+ 				  
+				 GROUP BY  A.ADMIN_ID, D.VCLE_NO	
+				 
+				  
+			   )  A
+		  LEFT JOIN TB_SYS_TEAM_INFO		 C ON ( A.TEAM_SEQ = C.TEAM_SEQ  ) 
+		  LEFT JOIN TB_SYS_DIST_WORK		 D ON ( A.ADMIN_ID = D.ADMIN_ID AND A.STAT_DATE = D.WORK_DATE )
+		  LEFT JOIN TB_SYS_DIST_WORK_DTL	 E ON ( D.WORK_SEQ = E.WORK_SEQ  )
+		 WHERE 1 = 1
+		 	  <if test='teamSeq != null and teamSeq != ""'>
+				AND C.TEAM_SEQ = #{teamSeq}
+			  </if>		   
+			  <if test='centerId != null and centerId != ""'>
+				AND C.CENTER_ID = #{centerId}
+			  </if>	
+			  
+			  <if test='centerName != null and centerName != ""'>
+					AND C.CENTER_ID = (
+							SELECT CENTER_ID 
+							  FROM TB_SYS_TEAM_INFO A, TB_SYS_ADMIN B
+							 WHERE A.TEAM_SEQ = B.TEAM_SEQ
+							   AND B.ADMIN_ID = #{centerName}	
+							 LIMIT 1  				
+					)
+			  </if>	
+			  
+			<choose>
+				<when test="centerId != null and centerId != ''"></when>
+				<when test="teamSeq != null and teamSeq != ''"></when>
+				<when test="adminName != null and adminName != ''"></when>
+				<when test="centerName != null and centerName != ''"></when>
+			  	<otherwise>
+					AND 1=2
+				</otherwise>
+	   		</choose>			  
+		  
+		ORDER BY C.TEAM_SEQ, ADMIN_NAME, STAT_HH
+	</select>
+	
+	
+	<select id="getCoworkDtlList" parameterType="distCoWorkVO" resultType="distCoWorkVO">
+		SELECT B.COWORK_DTL_SEQ			AS workDtlSeq
+			 , C.ADMIN_NAME			 AS coworkName
+		  FROM TB_MTC_DIST_COWORK_DTL B
+		 INNER JOIN TB_SYS_ADMIN C ON ( B.CO_WORK_ID = C.ADMIN_ID )
+		WHERE 1=1
+		  AND B.COWORK_INFO_SEQ = #{coworkInfoSeq} 
+	</select>
+	
+	
+	
+	<select id="getCoworkList" parameterType="distCoWorkVO" resultType="distCoWorkVO">
+		SELECT A.WORK_DATE 				AS workDate
+			 , A.WORK_CENTER_ID			
+			 , A.WORK_FR_HOUR			AS workFrHour
+			 , A.WORK_TO_HOUR			AS workToHour
+			 , A.WORK_DTL				AS workDtl
+			 , COUNT(B.COWORK_DTL_SEQ)	AS workCnt
+			 , BIKE_CNT			  	AS bikeCnt
+			 , GROUP_CONCAT( C.ADMIN_NAME ) AS coworkName
+			 , A.COWORK_INFO_SEQ		AS coworkInfoSeq
+			 , A.WORK_TYPE			  AS workType
+			 , E.CENTER_ID				AS workCenterId
+		  FROM TB_MTC_DIST_COWORK_INFO A
+		  LEFT JOIN TB_MTC_DIST_COWORK_DTL B ON ( A.COWORK_INFO_SEQ = B.COWORK_INFO_SEQ )
+		  LEFT JOIN TB_SYS_ADMIN C ON ( B.CO_WORK_ID = C.ADMIN_ID )
+		 INNER JOIN TB_SYS_ADMIN D ON ( A.REG_ID = D.ADMIN_ID )
+		  LEFT JOIN TB_SYS_TEAM_INFO E ON ( D.TEAM_SEQ = E.TEAM_SEQ )
+		WHERE 1=1
+		   <if test='searchBgnDe != null and searchBgnDe != ""'>
+				AND A.WORK_DATE = #{searchBgnDe}
+		  </if>
+		  <if test='searchBgnDe == null or searchBgnDe == ""'>
+		  	 	AND A.WORK_DATE = CURDATE() 
+		  </if>
+ 		 <if test='centerId != null and centerId != ""'>
+			AND A.WORK_CENTER_ID = #{centerId}
+		  </if>	
+		 
+		 <if test='coworkInfoSeq != null and coworkInfoSeq != ""'>
+			AND A.COWORK_INFO_SEQ = #{coworkInfoSeq}
+		  </if>	
+		  
+		GROUP BY A.WORK_DATE 
+			 , A.WORK_CENTER_ID
+			 , A.WORK_FR_HOUR
+			 , A.WORK_TO_HOUR
+			 , A.WORK_DTL
+			 , A.BIKE_CNT
+			 , A.WORK_CNT
+			 , A.COWORK_INFO_SEQ
+	</select>
+	
+	
+ 	<select id="getStaCenterList" parameterType="distributionDiaryVo" resultType="distributionDiaryVo">
+			<!--개인별 통계	 -->
+			SELECT /* DistributionDiary_SQL.getStaCenterList */
+				   A.*
+				 , IFNULL( H.INPUT_CNT, 0)   AS warehousingCnt  -- 이건은 평균값  
+				 , IFNULL( I.ENFRC_CNT, 0)   AS darTp006Cnt	 -- 강반처리
+			  FROM
+				   (	 
+						SELECT F.TEAM_SEQ
+							 , G.TEAM_NAME								AS teamName
+							 , D.VCLE_NO								AS vcleNo
+							 , IFNULL( COUNT(DISTINCT A.ADMIN_ID) ,0)   AS etc
+							 , IFNULL( ROUND(SUM(A.MOVE_CNT))	  ,0)   AS bikeMoveCnt
+							 , IFNULL( ROUND(SUM(A.RELOCATE_CNT)) ,0)   AS bikeReplaceCnt
+							 , G.CENTER_ID
+							 , G.TEAM_ID					AS teamSeq 
+							 , IFNULL(G.OFFICE_NAME,'')		AS officeName
+							 , I.WEATHER					AS weather
+							 , A.ADMIN_ID 
+						  FROM TB_STA_RELOCATE_HIST_HH		  A	
+				  		  LEFT JOIN TB_MTC_VCLE_DISPATCH		B  ON  ( A.ADMIN_ID = B.ADMIN_ID AND A.STAT_DATE = B.VCLE_DATE )
+				  		  LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL	C  ON  ( B.VCLE_SEQ = C.VCLE_SEQ AND A.VCLE_NO_SEQ = C.VCLE_NO )
+				  		  LEFT JOIN TB_SYS_VCLE_INFO			D  ON  ( C.VCLE_NO  = D.VCLE_NO_SEQ )
+				  		  LEFT JOIN TB_SYS_ADMIN				F  ON  ( A.ADMIN_ID   = F.ADMIN_ID ) 
+				  		  LEFT JOIN TB_SYS_TEAM_INFO			G  ON  ( F.TEAM_SEQ  = G.TEAM_SEQ )
+					   	  LEFT JOIN (  SELECT MAX(WEATHER) AS WEATHER
+					   	   				  FROM TB_SYS_WEATHER_INFO	
+					   	   				 WHERE STAT_DATE = CURDATE()
+					   	   			 ) I  ON ( 1 = 1 )  
+						 WHERE 1=1
+						  <if test='searchBgnDe != null and searchBgnDe != ""'>
+							AND A.STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}
+						  </if>
+						  
+						  <if test='searchBgnDe == null or searchBgnDe == ""'>
+							AND A.STAT_DATE = curdate()
+						  </if>
+						  
+						  <if test='centerId != null and centerId != ""'>
+							AND G.CENTER_ID = #{centerId}
+						  </if>	
+						  
+						  <if test='centerName != null and centerName != ""'>
+							AND G.CENTER_ID = (
+													SELECT CENTER_ID 
+													  FROM TB_SYS_TEAM_INFO A, TB_SYS_ADMIN B
+													 WHERE A.TEAM_SEQ = B.TEAM_SEQ
+													   AND B.ADMIN_ID = #{centerName}	
+													 LIMIT 1			
+											   )
+					  		</if>	
+								  
+						 GROUP BY G.TEAM_NAME, teamSeq 
+								, D.VCLE_NO
+					) A
+			LEFT JOIN (
+		   		 			 
+		   		 			 SELECT A.MAINTC_ADMIN_ID
+		   		 				  , SUM(INPUT_CNT) AS INPUT_CNT
+		   		 			  FROM
+		   		 			  (	   
+			   		 			SELECT A.MAINTC_ADMIN_ID
+			   		 				 , COUNT(DISTINCT A.REPAIR_SEQ)  AS INPUT_CNT
+			   		 			  FROM TB_MTC_REPAIR_INFO A
+								 WHERE 1=1 
+								  <if test='searchBgnDe != null and searchBgnDe != ""'>
+										AND A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchEndDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+								  </if>
+								  <if test='searchBgnDe == null or searchBgnDe == ""'>
+										AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+								  </if> 
+									AND REPAIR_CENTER_ID IS NOT NULL
+								 GROUP BY A.MAINTC_ADMIN_ID 
+								 UNION ALL
+								 SELECT A.REG_ID
+			   		 				 , COUNT(1)  AS INPUT_CNT
+			   		 			  FROM spb.TB_SYS_DIST_ACT_INFO A 
+			   		 			 WHERE 1=1 
+			   		 			 <if test='searchBgnDe != null and searchBgnDe != ""'>
+										AND A.ACT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}  
+								  </if>
+								  <if test='searchBgnDe == null or searchBgnDe == ""'>
+										AND A.ACT_DATE = CURDATE() 
+								  </if>  
+								GROUP BY A.REG_ID
+							 ) A
+							 GROUP BY A.MAINTC_ADMIN_ID
+							 
+		   	 		) H ON ( A.ADMIN_ID = H.MAINTC_ADMIN_ID )					
+					
+  			 LEFT JOIN (
+	   					-- 20220113 강반 방치건수 통합
+						SELECT B.ADMIN_ID
+							 , COUNT(1) AS ENFRC_CNT
+						  FROM TB_SVC_ENFRC_RETURN_HIST A
+							 , TB_SYS_ADMIN			 B  
+						 WHERE 1=1
+						  <if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND COMPT_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchEndDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )
+						  </if>
+						  <if test='searchBgnDe == null or searchBgnDe == ""'>
+								AND COMPT_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+						  </if> 
+						   AND A.REG_ID = B.ADMIN_ID
+						   AND B.ADMIN_GRP_SEQ IN ( 5, 11 )
+						 GROUP BY B.ADMIN_ID	   		 
+	   		) I ON (  A.ADMIN_ID= I.ADMIN_ID )					
+					
+			 UNION ALL   
+			 
+			-- 센터별 통계 
+			 
+			SELECT A.*
+				 , '' 	-- ADMIN_ID
+				 , IFNULL( INPUT_CNT, 0 )	AS warehousingCnt  -- 이건은 평균값
+				 , IFNULL( I.ENFRC_CNT, 0)   AS darTp006Cnt	 -- 강반처리
+			  FROM
+			  (		
+					SELECT F.TEAM_SEQ
+						 , I.MLANG_COM_CD_NAME						AS teamName
+						 , '합계'   					  				AS vcleNo
+						 , IFNULL( COUNT(DISTINCT A.ADMIN_ID) ,0)   AS etc
+						 , IFNULL( ROUND(SUM(A.MOVE_CNT))	  ,0)   AS bikeMoveCnt
+						 , IFNULL( ROUND(SUM(A.RELOCATE_CNT)) ,0)   AS bikeReplaceCnt 
+						 , G.CENTER_ID
+						 , 'TEAM_000'			   				AS teamSeq
+						 , IFNULL(G.OFFICE_NAME,'')		AS officeName
+						 , '' AS weather
+						 
+					  FROM spb.TB_STA_RELOCATE_HIST_HH	 A
+			  		  LEFT JOIN spb.TB_SYS_ADMIN				F  ON  ( A.ADMIN_ID   = F.ADMIN_ID ) 
+			  		  LEFT JOIN spb.TB_SYS_TEAM_INFO			G  ON  ( F.TEAM_SEQ  = G.TEAM_SEQ ) 
+			   		  LEFT JOIN spb.TB_SYS_MLANG_COM_CD  I ON ( I.COM_CD = G.CENTER_ID AND I.LANG_CLS_CD ='LAG_001' )		
+					 WHERE 1=1
+					  <if test='searchBgnDe != null and searchBgnDe != ""'>
+						AND A.STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}
+					  </if>
+					  
+					  <if test='searchBgnDe == null or searchBgnDe == ""'>
+						AND A.STAT_DATE = curdate()
+					  </if>
+					  
+					  <if test='centerId != null and centerId != ""'>
+						AND G.CENTER_ID = #{centerId}
+					  </if>	
+					  
+					  <if test='centerName != null and centerName != ""'>
+						AND G.CENTER_ID = (
+								SELECT CENTER_ID 
+								  FROM spb.TB_SYS_TEAM_INFO A, spb.TB_SYS_ADMIN B
+								 WHERE A.TEAM_SEQ = B.TEAM_SEQ
+								   AND B.ADMIN_ID = #{centerName}	
+								 LIMIT 1  				
+						)
+				  		</if>				  
+							  
+				 GROUP BY G.CENTER_ID   				
+				 ORDER BY CENTER_ID	
+			) A	
+			LEFT JOIN (
+		   		 			 
+  		 			 SELECT C.CENTER_ID
+  		 				  , SUM(INPUT_CNT) AS INPUT_CNT
+  		 			  FROM
+  		 			  (	   
+   		 			SELECT A.MAINTC_ADMIN_ID
+   		 				 , COUNT(DISTINCT A.REPAIR_SEQ)  AS INPUT_CNT
+   		 			  FROM spb.TB_MTC_REPAIR_INFO A
+					 WHERE 1=1 
+					  <if test='searchBgnDe != null and searchBgnDe != ""'>
+							AND A.REG_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchEndDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )  
+					  </if>
+					  <if test='searchBgnDe == null or searchBgnDe == ""'>
+							AND A.REG_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+					  </if> 
+						AND REPAIR_CENTER_ID IS NOT NULL
+					 GROUP BY A.MAINTC_ADMIN_ID 
+					 UNION ALL
+					 SELECT A.REG_ID
+   		 				 , COUNT(1)  AS INPUT_CNT
+   		 			  FROM spb.TB_SYS_DIST_ACT_INFO A 
+   		 			 WHERE 1=1 
+   		 			 <if test='searchBgnDe != null and searchBgnDe != ""'>
+							AND A.ACT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}  
+					  </if>
+					  <if test='searchBgnDe == null or searchBgnDe == ""'>
+							AND A.ACT_DATE = CURDATE() 
+					  </if>  
+					GROUP BY A.REG_ID
+				 	 ) A 
+				 	INNER JOIN TB_SYS_ADMIN	 B ON ( A.MAINTC_ADMIN_ID = B.ADMIN_ID ) 
+				 	INNER JOIN TB_SYS_TEAM_INFO C ON ( B.TEAM_SEQ = C.TEAM_SEQ ) 
+				 GROUP BY C.CENTER_ID
+				 
+  			 ) H ON ( A.CENTER_ID = H.CENTER_ID )
+  			 
+  			 LEFT JOIN (
+	   					-- 20220113 강반 방치건수 통합
+						SELECT C.CENTER_ID
+							 , COUNT(1) AS ENFRC_CNT
+						  FROM TB_SVC_ENFRC_RETURN_HIST A
+						 INNER JOIN TB_SYS_ADMIN			 B ON ( A.REG_ID = B.ADMIN_ID   ) 
+						 INNER JOIN TB_SYS_TEAM_INFO	C ON ( B.TEAM_SEQ = C.TEAM_SEQ )	
+						 WHERE 1=1
+						  <if test='searchBgnDe != null and searchBgnDe != ""'>
+								AND COMPT_DTTM BETWEEN  DATE_FORMAT( #{searchBgnDe},'%Y-%m-%d' ) AND DATE_ADD(  DATE_FORMAT( #{searchEndDe},'%Y-%m-%d' ) , INTERVAL 1 DAY )
+						  </if>
+						  <if test='searchBgnDe == null or searchBgnDe == ""'>
+								AND COMPT_DTTM BETWEEN CURDATE() AND DATE_ADD( CURDATE(), INTERVAL 1 DAY )
+						  </if> 
+						   AND B.ADMIN_GRP_SEQ IN ( 5, 11 )
+						 GROUP BY C.CENTER_ID	   		 
+	   		) I ON ( A.CENTER_ID = I.CENTER_ID )
+  			 			
+		ORDER BY officeName, CENTER_ID, teamSeq 	 
+	  	  		 
+	</select>	
+	 
+	<delete id="delTbOprBikeLost" parameterType="distributionDiaryVo">
+		DELETE /* DistributionDiary_SQL.delTbOprBikeLost */ A.*
+		  FROM PROC_ADMIN.TB_OPR_LOST_BIKE A
+		 INNER JOIN spb.TB_OPR_BIKE	  B ON  ( A.BIKE_NO = B.BIKE_NO )	
+		 WHERE B.BIKE_ID = #{bikeId} 
+	</delete>
+
+	<delete id="delTbOprBike016" parameterType="distributionDiaryVo">
+		UPDATE /* DistributionDiary_SQL.delTbOprBike016 */ TB_OPR_BIKE_ROB A
+		   SET A.PROCESS_YN = 'Y'  
+		 WHERE A.BIKE_ID = #{bikeId} 
+		   AND A.PROCESS_YN = 'N'
+	</delete>	
+	
+	<insert id="insertDistWork" parameterType="distWorkVO" useGeneratedKeys="true" keyProperty="workSeq">
+		INSERT INTO TB_SYS_DIST_WORK
+				(   ADMIN_ID
+		   		   ,CENTER_ID
+		   		   ,WORK_DATE
+		   		   ,WORK_TIME
+		   		   ,APPROVED
+	   ) VALUES (
+		   			#{adminId}
+		   		   ,#{centerId}
+		   		   ,#{workDate}
+		   		   ,#{workTime}
+		   		   ,'N'
+	   )
+	</insert>
+	
+	<insert id="insertDistWorkDtl" parameterType="distWorkVO">
+		INSERT INTO TB_SYS_DIST_WORK_DTL
+				(   
+					WORK_SEQ 
+		   		   ,DTL_CD
+		   		   ,ETC  
+		   		   ,WORK_DIV
+		   		   ,DTL_TIME
+		   		   ,REG_DTTM
+		   		   ,REG_ID
+		) VALUES (
+					
+					#{workSeq}
+		   		   ,#{dtlCd}
+		   		   ,#{etc}
+		   		   ,#{workDiv}
+		   		   ,#{dtlTime}
+		  		   ,#{regDttm}
+		 		   ,#{regId}
+		   		   
+		)
+	</insert>
+	
+	 <select id="checkDistWork" parameterType="repairTermVO" resultType="String">
+			SELECT /* 분배 근태 이미 저장되어있는지 확인 */
+			   	   WORK_SEQ		AS workSeq
+			  FROM TB_SYS_DIST_WORK 
+			 WHERE ADMIN_ID = #{adminId}
+			   AND WORK_DATE = #{workDate}  
+	</select>
+	
+	
+	<select id="getInsertWrkSeq" parameterType="distWorkVO" resultType="String">
+		SELECT 	/* 분배원 근태 정보 일련번호 조회  FK Key 용 */
+				MAX(WORK_SEQ)
+		   FROM TB_SYS_DIST_WORK
+		  WHERE ADMIN_ID = #{adminId}
+	</select>
+	
+	<select id="getInsertEtcWorkSeq" parameterType="distWorkVO" resultType="int">
+		SELECT 	/* 분배원 개별실적 일련번호 조회  FK Key 용 */
+				IFNULL(MAX(ETC_BIKE_SEQ),0)
+		   FROM TB_SYS_DIST_WORK_ETC_BIKE
+		  WHERE WORK_SEQ = #{workSeq}
+	</select>
+	
+	<select id="getMaintenWrkerAtt" parameterType="distWorkVO" resultType="distWorkVO">
+					SELECT  /* 분배원 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , c.admin_name 						AS adminName
+						  , a.center_id 						AS centerId
+						  , date_format(WORK_DATE,'%Y-%m-%d')	AS workDate
+						  , work_time 							AS workTime
+						  , a.WORK_SEQ 							AS workSeq
+						  , group_concat(b.DTL_CD) 				AS dtlCd
+						  , CONCAT( group_concat(b.DTL_TIME)  , '\n(', group_concat(e.MLANG_COM_CD_NAME) , ')' )	AS dtlName						  
+					   	  , approved
+						  , approver_id 						AS approverId
+						  , d.admin_name 						AS approverName
+						  , CASE b.WORK_DIV WHEN '1' THEN '오전'
+											WHEN '2' THEN '오후'
+											WHEN '3' THEN '전일'
+											WHEN '4' THEN '야간'
+							ELSE '' END							AS workDiv
+						  , CONCAT( MOVE_BIKE_CNT ,
+									  	CASE MOVE_BIKE_CD WHEN '1' THEN '\n(센터 출고)'  
+									  						  WHEN '2' THEN '\n(전산 미등록)'  
+									  						  WHEN '3' THEN '\n(센터 출고+전산 미등록)'  
+									  						  WHEN '9' THEN CONCAT( '\n(' , MOVE_ETC , ')' )  
+									  	ELSE '' 
+									  	END					  
+						  		   )  
+						  										AS moveBikeCd
+						  , CONCAT( RELOCATE_BIKE_CNT ,
+									  	CASE RELOCATE_BIKE_CD	 WHEN '1' THEN '\n(센터 입고)'  
+									  						  WHEN '2' THEN '\n(전산 미등록)'  
+									  						  WHEN '3' THEN '\n(센터입고+전산 미등록)'  
+									  						  WHEN '9' THEN CONCAT( '\n(' , RELOCATE_ETC , ')' )
+									  	ELSE '' 
+									  	END			  
+						  		   )	   						AS relocateBikeCd
+						  ,  CASE WHEN DATEDIFF(  a.WORK_DATE, CURDATE() ) BETWEEN -4 AND 0 THEN 1
+							 ELSE 0 END AS  isChangeAble
+			 		   FROM TB_SYS_DIST_WORK		  a 
+			LEFT OUTER JOIN TB_SYS_DIST_WORK_DTL	  b 		ON a.WORK_SEQ = b.WORK_SEQ 
+				 INNER JOIN TB_SYS_ADMIN 				c 		ON a.admin_id = c.admin_id
+			LEFT OUTER JOIN TB_SYS_ADMIN				d 		ON a.approver_id = d.admin_id
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD		 e 		ON b.DTL_CD = e.COM_CD 	
+			LEFT OUTER JOIN TB_SYS_DIST_WORK_ETC_BIKE   f	   ON a.WORK_SEQ = f.WORK_SEQ		
+		 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+		 		<choose>
+			 		<when test= 'adminGrpName != null and adminGrpName == "분배"'>
+			 			AND CENTER_ID LIKE 'DEC%'
+			 			and a.admin_id = #{adminId}
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+			 		</when>
+			 		<when test= 'adminGrpName != null and adminGrpName == "분배반장"'>
+			 			AND CENTER_ID LIKE 'DEC%'
+			 			and a.center_id = #{centerId}
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>			 			
+			 		</when>
+			 		<otherwise>
+			 			AND CENTER_ID LIKE 'DEC%'
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>
+						<if test='searchCenter != null and searchCenter != ""'>
+							and a.center_id = #{searchCenter}
+						</if>
+					</otherwise>	
+				</choose>
+			</trim>	
+			GROUP BY a.admin_id, a.WORK_DATE
+			ORDER BY a.WORK_DATE DESC
+		  <if test='pagingYn == "Y"'>
+		  	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>	
+	</select>
+	
+	<select id="getMaintenWrkerAttCnt" resultType="int">
+	  	  SELECT COUNT(1)
+		  FROM (						  
+					SELECT  /* 분배원 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , date_format(WORK_DATE,'%m-%d')		AS workDate 
+			 		   FROM TB_SYS_DIST_WORK		  a 
+				 INNER JOIN TB_SYS_ADMIN 				c ON a.admin_id = c.admin_id
+		 		WHERE 1=1
+					<if test='searchBgnDe != null and searchBgnDe != ""'>
+						and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchBgnDe == null or searchBgnDe == ""'>
+						and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+					</if>
+					<if test='searchAprd != null and searchAprd != ""'>
+						and a.approved = #{searchAprd}
+					</if>
+					<if test='searchAdmin != null and searchAdmin != ""'>
+						and c.admin_Name = #{searchAdmin}
+					</if>
+					<if test='searchCenter != null and searchCenter != ""'>
+						and a.center_id = #{searchCenter}
+					</if>  
+			GROUP BY a.admin_id, a.WORK_DATE
+			ORDER BY a.WORK_DATE desc
+			) A				  
+	</select>
+	
+	<select id="getRoundMaintenWrkerAtt" parameterType="distWorkVO" resultType="distWorkVO">
+					SELECT  /* 순회정비원 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , c.admin_name 						AS adminName
+						  , a.center_id 						AS centerId
+						  , date_format(WORK_DATE,'%Y-%m-%d')	AS workDate
+						  , work_time 							AS workTime
+						  , a.WORK_SEQ 							AS workSeq
+						  , group_concat(b.DTL_CD) 				AS dtlCd
+						  , CONCAT( group_concat(b.DTL_TIME)  , '\n(', group_concat(e.MLANG_COM_CD_NAME) , ')' )	AS dtlName	 
+			 		   FROM TB_SYS_DIST_WORK		  a 
+			LEFT OUTER JOIN TB_SYS_DIST_WORK_DTL	  b 		ON a.WORK_SEQ = b.WORK_SEQ 
+				 INNER JOIN TB_SYS_ADMIN 				c 		ON a.admin_id = c.admin_id
+			LEFT OUTER JOIN TB_SYS_ADMIN				d 		ON a.approver_id = d.admin_id
+			LEFT OUTER JOIN TB_SYS_MLANG_COM_CD		 e 		ON b.DTL_CD = e.COM_CD 	
+			 		WHERE CENTER_ID = 'CEN313'
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchBgnDe == null or searchBgnDe == ""'>
+							and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+						</if>
+						<if test='searchAprd != null and searchAprd != ""'>
+							and a.approved = #{searchAprd}
+						</if>
+						<if test='searchAdmin != null and searchAdmin != ""'>
+							and c.admin_Name = #{searchAdmin}
+						</if>
+						<if test='searchCenter != null and searchCenter != ""'>
+							and a.center_id = #{searchCenter}
+						</if>
+
+			GROUP BY a.admin_id, a.WORK_DATE
+			ORDER BY a.WORK_DATE DESC
+		  <if test='pagingYn == "Y"'>
+		  	LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>	
+	</select>
+	
+	<select id="getRoundMaintenWrkerAttCnt" resultType="int">
+	  <![CDATA[
+	  	  SELECT COUNT(1)
+		  ]]>
+		  FROM (						  
+					SELECT  /* 분배원 근태 정보 조회  */
+							a.admin_id 							AS adminId
+						  , date_format(WORK_DATE,'%m-%d')		AS workDate 
+			 		   FROM TB_SYS_DIST_WORK		  a 
+				 INNER JOIN TB_SYS_ADMIN 				c ON a.admin_id = c.admin_id
+		 	 WHERE CENTER_ID = 'CEN313'
+			   <if test='searchBgnDe != null and searchBgnDe != ""'>
+			   	and a.WORK_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   </if>
+			   <if test='searchBgnDe == null or searchBgnDe == ""'>
+			   	and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   </if>
+			   <if test='searchAprd != null and searchAprd != ""'>
+			   	and a.approved = #{searchAprd}
+			   </if>
+			   <if test='searchAdmin != null and searchAdmin != ""'>
+			   	and c.admin_Name = #{searchAdmin}
+			   </if>
+			   <if test='searchCenter != null and searchCenter != ""'>
+			   	and a.center_id = #{searchCenter}
+			   </if>
+			GROUP BY a.admin_id, a.WORK_DATE
+			ORDER BY a.WORK_DATE DESC
+			) A				  
+	</select>
+	
+	<select id="getInsertWrkCenterId" parameterType="distWorkVO" resultType="String">
+		   SELECT B.CENTER_ID
+			 FROM TB_SYS_ADMIN A, TB_SYS_TEAM_INFO B
+			WHERE 1=1
+			AND A.TEAM_SEQ = B.TEAM_SEQ
+			AND ADMIN_ID = #{adminId}
+	</select>
+	
+	<select id="getAdminGrpName" parameterType="distWorkVO" resultType="String">
+		SELECT /* 관리자 그룹 네임 조회 */
+			   b.grp_name 					AS adminGrpName
+		  FROM TB_SYS_ADMIN 		a
+		 INNER JOIN TB_SYS_GRP_CD		b 		ON a.admin_grp_seq = b.admin_grp_seq
+		 WHERE ADMIN_ID = #{adminId}
+	</select>
+	
+	 <select id="getCenterNameWithCenterCode" parameterType="distWorkVO" resultType="String">
+			SELECT /* com.dkitec.barocle.admin.repairMgmt.repairWork.service.DistWorkMapper.getCenterNameWithCenterCode */
+			   	   CENTER_NAME
+			  FROM TB_OPR_CENTER 
+			 WHERE CENTER_ID = #{searchCenter}
+			  
+	</select>
+	
+	<update id="updateDistWorkAprvd" parameterType="distWorkVO">
+		UPDATE TB_SYS_DIST_WORK 
+		   SET approved 	= #{approved}
+			 , approver_id	= #{approverId} 
+		 where work_seq 	= #{workSeq}
+	</update>
+	
+	
+	<update id="insertTbStaRelocateeHistHH" parameterType="distWorkVO">
+		INSERT INTO TB_STA_RELOCATE_HIST_HH
+		( `STAT_DATE`, `STAT_HH`, `ADMIN_ID`, `VCLE_NO_SEQ`, `STATION_ID`, `CO_WORK_CNT`, `MOVE_CNT`, `RELOCATE_CNT`, `MOVE_CNT_ORG`, `RELOCATE_CNT_ORG`, `REG_DTTM`, `MOD_DTTM`) 
+		SELECT A.WORK_DATE 
+			 , 99 AS STAT_HH 
+			 , A.ADMIN_ID 
+			 , IFNULL( MAX(D.VCLE_NO), 0 )  
+			 , '' 
+			 , 1 
+			 , B.MOVE_BIKE_CNT 
+			 , B.RELOCATE_BIKE_CNT 
+			 , B.MOVE_BIKE_CNT 
+			 , B.RELOCATE_BIKE_CNT 
+			 , B.REG_DTTM 
+			 , B.MOD_DTTM	  
+		  FROM TB_SYS_DIST_WORK A 
+		 INNER JOIN TB_SYS_DIST_WORK_ETC_BIKE B ON ( A.WORK_SEQ = B.WORK_SEQ ) 
+		 LEFT JOIN TB_MTC_VCLE_DISPATCH C ON ( A.ADMIN_ID = C.ADMIN_ID	AND A.WORK_DATE = C.VCLE_DATE )  
+		 LEFT JOIN TB_MTC_VCLE_DISPATCH_DTL D ON ( C.VCLE_SEQ = D.VCLE_SEQ ) 
+		 LEFT JOIN TB_STA_RELOCATE_HIST_HH  E ON ( A.WORK_DATE = E.STAT_DATE AND E.STAT_HH = 99 AND A.ADMIN_ID = E.ADMIN_ID )
+		 WHERE A.WORK_SEQ  = B.WORK_SEQ 
+		   AND A.WORK_DATE BETWEEN DATE_ADD(  curdate() , INTERVAL -3 DAY ) AND DATE_ADD(  curdate() , INTERVAL -1 DAY )
+		   AND A.WORK_SEQ  = #{workSeq} 
+		   AND A.APPROVER_ID IS NOT NULL 
+		   AND E.SEQ		 IS NULL
+		   GROUP BY A.WORK_DATE, A.ADMIN_ID 
+	</update>
+	
+	
+	
+	
+	
+	
+	
+	
+	<update id="updateDistWorkDtl" parameterType="distWorkVO">
+		UPDATE TB_SYS_DIST_WORK_DTL 
+		   SET 
+			   dtl_cd   = #{dtlCd}
+			  ,WORK_DIV  =#{workDiv}
+			  ,etc	  = #{etc}
+			  ,dtl_time = #{dtlTime}
+			  ,mod_dttm = #{modDttm}
+			  ,mod_id   = #{modId}
+		 where work_seq = #{workSeq}
+	</update>
+	
+	<update id="updateDistWork" parameterType="distWorkVO">
+		UPDATE TB_SYS_DIST_WORK
+		   SET work_time = #{workTime}
+		 where work_seq  = #{workSeq}
+	</update>
+	
+	
+	<select id="getMaintenWrkerAttD" parameterType="distWorkVO" resultType="distWorkVO">
+				SELECT  /* 분배직원 당일 근태 정보 조회  */
+						a.admin_id 							AS adminId
+					  , c.admin_name 						AS adminName
+					  , a.center_id 						AS centerId
+					  , b.WORK_DIV						  AS workDiv
+					  , date_format(WORK_DATE,'%Y-%m-%d')	AS workDate
+					  , work_time 							AS workTime
+					  , a.WORK_SEQ 							AS workSeq
+					  , group_concat(b.DTL_CD) 				AS dtlCd
+					  , group_concat(e.MLANG_COM_CD_NAME) 	AS dtlName						  
+					  , group_concat(b.ETC) 				AS etc
+					  , group_concat(b.DTL_TIME) 			AS dtlTime
+				   	  , approved
+					  , approver_id 						AS approverId
+					  , d.admin_name 						AS approverName
+					  , f.ETC_BIKE_SEQ 						AS etcBikeSeq
+					  
+					  , f.MOVE_ETC AS moveEtc
+					  -- 2022.01.06 입력값 명칭 변경으로 수정
+					  , f.MOVE_BIKE_CD 						AS moveBikeCd
+					  , f.MOVE_BIKE_CNT 					AS moveBikeCnt 
+						-- 2022.01.06 입력값 명칭 변경으로 수정
+					  , f.RELOCATE_BIKE_CD 					AS relocateBikeCd
+					  , f.RELOCATE_BIKE_CNT 				AS relocateBikeCnt	
+					  , f.RELOCATE_ETC 						AS relocateEtc
+					  , f.ETC_BIKE_SEQ 						AS etcBikeSeq
+		 		   FROM TB_SYS_DIST_WORK		  a 
+		LEFT OUTER JOIN TB_SYS_DIST_WORK_DTL	  b 		ON a.WORK_SEQ = b.WORK_SEQ 
+			 INNER JOIN TB_SYS_ADMIN 				c 		ON a.admin_id = c.admin_id
+		LEFT OUTER JOIN TB_SYS_ADMIN				d 		ON a.approver_id = d.admin_id
+		LEFT OUTER JOIN TB_SYS_MLANG_COM_CD		 e 		ON b.DTL_CD = e.COM_CD 	
+		LEFT OUTER JOIN TB_SYS_DIST_WORK_ETC_BIKE   f	   ON a.WORK_SEQ = f.WORK_SEQ 		
+	 	<trim prefix="WHERE" prefixOverrides="AND |OR">
+	 		and a.admin_id = #{adminId}
+			   and a.WORK_DATE BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 0 DAY + INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+	 	</trim>		
+	</select>
+	
+	<insert id="insertDistCoWork" parameterType="distCoWorkVO" useGeneratedKeys="true" keyProperty="coworkInfoSeq">
+		INSERT INTO TB_MTC_DIST_COWORK_INFO 
+		(
+				  BIKE_CNT
+				, REG_DTTM
+				, REG_ID
+				, WORK_CNT
+				, WORK_DATE
+				, WORK_DTL
+				, WORK_FR_HOUR
+				, WORK_TO_HOUR
+				, WORK_TYPE
+				, WORK_CENTER_ID
+		) VALUES (
+				  ( CASE WHEN  #{bikeCnt} = '' or #{bikeCnt} is null THEN 0 ELSE  #{bikeCnt} END ) 
+				,  now()
+				, #{regId}
+				, 0
+				, curdate()
+				, #{workDtl}
+				, #{workFrHour}
+				, ( CASE WHEN  #{workToHour} = '' or #{workToHour} is null THEN NULL ELSE  #{workToHour} END )
+				, #{workType}
+				, #{workCenterId}
+				)
+	</insert>	
+	
+	<update id="updateDistCoWork" parameterType="distCoWorkVO">
+	   UPDATE /* DistributionDiary_SQL.updateDistCoWork */
+			  TB_MTC_DIST_COWORK_INFO SET  
+			  BIKE_CNT	 = ( CASE WHEN  #{bikeCnt} = '' or #{bikeCnt} is null THEN 0 ELSE  #{bikeCnt} END ) 
+			<!-- , WORK_CNT	 = #{workCnt} -->
+			, WORK_DTL	 = #{workDtl}
+			, WORK_FR_HOUR = #{workFrHour}
+			, WORK_TO_HOUR = ( CASE WHEN  #{workToHour} = '' or #{workToHour} is null THEN NULL ELSE  #{workToHour} END )
+			, WORK_TYPE	= #{workType}
+			, MOD_DTTM	 = now()
+			, MOD_ID	   = #{regId}
+		WHERE COWORK_INFO_SEQ = #{coworkInfoSeq}
+	</update>
+	
+	
+	<insert id="insertDistWorkEtcBike" parameterType="distWorkVO">
+		INSERT INTO TB_SYS_DIST_WORK_ETC_BIKE (
+			 MOVE_BIKE_CD
+			,MOVE_BIKE_CNT
+			,MOVE_ETC
+			,RELOCATE_BIKE_CD
+			,RELOCATE_BIKE_CNT
+			,RELOCATE_ETC
+			,REG_DTTM
+			,REG_ID
+			,WORK_SEQ
+		) VALUES (
+			 #{moveBikeCd}
+			,#{moveBikeCnt}
+			,#{moveEtc}
+			,#{relocateBikeCd}
+			,#{relocateBikeCnt}
+			,#{relocateEtc}
+			,now()
+			,#{adminId}
+			,#{workSeq}
+		)
+	</insert>	
+	
+	<update id="updateDistWorkEtcBike" parameterType="distWorkVO">
+		UPDATE TB_SYS_DIST_WORK_ETC_BIKE SET
+			MOD_DTTM = now()  
+		 , MOD_ID = #{adminId}  
+		   <if test=' moveBikeCd != null and moveBikeCd != ""'>  
+		 , MOVE_BIKE_CD = #{moveBikeCd}  
+		 </if> 
+		   <if test=' moveBikeCnt != null and moveBikeCnt != ""'>  
+		 , MOVE_BIKE_CNT = #{moveBikeCnt}  
+		 </if> 
+		   <if test=' relocateBikeCnt != null and relocateBikeCnt != ""'>  
+		 , RELOCATE_BIKE_CNT = #{relocateBikeCnt}  
+		 </if> 
+		   <if test=' relocateBikeCd != null and relocateBikeCd != ""'>  
+		 , RELOCATE_BIKE_CD = #{relocateBikeCd}  
+		 </if> 
+		   <if test=' relocateEtc != null and relocateEtc != ""'>  
+		 , RELOCATE_ETC = #{relocateEtc}  
+		 </if> 
+		   <if test=' moveEtc != null and moveEtc != ""'>  
+		 , MOVE_ETC = #{moveEtc}  
+		 </if> 
+		 WHERE ETC_BIKE_SEQ = #{etcBikeSeq}
+	</update>
+	
+	<update id="deleteDistWorkEtcBike" parameterType="distWorkVO">
+		DELETE FROM TB_SYS_DIST_WORK_ETC_BIKE   
+		 WHERE ETC_BIKE_SEQ = #{etcBikeSeq}
+	</update>
+	
+	
+	<update id="updateDistCoWorkCnt" parameterType="distCoWorkDtlVO">
+		UPDATE /* DistributionDiary_SQL.updateDistCoWorkCnt */
+			   TB_MTC_DIST_COWORK_INFO A
+		 LEFT JOIN ( SELECT COWORK_INFO_SEQ, COUNT(1) AS CNT FROM TB_MTC_DIST_COWORK_DTL Z WHERE COWORK_INFO_SEQ = #{coworkInfoSeq} ) B
+					ON ( A.COWORK_INFO_SEQ = B.COWORK_INFO_SEQ )	
+		  SET  WORK_CNT = IFNULL( B.CNT , 0 )
+		WHERE A.COWORK_INFO_SEQ = #{coworkInfoSeq}
+	</update>
+	
+	<select id="getDistCoWork" parameterType="distCoWorkVO" resultType="distCoWorkVO">
+		SELECT A.BIKE_CNT AS bikeCnt 
+			 , A.COWORK_INFO_SEQ AS coworkInfoSeq 
+			 , A.MOD_DTTM AS modDttm 
+			 , A.MOD_ID AS modId 
+			 , A.REG_DTTM AS regDttm 
+			 , A.REG_ID AS regId 
+			 , A.WORK_CNT AS workCnt 
+			 , A.WORK_DATE AS workDate 
+			 , A.WORK_DTL AS workDtl 
+			 , A.WORK_FR_HOUR AS workFrHour 
+			 , A.WORK_TO_HOUR AS workToHour 
+			 , A.WORK_TYPE AS workType 
+			 , A.WORK_CENTER_ID AS workCenterId
+			 , B.COWORK_DTL_SEQ  AS workDtlSeq   
+		  FROM TB_MTC_DIST_COWORK_INFO A
+		  LEFT JOIN TB_MTC_DIST_COWORK_DTL B ON ( A.COWORK_INFO_SEQ = B.COWORK_INFO_SEQ )
+		  LEFT JOIN TB_SYS_ADMIN C ON ( B.CO_WORK_ID = C.ADMIN_ID )
+		 WHERE 1=1
+		   AND EXISTS
+			   (
+			   SELECT Y.CENTER_ID 
+				 FROM TB_SYS_ADMIN X, TB_SYS_TEAM_INFO Y
+				WHERE X.TEAM_SEQ = Y.TEAM_SEQ
+				  AND X.ADMIN_ID =  #{regId}
+				  AND Y.CENTER_ID = A.WORK_CENTER_ID
+			   )
+		   AND A.WORK_DATE = curdate()	 
+	</select>
+	
+	 <insert id="insertDistCoWorkDtl" parameterType="distCoWorkDtlVO" useGeneratedKeys="true" keyProperty="coworkDtlSeq">
+		INSERT INTO TB_MTC_DIST_COWORK_DTL (
+			  COWORK_INFO_SEQ
+			, CO_WORK_ID
+			, REG_DTTM
+		) VALUES (
+			 #{coworkInfoSeq}
+			,#{coWorkId}
+			,now()
+		)	
+	</insert>	
+	
+	<delete id="deleteDistCoWork" parameterType="distCoWorkDtlVO">
+		DELETE FROM TB_MTC_DIST_COWORK_INFO
+		WHERE COWORK_INFO_SEQ = #{coworkInfoSeq}
+	</delete>	
+	
+	<delete id="deleteDistCoWorkDtl" parameterType="distCoWorkDtlVO">
+		DELETE FROM TB_MTC_DIST_COWORK_DTL
+		WHERE COWORK_INFO_SEQ = #{coworkInfoSeq}
+		<if test='coworkDtlSeq != null and coworkDtlSeq != ""'>
+			AND COWORK_DTL_SEQ = #{coworkDtlSeq}
+		</if>	 
+	</delete>
+	
+</mapper>

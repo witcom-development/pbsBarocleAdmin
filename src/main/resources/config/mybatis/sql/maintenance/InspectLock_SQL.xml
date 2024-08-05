@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.inspect.lock.service.InspectLockMapper">
+	<select id="getInspectLockList" parameterType="InspectLockVO" resultType="InspectLockVO">
+	<![CDATA[
+			SELECT INSPECT.FAULT_SEQ								  AS faultSeq
+	  			 ,A.RACK_ID																	  AS rackId
+				,A.NOW_LOCATE_CLS_CD																AS locateClsCd
+				,IF(A.NOW_LOCATE_CLS_CD  ='S',CONCAT('(S)',(SELECT STATION_NAME
+														  FROM TB_OPR_MLANG_STATION
+														  WHERE STATION_ID = A.NOW_LOCATE_ID
+														   AND LANG_CLS_CD = #{lang} )), '')	AS stationName
+				,IF(A.NOW_LOCATE_CLS_CD  ='C', CONCAT('(C)',(SELECT CENTER_NAME
+														  FROM TB_OPR_CENTER
+														  WHERE CENTER_ID = A.NOW_LOCATE_ID)) ,'')  AS centerName
+				,A.RACK_STUS_CD																 AS rackStatusCd
+				,(SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = INSPECT.FAULT_SEQ) AS rackStatusName
+				,(SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END FROM TB_MTC_FAULT_DETL DETL WHERE DETL.FAULT_SEQ = INSPECT.FAULT_SEQ AND DETL.FAULT_CLS_CD = 'ERR_002') AS reportYn
+				,REPINFO.REPAIR_CMPT_YN				  		  AS repairCmptYn
+			 	,REPINFO.REPAIR_SEQ						  	  AS repairSeq					 
+			 	,DATE_FORMAT(INSPECT.REG_DTTM  ,'%Y-%m-%d %H:%i')   AS regDttm
+				,DATE_FORMAT(A.LAST_CHK_DTTM  ,'%Y-%m-%d %H:%i')	AS lastChkDttm
+				,A.NOW_STATION_EQUIP_ORD					  AS stationEquipOrder
+			FROM TB_MTC_FAULT_INFO INSPECT
+			JOIN TB_OPR_RACK A ON A.RACK_ID = INSPECT.EQUIPMENT_ID
+			LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON A.NOW_LOCATE_ID = ST.STATION_ID
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				INSPECT.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				INSPECT.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rackId !=null and rackId != ""'>
+			  	AND A.RACK_ID LIKE CONCAT('',#{rackId},'%')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND ST.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND ST.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND INSPECT.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND INSPECT.READ_CLS_CD = 'H'
+				</if>
+		   </trim>	  
+		   ORDER BY INSPECT.REG_DTTM DESC, INSPECT.FAULT_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if>
+	</select>
+	<select id="getInspectLockListCount" parameterType="InspectLockVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		  FROM TB_MTC_FAULT_INFO INSPECT
+			JOIN TB_OPR_RACK A ON A.RACK_ID = INSPECT.EQUIPMENT_ID
+			LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ
+			LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON A.NOW_LOCATE_ID = ST.STATION_ID
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				INSPECT.REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				INSPECT.REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='rackId !=null and rackId != ""'>
+			  	AND A.RACK_ID LIKE CONCAT('',#{rackId},'%')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND ST.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND ST.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND INSPECT.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND INSPECT.READ_CLS_CD = 'H'
+				</if>
+		   </trim> 
+	</select>
+</mapper>

@@ -1,0 +1,244 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.inspect.ap.service.InspectApMapper">
+<!--	 <select id="getInspectApList" parameterType="InspectApVO" resultType="InspectApVO">
+	<![CDATA[
+	   SELECT T.FAULT_SEQ								  AS faultSeq
+	   		  ,T.DEVICE_ID AS apId
+			  ,T.SERIAL_NO as serialNo
+			  ,T.IP_V4_ADDR as ipV4
+			  ,T.REPAIR_CMPT_YN				  		  AS repairCmptYn
+			  ,T.REPAIR_SEQ						  	  AS repairSeq 
+			  ,DATE_FORMAT(T.LAST_CHK_DTTM, '%Y-%m-%d %H:%i')  AS lastChkDttm
+			  ,T.DEVICE_STUS_NAME	 					AS deviceStatusName
+			  ,(SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END FROM TB_MTC_FAULT_DETL DETL WHERE DETL.FAULT_SEQ = T.FAULT_SEQ AND DETL.FAULT_CLS_CD = 'ERA_002') AS reportYn
+			  ,DATE_FORMAT(T.REG_DTTM, '%Y-%m-%d %H:%i')	  AS regDttm
+			  ,T.LOCATE_ID							  AS stationId
+			  ,(case 
+				   when T.LOCATE_CLS_CD = 'C' then CONCAT('(C)', (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = T.LOCATE_ID))
+				   else CONCAT('(S)', (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = T.LOCATE_ID AND LANG_CLS_CD = #{lang}))
+				end)							  AS stationName  
+			  
+		FROM 
+		(
+			SELECT INSPECT.FAULT_SEQ
+					  , D.DEVICE_ID		 
+					  , D.SERIAL_NO
+					  , D.IP_V4_ADDR
+					  , REPINFO.REPAIR_CMPT_YN
+					  , REPINFO.REPAIR_SEQ
+					  , INSPECT.REG_DTTM
+					  , INSPECT.READ_CLS_CD
+					  , D.LAST_CHK_DTTM
+					  , (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) FROM TB_MTC_FAULT_DETL DETL LEFT OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = #{lang} WHERE FAULT_SEQ = INSPECT.FAULT_SEQ) AS DEVICE_STUS_NAME
+					  , A.LOCATE_ID
+					  , A.LOCATE_CLS_CD
+					  , ST.STATION_GRP_SEQ
+					  , ST.STATION_ID
+				  FROM TB_MTC_FAULT_INFO INSPECT
+				  JOIN TB_IOT_DEVICE D ON  D.DEVICE_ID = INSPECT.EQUIPMENT_ID
+				  INNER JOIN TB_IOT_AP_LOCATE_INFO A ON D.DEVICE_ID = A.DEVICE_ID AND A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+				  LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ 
+				  LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON A.LOCATE_ID = ST.STATION_ID
+				  WHERE INSPECT.EQUIPMENT_CLS_CD = 'DEV_003' AND A.LOCATE_CLS_CD = 'S'
+		   ) AS T
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='apId !=null and apId != ""'>
+			  	AND DEVICE_ID LIKE CONCAT(#{apId},'%')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND T.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND T.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND T.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND T.READ_CLS_CD = 'H'
+				</if>
+		   </trim>	  
+		   ORDER BY REG_DTTM DESC, FAULT_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select> // AP리스트 조회 백업 -->
+	
+		<select id="getInspectApList" parameterType="InspectApVO" resultType="InspectApVO">
+	<![CDATA[
+			  SELECT T.FAULT_SEQ						  AS faultSeq
+				   ,T.DEVICE_ID AS apId
+				  ,T.SERIAL_NO as serialNo
+				  ,T.IP_V4_ADDR as ipV4
+				  ,T.REPAIR_CMPT_YN					  AS repairCmptYn
+				  ,T.REPAIR_SEQ						   AS repairSeq 
+				  ,DATE_FORMAT(T.LAST_CHK_DTTM, '%Y-%m-%d %H:%i')  AS lastChkDttm
+				  ,T.DEVICE_STUS_NAME					AS deviceStatusName
+				  ,(SELECT CASE WHEN COUNT(*) > 0 THEN 'Y' ELSE 'N' END FROM TB_MTC_FAULT_DETL DETL WHERE DETL.FAULT_SEQ = T.FAULT_SEQ AND DETL.FAULT_CLS_CD = 'ERA_002') AS reportYn
+				  ,DATE_FORMAT(T.REG_DTTM, '%Y-%m-%d %H:%i')	  AS regDttm
+				  ,T.LOCATE_ID							  AS stationId
+				  ,(case 
+					   when T.LOCATE_CLS_CD = 'C' then CONCAT('(C)', (SELECT CENTER_NAME FROM TB_OPR_CENTER WHERE CENTER_ID = T.LOCATE_ID))
+					   else CONCAT('(S)', (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = T.LOCATE_ID AND LANG_CLS_CD =  #{lang}))
+					end)							  AS stationName  
+			 ,(case 
+					   when T.LOCATE_CLS_CD = 'C' then (SELECT MCOM.MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD MCOM
+						 JOIN TB_OPR_CENTER OPCEN ON OPCEN.DISTRICT_CD = MCOM.COM_CD 
+						 WHERE MCOM.LANG_CLS_CD =  #{lang} AND OPCEN.CENTER_ID = T.LOCATE_ID)
+						 
+					   else (SELECT OPMLST.STATION_GRP_NAME FROM TB_OPR_MLANG_STATION_GRP OPMLST
+					   JOIN TB_OPR_STATION OPST ON OPST.STATION_GRP_SEQ = OPMLST.STATION_GRP_SEQ
+					   WHERE OPMLST.LANG_CLS_CD =  #{lang}  AND OPST.STATION_ID = T.LOCATE_ID
+				)
+					end)							  AS districtName
+		FROM 
+		(
+		   SELECT INSPECT.FAULT_SEQ
+				   , D.DEVICE_ID		 
+					  , D.SERIAL_NO
+					  , D.IP_V4_ADDR
+					  , REPINFO.REPAIR_CMPT_YN
+					  , REPINFO.REPAIR_SEQ
+					  , INSPECT.REG_DTTM
+					  , INSPECT.READ_CLS_CD
+					  , D.LAST_CHK_DTTM
+					  , (SELECT GROUP_CONCAT(MLANG.MLANG_COM_CD_NAME) 
+			FROM TB_MTC_FAULT_DETL DETL LEFT 
+			OUTER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD 
+			AND MLANG.LANG_CLS_CD =  #{lang} WHERE FAULT_SEQ = INSPECT.FAULT_SEQ) AS DEVICE_STUS_NAME
+					  , A.LOCATE_ID
+					  , A.LOCATE_CLS_CD
+				  FROM TB_MTC_FAULT_INFO INSPECT
+				  JOIN TB_IOT_DEVICE D ON  D.DEVICE_ID = INSPECT.EQUIPMENT_ID
+				  INNER JOIN TB_IOT_AP_LOCATE_INFO A ON D.DEVICE_ID = A.DEVICE_ID AND A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+				 LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ 
+				  WHERE INSPECT.EQUIPMENT_CLS_CD = 'DEV_003' AND (A.LOCATE_CLS_CD = 'S' OR A.LOCATE_CLS_CD = 'C')
+		   ) AS T
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='apId !=null and apId != ""'>
+			  	AND DEVICE_ID LIKE CONCAT(#{apId},'%')
+				</if>
+				<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND T.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND T.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND T.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND T.READ_CLS_CD = 'H'
+				</if>
+		   </trim>	  
+		   ORDER BY REG_DTTM DESC, FAULT_SEQ DESC
+		   <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	
+	<select id="getInspectApListCount" parameterType="InspectApVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		  FROM 
+		(
+			SELECT D.DEVICE_ID		 
+					  , D.DEVICE_STUS_CD
+					  , D.SERIAL_NO
+					  , D.IP_V4_ADDR
+					  , REPINFO.REPAIR_CMPT_YN
+					  , REPINFO.REPAIR_SEQ
+					  , INSPECT.REG_DTTM
+					  , INSPECT.READ_CLS_CD
+					  , D.LAST_CHK_DTTM
+					  , A.LOCATE_ID
+					  , A.LOCATE_CLS_CD
+					  , ST.STATION_GRP_SEQ
+					  , ST.STATION_ID
+				  FROM TB_MTC_FAULT_INFO INSPECT
+				  JOIN TB_IOT_DEVICE D ON  D.DEVICE_ID = INSPECT.EQUIPMENT_ID
+				  INNER JOIN TB_IOT_AP_LOCATE_INFO A ON D.DEVICE_ID = A.DEVICE_ID  AND A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+				  LEFT OUTER JOIN TB_MTC_REPAIR_INFO REPINFO ON INSPECT.FAULT_SEQ = REPINFO.FAULT_SEQ
+				 LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME, ST.STATION_GRP_SEQ
+								 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+								 WHERE ST.STATION_ID = MST.STATION_ID
+								  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON A.LOCATE_ID = ST.STATION_ID
+				  WHERE INSPECT.EQUIPMENT_CLS_CD = 'DEV_003' AND (A.LOCATE_CLS_CD = 'S' OR A.LOCATE_CLS_CD = 'C')
+		   ) AS T
+		   ]]>
+			<trim prefix ="WHERE" prefixOverrides="AND"> 
+				<if test='searchBgnDe != null and searchBgnDe != ""'>
+				REG_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='searchBgnDe == null or searchBgnDe == ""'>
+				REG_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+				</if>
+				<if test='apId !=null and apId != ""'>
+			  	AND DEVICE_ID LIKE CONCAT(#{apId},'%')
+			  	</if>
+			  	<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+				AND T.STATION_GRP_SEQ = #{stationGrpSeq}
+				</if>
+				<if test='stationId !=null and stationId != ""'>
+				AND T.STATION_ID = #{stationId}
+				</if>
+				<if test='chkType != "H"'>
+				AND T.READ_CLS_CD = 'S'
+				</if>
+				<if test='chkType == "H"'>
+				AND T.READ_CLS_CD = 'H'
+				</if>
+		   </trim>
+	</select>
+	
+	<update id="updateApStatus" parameterType="InspectApVO">
+		UPDATE TB_IOT_DEVICE SET 
+			DEVICE_STUS_CD = 'APS_001'
+		WHERE DEVICE_ID = #{apId}
+	</update>
+	
+	<insert id="insertFaultAp" parameterType="InspectApVO">
+		INSERT INTO TB_MTC_FAULT_INFO
+		(FAULT_SEQ, EQUIPMENT_ID, EQUIPMENT_CLS_CD,READ_CLS_CD, REG_DTTM)
+		VALUES (NULL, #{apId}, 'DEV_003', 'S', NOW())
+	</insert>
+	
+	<insert id="insertFaultApDetail" parameterType="InspectApVO">
+		<selectKey resultType="string" keyProperty="faultSeq" order="BEFORE">
+			SELECT FAULT_SEQ FROM TB_MTC_FAULT_INFO WHERE EQUIPMENT_ID =	#{apId} ORDER BY REG_DTTM DESC LIMIT 1
+		</selectKey>
+		INSERT INTO TB_MTC_FAULT_DETL
+		(FAULT_SEQ, FAULT_CLS_CD, REG_DTTM,REG_ID)
+		VALUES (#{faultSeq}, #{faultClsCd}, NOW(), #{adminId})
+	</insert>
+	
+		<insert id="insertRepairAp" parameterType="InspectApVO">
+		INSERT INTO TB_MTC_REPAIR_INFO
+		(FAULT_SEQ, EQUIPMENT_CLS_CD,EQUIPMENT_ID, MAINTC_ADMIN_ID, REPAIR_CMPT_YN
+		, REPAIR_CENTER_ID,REG_DTTM)
+		VALUES ( #{faultSeq}, 'DEV_003', #{apId}, NULL, 'N', NULL, NOW())
+	</insert>
+</mapper>

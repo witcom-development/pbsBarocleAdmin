@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.customer.counsel.service.CounselMapper">
+	<select id="getCounselList" parameterType="CounselVO" resultType="CounselVO">
+		SELECT
+			CONSL_SEQ	AS conslSeq,
+			CUST_NM		AS custNm,
+			TALK_TNO		AS talkTno,
+			CONSL_DATE	AS conslDate,
+			TALK_STRT_DT	AS talkStrtDt,
+			TALK_END_DT		AS talkEndDt,
+			CONSL_LCD	AS conslLcd,
+			(SELECT CD_DESC1 FROM TB_SYS_CALL_COM_CD WHERE CONSL_LCD = COM_CD) AS lcdName,
+			CONSL_MCD	AS conslMcd,
+			(SELECT CD_DESC1 FROM TB_SYS_CALL_COM_CD WHERE CONSL_MCD = COM_CD) AS mcdName,
+			REQUEST_CONSL_DSCRP	AS requestConslDscrp
+		FROM uc_crs_consl_hist
+		WHERE 1=1
+		<if test="searchBgnDe!='' and searchBgnDe!=null">
+			AND DATE_FORMAT(CONSL_DATE,'%Y-%m-%d') &gt;= #{searchBgnDe}
+		</if>
+		<if test="searchEndDe!='' and searchEndDe!=null">
+			AND DATE_FORMAT(CONSL_DATE,'%Y-%m-%d') &lt;= #{searchEndDe}
+		</if>
+		<if test="custNm!='' and custNm!=null">
+		AND CUST_NM = #{custNm}
+		</if>
+		<if test="talkTno!='' and talkTno!=null">
+		AND TALK_TNO = #{talkTno}
+		</if>
+		<if test="conslLcd!='' and conslLcd!=null">
+		AND CONSL_LCD = #{conslLcd}
+		</if>
+		<if test="conslMcd!='' and conslMcd!=null">
+		AND CONSL_MCD = #{conslMcd}
+		</if>
+		ORDER BY CONSL_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="getCounselListCount" parameterType="CounselVO" resultType="int">
+		SELECT COUNT(*)
+		FROM uc_crs_consl_hist
+		WHERE 1=1
+		<if test="searchBgnDe!='' and searchBgnDe!=null">
+			AND DATE_FORMAT(CONSL_DATE,'%Y-%m-%d') &gt;= #{searchBgnDe}
+		</if>
+		<if test="searchEndDe!='' and searchEndDe!=null">
+			AND DATE_FORMAT(CONSL_DATE,'%Y-%m-%d') &lt;= #{searchEndDe}
+		</if>
+		<if test="custNm!='' and custNm!=null">
+		AND CUST_NM = #{custNm}
+		</if>
+		<if test="talkTno!='' and talkTno!=null">
+		AND TALK_TNO = #{talkTno}
+		</if>
+		<if test="conslLcd!='' and conslLcd!=null">
+		AND CONSL_LCD = #{conslLcd}
+		</if>
+		<if test="conslMcd!='' and conslMcd!=null">
+		AND CONSL_MCD = #{conslMcd}
+		</if>
+	</select>
+	
+	<select id="getConslLcdList" parameterType="CounselVO" resultType="CounselVO">
+		SELECT COM_CD AS comCd
+			, CD_DESC1 AS cdDesc1
+		FROM TB_SYS_CALL_COM_CD
+		WHERE COM_UP_CD IS NULL
+	</select>
+	
+	<select id="getConslMcdList" parameterType="CounselVO" resultType="CounselVO">
+		SELECT COM_CD AS comCd
+			, CD_DESC1 AS cdDesc1
+		FROM TB_SYS_CALL_COM_CD
+		WHERE COM_UP_CD = #{conslLcd}
+	</select>
+
+</mapper>

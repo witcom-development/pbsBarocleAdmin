@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.deviceMgmt.ap.service.ApMapper">
+	
+	<select id="getApList" parameterType="apVo" resultType="apVo">
+	  
+		SELECT T.deviceID
+			  ,T.deviceStatusCd
+			  ,T.serialNo
+			  ,T.ipV4
+			  ,DATE_FORMAT(T.lastChkDttm, '%Y-%m-%d')  AS lastChkDttm
+			  ,(SELECT MLANG_COM_CD_NAME
+				  FROM spb.TB_SYS_MLANG_COM_CD  A, spb.TB_SYS_COM_CD B
+				 WHERE A.COM_CD = B.COM_CD 
+				   AND A.COM_CD = T.deviceStatusCd  
+				   AND B.COM_UP_CD = 'APS'  
+				   AND A.LANG_CLS_CD = #{lang}	 )	 AS deviceStatusName
+			  ,DATE_FORMAT(T.regDttm, '%Y-%m-%d')	  AS regDttm
+			  ,T.locateId							  AS stationId
+			  ,(case 
+				   when T.locateClsCd = 'C' then (SELECT CONCAT('(센)',CENTER_NAME) FROM spb.TB_OPR_CENTER WHERE CENTER_ID = T.locateId)
+				   else (SELECT CONCAT('(대)',STATION_NAME) FROM spb.TB_OPR_MLANG_STATION WHERE STATION_ID = T.locateId AND LANG_CLS_CD = #{lang})
+				end)							  AS stationName	  
+			  ,DATEDIFF(DATE_FORMAT(DATE_ADD(T.lastChkDttm, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_007') DAY), '%Y-%m-%d'), DATE_FORMAT(now(), '%Y-%m-%d') ) AS lastChkRemainDay 
+			  ,T.entrpsCd
+			  ,(SELECT L.MLANG_COM_CD_NAME
+							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							WHERE COM_UP_CD = 'ENT'
+							  AND L.LANG_CLS_CD = 'LAG_001'
+							  AND S.COM_CD = T.entrpsCd) AS entrpsCdNm			  
+		  FROM 
+			   (SELECT D.DEVICE_ID		AS deviceID 
+					  , D.DEVICE_STUS_CD  AS deviceStatusCd 
+					  , D.SERIAL_NO	   AS serialNo
+					  , D.IP_V4_ADDR	  AS ipV4
+					  , D.REG_DTTM		AS regDttm 
+					  , D.LAST_CHK_DTTM   AS lastChkDttm
+					  , A.LOCATE_ID	   AS locateId
+					  , A.LOCATE_CLS_CD   AS locateClsCd
+					  , D.ENTRPS_CD		  AS entrpsCd
+				  FROM spb.TB_IOT_DEVICE D LEFT OUTER JOIN spb.TB_IOT_AP_LOCATE_INFO A ON D.DEVICE_ID = A.DEVICE_ID AND A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+				  WHERE DEVICE_MODL_CD ='DM1'
+		  <if test='searchBgnDe != null and searchBgnDe != ""'>
+		  <![CDATA[  AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= D.REG_DTTM  ]]>
+		  </if>
+		  <if test='searchEndDe != null and searchEndDe != ""'>
+		  <![CDATA[  AND D.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+		  </if>
+		  <if test='stationId != null and stationId != ""'>
+		  AND A.LOCATE_ID = #{stationId}
+		  AND A.LOCATE_CLS_CD  = 'S'
+		  </if>
+		  <if test='stationGrpSeq != null and stationGrpSeq != "" and (stationId == null or  stationId == "")'>
+		  AND A.LOCATE_CLS_CD  = 'S'
+		  AND A.LOCATE_ID IN (SELECT STATION_ID
+								FROM spb.TB_OPR_STATION
+							   WHERE STATION_GRP_SEQ = #{stationGrpSeq})
+		  </if>
+		  <if test='deviceStatusCd != null and deviceStatusCd != ""'>
+		  AND D.DEVICE_STUS_CD = #{deviceStatusCd}
+		  </if>
+		  <if test='rglChkSearch != null and rglChkSearch != ""'>
+		  AND DATE_FORMAT(NOW(), '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL((SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_007') - #{rglChkSearch}) DAY), '%Y-%m-%d') AND  DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_007') DAY), '%Y-%m-%d')
+		  </if>
+		  ORDER BY D.REG_DTTM DESC, D.DEVICE_ID DESC   
+		  <if test='pagingYn == "Y"'>
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  </if>	
+		) AS T
+	</select>
+	<select id="getApListCount" parameterType="apVo" resultType="int">
+		 SELECT COUNT(*)
+		   FROM spb.TB_IOT_DEVICE D INNER JOIN spb.TB_IOT_AP_LOCATE_INFO A ON D.DEVICE_ID = A.DEVICE_ID AND A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+		   WHERE  DEVICE_MODL_CD ='DM1'
+		  <if test='searchBgnDe != null and searchBgnDe != ""'>
+		  <![CDATA[  AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= D.REG_DTTM  ]]>
+		  </if>
+		  <if test='searchEndDe != null and searchEndDe != ""'>
+		  <![CDATA[  AND D.REG_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+		  </if>
+		  <if test='stationId != null and stationId != ""'>
+		  AND A.LOCATE_CLS_CD  = 'S'
+		  AND A.LOCATE_ID = #{stationId}
+		  </if>
+		  <if test='stationGrpSeq != null and stationGrpSeq != "" and (stationId == null or  stationId == "")'>
+		  AND A.LOCATE_CLS_CD  = 'S'
+		  AND A.LOCATE_ID IN (SELECT STATION_ID
+								FROM spb.TB_OPR_STATION
+							   WHERE STATION_GRP_SEQ = #{stationGrpSeq})
+		  </if>
+		  <if test='deviceStatusCd != null and deviceStatusCd != ""'>
+		  AND D.DEVICE_STUS_CD = #{deviceStatusCd}
+		  </if>
+		  <if test='rglChkSearch != null and rglChkSearch != ""'>
+		  AND DATE_FORMAT(NOW(), '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL((SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_007') - #{rglChkSearch}) DAY), '%Y-%m-%d') AND  DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_007') DAY), '%Y-%m-%d')
+		  </if>
+	</select>
+	
+	<select id="getAPInfo" parameterType="apVo" resultType="apVo">
+		SELECT T.deviceID		
+			  ,T.serialNo  
+			  ,T.deviceStatusCd 
+			  ,T.ipV4 
+			  ,T.lastChkDttm 
+			  ,T.regDttm
+			  ,T.locateClsCd
+			  ,(
+			  CASE 
+				  WHEN T.locateClsCd = 'S' THEN ( SELECT concat(STATION_GRP_SEQ ,'/',STATION_ID)	 
+													FROM spb.TB_OPR_STATION
+												   WHERE STATION_ID =  T.locateId	)								  
+				  WHEN T.locateClsCd = 'C' THEN T.locateId
+				  END   
+				) AS locateId
+			  ,T.entrpsCd
+	 FROM ( 
+			SELECT D.DEVICE_ID												  AS deviceID,
+				   D.SERIAL_NO												  AS serialNo,
+				   D.DEVICE_STUS_CD											 AS deviceStatusCd,
+				   D.IP_V4_ADDR												 AS ipV4,
+				   DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')					 AS lastChkDttm,
+				   DATE_FORMAT(D.REG_DTTM, '%Y-%m-%d')						  AS regDttm,
+				   A.LOCATE_ID												  AS locateId,
+				   A.LOCATE_CLS_CD											  AS locateClsCd,
+				   D.ENTRPS_CD	  AS entrpsCd
+			  FROM spb.TB_IOT_DEVICE D LEFT OUTER JOIN spb.TB_IOT_AP_LOCATE_INFO A 
+				ON D.DEVICE_ID = A.DEVICE_ID  AND  A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+			 WHERE D.DEVICE_ID = #{deviceId}
+		 ) AS T
+	</select>
+	
+	<select id="isChkIdDup" parameterType="apVo" resultType="int">
+		SELECT COUNT(*)
+		  FROM TB_IOT_DEVICE
+		  <where>
+		  <choose>
+			  <when test='chkType == "serial"'>
+			  SERIAL_NO = #{chkId}  
+			  </when>
+			  <otherwise>
+			  DEVICE_ID = #{chkId}  
+			  </otherwise>		
+		  </choose>		
+		  </where>
+	</select>
+	
+	<insert id="insertDeviceReg" parameterType="apVo">
+		INSERT INTO TB_IOT_DEVICE (
+				 DEVICE_ID
+				,DEVICE_MODL_CD
+				,SERIAL_NO
+				,IP_V4_ADDR
+				,DEVICE_STUS_CD
+				,REG_DTTM
+				,LAST_CHK_DTTM
+				,ENTRPS_CD
+		) VALUES (
+				#{deviceId}
+			   ,#{deviceModlCd}
+			   ,#{serialNo}
+			   ,#{ipV4}
+			   ,#{deviceStatusCd}
+			   ,NOW()
+			   ,NOW()
+			   ,#{entrpsCd}
+		)
+	</insert>
+	<insert id="addApLocateHist" parameterType="apVo">
+		INSERT INTO TB_IOT_AP_LOCATE_INFO (
+				 DEVICE_ID
+				,LOCATE_STR_DTTM
+				,LOCATE_END_DTTM
+				,LOCATE_CLS_CD
+				,LOCATE_ID
+				,LOCATE_ADMIN_ID
+		) VALUES (
+				#{deviceId}
+			   ,date_add(now() ,interval 1 second)
+			   ,STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+			   ,#{locateClsCd}
+			   ,#{locateId}
+			   ,#{locateAdminId}
+		)
+	</insert>
+	<update id="setApLocateHist" parameterType="apVo"> 
+		UPDATE TB_IOT_AP_LOCATE_INFO
+		   SET LOCATE_END_DTTM = NOW()
+			  ,LOCATE_END_ADMIN_ID = #{locateAdminId}
+		 WHERE DEVICE_ID = #{deviceId}
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+	</update>
+	<update id="setAPDevice" parameterType="apVo">
+	<![CDATA[	
+		UPDATE TB_IOT_DEVICE
+	]]>
+		<set>
+			<if test='serialNo != null and serialNo != ""'>
+			 SERIAL_NO = #{serialNo} 
+			</if>
+			<if test='deviceStatusCd != null and deviceStatusCd != ""'>
+			 ,DEVICE_STUS_CD = #{deviceStatusCd} 
+			</if>
+			<if test='ipV4 != null and ipV4 != ""'>
+			,IP_V4_ADDR = #{ipV4}			
+			</if>
+			<if test='lastChkDttm != null and lastChkDttm != ""'>
+			,LAST_CHK_DTTM = CONCAT(#{lastChkDttm}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
+			</if>
+		</set>
+		WHERE DEVICE_ID = #{deviceId}	  
+	</update>
+	
+	<select id="getStation" parameterType="String" resultType="String">
+		SELECT STATION_ID	AS stationId
+		  FROM TB_OPR_STATION
+		 WHERE STATION_GRP_SEQ = #{stationGrpSeq}	 
+	</select>
+	<select id="getApHistoryInfo" parameterType="String" resultType="apVo">
+		SELECT LOCATE_CLS_CD AS locateClsCd
+			  ,LOCATE_ID	 AS locateId
+			  ,DEVICE_ID	 AS deviceId
+		  FROM TB_IOT_AP_LOCATE_INFO
+		 WHERE DEVICE_ID = #{deviceId}
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+	</select>  
+	
+	<select id="isStationAPExist" parameterType="apVo" resultType="int">
+		SELECT COUNT(DEVICE_ID)
+		  FROM TB_IOT_AP_LOCATE_INFO
+		 WHERE LOCATE_CLS_CD = 'S'
+		   AND LOCATE_ID = #{locateId}
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+	</select> 
+	  
+</mapper>

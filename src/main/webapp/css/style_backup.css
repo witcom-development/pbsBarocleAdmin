@@ -1,0 +1,539 @@
+@import url('/css/solbit200525.css');
+/******************************************************************
+ * #basic, layout
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+a:link, a:active, a:visited {color:inherit}
+select {height:30px;line-height:24px}
+input[type=text],input[type=password] {font-size:12px;padding:0 5px;height:28px;vertical-align:middle}
+img {display:inline-block}
+input[readonly],
+select[readonly],
+textarea[readonly] {background:#eeeeee !important}
+
+#container {display:inline-block; width:750px; vertical-align:top; margin-left:25px; margin-top:50px; padding-bottom:50px; position:relative}
+
+html,body {height:100%}
+.popmask {background:url(/images/tranBg.png); position:fixed; left:0; top:0; z-index:999999999999999999999999999999999999999999999999999}
+#header {width:100%;position:absolute;top:0;left:0;background:#fff}
+#body {width:100%;min-height:100%;background:url("/images/bg_leftmenu.png") repeat-y;margin-bottom:-56px;overflow:auto;}
+#body2 {width:100%;min-height:100%;margin-bottom:-56px;overflow:auto;}
+#body.logined {background:none; text-align:center}
+#body.logined .content {width:1000px}
+#footer {width:100%;height:56px;background:#606060;overflow:hidden}
+.allwrap {height:100%}
+.cont {padding-bottom:56px;padding-top:105px;width:1000px;}
+#body.logined .cont {margin:0 auto; padding-top:20px}
+.cont:after {content:"";display:block;clear:both}
+.login {width:100%;height:32px;background:url("/images/bg_loginStatue.png") repeat;}
+.page {position:relative;overflow:hidden}
+.head {margin-top:50px;font-size:15px;font-weight:bold;overflow:hidden;}
+.head span {text-align:right; font-size:11px; margin-top:4px;font-weight:normal;float:right;}
+.head2 {margin-top:50px;font-size:15px;font-weight:bold; display:block; position:relative;}
+.head2 em {font-style:normal; margin-bottom:15px; display:block}
+.head2 span {text-align:right; font-size:11px; font-weight:normal;right:0; top:10px; position:absolute}
+.ttbtncase1 {position:relative; overflow:visible}
+.ttbtncase1 span {position:absolute; right:0; bottom:0}
+.layerMenuArea {display:none}
+.menuButton {display:none}
+.loginStatue {width:1000px;font-size:12px;color:#fff;font-family:"AppleGothic","돋움",dotum; text-align:right}
+.loginStatue span {margin-top:8px;padding-left:15px;background:url("/images/bul_loginStatue.png") no-repeat 0 1px; display:inline-block}
+.loginStatue .loginButton {width:70px; background:#fff;text-align:center;margin-left:3px; color:#065927; display:inline-block; vertical-align:middle; padding:3px 0 2px}
+.blogin {padding-top:5px}
+.menuArea {width:100%;height:73px;background:#fafafa;border-bottom:1px solid #c6c6c6;overflow:hidden}
+.menuBox {width:1000px}
+.logo {margin-top:21px;margin-left:28px;float:left}
+.menu {float:right;margin-top:30px}
+.menu li {display:inline-block;font-size:16px;color:#444;font-weight:bold;margin-left:10px;}
+.menu li a:hover{color:#065927}
+.leftmenu {float:left;width:238px;border:1px solid #e1e1e5; border-left:0 none;vertical-align:top;height:100%}
+.leftmenu dl {height:100%;background:#f0f1f6;}
+.leftmenu dt {height:80px;background:#49627f;color:#fff;padding-left:30px; font-size:22px; font-weight:bold; line-height:75px}
+.leftmenu dd {border-top:1px solid #e1e1e5;padding-left:30px;line-height:41px; font-size:13px}
+.leftmenu dd a:hover {text-decoration:underline}
+.leftmenu dd ul {margin-left:-30px; display:none}
+.leftmenu dd li {border-top:1px solid #e1e1e5; padding-left:40px; background:#e2e7ed url(/images/bul_hyphen.png) 30px center no-repeat}
+.content {vertical-align:top;width:740px;overflow:hidden;padding-top:32px;padding-bottom:100px;padding-left:20px;overflow: hidden;}
+.foot {text-align:center;color:#fff;margin-top:20px;font-size:12px}
+.subject {border-bottom:1px solid #d9d9d9;padding-bottom:15px;overflow:hidden;}
+.subject span {float:right;margin-top:16px;font-size:13px;color:#444;background:url("/images/bul_subject.png") no-repeat 0 3px;padding-left:20px}
+.subject em {font-style:normal;color:#003c7f;font-weight:bold;}
+.pageTitle {float:left;font-size:27px;color:#000;font-weight:bold}
+.statu {padding-left:30%;display:block;}
+.statulist p {position:relative; margin:1px 5px}
+.statulist p span {position:absolute; right:0}
+.listalign {font-size:12px;	}
+.staBox {padding:10px 20px;background:#fff;border:1px solid #e0e0e0}
+.staBox span {overflow:hidden;margin-right:10px}
+.staBox span em {margin-top:5px;display:inline-block;line-height:18px;margin-right:5px}
+.staBox span em img {vertical-align:bottom}
+.alert em {margin-top:5px;display:inline-block;line-height:18px;margin-right:5px}
+.alert em img {vertical-align:bottom}
+
+.dash {margin:0 4px;line-height:30px}
+.laType {font-size:14px;line-height:30px;margin-right:10px;display:inline-block}
+.loginedBox {width:65%;margin:0 auto;margin-top:50px}
+.user {padding:25px 20px;text-align:center;background:#fff;border:1px solid #dadbdb; margin-top:80px}
+.user em {display:inline-block;width:70px;margin-bottom:10px}
+.user em img {width:100%}
+.user .id {color:#1cb46f;font-family:'NanumGothicBold'}
+.loginArea {margin:0 auto;width:70%;background:#fefefe;border:1px solid #d9d9d9;text-align:center;padding:100px 30px}
+.loginArea p {color:#11955a;font-size:18px}
+.loginArea input {width:300px;height:50px}
+.loginArea .loging input {width:auto;height:auto; vertical-align:middle; }
+.loginArea .loging {font-size:15px; width:300px; text-align:left; margin:0 auto 20px}
+
+.loginBox {margin-top:40px}
+.loginBox p {margin-bottom:10px} 
+/******************************************************************
+ * #검색 조건
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+
+/* .shBox {border:1px solid #cecece;padding:10px 10px 0;background:#fcfcfc;margin-top:20px} */
+.shBox {border:1px solid #cecece;padding:10px 10px 0;background:#fcfcfc;margin-top:20px;position:relative}
+
+.shBox input {background:#FFF}
+.shBox_m {display:none}
+.shBoxSection {overflow:hidden; font-size:12px}
+.shBoxSection .section {display:inline-block;width:350px;margin-bottom:10px; float:left; height:30px; vertical-align:middle;}
+.shBoxSection .section.radbox,
+.shBoxSection .section.radbox2 {padding-top:7px; height:23px;}
+.shBoxSection .section.radbox2 .input-rd01 {margin-right:3px}
+.shBoxSection .section.level 	.input-rd01 {margin-right:0; padding:0}
+.shBoxSection .section.level 	.input-rd01 label {font-size:11px; letter-spacing:-2px; margin-right:1px}
+.shBoxSection .pright {float:right;}
+.shBoxSection .ptr {text-align:right}
+.daymth1,.daymth2,.daymth3 {display:inline-block}
+.daymth2,.daymth3 {display:none}
+.shBoxSection:after {content:""; display:block; clear:both}
+.shBoxSection .repos {padding-top:5px; height:25px}
+.shBox_pop {border:1px solid #cecece;padding:10px 10px;background:#fcfcfc}
+
+.etccase1 {text-align:right}
+.etccase2 .fwselect {width:240px; display:inline-block; vertical-align:middle; padding-top:8px}
+.etccase2 label {vertical-align:middle; padding-top:7px}
+.btncase1 {position:absolute; right:10px}
+/******************************************************************
+ * #표스타일
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+/* .eillsis {overflow:hidden;width:70%;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis; display:inline-block} */
+.lralign {position:relative; margin-bottom:5px}
+.lralign p {position:absolute; right:0; top:0; font-size:12px}
+.lralign p:first-child {position:relative}
+.tb_numlist {text-align:right; font-size:11px; margin:15px 0 5px}
+.tb_case1 {position:relative; margin:15px 0 5px; font-size:11px;}
+.tb_case1 em {font-style:normal; color:#C00;}
+.tb_case1 span {text-align:right; font-size:11px; position:absolute; right:0; bottom:0}
+.tb_type01 {width:100%;border:1px solid #e6e6e6;font-size:13px;table-layout:fixed}
+.tb_type01 th {text-align:center;padding:15px 0;background:#eff5f8;border-top:2px solid #5e5e5e;border-right:1px solid #e6e6e6}
+.tb_type01 td {text-align:left;padding:10px 2px;border:1px solid #e6e6e6}
+.tb_type01.tb_right td {text-align:right}
+.tb_type01 td.title {text-align:left;}
+.tb_type01 td.title a {overflow:hidden;width:95%;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis; display:inline-block; vertical-align:middle; margin-left:10px;}
+.tb_type01 td a {color:#069}
+
+
+.tb_type02 {width:100%;border:1px solid #e7e7e7;border-bottom:#c1c1c1;text-align:left;font-size:13px;table-layout:fixed}
+.tb_type02 th.top {border-top:2px solid #5e5e5e;}
+.tb_type02 td.top {border-top:2px solid #5e5e5e;}
+.tb_type02 th em {color:#F30}
+.tb_type02 th .brIn {padding-left:10px}
+.tb_type02 td, 
+.tb_type02 th {border:1px solid #c1c1c1;padding:10px 15px; text-align:left; height:30px; vertical-align:middle}
+.tb_type02 th {background:#eff5f8;color:#33335a; vertical-align:middle}
+.tb_type02 td input[type=file] {width:80%; height:30px;}
+
+.tb_type03 {width:100%;border-top:2px solid #5e5e5e;font-size:13px;table-layout:fixed}
+.tb_type03 th {text-align:center;padding:5px 0;background:#eff5f8;border-right:1px solid #e6e6e6;border-bottom:1px solid #e6e6e6; vertical-align:middle}
+.tb_type03 td {text-align:left;padding:10px 2px;border:1px solid #e6e6e6}
+.tb_type03.tb_right td {text-align:right}
+.tb_type03 td.title {text-align:left;}
+.tb_type03 td.title a {overflow:hidden;width:95%;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis; display:inline-block; vertical-align:middle; margin-left:10px;}
+.tb_type03 td a {color:#069}
+
+.tb_type04 {width:100%;border:1px solid #e6e6e6;font-size:13px;table-layout:fixed}
+.tb_type04 th {text-align:center;padding:15px 0;background:#eff5f8;border-right:1px solid #e6e6e6}
+.tb_type04 td {text-align:left;padding:10px 2px;border:1px solid #e6e6e6}
+.tb_type04.tb_right td {text-align:right}
+.tb_type04 td.title {text-align:left;}
+.tb_type04 td.title a {overflow:hidden;width:95%;white-space:nowrap;text-overflow:ellipsis;-o-text-overflow:ellipsis; display:inline-block; vertical-align:middle; margin-left:10px;}
+.tb_type04 td a {color:#069}
+
+.editor {height:300px;padding:0 !important;}
+.editorLine th {padding-top:0px;vertical-align:middle}
+.detatextarea {width:97%; display:inline-block; height:200px}
+.resdayarea {display:inline-block; margin-left:20px}
+.pwtableblock {display:inline-block}
+.spanLine th {border-top:1px solid #e6e6e6}
+.daycase1 p {display:inline-block; margin:5px 10px 5px 0;}
+.daycase1 p em {display:inline-block; width:30px; font-style:normal}
+.lengcase1 p {margin-top:5px}
+.lengcase1 p:first-child {margin:0}
+.lengcase1 p label {display:inline-block; width:50px} 
+.pp {display:block;}
+.pp em {font-style:normal;margin-right:5px;width:150px;display:inline-block}
+.renNum {width:100px;display:inline-block}
+
+.posrela {position:relative;}
+.posrela .widpos {width:49%}
+.posrela .posright {position:absolute; right:0; top:0}
+.posrela .whead {font-size:15px; font-weight:bold;}
+.posrela .widpos .tb_type01 th {padding:8px 0; vertical-align:middle}
+.posrela .widpos .tb_type01 td {text-align:right}
+.widscr {width:auto; overflow:scroll; overflow-y:hidden}
+/******************************************************************
+ * #paging
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.paging {text-align:center;clear:both; margin:30px 0 50px}
+.paging:after {display:block; content:""; clear:both}
+.paging a {display:inline-block;vertical-align:middle;margin:0;font-size:12px;font-family:"nanumgothic"}
+.paging a img {display:block}
+.paging a.pagePrev {margin-right:3px}
+.paging a.pageNext {margin-left:3px}
+.paging span {display:inline-block;font-size:0px;vertical-align:middle;margin:0 1px 0 2px;color:#777;padding:0 5px;border:1px solid transparent;background:#fff;border:1px solid #e2e2e2;} 
+.paging span:hover {background:#28a06f;color:#fff}
+.paging span:hover a {color:#fff}
+.paging span a {display:block;height:32px;line-height:31px;width:25px;font-size:11px;color:#888}
+.paging span.on {background:#28a06f;border:1px solid #9d9d9d;color:#fff;margin:0 3px}
+.paging span.on a {color:#fff;}
+
+.drpaging {text-align:center;clear:both; margin:30px 0 50px;vertical-align:top}
+.drpaging a {display:inline-block;vertical-align:middle}
+.drpaging span {display:inline-block;vertical-align:top;margin:0 10px}
+.drpaging span input {height:21px;width:50px;margin-right:10px}
+.drpaging span input[type=number]{border:1px solid #d4d4d4; padding:6px; background:#FFF; font-size:14px;}
+.drpaging span em {font-style:normal;margin-right:10px}
+.drpaging span button {border:1px solid #dedede;padding:10px 15px;display:inline-block;background:#28a06f;color:#fff;font-family:"nanumgothic"}
+
+/******************************************************************
+ * #버튼영역
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.btnArea {overflow:hidden;margin-top:20px}
+.btnArea_pop {overflow:hidden;margin-top:20px}
+.btnArea_m {display:none}
+.btnArea > span.right > button,
+.btnArea > span.right > a {margin-left:10px}
+.btnArea > span.left > button,
+.btnArea > span.left > a {margin-right:10px}
+.btnArea_pop > span.right > button,
+.btnArea_pop > span.right > a {margin-left:10px}
+.btnArea_pop > span.left > button,
+.btnArea_pop > span.left > a {margin-right:10px}
+
+/******************************************************************
+ * #게시판 타입
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.photoArea {margin-top:20px}
+
+.photoBord {border-bottom:2px solid #d2d2d2; margin-left:-10px}
+.photoBord li  {display:inline-block;width:240px;margin-left:10px;margin-bottom:30px;}
+.photoBord li p {display:block;width:240px; height:180px}
+.photoBord li p.img {border:1px solid #dbdbdb; background-position: center center !important; background-repeat:no-repeat !important}
+.photoBord li span.title {display:block; margin-top:15px;font-size:14px;font-family:NanumGothicBold,'나눔고딕',ng,sans-serif;color:#555}
+.photoBord li a:hover span.title {color:#038751}
+.photoBord li em.data {display:block;font-style:normal;font-size:14px;color:#555;margin-top:10px}
+.photoBord li .data {font-size:12px;color:#717171;margin-top:3px;margin-left:5px;margin-bottom:5px}
+.usaltbtd {position:relative;}
+.usalbtn {position:absolute;right:10px;	top:10px;}
+/******************************************************************
+ * #탭스타일
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.tabWrap.type3 {position:relative;z-index:10;margin-top:20px}
+.tabWrap.type3 .tabBox {}
+.tabWrap.type3 .tabBox:after {display:block; clear:both; content:""}
+.tabWrap.type3 .tab {float:left;margin-right:5px}
+.tabWrap.type3 .tab.on {border-bottom:1px solid #fff}
+.tabWrap.type3 .tab button {display:block;padding:10px 20px;width:120px;background:#f8f8f8;border:1px solid #f8f8f8;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:15px;color:#383838;}
+.tabWrap.type3 .tab.on button {background:#fff;border:1px solid #08935a;color:#08935a;font-weight:bold}
+.tabWrap.type3 .tabCon {display:none;position:relative;z-index:5;padding:15px 0;width:100%;}
+.tabWrap.type3 .tabCon.on {display:block}
+.tabWrap.type3 .tabCon .moreBtn {position:absolute;right:0;top:-20px;font-size:12px}
+
+.tablist {overflow:hidden}
+.tablist li {padding:10px 12px;;background:#f8f8f8;float:left;margin-right:5px;font-size:14px}
+.tablist li.on {border:1px solid #08935a;color:#08935a;background:#fff}
+.tablist_m {display:none;width:200px;margin-top:20px}
+/******************************************************************
+ * #질문 layout
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.questionBoxWrap {display:block;overflow:hidden}
+.questionBoxWrap_m {display:none;overflow:hidden}
+.answerBoxWrap {display:block;overflow:hidden}
+.answerBoxWrap_m {display:none;overflow:hidden}
+.questionBox {border:1px solid #e6e6e6;background:#fefefe;padding-top:30px;position:relative;margin-top:20px}
+.answerBox {background:#fefefe;position:relative;margin-top:30px}
+.layTb {table-layout:fixed;width:99%}
+.layTb td {padding:10px;font-size:14px;font-family:NanumGothic,"나눔고딕",dotum,"돋움";color:#33335a;font-weight:bold;}
+.layTb td label {font-size:12px;font-family:NanumGothic,"나눔고딕",dotum,"돋움";color:#000;font-weight:normal;text-align:left}
+.tb_type01.addSt .br {border-right:1px solid #e6e6e6}
+.tb_type01.addSt tbody.np td {padding:10px 8px}
+.tb_type01.addSt th {border-left:none;border-right:none;border-bottom:1px solid #e6e6e6;padding:10px 8px}
+.tb_type01.addSt th:first-child {border-right:1px solid #e6e6e6}
+.tb_type01.addSt td {border:none;border-bottom:1px solid #e6e6e6;text-align:left}
+.tb_type01.addSt td:first-child {border-right:1px solid #e6e6e6}
+.tb_type01.addSt td.sd, .tb_type01.addSt th.sd {padding-right:0}
+.tb_type01.addSt td.last, .tb_type01.addSt th.last {padding-left:0} 
+.addStwrap {padding:10px}
+/******************************************************************
+ * #2단 구조
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.didBox {margin-top:20px}
+.didBox .leftBox {width:280px;float:left;margin-right:15px;border:1px solid #dedede}
+.didBox .rightBox {width:440px;float:left;}
+.didBox.pop {overflow:hidden}
+.didBox.pop .leftBox {width:48%}
+.didBox.pop .rightBox {width:48%}
+.didBox2 {margin-top:20px;overflow:hidden}
+.didBox2 .leftBox {width:49%;float:left;margin-right:2%;}
+.didBox2 .rightBox {width:49%;float:left;position:relative}
+.abBottom {position:absolute;bottom:-39.5%;left:0}
+/******************************************************************
+ * #플레이스 홀더
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.pholder {display:inline-block;position:relative;z-index:10}
+.pholder label {display:block;position:absolute;left:0;top:0;z-index:10;width:100%;height:100%;line-height:28px;text-indent:7px;font-size:12px}
+.pholder.holder label {display:none}
+
+/******************************************************************
+ * #팝업
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+.allwrap.pop {padding:5px 0 10px}
+.allwrap.pop .btnArea button {padding-left:25px; padding-right:25px; font-weight:bold; margin-left:10px; margin-right:10px;}
+.shBox_pop h2 {color:#066; font-size:14px; margin-bottom:5px;}
+.shBox_pop p {color:#333; font-size:12px;}
+.popTt {color:#FFF; padding:12px 10px 12px;background:#50af84;}
+.popTtl {color:#FFF; padding:12px 10px 12px;background:#50af84;}
+.popTt2 { padding:12px 10px 12px;}
+.cntbox {padding:10px; background:#fff;padding-bottom:20px;}
+.popclose {position:absolute; top:8px; right:15px}
+.popclose img {width:25px}
+/******************************************************************
+ * #input 수치
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+/*datepick*/
+.selectDate.input-datepick01 {width:245px}
+.input-datepick01 {width:90%}
+
+.selectDate.input-datepick02 {width:120px}
+.input-datepick02 {width:80%}
+
+.selectDate.input-datepick03 {width:120px}
+.input-datepick03 {width:80%}
+
+.selectDate.input-datepick04 {width:105px}
+.input-datepick04 {width:89%}
+
+/*select*/
+.longselect {height:200px;}
+.shortselect {height:100px;}
+.select-category01 {width:175px;margin-right:10px}
+.select-category02 {width:200px;}
+.select-category03 {width:150px;}
+.select-category04 {width:239px;}
+.select-category05 {width:269px;}
+.select-category06 {width:70px;}
+.select-category07 {width:70px;}
+.select-category08 {width:112px;}
+.select-category09 {width:95%;}
+
+/*input-text*/
+.input-text01 {width:540px}
+.input-text02 {width:350px;margin-right:5px}
+.input-text02p {width:320px;margin-right:5px}
+.input-text03 input {width:50px;}
+.input-text04 input {width:400px}
+.input-text05 input {width:500px}
+.input-text06 input {width:638px}
+.pholder.input-text06 {width:100%}
+.input-text07 input {width:218px}
+.input-text01p input {width:90%}
+.input-text03p input {width:150px;}
+.input-text08 input {width:80px}
+.input-text09 input {width:35px}
+.input-text10 input {width:260px}
+.input-text11 input {width:38%; margin-right:5px}
+.input-text12 input {width:100px}
+.input-text20 input {width:580px}
+.input-text21 input {width:450px}
+/*추가 dki 08.19	*/
+.input-text13 input {width:60%; margin-right:5px}
+
+.pholder.input-text07 label {width:220px;}
+.pholder.input-text05 label {width:500px;}
+.pholder.input-text06 label {width:628px}
+/*input-checkbox*/
+.input-ck01 {margin-right:15px}
+.input-ck01 input {width:18px;height:18px;vertical-align:middle}
+.input-ck01 label {font-family:nanumGothic,"나눔고딕","돋움",dotum;font-size:13px;color:#000;margin-left:5px}
+
+.input-ck02 {margin-right:15px;margin-bottom:10px;width:150px;display:inline-block}
+.input-ck02 input {width:18px;height:18px;vertical-align:middle}
+.input-ck02 label {font-family:nanumGothic,"나눔고딕","돋움",dotum;font-size:13px;color:#000;margin-left:5px}
+
+/*input-radio*/
+.input-rd01 {margin-right:15px}
+.input-rd01 input {width:18px;height:18px;vertical-align:middle}
+.input-rd01 label {font-family:nanumGothic,"나눔고딕","돋움",dotum;font-size:13px;color:#000;margin-left:5px}
+
+/*btn type*/
+.fullBtn img {display:block}
+
+.btnType01 {padding:12px 30px;color:#fff;background:#275b97;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:14px}
+.btnType02 {padding:8px 10px 9px;background:#27bbb2;color:#fff;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:12px}
+.btnType03 {display:block;margin:0 auto;}
+.btnType05 {padding:8px 10px;background:#275b97;color:#fff;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:12px}
+.btnType06 {width:310px;height:50px;padding:8px 10px;background:#16b36d;color:#fff;font-family:NanumGothic,’나눔고딕’,dotum,"돋움";font-size:12px}
+
+
+.btn_delQ {position:absolute;right:18px;top:10px}
+.btn_addQ {margin-top:20px}
+
+.btn-srh01 {margin-left:10px}
+.btn-srh02 {margin-left:10px}
+.btn-srh03 {width:30px;height:30px;background:#666666;margin-left:5px; vertical-align:middle}
+.btn-srh03 img {width:100%}
+
+/**/
+.laType02 {width:60px;margin-right:5px;display:inline-block;font-size:12px}
+.laType03 {width:70px;margin-right:5px;display:inline-block;font-size:12px}
+
+/*button color*/
+.bc_bule {background:#49627f}
+.bc_green {background:#3e9a62}
+.bc_gray {background:#777}
+
+/*a style*/
+.formula {text-decoration:underline;font-size:14px;margin-top:10px;margin-left:5px;color:#333}
+a.btnType01, 
+a.btnType02, 
+a.btnType03,
+a.btnType05 {color:#fff !important;vertical-align:middle;font-size:14px;display:inline-block}
+
+
+
+
+/******************************************************************
+ * #지도정보
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+ * 2015.06.05
+ * .stamapinfo  의 초기 display 값 삭제.
+ * dki ymshin
+******************************************************************/
+.staguide {position:relative; margin-top:20px;}
+.stamapinfo {border:2px solid #555; background:#fff; font-family:dotum; width:250px; margin:-208px 0 0 -109px;text-align:left}
+.stamapinfo .stamtitle {background:#f5f5f5; border-bottom:1px solid #c9c9c9; font-size:15px; color:#333; position:relative}
+.stamapinfo .stamtitle span {margin:10px 0 10px 10px; font-weight:bold; display:inline-block}
+.stamapinfo .stamtitle a {position:absolute; top:9px; right:10px}
+.stamapinfo .staimg {display:inline-block; margin:10px 0 10px 10px; vertical-align:middle}
+.stamapinfo ul {display:inline-block; vertical-align:middle; font-size:12px; margin:12px 10px 10px 5px}
+.stamapinfo ul li {margin:0 0 5px; background:url(/images/gnbDots1.gif) 0 center no-repeat; padding-left:8px;}
+.stamapinfo ul li span {color:#d90000; font-weight:bold}
+.stamapinfo .stamappos img {display:block; margin:0 auto}
+.stamapinfo .stamappos {display:block; text-align:center; margin-bottom:-16px;}
+.mpblue,
+.mporg,
+.mpred {position:absolute; text-align:center;} 
+.infolf {text-align:left}
+
+.mapguidebox {margin:30px 0 0; text-align:right}
+.mapguidebox li {display:inline-block; font-size:13px; padding:5px 0 5px 18px; margin-left:10px}
+.mapguidebox li:first-child {margin-left:0}
+.mgb1 {background:url(../images/ico_s01.png) 0 6px no-repeat;}
+.mgb2 {background:url(../images/ico_s02.png) 0 6px no-repeat;}
+.mgb3 {background:url(../images/ico_s03.png) 0 6px no-repeat;}
+.mgb4 {background:url(../images/ico_s04.png) 0 6px no-repeat;}
+.mgb5 {background:url(../images/ico_s05.png) 0 6px no-repeat;}
+.mapcus {margin-top:10px}
+.mapcus img {width:auto}
+
+/******************************************************************
+ * #컨텐츠
+ * ---------------------------------------------------------------- 
+ + Work History *
+ * ----------------------------------------------------------------
+******************************************************************/
+/*  실시간현황 */
+.mapguide {margin-top:20px; position:relative; color:#666; font-size:14px}
+.mapguide p {display:inline-block; font-family:'NanumGothicBold'; color:#333; padding-right:5px; vertical-align:middle}
+.mapguide span {width:80px; /*display:inline-block;*/vertical-align:middle}
+.mapguide span em {vertical-align:middle}
+.mapguide span em img {vertical-align:middle;}
+.mapguide button {position:absolute; right:10px; top:12px}
+
+/* 유지보수 */
+td.recly {padding-bottom:0}
+.recly .input-ck02 label {font-size:11px}
+
+/******************************************************************************************************************************************************************************************************
+ * #반응형웹 초기화 ** pw : 반응형 / T : 테블릿 / M : 모바일
+******************************************************************************************************************************************************************************************************/
+.pwPC {display:block !important}
+.pwPCin {display:inline-block !important}
+.pwTM {display:none !important}
+.dvhid {display:none}
+.openlayer {display:none !important}
+.apphide {display:inline-block !important}
+.main.er {overflow:hidden;background:#fff}
+.error {margin:10% 0;width:100%;text-align:center} 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

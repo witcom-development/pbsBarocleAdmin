@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE tiles-definitions PUBLIC "-//Apache Software Foundation//DTD Tiles Configuration 3.0//EN" "tiles-config_3_0.dtd">
+<tiles-definitions>
+	
+	<definition name="mainTemplate" template="/WEB-INF/views/admin/layout/layout.jsp">
+		<put-attribute name="title" value="" />
+		<put-attribute name="resource" value="/WEB-INF/views/admin/layout/resource.jsp" />
+		<put-attribute name="header" value="/WEB-INF/views/admin/layout/header.jsp" />
+		<put-attribute name="head" value="/WEB-INF/views/admin/layout/head.jsp" />
+		<put-attribute name="subject" value="/WEB-INF/views/admin/layout/subject.jsp" />
+		<put-attribute name="left" value="/WEB-INF/views/admin/layout/left.jsp" />
+		<put-attribute name="body" value="" />
+		<put-attribute name="footer" value="/WEB-INF/views/admin/layout/footer.jsp" />
+	</definition>
+	
+	<!--로그인-->
+	<definition name="/admin/login/com_login" extends="mainTemplate" template="/WEB-INF/views/admin/login/com_login.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--로그인이력-->
+	<definition name="/admin/login/com_login_suc" extends="mainTemplate" template="/WEB-INF/views/admin/login/com_login_suc.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--로그인_성공_분배-->
+	<definition name="/admin/login/dist/com_login_suc_dist" extends="mainTemplate" template="/WEB-INF/views/admin/login/dist/com_login_suc_dist.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	<!--로그인_성공_순회-->
+	<definition name="/admin/login/round/com_login_suc_round" extends="mainTemplate" template="/WEB-INF/views/admin/login/round/com_login_suc_round.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+
+	 <!--에러페이지-->
+	<definition name="/admin/common/error" extends="mainTemplate" template="/WEB-INF/views/admin/common/error.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--에러페이지-->
+	<definition name="/admin/login/com_no_per" extends="mainTemplate" template="/WEB-INF/views/admin/login/com_no_per.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+	<!--에러페이지-->
+	<definition name="/admin/login/com_not_page" extends="mainTemplate" template="/WEB-INF/views/admin/login/com_not_page.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
+</tiles-definitions>

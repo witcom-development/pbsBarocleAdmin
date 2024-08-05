@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.statistics.route.service.RouteStatisticsMapper">
+	<select id="getRouteDataList" parameterType="routeStatisticsVo" resultType="routeStatisticsVo">
+		<!-- 주요이동경로 기존 쿼리
+		SELECT 
+			A.RENT_HIST_SEQ AS rentHistSeq,
+			MOVE_ORD AS moveOrd,
+			dg_decrypt_float('TB_SVC_RENT_MOVE_INFO', 'MOVE_LATITUDE', MOVE_LATITUDE) AS moveLatitude, 
+			dg_decrypt_float('TB_SVC_RENT_MOVE_INFO', 'MOVE_LONGITUDE', MOVE_LONGITUDE) AS moveLongitude
+		FROM TB_SVC_RENT_HIST A LEFT OUTER JOIN TB_SVC_RENT_MOVE_INFO B ON A.RENT_HIST_SEQ = B.RENT_HIST_SEQ
+		WHERE A.RENT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		AND A.RENT_STATION_ID = #{rentStationId}
+		AND A.RETURN_STATION_ID = #{returnStationId}
+		AND MOVE_ORD IS NOT NULL
+		AND MOVE_LATITUDE IS NOT NULL
+		AND MOVE_LONGITUDE IS NOT NULL
+		 -->
+		 
+		<!-- 주요이동경로 자전거번호 추가 검색 (통계>주요 이동경로 현황), CMS_20161103-->
+				
+		  <!-- SELECT RENTHISTSEQ,
+				 MOVEORD,
+				 MOVELATITUDE,
+				 MOVELONGITUDE,
+				 CASE WHEN SUBSTRING_INDEX(MORD,',',1) > 10 
+					  THEN  ( CASE WHEN FLOOR(MOVEORD / (SUBSTRING_INDEX(MORD,',',1) / 10)) = 10
+								 THEN FLOOR(MOVEORD / (SUBSTRING_INDEX(MORD,',',1) / 10))
+								 ELSE FLOOR(MOVEORD / (SUBSTRING_INDEX(MORD,',',1) / 10)) + 1
+								 END )
+					  ELSE MOVEORD
+					   END 
+				 AS mordArr
+		 FROM (
+				SELECT RENTHISTSEQ
+					  ,MOVEORD
+					  ,MOVELATITUDE
+					  ,MOVELONGITUDE
+				  FROM (
+							SELECT  A.RENT_HIST_SEQ AS rentHistSeq,
+							  		MOVE_ORD AS moveOrd,
+									A.RENT_BIKE_ID as RENT_BIKE_ID,
+							  		dg_decrypt_float('TB_SVC_RENT_MOVE_INFO', 'MOVE_LATITUDE', MOVE_LATITUDE) AS moveLatitude, 
+							  		dg_decrypt_float('TB_SVC_RENT_MOVE_INFO', 'MOVE_LONGITUDE', MOVE_LONGITUDE) AS moveLongitude
+							   FROM TB_SVC_RENT_HIST A LEFT OUTER JOIN TB_SVC_RENT_MOVE_INFO B ON A.RENT_HIST_SEQ = B.RENT_HIST_SEQ
+							  WHERE A.RENT_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND)
+							  	AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND) 
+							  	<if test='rentStationId != null and rentStationId != ""'>
+								AND A.RENT_STATION_ID   = #{rentStationId}
+								</if>
+								<if test='returnStationId != null and returnStationId != ""'>
+								AND A.RETURN_STATION_ID = #{returnStationId}
+								</if>
+								AND MOVE_ORD IS NOT NULL
+							  	AND MOVE_LATITUDE IS NOT NULL
+							  	AND MOVE_LONGITUDE IS NOT NULL
+						)A
+						INNER JOIN TB_OPR_BIKE B
+						   ON A.RENT_BIKE_ID = B.BIKE_ID
+						WHERE 1=1
+						  <if test='searchBikeNo != null and searchBikeNo != ""'>
+						  AND CASE WHEN #{searchBikeNo} &lt; 10 
+							 	   THEN B.BIKE_NO = CONCAT('BRC-','0000',#{searchBikeNo})
+							 	   WHEN #{searchBikeNo} &gt; 9 AND #{searchBikeNo} &lt; 100 
+							  	   THEN B.BIKE_NO = CONCAT('BRC-','000',#{searchBikeNo})
+							  	   WHEN #{searchBikeNo} &gt; 99 AND #{searchBikeNo} &lt; 1000 
+							  	   THEN B.BIKE_NO = CONCAT('BRC-','00',#{searchBikeNo})
+								   WHEN #{searchBikeNo} &gt; 999 AND #{searchBikeNo} &lt; 10000 
+								   THEN B.BIKE_NO = CONCAT('BRC-','0',#{searchBikeNo})
+								   ELSE B.BIKE_NO = CONCAT('BRC-',#{searchBikeNo})
+								   END
+						  </if>
+			  )A,
+			  (SELECT RENT_HIST_SEQ, GROUP_CONCAT(MOVE_ORD   ORDER BY MOVE_ORD DESC) AS MORD
+					  FROM TB_SVC_RENT_MOVE_INFO
+					  GROUP BY RENT_HIST_SEQ
+			  )B
+			  WHERE A.RENTHISTSEQ = B.RENT_HIST_SEQ   -->
+	SELECT  @rownum:=@rownum+1 AS mordArr
+		 , XPOS  AS MOVELATITUDE
+		 , YPOS  AS MOVELONGITUDE
+	  FROM TB_OPR_QR_LOG A, (select @rownum:=0) TMP
+	WHERE BIKE_NO = #{searchBikeNo}  
+	  AND XPOS > 0 AND YPOS > 0
+	  AND REG_DTTM  BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		 ORDER BY REG_DTTM 		  
+			  
+		   <!--	SELECT RENTHISTSEQ,
+					 MOVEORD,
+					 MOVELATITUDE,
+					 MOVELONGITUDE,
+					 CASE WHEN FLOOR(CNT/(TOT_CNT/10)) = 10
+						  THEN FLOOR(CNT/(TOT_CNT/10))
+						  ELSE FLOOR(CNT/(TOT_CNT/10)) + 1
+						  END AS mordArr
+				FROM (
+						SELECT @rownum:=@rownum+1 AS CNT,
+							   RENTHISTSEQ,
+							   MOVEORD,
+							   MOVELATITUDE,
+							   MOVELONGITUDE,
+							   (
+								  SELECT COUNT(*) AS RN
+									from (
+										  SELECT 
+												 RENTHISTSEQ,
+												 MOVEORD,
+												 MOVELATITUDE,
+												 MOVELONGITUDE 
+										  FROM (SELECT A.RENT_HIST_SEQ   AS rentHistSeq,
+													   MOVE_ORD		  AS moveOrd,
+													   A.RENT_BIKE_ID	AS RENT_BIKE_ID,
+													   dg_decrypt_float('TB_SVC_RENT_MOVE_INFO',
+																		'MOVE_LATITUDE',
+																		MOVE_LATITUDE)
+														  AS moveLatitude,
+													   dg_decrypt_float('TB_SVC_RENT_MOVE_INFO',
+																		'MOVE_LONGITUDE',
+																		MOVE_LONGITUDE)
+														  AS moveLongitude
+												FROM TB_SVC_RENT_HIST	  A
+													 LEFT OUTER JOIN TB_SVC_RENT_MOVE_INFO B
+														ON A.RENT_HIST_SEQ = B.RENT_HIST_SEQ
+												WHERE 1=1
+												  AND MOVE_ORD IS NOT NULL
+												  AND MOVE_LATITUDE IS NOT NULL
+												  AND MOVE_LONGITUDE IS NOT NULL
+												 and  A.RENT_HIST_SEQ   = 40750395
+												  ) A
+											   INNER JOIN TB_OPR_BIKE B ON A.RENT_BIKE_ID = B.BIKE_ID
+										  WHERE	 1 = 1
+												<if test='searchBikeNo != null and searchBikeNo != ""'>
+						  						  AND B.BIKE_NO = #{searchBikeNo}	
+						  						</if>
+										 )A
+							   ) AS tot_cnt
+						  from (
+								SELECT 
+									   RENTHISTSEQ,
+									   MOVEORD,
+									   MOVELATITUDE,
+									   MOVELONGITUDE 
+								FROM (SELECT A.RENT_HIST_SEQ   AS rentHistSeq,
+											 MOVE_ORD		  AS moveOrd,
+											 A.RENT_BIKE_ID	AS RENT_BIKE_ID,
+											 dg_decrypt_float('TB_SVC_RENT_MOVE_INFO',
+															  'MOVE_LATITUDE',
+															  MOVE_LATITUDE)
+												AS moveLatitude,
+											 dg_decrypt_float('TB_SVC_RENT_MOVE_INFO',
+															  'MOVE_LONGITUDE',
+															  MOVE_LONGITUDE)
+												AS moveLongitude
+									  FROM TB_SVC_RENT_HIST	  A
+										   LEFT OUTER JOIN TB_SVC_RENT_MOVE_INFO B
+											  ON A.RENT_HIST_SEQ = B.RENT_HIST_SEQ
+									  WHERE  1=1
+										AND MOVE_ORD IS NOT NULL
+										AND MOVE_LATITUDE IS NOT NULL
+										AND MOVE_LONGITUDE IS NOT NULL
+										 
+									   and   A.RENT_HIST_SEQ   = 40750395
+										
+										) A
+									 INNER JOIN TB_OPR_BIKE B ON A.RENT_BIKE_ID = B.BIKE_ID
+								WHERE	 1 = 1
+									 <if test='searchBikeNo != null and searchBikeNo != ""'>
+										  AND B.BIKE_NO = #{searchBikeNo}  
+										  </if>
+							   )A ,(select @rownum:=0) TMP
+						  )A -->
+	</select>
+</mapper>

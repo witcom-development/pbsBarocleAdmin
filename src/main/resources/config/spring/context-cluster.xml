@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xmlns:hz="http://www.hazelcast.com/schema/spring"
+	   xmlns:cache="http://www.springframework.org/schema/cache"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						   http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+						   http://www.hazelcast.com/schema/spring http://www.hazelcast.com/schema/spring/hazelcast-spring.xsd
+						   http://www.springframework.org/schema/cache http://www.springframework.org/schema/cache/spring-cache.xsd">
+
+	<util:properties id="clusterProps" location="classpath:config/properties/cluster.xml"/>
+	
+	<cache:annotation-driven cache-manager="cacheManager" />
+
+	<bean id="cacheManager" class="com.hazelcast.spring.cache.HazelcastCacheManager">
+	  <constructor-arg ref="cluster"/>
+	</bean>
+	
+	<hz:hazelcast id="cluster">
+		<hz:config>
+			<!-- <hz:management-center enabled="true" url="http://127.0.0.1:8780/mancenter-3.4.2"/> -->
+			<hz:network port="#{clusterProps.port}" port-auto-increment="true">
+				<hz:join>
+					<hz:multicast enabled="false"/>
+					<hz:tcp-ip enabled="true" connection-timeout-seconds="20">
+						<hz:members>#{clusterProps.members}</hz:members>
+					</hz:tcp-ip>
+				</hz:join>
+			</hz:network>
+			<hz:map name="smsMessage" backup-count="2"/>
+		</hz:config>
+		
+	</hz:hazelcast>
+	
+</beans>

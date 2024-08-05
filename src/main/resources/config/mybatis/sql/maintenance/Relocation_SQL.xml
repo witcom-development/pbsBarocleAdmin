@@ -1,0 +1,578 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+
+<mapper namespace="com.dkitec.barocle.admin.maintenance.relocation.service.RelocationMapper">
+	<select id="getRelocationNeedList" parameterType="RelocationVO" resultType="RelocationVO">
+	<![CDATA[
+		SELECT 
+			C.STATION_GRP_NAME AS stationGrp,
+			C.STATION_GRP_SEQ AS stationGrpSeq,
+			B.STATION_NAME AS stationName,
+			B.STATION_ID AS stationId,
+			IFNULL(D.RACK_CNT, 0) AS rockCnt,
+			IFNULL(D.RETURNABLE_CNT, 0) AS returnableCnt,
+			IFNULL(D.CASCADE_RACK_CNT, 0) AS cascadeRackCnt,
+			IFNULL(D.BIKE_TOT_CNT, 0) AS bikeTotCnt,
+			IFNULL(D.THRESHOLD_VAL, 0) AS thresholdValue,
+			E.ADD_VAL1 AS thresholdLow,
+			E.ADD_VAL2 AS thresholdHigh
+		FROM TB_OPR_STATION A
+		JOIN TB_OPR_MLANG_STATION B ON A.STATION_ID =  B.STATION_ID AND B.LANG_CLS_CD = #{lang}
+		JOIN TB_OPR_MLANG_STATION_GRP C ON A.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD = #{lang}
+		LEFT OUTER JOIN	(
+			SELECT 
+				COUNT(R.RACK_ID) AS RACK_CNT,
+				COUNT(R.RACK_ID) - COUNT(P.BIKE_ID) AS RETURNABLE_CNT,
+				SUM(IF(P.CASCADE_YN = 'Y',1,0) ) AS CASCADE_RACK_CNT,
+				COUNT(P.BIKE_ID) AS BIKE_TOT_CNT,
+				R.NOW_LOCATE_ID,
+				IFNULL(((COUNT(P.BIKE_ID) / COUNT(R.RACK_ID)) * 100), 0) AS THRESHOLD_VAL
+		  	FROM TB_OPR_RACK R 
+		  	LEFT OUTER JOIN TB_OPR_BIKE_PARKING P ON R.RACK_ID = P.RACK_ID
+		 	WHERE R.NOW_LOCATE_CLS_CD = 'S'
+		 	GROUP BY R.NOW_LOCATE_ID
+		 	) D ON D.NOW_LOCATE_ID = A.STATION_ID
+			, (SELECT ADD_VAL1, ADD_VAL2 FROM TB_SYS_COM_CD WHERE COM_CD = 'MSI_010') AS E
+		WHERE 1=1 
+	]]>
+		<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+		AND	A.STATION_GRP_SEQ = #{stationGrpSeq}
+		</if>
+		<if test='stationId !=null and stationId != ""'>
+		AND	A.STATION_ID = #{stationId}
+		</if>
+		<if test='threshold !=null and threshold =="high" and threshold !=""'>
+		AND IFNULL(D.THRESHOLD_VAL, 0) > E.ADD_VAL2
+		</if>
+		<if test='threshold !=null and threshold =="low" and threshold !=""'>
+		AND E.ADD_VAL1 > IFNULL(D.THRESHOLD_VAL, 0)
+		</if>
+		<if test='sortType != null and sortType != ""'>
+			<if test='sortType == "bike"'>
+				ORDER BY IFNULL(D.BIKE_TOT_CNT, 0)
+			</if>
+			<if test='sortType == "cascade"'>
+				ORDER BY IFNULL(D.CASCADE_RACK_CNT, 0)
+			</if>
+			<if test='sortValue != null and sortValue == "ASC"'>
+				ASC
+			</if>
+			<if test='sortValue != null and sortValue == "DESC"'>
+				DESC
+			</if>
+		</if>
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if> 
+	</select>
+	<select id="getRelocationNeedListCount" parameterType="RelocationVO" resultType="int">
+	  <![CDATA[
+		SELECT COUNT(*)
+		FROM TB_OPR_STATION A
+		JOIN TB_OPR_MLANG_STATION B ON A.STATION_ID =  B.STATION_ID AND B.LANG_CLS_CD = #{lang}
+		JOIN TB_OPR_MLANG_STATION_GRP C ON A.STATION_GRP_SEQ = C.STATION_GRP_SEQ AND C.LANG_CLS_CD = #{lang}
+		LEFT OUTER JOIN	(
+			SELECT 
+				COUNT(R.RACK_ID) AS RACK_CNT,
+				COUNT(R.RACK_ID) - COUNT(P.BIKE_ID) AS RETURNABLE_CNT,
+				SUM(IF(P.CASCADE_YN = 'Y',1,0) ) AS CASCADE_RACK_CNT,
+				COUNT(P.BIKE_ID) AS BIKE_TOT_CNT,
+				R.NOW_LOCATE_ID,
+				IFNULL(((COUNT(P.BIKE_ID) / COUNT(R.RACK_ID)) * 100), 0) AS THRESHOLD_VAL
+		  	FROM TB_OPR_RACK R 
+		  	LEFT OUTER JOIN TB_OPR_BIKE_PARKING P ON R.RACK_ID = P.RACK_ID
+		 	WHERE R.NOW_LOCATE_CLS_CD = 'S'
+		 	) D ON D.NOW_LOCATE_ID = A.STATION_ID
+			, (SELECT ADD_VAL1, ADD_VAL2 FROM TB_SYS_COM_CD WHERE COM_CD = 'MSI_010') AS E
+		WHERE 1=1
+	]]>
+		<if test='stationGrpSeq !=null and stationGrpSeq != ""'>
+		AND A.STATION_GRP_SEQ = #{stationGrpSeq}
+		</if>
+		<if test='stationId !=null and stationId != ""'>
+		AND A.STATION_ID = #{stationId}
+		</if>
+		<if test='threshold !=null and threshold =="high" and threshold !=""'>
+		AND IFNULL(D.THRESHOLD_VAL, 0) > E.ADD_VAL2
+		</if>
+		<if test='threshold !=null and threshold =="low" and threshold !=""'>
+		AND E.ADD_VAL1 > IFNULL(D.THRESHOLD_VAL, 0)
+		</if>
+	</select>
+	
+	<select id="getRelocationStateList" parameterType="RelocationVO" resultType="RelocationVO">
+	<![CDATA[
+		   SELECT 
+		   		C.MLANG_COM_CD_NAME AS adminTypeName,
+				A.ADMIN_NAME AS adminName,
+				A.ADMIN_ID	AS adminId,
+				CAST(AES_DECRYPT(UNHEX(A.ADMIN_MPN_NO),'BRC') as CHAR) AS adminPhone,
+				CAST(AES_DECRYPT(UNHEX(A.ADMIN_EMAIL_NAME),'BRC') as CHAR) AS adminEmail
+			FROM TB_SYS_ADMIN A 
+			JOIN TB_SYS_GRP_CD B ON A.ADMIN_GRP_SEQ = B.ADMIN_GRP_SEQ
+			JOIN TB_SYS_MLANG_COM_CD C ON B.ADMIN_CLS_CD = C.COM_CD AND LANG_CLS_CD = #{lang}
+			WHERE 1 = 1
+		   ]]>
+		   <!-- A.ADMIN_MPN_NO AS adminPhone, -->
+		   <!-- dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', A.ADMIN_MPN_NO) AS adminPhone, -->
+		   <!-- A.ADMIN_EMAIL_NAME AS adminEmail -->
+		   <!-- dg_decrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', A.ADMIN_EMAIL_NAME) AS adminEmail -->
+		   <if test='searchType !=null and searchType == "name"'>
+			 	AND ADMIN_NAME LIKE CONCAT('',#{searchValue},'%')
+		   </if>
+		   <if test='searchType !=null and searchType == "id"'>
+			 	AND ADMIN_ID LIKE CONCAT('',#{searchValue},'%')
+		   </if>
+		   <if test='adminType != null and adminType != ""'>
+		   		AND B.ADMIN_CLS_CD = #{adminType}
+		   </if>
+		   ORDER BY CRE_DTTM DESC, ADMIN_NAME DESC
+		   
+	 	   
+		  <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	<select id="getRelocationStateListCount" parameterType="RelocationVO" resultType="int">
+	  <![CDATA[
+			SELECT COUNT(*)
+			FROM TB_SYS_ADMIN A 
+			JOIN TB_SYS_GRP_CD B ON A.ADMIN_GRP_SEQ = B.ADMIN_GRP_SEQ
+			WHERE 1 = 1
+	  ]]>
+		   <if test='searchType !=null and searchType == "name"'>
+			 	AND ADMIN_NAME LIKE CONCAT('',#{searchValue},'%')
+		   </if>
+		   <if test='searchType !=null and searchType == "id"'>
+			 	AND ADMIN_ID LIKE CONCAT('',#{searchValue},'%')
+		   </if>
+		   <if test='adminType != null and adminType != ""'>
+		   		AND B.ADMIN_CLS_CD = #{adminType}
+		   </if>
+	</select>
+	
+	<select id="getRelocationStateDetail" parameterType="RelocationVO" resultType="RelocationVO">
+		<![CDATA[
+			SELECT SUBSTR(B.BIKE_NO,5) AS bikeNo
+				, C.STATION_NO AS fromStationName
+				, A.MOVEAGN_ADMIN_ID AS moveagnAdmin
+				, D.STATION_NO AS toSationName
+				, A.RELOCATE_ADMIN_ID AS relocationAdmin
+				, DATE_FORMAT(A.RELOCATE_STR_DTTM,'%Y-%m-%d %T') AS relocateStrDttm
+				, DATE_FORMAT(A.RELOCATE_END_DTTM,'%Y-%m-%d %T') AS relocateEndDttm
+				, A.RELOCATE_CMPT_YN AS relocationCmptYn
+			FROM TB_MTC_RELOCATE_HIST	  A
+			LEFT OUTER JOIN TB_OPR_BIKE	B ON A.RELOCATE_BIKE_ID = B.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_STATION C ON A.FROM_STATION_ID = C.STATION_ID   
+			LEFT OUTER JOIN TB_OPR_STATION D ON A.TO_STATION_ID = D.STATION_ID  
+			WHERE 1 = 1
+		]]>
+		   <if test='searchBgnDe != null and searchBgnDe != ""'>
+			   <if test='viewType == null or viewType == ""'>
+				AND 1=2
+			   </if>
+			   <if test='viewType != null and viewType == "move"'>
+			   AND A.RELOCATE_STR_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   AND A.MOVEAGN_ADMIN_ID = #{adminId}
+			   </if>
+			   <if test='viewType != null and viewType == "relocate"'>
+			   AND A.RELOCATE_END_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   AND A.RELOCATE_ADMIN_ID = #{adminId}
+			   </if>
+		   </if>
+		   <if test='searchBgnDe == null or searchBgnDe == ""'>
+		  	AND (
+		   			(
+		   				A.RELOCATE_STR_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) 
+		   										AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY  - INTERVAL 1 SECOND)
+						AND A.MOVEAGN_ADMIN_ID = #{adminId}
+					)			   										
+		   		OR
+		   			(
+		   				A.RELOCATE_END_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) 
+		   										AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   				AND A.RELOCATE_ADMIN_ID = #{adminId}						
+		   			)
+		   		)
+		   </if>
+		   <if test='relocationCmptYn !=null and relocationCmptYn != ""'>
+		   AND A.RELOCATE_CMPT_YN = #{relocationCmptYn}
+		   </if>
+		   ORDER BY IFNULL ( RELOCATE_END_DTTM, RELOCATE_STR_DTTM ) DESC, BIKE_NO DESC
+	 	   
+		  <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	<select id="getRelocationStateDetailCount" parameterType="RelocationVO" resultType="int">
+	  <![CDATA[
+			SELECT COUNT(*)
+			FROM TB_MTC_RELOCATE_HIST A
+			WHERE 1 = 1
+	  ]]>
+		   <if test='searchBgnDe != null and searchBgnDe != ""'>
+			   <if test='viewType == null or viewType == ""'>
+			   AND 1=2	
+			   </if>
+			   <if test='viewType != null and viewType == "move"'>
+			   		AND A.RELOCATE_STR_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   		AND A.MOVEAGN_ADMIN_ID = #{adminId}
+			   </if>
+			   <if test='viewType != null and viewType == "relocate"'>
+			   		AND A.RELOCATE_END_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   		AND A.RELOCATE_ADMIN_ID = #{adminId}
+			   </if>
+		   </if>
+		   <if test='searchBgnDe == null or searchBgnDe == ""'>
+		   AND (
+		   			(
+		   				A.RELOCATE_STR_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) 
+		   										AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY  - INTERVAL 1 SECOND)
+						AND A.MOVEAGN_ADMIN_ID = #{adminId}
+					)			   										
+		   		OR
+		   			(
+		   				A.RELOCATE_END_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) 
+		   										AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   				AND A.RELOCATE_ADMIN_ID = #{adminId}						
+		   			)
+		   		)	
+		   </if>
+		   <if test='relocationCmptYn !=null and relocationCmptYn != ""'>
+		   AND A.RELOCATE_CMPT_YN = #{relocationCmptYn}
+		   </if> 
+	</select>
+	<select id="getRelocationStateBike" parameterType="RelocationVO" resultType="RelocationVO">
+		<![CDATA[
+			SELECT 
+				B.BIKE_NO AS bikeNo,
+				C.STATION_NAME AS fromStationName,
+				E.NOW_STATION_EQUIP_ORD AS fromStationEquipOrder,
+				A.MOVEAGN_ADMIN_ID AS moveagnAdmin,
+				D.STATION_NAME AS toSationName,
+				F.NOW_STATION_EQUIP_ORD AS toStationEquipOrder,
+				A.RELOCATE_ADMIN_ID AS relocationAdmin,
+				A.RELOCATE_STR_DTTM AS relocateStrDttm,
+				A.RELOCATE_END_DTTM AS relocateEndDttm,
+				A.RELOCATE_CMPT_YN AS relocationCmptYn
+			FROM TB_MTC_RELOCATE_HIST A
+			LEFT OUTER JOIN TB_OPR_BIKE B ON A.RELOCATE_BIKE_ID = B.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_MLANG_STATION C ON A.FROM_STATION_ID = C.STATION_ID AND C.LANG_CLS_CD = #{lang}
+			LEFT OUTER JOIN TB_OPR_RACK E ON A.FROM_RACK_ID = E.RACK_ID
+			LEFT OUTER JOIN TB_OPR_MLANG_STATION D ON A.TO_STATION_ID = D.STATION_ID AND D.LANG_CLS_CD = #{lang}
+			LEFT OUTER JOIN TB_OPR_RACK F ON A.TO_RACK_ID = F.RACK_ID
+			WHERE 1 = 1
+		]]>
+		   <if test='searchBgnDe != null and searchBgnDe != ""'>
+			   <if test='viewType == null or viewType == ""'>
+			   AND (A.RELOCATE_STR_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   OR
+			   A.RELOCATE_END_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND))
+			   </if>
+			   <if test='viewType != null and viewType == "move"'>
+			   AND A.RELOCATE_STR_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   </if>
+			   <if test='viewType != null and viewType == "relocate"'>
+			   AND A.RELOCATE_END_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   </if>
+		   </if>
+		   <if test='searchBgnDe == null or searchBgnDe == ""'>
+		   AND (A.RELOCATE_STR_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   OR
+		   A.RELOCATE_END_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND))
+		   </if>
+		   <if test='bikeNo != null and bikeNo != ""'>
+<!-- 		   AND B.BIKE_NO LIKE CONCAT('%', #{bikeNo}) -->
+		   AND B.BIKE_NO = (CASE WHEN LENGTH(#{bikeNo}) = 5 THEN CONCAT('BRC-', #{bikeNo})
+							WHEN LENGTH(#{bikeNo}) = 4 THEN CONCAT('BRC-0', #{bikeNo})
+							ELSE #{bikeNo} END
+						   )
+		   </if>
+		   <if test='relocationCmptYn !=null and relocationCmptYn != ""'>
+		   AND A.RELOCATE_CMPT_YN = #{relocationCmptYn}
+		   </if>
+		   ORDER BY RELOCATE_END_DTTM DESC, BIKE_NO DESC
+	 	   
+		  <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if> 
+	</select>
+	<select id="getRelocationStateBikeCount" parameterType="RelocationVO" resultType="int">
+	  <![CDATA[
+			SELECT COUNT(*)
+			FROM TB_MTC_RELOCATE_HIST A
+			LEFT OUTER JOIN TB_OPR_BIKE B ON A.RELOCATE_BIKE_ID = B.BIKE_ID
+			LEFT OUTER JOIN TB_OPR_MLANG_STATION C ON A.FROM_STATION_ID = C.STATION_ID AND C.LANG_CLS_CD = #{lang}
+			LEFT OUTER JOIN TB_OPR_RACK E ON A.FROM_RACK_ID = E.RACK_ID
+			LEFT OUTER JOIN TB_OPR_MLANG_STATION D ON A.TO_STATION_ID = D.STATION_ID AND D.LANG_CLS_CD = #{lang}
+			LEFT OUTER JOIN TB_OPR_RACK F ON A.TO_RACK_ID = F.RACK_ID
+			WHERE 1 = 1
+	  ]]>
+		   <if test='searchBgnDe != null and searchBgnDe != ""'>
+			   <if test='viewType == null or viewType == ""'>
+			   AND (A.RELOCATE_STR_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   OR
+			   A.RELOCATE_END_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND))
+			   </if>
+			   <if test='viewType != null and viewType == "move"'>
+			   AND A.RELOCATE_STR_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   </if>
+			   <if test='viewType != null and viewType == "relocate"'>
+			   AND A.RELOCATE_END_DTTM BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			   </if>
+		   </if>
+		   <if test='searchBgnDe == null or searchBgnDe == ""'>
+		   AND (A.RELOCATE_STR_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		   OR
+		   A.RELOCATE_END_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL -6 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND))
+		   </if>
+		   <if test='bikeNo != null and bikeNo != ""'>
+		   <!-- AND B.BIKE_NO LIKE CONCAT('%', #{bikeNo}) -->
+		   AND B.BIKE_NO = (CASE WHEN LENGTH(#{bikeNo}) = 5 THEN CONCAT('BRC-', #{bikeNo})
+							WHEN LENGTH(#{bikeNo}) = 4 THEN CONCAT('BRC-0', #{bikeNo})
+							ELSE #{bikeNo} END
+						   )		   
+		   
+		   </if>
+		   <if test='relocationCmptYn !=null and relocationCmptYn != ""'>
+		   AND A.RELOCATE_CMPT_YN = #{relocationCmptYn}
+		   </if>
+		   ORDER BY IFNULL( RELOCATE_END_DTTM, RELOCATE_STR_DTTM ) DESC  
+	</select>
+	
+	<select id="getRelocationStateStationCount" parameterType="RelocationVO" resultType="int">
+			SELECT COUNT(*)
+			FROM TB_STA_RELOCATE_STATION A
+		INNER JOIN TB_OPR_STATION B ON ( A.STATION_ID = B.STATION_ID  )
+		INNER JOIN TB_OPR_MLANG_STATION C ON ( A.STATION_ID = C.STATION_ID AND C.LANG_CLS_CD = 'LAG_001')	
+		WHERE B.STATION_USE_YN IN ( 'Y', 'T', 'S' )	
+		  <if test='bikeNo != null and bikeNo != ""'>
+		   AND B.STATION_NO = LPAD(  #{bikeNo}, 5, '0')
+		   </if>
+		  <if test='searchBgnDe == null or searchBgnDe == ""'>
+		   AND A.STAT_DATE = CURDATE()
+		  </if> 
+		  <if test='bikeNo == null or bikeNo == ""'>
+		   AND 1=2
+		   </if>
+		  <if test='searchBgnDe != null and searchBgnDe != ""'>
+		   AND A.STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}
+		   </if>
+		   
+		  			
+	</select>
+
+	<select id="getRelocationStateStation" parameterType="RelocationVO" resultType="RelocationVO">
+			SELECT C.STATION_NAME AS fromStationName
+				 , DATE_FORMAT(A.RELOCATE_STR_DTTM, '%Y-%m-%d %T')  AS relocateStrDttm
+				 , DATE_FORMAT(A.RELOCATE_END_DTTM, '%Y-%m-%d %T') AS relocateEndDttm
+				 , A.MOVE_CNT		   as moveCnt
+				 , A.RELOCATE_CNT	   as relocateCnt 
+			FROM TB_STA_RELOCATE_STATION A
+		   INNER JOIN TB_OPR_STATION B ON ( A.STATION_ID = B.STATION_ID  )
+		   INNER JOIN TB_OPR_MLANG_STATION C ON ( A.STATION_ID = C.STATION_ID AND C.LANG_CLS_CD = 'LAG_001')
+		  WHERE  B.STATION_USE_YN IN ( 'Y', 'T', 'S' )
+		  <if test='bikeNo != null and bikeNo != ""'>
+		   AND B.STATION_NO = LPAD(  #{bikeNo}, 5, '0')
+		   </if>
+		   <if test='bikeNo == null or bikeNo == ""'>
+		   AND 1=2
+		   </if>
+		  <if test='searchBgnDe == null or searchBgnDe == ""'>
+		   AND A.STAT_DATE = CURDATE()
+		  </if> 
+		  <if test='searchBgnDe != null and searchBgnDe != ""'>
+		   AND A.STAT_DATE BETWEEN #{searchBgnDe} AND #{searchEndDe}
+		   </if>
+		   ORDER BY IFNULL( RELOCATE_END_DTTM, RELOCATE_STR_DTTM ) DESC
+		  <if test='pagingYn == "Y"'>
+		  <![CDATA[
+		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		  ]]>
+		  </if>		  
+	</select>	
+	
+	 <select id="getRelocationStateStationMap" parameterType="RelocationVO" resultType="RelocationMapVO">
+		SELECT IFNULL( 
+						CASE WHEN TOT_CNT >= 10 THEN 'A'
+							 WHEN TOT_CNT >=  6 THEN 'B'
+							 WHEN TOT_CNT >=  3 THEN 'C'
+							 WHEN TOT_CNT >=  1 THEN 'D'
+						ELSE 'E'
+				   		END
+				   		 
+						, 'E' ) 			AS imgSrc
+			 , IFNULL( B.RELOCATE_CNT, 0 )  AS relocateCnt
+			 , IFNULL( B.MOVE_CNT, 0 )	  AS moveCnt
+			 , IFNULL( B.TOT_CNT,  0 )	  AS totCnt
+			 , A.STATION_ID					AS stationId
+			 , A.STATION_NO					AS stationNo
+			 , A.STATION_LATITUDE			AS stationLatitude
+			 , A.STATION_LONGITUDE			AS stationLongitude
+			 , C.STATION_NAME			   AS stationName
+			 , D.STATION_GRP_NAME		   AS stationGrpName
+			 , F.MLANG_COM_CD_NAME		  AS centerName
+		 FROM TB_OPR_STATION A
+		INNER JOIN TB_OPR_MLANG_STATION	 C ON ( A.STATION_ID  = C.STATION_ID  AND C.LANG_CLS_CD ='LAG_001' ) 
+		INNER JOIN TB_OPR_MLANG_STATION_GRP D ON ( A.STATION_GRP_SEQ = D.STATION_GRP_SEQ AND D.LANG_CLS_CD ='LAG_001' ) 
+		LEFT JOIN  TB_SYS_TEAM_INFO		 E ON ( A.TEAM_SEQ	= E.TEAM_SEQ )
+		LEFT JOIN  TB_SYS_MLANG_COM_CD	  F ON ( E.CENTER_ID   = F.COM_CD	  AND F.LANG_CLS_CD ='LAG_001' ) 
+		LEFT JOIN
+		(
+			SELECT  STATION_ID	 
+				  , SUM(RELOCATE_CNT)		AS RELOCATE_CNT
+				  , SUM(MOVE_CNT)			 AS MOVE_CNT	
+				  , SUM(RELOCATE_CNT + MOVE_CNT ) AS TOT_CNT  
+			  FROM TB_STA_RELOCATE_STATION_VISIT A
+			 WHERE STAT_DATE BETWEEN DATE_ADD( CURDATE(), INTERVAL -8 DAY ) AND CURDATE()
+			 GROUP BY STATION_ID
+		) B ON ( A.STATION_ID = B.STATION_ID )
+		WHERE A.STATION_USE_YN IN ( 'Y', 'S', 'T' )	 
+		  AND A.STATION_ID NOT IN ( 'ST-85' )
+	 </select>
+	 
+	 
+	 
+	 
+	  <select id="getRelocationWorkOrderCount" parameterType="RelocationWorkOrderVO" resultType="int">
+			SELECT COUNT(1)
+			  FROM safeIvn.rearrangement A
+				 , spb.TB_OPR_STATION	B
+			 WHERE A.station_code = B.STATION_ID 
+			<if test='searchBgnDe == null or searchBgnDe == ""'>
+			   AND A.ymd = CURDATE()
+			</if> 
+			<if test='searchBgnDe != null and searchBgnDe != ""'>
+			   AND A.ymd BETWEEN #{searchBgnDe} AND #{searchEndDe}
+			</if>   
+			<if test='stationId != null and stationId != ""'>
+			   AND B.STATION_NO = LPAD( #{stationId}, 5, '0' )
+			</if>   
+		  			
+	</select>
+
+	<select id="getRelocationWorkOrder" parameterType="RelocationWorkOrderVO" resultType="RelocationWorkOrderVO">
+			SELECT D.MLANG_COM_CD_NAME  AS stationGrp
+				 , C.TEAM_NAME		  AS returnableCnt
+				 , E.STATION_NAME	   AS fromStationName
+				 , A.ymd				AS relocateStrDttm
+				 , A.hour	   		AS relocateEndDttm
+				 , A.currCnt			AS rockCnt
+				 , A.count	   		AS relocateCnt
+				 , CASE WHEN A.count > 0 THEN CONCAT( A.count, '대 배치') ELSE CONCAT( ABS( A.count ), '대 회수') END
+										AS moveCnt1
+			  FROM safeIvn.rearrangement A
+				 , spb.TB_OPR_STATION	B
+				 , spb.TB_SYS_TEAM_INFO  C
+				 , spb.TB_SYS_MLANG_COM_CD D
+				 , spb.TB_OPR_MLANG_STATION E
+			 WHERE A.station_code = B.STATION_ID 
+			   AND B.TEAM_SEQ = C.TEAM_SEQ
+			   AND C.CENTER_ID = D.COM_CD
+			   AND D.LANG_CLS_CD = 'LAG_001'
+			   AND A.station_code = E.STATION_ID
+			   AND E.LANG_CLS_CD = 'LAG_001' 
+			<if test='searchBgnDe == null or searchBgnDe == ""'>
+			   AND A.ymd = CURDATE()
+			</if> 
+			<if test='searchBgnDe != null and searchBgnDe != ""'>
+			   AND A.ymd BETWEEN #{searchBgnDe} AND #{searchEndDe}
+			</if>   
+			<if test='stationId != null and stationId != ""'>
+			   AND B.STATION_NO = LPAD( #{stationId}, 5, '0' )
+			</if>   
+		   
+			ORDER BY relocateStrDttm DESC, relocateEndDttm DESC
+			<if test='pagingYn == "Y"'>
+			  <![CDATA[
+			  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			  ]]>
+			</if>  
+		 
+	</select>	
+	 
+	 
+	 
+	 
+	<select id="getRelocationArrangeCall" parameterType="RelocationWorkArrangeCallVO" resultType="RelocationWorkArrangeCallVO">
+		SELECT A.call_seq
+			, A.req_ymd
+			, A.req_hour
+			, A.team_seq
+			, A.req_mem_cnt
+			, A.req_latitude
+			, A.req_longitude
+			, A.req_yn
+			, A.req_admin_id
+			, DATE_FORMAT( A.req_dttm, '%T') AS req_dttm
+			, DATE_FORMAT( A.end_dttm, '%T') AS end_dttm
+			, B.group_seq 
+			, C.ADMIN_NAME AS adminName
+			, A.initial_count AS initialCount
+		  FROM safeIvn.arrage_call A
+		  LEFT JOIN safeIvn.arrange_result B ON ( A.call_seq = B.call_seq )
+		  INNER JOIN spb.TB_SYS_ADMIN	  C ON ( A.req_admin_id = C.ADMIN_ID )
+		 WHERE 1=1 
+ 		<if test='searchBgnDe == null or searchBgnDe == ""'>
+		   AND A.req_ymd = CURDATE()
+		</if> 
+		<if test='searchBgnDe != null and searchBgnDe != ""'>
+		   AND A.req_ymd BETWEEN #{searchBgnDe} AND #{searchEndDe}
+		</if>  
+		<if test='adminName != null and adminName != ""'>
+		   AND C.ADMIN_NAME = #{adminName}
+		</if>
+		GROUP BY A.call_seq, B.group_seq
+		ORDER BY A.call_seq, B.group_seq
+		LIMIT 10
+	</select>
+	 
+	<select id="getRelocationArrangeResult" parameterType="RelocationWorkArrangeResultVO" resultType="RelocationWorkArrangeResultVO">
+		SELECT result_seq
+			 , A.call_seq
+			 , A.group_seq
+			 , A.move_seq
+			 , A.station_id
+			 , A.move_cnt
+			 , B.STATION_NO as station_no 
+			 , B.STATION_LATITUDE  AS req_latitude
+			 , B.STATION_LONGITUDE AS req_longitude
+		  FROM safeIvn.arrange_result A
+		 INNER JOIN spb.TB_OPR_STATION B ON ( A.station_id = B.STATION_ID )
+		 WHERE 1=1 
+		   AND A.call_seq  = #{call_seq}
+		   AND A.group_seq = #{group_seq}
+	</select>	 
+	 
+	<insert id="insertRelocationArrangeCall" parameterType="RelocationWorkArrangeCallVO">
+		INSERT INTO safeIvn.arrage_call
+				(   
+					req_ymd
+				   ,req_hour 
+		   		   ,team_seq
+		   		   ,req_mem_cnt
+		   		   ,req_latitude
+		   		   ,req_longitude
+		   		   ,req_admin_id
+		   		   ,initial_count
+		   		)   
+		 SELECT	 MAX(ymd)
+		   		  , MAX(hour)
+		   		  , #{team_seq}
+		   		  , #{req_mem_cnt}
+		   		  , #{req_latitude}
+		   		  , #{req_longitude}
+		   		  , #{req_admin_id}
+		   		  , #{initialCount}
+		   FROM	safeIvn.rearrangement
+		  WHERE   ymd = curdate() 
+	</insert>  
+</mapper>

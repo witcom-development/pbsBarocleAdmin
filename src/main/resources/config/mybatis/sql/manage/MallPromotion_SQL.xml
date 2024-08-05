@@ -1,0 +1,182 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.mallpromotion.service.MallPromotionMapper">
+	
+	<resultMap id="resultMallPromotionVO" type="com.dkitec.barocle.admin.manage.mallpromotion.vo.MallPromotionVO">
+		<result column="SHOP_AD_SEQ" property="shopADSeq" />
+		<result column="STATION_ID" property="stationID" />
+		<result column="TYPE_CLS_CD" property="typeClsCD" />
+		<result column="CD_DESC1" property="cdDesc1" />
+		<result column="CD_DESC2" property="cdDesc2" />
+		<result column="SHOP_NAME" property="shopName" />
+		<result column="SHOP_POST_NO" property="shopPostNO" />
+		<result column="SHOP_ADDR1" property="shopAddr1" />
+		<result column="SHOP_ADDR2" property="shopAddr2" />
+		<result column="SHOP_TEL_NO" property="shopTelNO" />
+		<result column="SHOP_LATITUDE" property="shopLatitude" />
+		<result column="SHOP_LONGITUDE" property="shopLongitude" />
+		<result column="REG_DTTM" property="regDttm" />
+		<result column="REG_ID" property="regID" />
+		<result column="MOD_DTTM" property="modDttm" />
+		<result column="MOD_ID" property="modID" />
+		<result column="AD_TEXT_DESC" property="adTextDesc" />
+		<result column="STATION_NO" property="stationNO" />
+		<result column="STATION_NAME" property="stationName" />
+		<result column="STATION_GRP_SEQ" property="stationGrpSeq" />
+		<result column="MAIN_STATION_ID" property="mainStationID" />
+		<result column="STATION_GRP_NAME" property="stationGrpName" />
+	</resultMap>
+	
+	<select id="listMallPromotionCount" parameterType="mallPromotionVO" resultType="int">
+		SELECT	COUNT(T1.SHOP_AD_SEQ) AS shopADSeq
+		FROM	TB_OPR_SHOP_AD T1
+				LEFT OUTER JOIN TB_OPR_STATION T2 ON T1.STATION_ID=T2.STATION_ID
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION T4 ON T2.STATION_ID=T4.STATION_ID
+				LEFT OUTER JOIN TB_OPR_STATION_GRP T3 ON T2.STATION_GRP_SEQ=T3.STATION_GRP_SEQ
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP T5 ON T3.STATION_GRP_SEQ=T5.STATION_GRP_SEQ
+				LEFT OUTER JOIN TB_SYS_COM_CD TC ON T1.TYPE_CLS_CD=TC.COM_CD
+		WHERE	T4.LANG_CLS_CD = #{mLang} AND T5.LANG_CLS_CD = #{mLang}
+				<if test="stationGrpSeq!='' and stationGrpSeq!=null">AND T3.STATION_GRP_SEQ = #{stationGrpSeq}</if>
+				<if test="stationID!='' and stationID!=null">AND T1.STATION_ID = #{stationID}</if>
+				<!-- <if test="mainStationID!='' and mainStationID!=null">AND T3.MAIN_STATION_ID = #{mainStationID}</if> -->
+				<if test="typeClsCD!='' and typeClsCD!=null">AND T1.TYPE_CLS_CD = #{typeClsCD}</if>
+	</select>
+	
+	<select id="listMallPromotion" parameterType="mallPromotionVO" resultMap="resultMallPromotionVO">
+		SELECT	
+				T1.SHOP_AD_SEQ,
+				T1.STATION_ID,
+				T1.TYPE_CLS_CD,
+				TC.CD_DESC1,
+				TC.CD_DESC2,
+				T1.SHOP_NAME,
+				T1.SHOP_POST_NO,
+				T1.SHOP_ADDR1,
+				T1.SHOP_ADDR2,
+				T1.SHOP_TEL_NO,
+				T1.SHOP_LATITUDE,
+				T1.SHOP_LONGITUDE,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID,
+				T1.AD_TEXT_DESC,
+				T2.STATION_NO,
+				T4.STATION_NAME,
+				T3.STATION_GRP_SEQ,
+				T3.MAIN_STATION_ID,
+				T5.STATION_GRP_NAME
+		FROM	TB_OPR_SHOP_AD T1
+				LEFT OUTER JOIN TB_OPR_STATION T2 ON T1.STATION_ID=T2.STATION_ID
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION T4 ON T2.STATION_ID=T4.STATION_ID
+				LEFT OUTER JOIN TB_OPR_STATION_GRP T3 ON T2.STATION_GRP_SEQ=T3.STATION_GRP_SEQ
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP T5 ON T3.STATION_GRP_SEQ=T5.STATION_GRP_SEQ
+				LEFT OUTER JOIN TB_SYS_COM_CD TC ON T1.TYPE_CLS_CD=TC.COM_CD
+		WHERE	T4.LANG_CLS_CD = #{mLang} AND T5.LANG_CLS_CD = #{mLang}
+				<if test="stationGrpSeq!='' and stationGrpSeq!=null">AND T3.STATION_GRP_SEQ = #{stationGrpSeq}</if>
+				<if test="stationID!='' and stationID!=null">AND T1.STATION_ID = #{stationID}</if>
+				<!-- <if test="mainStationID!='' and mainStationID!=null">AND T3.MAIN_STATION_ID = #{mainStationID}</if> -->
+				<if test="typeClsCD!='' and typeClsCD!=null">AND T1.TYPE_CLS_CD = #{typeClsCD}</if>
+		ORDER BY
+				T1.REG_DTTM DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select>
+	
+	<select id="getStationGroup" parameterType="java.lang.String" resultType="java.util.HashMap">
+		SELECT	T1.STATION_GRP_SEQ AS stationGrpSeq, T2.STATION_GRP_NAME AS stationGrpName
+		FROM	TB_OPR_STATION_GRP T1
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP T2 ON T1.STATION_GRP_SEQ=T2.STATION_GRP_SEQ
+		WHERE	T2.LANG_CLS_CD = #{mLang}
+		ORDER BY
+				T1.STATION_GRP_SEQ ASC
+	</select>
+	
+	<select id="getStationID" parameterType="java.util.HashMap" resultType="java.util.HashMap">
+		SELECT	T3.STATION_ID AS stationID, T4.STATION_NAME AS stationName
+		FROM	TB_OPR_STATION_GRP T1
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP T2 ON T1.STATION_GRP_SEQ=T2.STATION_GRP_SEQ
+				INNER JOIN TB_OPR_STATION T3 ON T3.STATION_GRP_SEQ=T1.STATION_GRP_SEQ
+				LEFT OUTER JOIN TB_OPR_MLANG_STATION T4 ON T3.STATION_ID=T4.STATION_ID
+		WHERE	T1.STATION_GRP_SEQ = #{stationGrpSeq} AND T2.LANG_CLS_CD = #{mLang} AND T4.LANG_CLS_CD = #{mLang}
+		ORDER BY
+				T1.STATION_GRP_SEQ ASC
+	</select>
+	
+	<select id="viewMallPromotion" parameterType="mallPromotionVO" resultMap="resultMallPromotionVO">
+		SELECT	
+				T1.SHOP_AD_SEQ,
+				T1.STATION_ID,
+				T1.TYPE_CLS_CD,
+				TC.CD_DESC1,
+				TC.CD_DESC2,
+				T1.SHOP_NAME,
+				T1.SHOP_POST_NO,
+				T1.SHOP_ADDR1,
+				T1.SHOP_ADDR2,
+				T1.SHOP_TEL_NO,
+				T1.SHOP_LATITUDE,
+				T1.SHOP_LONGITUDE,
+				T1.REG_DTTM,
+				T1.REG_ID,
+				T1.MOD_DTTM,
+				T1.MOD_ID,
+				T1.AD_TEXT_DESC,
+				T2.STATION_NO,
+				T4.STATION_NAME,
+				T3.STATION_GRP_SEQ,
+				T3.MAIN_STATION_ID,
+				T5.STATION_GRP_NAME
+		FROM	TB_OPR_SHOP_AD T1
+				LEFT OUTER JOIN TB_OPR_STATION T2 ON T1.STATION_ID=T2.STATION_ID
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION T4 ON T2.STATION_ID=T4.STATION_ID
+				LEFT OUTER JOIN TB_OPR_STATION_GRP T3 ON T2.STATION_GRP_SEQ=T3.STATION_GRP_SEQ
+					LEFT OUTER JOIN TB_OPR_MLANG_STATION_GRP T5 ON T3.STATION_GRP_SEQ=T5.STATION_GRP_SEQ
+				LEFT OUTER JOIN TB_SYS_COM_CD TC ON T1.TYPE_CLS_CD=TC.COM_CD
+		WHERE	T1.SHOP_AD_SEQ = #{shopADSeq} AND T4.LANG_CLS_CD = #{mLang} AND T5.LANG_CLS_CD = #{mLang}
+	</select>
+	
+	<insert id="insertMallPromotion" parameterType="mallPromotionVO" useGeneratedKeys="true" keyProperty="shopADSeq">
+		INSERT INTO TB_OPR_SHOP_AD
+			(
+				STATION_ID, TYPE_CLS_CD,
+				SHOP_NAME, SHOP_POST_NO, SHOP_ADDR1, SHOP_ADDR2, SHOP_TEL_NO,
+				SHOP_LATITUDE, SHOP_LONGITUDE,
+				REG_DTTM, REG_ID, MOD_DTTM, MOD_ID, AD_TEXT_DESC
+			)
+		VALUES
+			(
+				#{stationID}, #{typeClsCD},
+				#{shopName}, #{shopPostNO}, #{shopAddr1}, #{shopAddr2}, #{shopTelNO},
+				#{shopLatitude}, #{shopLongitude},
+				NOW(), #{regID}, NOW(), #{regID}, #{adTextDesc}
+			)
+	</insert>
+	
+	<update id="updateMallPromotion" parameterType="mallPromotionVO">
+		UPDATE TB_OPR_SHOP_AD
+		SET
+				STATION_ID = #{stationID},
+				TYPE_CLS_CD = #{typeClsCD},
+				SHOP_NAME = #{shopName},
+				SHOP_POST_NO = #{shopPostNO},
+				SHOP_ADDR1 = #{shopAddr1},
+				SHOP_ADDR2 = #{shopAddr2},
+				SHOP_TEL_NO = #{shopTelNO},
+				<if test="shopLatitude!='' and shopLatitude!=null">
+					SHOP_LATITUDE = #{shopLatitude},
+				</if>
+				<if test="shopLongitude!='' and shopLongitude!=null">
+					SHOP_LONGITUDE = #{shopLongitude},
+				</if>
+				MOD_DTTM = NOW(),
+				MOD_ID = #{modID},
+				AD_TEXT_DESC = #{adTextDesc}
+		WHERE
+			SHOP_AD_SEQ = #{shopADSeq}
+	</update>
+	
+	<delete id="deleteMallPromotion" parameterType="mallPromotionVO">
+		DELETE FROM TB_OPR_SHOP_AD WHERE SHOP_AD_SEQ = #{shopADSeq}
+	</delete>
+
+</mapper>

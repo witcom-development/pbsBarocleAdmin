@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	   xmlns:util="http://www.springframework.org/schema/util"
+	   xmlns:aop="http://www.springframework.org/schema/aop"
+	   xmlns:tx="http://www.springframework.org/schema/tx"
+	   xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+						   http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util.xsd
+						   http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd
+						   http://www.springframework.org/schema/tx http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+	<util:properties id="databaseProps" location="classpath:config/properties/database.xml"/>
+	
+	<!-- MySQL Master DATA Source -->
+	<bean id="masterDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.driverClassName}"/>
+		<property name="url" value="#{databaseProps.url}"/>
+		<property name="username" value="#{databaseProps.username}"/>
+		<property name="password" value="#{databaseProps.password}"/>
+	</bean>
+	
+	<!-- MySQL Slave 1st DATA Source -->
+	<bean id="slaveOneDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.db2DriverClassName}"/>
+		<property name="url" value="#{databaseProps.db2Url}"/>
+		<property name="username" value="#{databaseProps.db2Username}"/>
+		<property name="password" value="#{databaseProps.db2Password}"/>
+	</bean>
+	
+
+	<!-- MySQL Slave 2nd DATA Source -->
+	<!-- <bean id="slaveTwoDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.db3DriverClassName}"/>
+		<property name="url" value="#{databaseProps.db3Url}"/>
+		<property name="username" value="#{databaseProps.db3Username}"/>
+		<property name="password" value="#{databaseProps.db3Password}"/>
+	</bean>	 -->
+	
+	<bean id="slavePushDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.dbPushDriverClassName}"/>
+		<property name="url" value="#{databaseProps.dbPushUrl}"/>
+		<property name="username" value="#{databaseProps.dbPushUsername}"/>
+		<property name="password" value="#{databaseProps.dbPushPassword}"/>
+	</bean>
+
+	<!-- // 통계 DB -->
+	<bean id="staticsDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.dbStaticsDriverClassName}"/>
+		<property name="url" value="#{databaseProps.dbStaticsUrl}"/>
+		<property name="username" value="#{databaseProps.dbStaticsUsername}"/>
+		<property name="password" value="#{databaseProps.dbStaticsPassword}"/>
+	</bean>
+		
+	<!-- // 문자 DB -->
+	<bean id="mmsDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.dbMMSDriverClassName}"/>
+		<property name="url" value="#{databaseProps.dbMMSUrl}"/>
+		<property name="username" value="#{databaseProps.dbMMSUsername}"/>
+		<property name="password" value="#{databaseProps.dbMMSPassword}"/>
+	</bean>
+	
+	<!-- // 개발 DB -->
+	<bean id="devDataSource" class="com.dkitec.barocle.datasource.DecodeDataSource" destroy-method="close">
+		<property name="driverClassName" value="#{databaseProps.dbDEVDriverClassName}"/>
+		<property name="url" value="#{databaseProps.dbDEVUrl}"/>
+		<property name="username" value="#{databaseProps.dbDEVUsername}"/>
+		<property name="password" value="#{databaseProps.dbDEVPassword}"/>
+	</bean>	
+		
+	<!-- Transaction Manager -->
+	<bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource" ref="dataSource"/>
+	</bean>
+	
+	<!-- SqlSessionFactory -->
+	<bean id="sqlSession" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource"/>
+		<property name="configLocation" value="classpath:config/mybatis/mybatis-config.xml"/>
+	</bean>
+	
+	<bean id="dataSource" class="com.dkitec.barocle.datasource.RoutingDataSource">
+		<property name="targetDataSources">
+		<map key-type="com.dkitec.barocle.datasource.DataSourceType">
+			<entry key="MASTER" value-ref="masterDataSource"/>
+			<entry key="SLAVE01" value-ref="slaveOneDataSource"/>
+			
+			<entry key="PUSH" value-ref="slavePushDataSource"/>
+
+			<!-- // 통계 DB 추가  -->
+			<entry key="STATICS" value-ref="staticsDataSource"/>
+			
+			<!-- // 문자 DB 추가  -->
+			<entry key="MMSDB" value-ref="mmsDataSource"/>
+			
+			<!-- // 개발 DB 추가  -->
+			<entry key="DEVDB" value-ref="devDataSource"/>			
+						
+			<!-- <entry key="SLAVE02" value-ref="slaveTwoDataSource"/> -->
+		</map>
+		</property>
+		<!-- Default DataSource -->
+		<property name="defaultTargetDataSource" ref="masterDataSource"/>
+	</bean>
+	
+	<aop:aspectj-autoproxy proxy-target-class="true"/>
+	<!-- @Service단에서 Transaction 처리도 함께 해주기 위해 transaction manager의 order는 2로 내려준다. -->
+	<tx:annotation-driven proxy-target-class="true" order="2"/>
+	
+	<bean class="egovframework.rte.psl.dataaccess.mapper.MapperConfigurer">
+		<property name="basePackage" value="com.dkitec.barocle"/>
+	</bean>
+	 
+</beans>

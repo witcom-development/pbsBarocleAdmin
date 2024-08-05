@@ -1,0 +1,1509 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper">
+
+	<select id="getBikeList" parameterType="bikeVo" resultType="bikeVo">
+		
+		<choose> 
+			<when test='bikeStatusCd == "BKS_013"'>
+				/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_013 자전거 이력조회 */
+				SELECT Z.BIKE_ID									AS bikeId
+					 , Z.BIKE_NO									AS bikeNo
+					 , CONCAT( B.STATION_NAME , '(회수)' )			 AS bikeStatusName
+					 , CONCAT( C.STATION_NAME , '(이동)' )			 AS adminId
+					 , A.RELOCATE_STR_DTTM						  AS locateStrDttm 
+					 , ''   AS batteryStusCd  -- 재배치담당자
+					 , A.RELOCATE_END_DTTM						  AS lostDate
+					 , CONCAT( '← ', D.ADMIN_NAME , '(회수) / ' , E.ADMIN_NAME, '(이동)   →' )  AS isParking	 
+					 , '재배치'									   AS bikeStatusCd
+					 , Z.USE_CNT									AS useCnt
+				  FROM TB_MTC_RELOCATE_HIST A
+				 INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+															  AND A.RELOCATE_BIKE_ID = Z.BIKE_ID )
+				  LEFT JOIN TB_OPR_MLANG_STATION B ON (  A.FROM_STATION_ID = B.STATION_ID AND B.LANG_CLS_CD = 'LAG_001' )
+				  LEFT JOIN TB_OPR_MLANG_STATION C ON (  A.TO_STATION_ID = C.STATION_ID AND C.LANG_CLS_CD = 'LAG_001' )  
+				  LEFT JOIN TB_SYS_ADMIN D ON ( A.RELOCATE_ADMIN_ID = D.ADMIN_ID )
+				  LEFT JOIN TB_SYS_ADMIN E ON ( A.MOVEAGN_ADMIN_ID = E.ADMIN_ID )  
+				 WHERE RELOCATE_STR_DTTM BETWEEN  STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				 
+				 UNION ALL
+
+				SELECT Z.BIKE_ID	  AS bikeId
+					 , Z.BIKE_NO	  AS bikeNo
+					 , CONCAT( B.STATION_NAME , ' (시작대여소)')
+					 , CONCAT( C.STATION_NAME , ' (종료대여소)')
+					 , A.RENT_DTTM
+					 , '← 대여시간 , 반납시간  → '
+					 , A.RETURN_DTTM
+					 , ''
+					 , '자전거 대여'
+					  , Z.USE_CNT									AS useCnt  
+				 FROM TB_SVC_RENT_HIST A
+				 INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+				 												AND A.RENT_BIKE_ID = Z.BIKE_ID )
+				 LEFT JOIN TB_OPR_MLANG_STATION B   ON ( A.RENT_STATION_ID = B.STATION_ID AND B.LANG_CLS_CD = 'LAG_001' )
+				 LEFT JOIN TB_OPR_MLANG_STATION C   ON ( A.RETURN_STATION_ID = C.STATION_ID AND C.LANG_CLS_CD = 'LAG_001' )  	 
+				WHERE 1=1
+				  AND RENT_YMD BETWEEN #{searchBgnDe} AND #{searchEndDe}
+				  
+
+				UNION ALL
+				 
+				SELECT Z.BIKE_ID	  AS bikeId
+					 , Z.BIKE_NO	  AS bikeNo
+					 , ''
+					 , ''
+					  , A.REG_DTTM  
+					  , A.FAULT_CONTENT 
+					  , ''
+					  , ''
+					  , CONCAT( '고장신고', CONCAT( ':'  
+							  , (
+							  		SELECT GROUP_CONCAT( C.MLANG_COM_CD_NAME ) FROM TB_MTC_FAULT_DETL B , TB_SYS_MLANG_COM_CD C
+							  		WHERE A.FAULT_SEQ = B.FAULT_SEQ
+							  		  AND B.FAULT_CLS_CD = C.COM_CD
+							  		  AND C.LANG_CLS_CD = 'LAG_001'
+								) ) )
+					  , Z.USE_CNT									AS useCnt		  
+				  FROM TB_MTC_FAULT_INFO A
+				 INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+															  AND A.EQUIPMENT_ID = Z.BIKE_ID )	
+				WHERE 1=1
+				  AND A.REG_DTTM BETWEEN  STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				  AND A.EQUIPMENT_CLS_CD ='DEV_001'				  
+				  
+				UNION ALL
+				
+				SELECT Z.BIKE_ID	  AS bikeId
+					 , Z.BIKE_NO	  AS bikeNo
+					 , D.STATION_NAME
+					 ,  CONCAT( B.NOW_STATION_EQUIP_ORD, '번 거치대')  
+					  , A.REG_DTTM  
+					  , ''
+					  , ERR_ID
+					  , '' 
+					  , CONCAT( ' 충격감지 ( ' ,  CASE LOCK_STATE WHEN '01' THEN ' Lock 잠금상태 ) ' WHEN '02' THEN '  Lock 풀림상태  ) ' ELSE LOCK_STATE END )  
+					   , Z.USE_CNT									AS useCnt
+				  FROM TB_OPR_ROB_BRI A 
+				  LEFT JOIN TB_OPR_RACK B ON ( A.RACK_ID = B.RACK_ID ) LEFT JOIN TB_OPR_STATION C ON ( B.NOW_LOCATE_ID = C.STATION_ID )
+				 INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+																  AND A.BIKE_ID = Z.BIKE_ID )   
+				   LEFT JOIN TB_OPR_MLANG_STATION D ON ( C.STATION_ID = D.STATION_ID AND D.LANG_CLS_CD = 'LAG_001' )
+				 WHERE 1=1
+				   AND A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )			
+				
+
+				UNION ALL
+				
+				SELECT Z.BIKE_ID	  AS bikeId
+					 , Z.BIKE_NO	  AS bikeNo
+					 , IFNULL( D.STATION_NAME, E.CENTER_NAME )
+					 , CONCAT( B.NOW_STATION_EQUIP_ORD, '번 거치대')
+					 , LOCATE_STR_DTTM   
+					 , '← 보고시간,  이동시간  →'  
+					 , LOCATE_END_DTTM
+					 , ''
+					 , '주차대기(주기적인 상태보고)'
+					  , Z.USE_CNT									AS useCnt 
+				  FROM TB_OPR_BIKE_LOCATE_HIST A
+				 INNER JOIN TB_OPR_BIKE		  Z ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																		END 
+													AND A.BIKE_ID = Z.BIKE_ID ) 
+				  LEFT JOIN TB_OPR_RACK		  B ON ( A.LOCATE_ID = B.RACK_ID ) LEFT JOIN TB_OPR_STATION C ON ( B.NOW_LOCATE_ID = C.STATION_ID ) 
+				  LEFT JOIN TB_OPR_MLANG_STATION D ON ( C.STATION_ID = D.STATION_ID AND D.LANG_CLS_CD = 'LAG_001' )
+				  LEFT JOIN TB_OPR_CENTER E ON ( A.LOCATE_ID = E.CENTER_ID )
+				 WHERE 1=1
+				   AND LOCATE_CLS_CD = 'R'
+				   AND LOCATE_STR_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				   
+				UNION ALL
+				
+				SELECT Z.BIKE_ID	  AS bikeId
+					 , Z.BIKE_NO	  AS bikeNo
+					 , C.CENTER_NAME
+					 , CONCAT( B.ADMIN_NAME , '(등록자)')
+					 , A.REG_DTTM
+					  , '← 시작시간,  종료시간  →'  
+					  , A.REPAIR_CMPT_DTTM
+					  , CONCAT (  A.BIKE_REPORT , ' ' , A.REPAIR_REPORT )
+					  , '자전거수리' 
+					  , Z.USE_CNT									AS useCnt
+				  FROM TB_MTC_REPAIR_INFO	 A
+				 INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+																AND A.EQUIPMENT_ID = Z.BIKE_ID ) 
+				  LEFT JOIN TB_SYS_ADMIN	  B ON ( A.MAINTC_ADMIN_ID = B.ADMIN_ID )
+				  LEFT JOIN TB_OPR_CENTER	 C ON  ( A.REPAIR_CENTER_ID = C.CENTER_ID )
+				 WHERE 1=1
+				   AND (  REPAIR_CMPT_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					   OR A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ) 
+					   )				
+				
+				  
+				ORDER BY 5
+				
+			 <if test='pagingYn == "Y"'>
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			 </if>  			 
+			</when>
+			<when test='bikeStatusCd == "BKS_014"'>
+				/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_014  회수조회 */
+				SELECT B.BIKE_ID				 AS bikeId
+					, B.BIKE_NO				  AS bikeNo
+					, C.MLANG_COM_CD_NAME		AS bikeStatusCd   -- 변경전자전거상태
+					, A.REG_DTTM				 AS regDttm		-- 분실시간
+					, D.MLANG_COM_CD_NAME		AS bikeStatusName -- 현재자전거상태
+					, A.FN_REG_ID				AS adminId -- 반납ID
+					, A.FN_DTTM				  AS modDttm
+					, A.RETURN_DESC			  AS batteryStusCd
+					, B.USE_CNT									AS useCnt
+				FROM TB_OPR_BIKE_LOST_HIST A
+				INNER JOIN TB_OPR_BIKE	  B ON ( A.BIKE_ID = B.BIKE_ID )
+				LEFT JOIN TB_SYS_MLANG_COM_CD C ON ( A.BF_BIKE_STUS_CD = C.COM_CD AND C.LANG_CLS_CD = 'LAG_001' )
+				LEFT JOIN TB_SYS_MLANG_COM_CD D ON ( B.BIKE_STUS_CD = D.COM_CD AND D.LANG_CLS_CD = 'LAG_001' )
+				WHERE A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				  <if test='bikeSeCd != null and bikeSeCd != ""'>
+					AND B.BIKE_SE_CD = #{bikeSeCd}
+				  </if>
+				  <if test='searchWord !=null and searchWord != ""'>
+				  	AND B.BIKE_NO		=	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+				  </if>
+				  
+				  <if test='bikeStatusName !=null and bikeStatusName != ""'>
+				  	AND A.BF_BIKE_STUS_CD LIKE CONCAT('%',#{bikeStatusName})
+				  </if>	
+			   ORDER BY  A.REG_DTTM DESC
+			 <if test='pagingYn == "Y"'>
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			 </if>  			 
+			</when>
+			<when test='bikeStatusCd == "BKS_015"'>
+			/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_015 출고 */
+			SELECT A.RENT_BIKE_ID	  AS bikeId
+				 , B.BIKE_NO		   AS bikeNo	 -- 자전거번호
+				 , CASE ENFRC_GUBUN_CD WHEN '2' THEN '방치신고'	
+				   ELSE '강제반납'  
+				   END				 AS bikeStatusCd	 -- 강제반납
+				 , C.MLANG_COM_CD_NAME AS bikeStatusName -- 자전거현재상태
+				 , D.MLANG_COM_CD_NAME AS lostRegId	  -- 미반납사유
+				 , CASE A.COMPT_CD WHEN '1' THEN '재배치'
+								   WHEN '2' THEN '회수 후 재배치'  
+								   WHEN '3' THEN '센터입고'
+								   WHEN '4' THEN '정상대기중'
+								   WHEN '5' THEN '자전거 없음'
+								   WHEN '6' THEN '대여중'
+								   WHEN '7' THEN '자동조치'					   
+					END
+									   AS entrpsCd   -- 현장조치
+				 , E.ADMIN_NAME		AS adminId	-- 등록자
+				 , A.REG_DTTM		  AS regDttm	-- 등록일시
+				 , F.ADMIN_NAME		AS entrpsCdNm -- 처리자
+				 , A.COMPT_DTTM		AS modDttm	-- 처리일시
+				 , A.SMS_YN			AS batteryStusCd -- SMS전송여부
+				 , B.USE_CNT									AS useCnt
+			  FROM TB_SVC_ENFRC_RETURN_HIST A
+			  LEFT JOIN TB_SYS_MLANG_COM_CD  D ON ( A.ENFRC_RETURN_CD = D.COM_CD AND D.LANG_CLS_CD = 'LAG_001' ) 
+			  LEFT JOIN TB_SYS_ADMIN		 E ON ( A.AGENT_ID		= E.ADMIN_ID )
+			  LEFT JOIN TB_SYS_ADMIN		 F ON ( A.REG_ID		  = F.ADMIN_ID ) 
+				 , TB_OPR_BIKE B
+			  LEFT JOIN TB_SYS_MLANG_COM_CD  C ON ( B.BIKE_STUS_CD = C.COM_CD AND C.LANG_CLS_CD = 'LAG_001' )
+			 WHERE A.RENT_BIKE_ID = B.BIKE_ID
+			   AND A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+			   AND B.BIKE_NO	   =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+			   AND A.COMPT_CD  	  LIKE CONCAT('%',#{lostYn})
+			 ORDER BY  A.REG_DTTM DESC
+			 <if test='pagingYn == "Y"'>
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			 </if>  			 
+			</when>
+			<when test='bikeStatusCd == "BKS_005"'>
+					SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_005 */
+							BIKE.BIKE_ID		AS bikeId
+						, BIKE.BIKE_NO		AS bikeNo
+						, BIKE.LOST_DATE	  AS lostDate
+						, CEN.CENTER_NAME	 AS stationName
+						, BIKE.BIKE_STUS_CD   AS bikeStatusCd
+						, BIKE.MOD_DTTM	   AS regDttm
+						, BIKE.MOD_DTTM	   AS modDttm
+						, BIKE.ENTRPS_CD	  AS entrpsCd
+						, DATEDIFF( NOW(), BIKE.MOD_DTTM ) AS locateStrDttm
+						, BIKE.USE_CNT									AS useCnt
+					FROM TB_OPR_BIKE			  BIKE 
+					LEFT JOIN TB_OPR_CENTER CEN	ON BIKE.CENTER_ID = CEN.CENTER_ID
+				WHERE BIKE.BIKE_STUS_CD  = 'BKS_005'
+					AND BIKE.CENTER_ID	!= 'CEN061'
+					AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+
+					AND BIKE.MOD_DTTM BETWEEN STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				ORDER BY BIKE.MOD_DTTM DESC 
+				<if test='pagingYn == "Y"'>
+						LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+				</if>  
+		  </when> 
+		  <when test='bikeStatusCd == "BKS_099"'>
+				   
+				   /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_099 도난추정 */
+					SELECT BIKE.BIKE_ID		AS bikeId
+						 , BIKE.BIKE_NO		AS bikeNo
+						 , BIKE.BIKE_STUS_CD   AS bikeStatusCd
+						 , INFO.REG_DTTM	   AS regDttm
+						 , BIKE.MOD_DTTM	   AS modDttm
+						 , DATEDIFF( NOW(), INFO.REG_DTTM ) AS locateStrDttm 
+						 , GRP.STATION_GRP_NAME	AS centerId				
+						 , ST2.STATION_NAME		AS stationName
+						 , HIST.RETURN_DTTM		AS lostDate
+						 , HIST.RETURN_ADMIN_ID	AS bikeStatusName 
+						<!--  <if test='pagingYn != "Y"'> -->
+						<if test="false">
+						 , (
+								SELECT MAX(LOCATE_STR_DTTM)
+								  FROM spb.TB_OPR_BIKE_LOCATE_HIST Z
+									   WHERE Z.BIKE_ID	   = INFO.BIKE_ID
+										 AND Z.LOCATE_CLS_CD = 'R'
+								   AND Z.LOCATE_END_DTTM > DATE_ADD( INFO.REG_DTTM, INTERVAL -3 DAY)  
+						   ) AS entrpsCd
+				 	   </if>
+				 	   , BIKE.USE_CNT									AS useCnt	 
+					  FROM spb.TB_OPR_BIKE_ROB   INFO  
+					 INNER JOIN spb.TB_OPR_BIKE  BIKE  ON ( BIKE.BIKE_ID = INFO.BIKE_ID )	
+					  LEFT JOIN spb.TB_SVC_RENT_HIST		 HIST ON  INFO.RENT_HIST_SEQ	   = HIST.RENT_HIST_SEQ
+					  LEFT JOIN spb.TB_OPR_MLANG_STATION	  ST2 ON  HIST.RETURN_STATION_ID   = ST2.STATION_ID AND ST2.LANG_CLS_CD = 'LAG_001'
+					  LEFT JOIN spb.TB_OPR_STATION			 ST ON  HIST.RETURN_STATION_ID   = ST.STATION_ID
+					  LEFT JOIN spb.TB_OPR_MLANG_STATION_GRP  GRP ON  GRP.STATION_GRP_SEQ	  = ST.STATION_GRP_SEQ  AND GRP.LANG_CLS_CD = 'LAG_001'
+				   WHERE BIKE.BIKE_STUS_CD  = 'BKS_016'
+					 AND INFO.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					 <if test='searchWord != null and searchWord != ""'>
+					 	AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+					 </if>
+					 <if test='bikeSeCd != null and bikeSeCd != ""'>
+						AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+					 </if>
+   			   ORDER BY INFO.REG_DTTM DESC, BIKE.BIKE_ID 
+			   <if test='pagingYn == "Y"'>
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			   </if>
+				</when>
+
+				<when test='bikeStatusCd == "BKS_007"'>
+					SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_007 분실 */
+						   A.*
+						, CONCAT('분실', CASE WHEN B.RETURN_ADMIN_ID IS NULL THEN '(대여이력 확인필요)' ELSE '(강반)' END )  AS bikeStatusName 
+						, DATEDIFF( NOW(), lostDate ) AS locateStrDttm
+						, '' as rentClsCdName
+					FROM
+					(
+					SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_007 */
+							BIKE.BIKE_ID	 AS bikeId
+						,   BIKE.BIKE_NO	 AS bikeNo
+						,   BIKE.LOST_DATE   AS lostDate
+						,	''			   AS stationName
+						,	BIKE.BIKE_STUS_CD AS bikeStatusCd
+						,	BIKE.LOST_DATE	AS regDttm
+						,	BIKE.MOD_DTTM	 AS modDttm
+						,	BIKE.ENTRPS_CD	AS entrpsCd
+						,	IFNULL( ADM.ADMIN_NAME, BIKE.MOD_ID )  AS entrpsCdNm
+						, (
+							SELECT MAX(A.RENT_HIST_SEQ) 
+								FROM TB_SVC_RENT_HIST A
+								WHERE A.RENT_BIKE_ID = BIKE.BIKE_ID
+								AND A.RENT_DTTM BETWEEN DATE_ADD( BIKE.MOD_DTTM, INTERVAL -20 DAY) AND  BIKE.MOD_DTTM
+						   ) AS MAX_RENT_HIST_SEQ
+						, BIKE.USE_CNT									AS useCnt   
+						FROM TB_OPR_BIKE BIKE 
+						LEFT JOIN TB_SYS_ADMIN   ADM ON ADM.ADMIN_ID = BIKE.MOD_ID														 
+					WHERE BIKE.BIKE_STUS_CD = 'BKS_007'
+										  AND BIKE.BIKE_NO LIKE	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			WHEN #{searchWord} = '' THEN '%'
+																			ELSE #{searchWord}
+																			END
+										  AND BIKE.LOST_DATE BETWEEN  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+										  <if test='bikeSeCd != null and bikeSeCd != ""'>
+											AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+										  </if>
+					) A
+				LEFT JOIN TB_SVC_RENT_HIST B ON A.MAX_RENT_HIST_SEQ = B.RENT_HIST_SEQ
+				ORDER BY lostDate DESC, modDttm DESC
+					<if test='pagingYn == "Y"'>
+						LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+					</if>
+				</when>	
+				
+				<when test='bikeStatusCd == "BKS_020"'>
+				   
+					/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_020 분실이력 */
+				   SELECT A.*
+						, DATEDIFF( NOW(), A.regDttm ) AS locateStrDttm 
+						, GRP.STATION_GRP_NAME	AS centerId				
+						, ST2.STATION_NAME		AS stationName
+						, HIST.RETURN_DTTM		AS lostDate
+						, HIST.RETURN_ADMIN_ID	AS bikeStatusName 
+						<if test='pagingYn == "Y"'>
+						 , (
+								SELECT MAX(LOCATE_STR_DTTM)
+								  FROM spb.TB_OPR_BIKE_LOCATE_HIST Z
+									   WHERE Z.BIKE_ID	   = A.bikeId
+										 AND Z.LOCATE_CLS_CD = 'R'
+								   AND Z.LOCATE_END_DTTM > DATE_ADD( A.regDttm, INTERVAL -3 DAY)  
+						   ) AS entrpsCd
+						 , (
+								
+								SELECT MAX(REG_DTTM)
+								  FROM spb.TB_MTC_FAULT_INFO Z
+									   WHERE Z.EQUIPMENT_ID = A.bikeId
+								   AND Z.REG_DTTM > DATE_ADD( A.regDttm, INTERVAL -3 DAY) 
+								   AND Z.EQUIPMENT_CLS_CD ='DEV_001'
+								   
+						   ) AS entrpsCdNm
+						  </if>
+					FROM
+					(
+					SELECT BIKE.BIKE_ID	   AS bikeId
+						  , BIKE.BIKE_NO	  AS bikeNo
+						  , BIKE.MOD_ID	   AS regId
+						  , BIKE.LOST_DATE	AS regDttm
+						  , MAX(RENT_HIST_SEQ) AS MAX_RENT_HIST_SEQ
+						  , BIKE.USE_CNT									AS useCnt
+					 FROM TB_OPR_BIKE	   BIKE	
+					LEFT JOIN TB_SVC_RENT_HIST  HIST ON ( BIKE.BIKE_ID	  = HIST.RENT_BIKE_ID )
+					WHERE BIKE.BIKE_STUS_CD = 'BKS_007'
+					  AND BIKE.LOST_DATE BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					  AND BIKE.BIKE_NO LIKE  CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+					GROUP BY BIKE.BIKE_ID
+					) A
+					LEFT JOIN spb.TB_SVC_RENT_HIST		 HIST ON  A.MAX_RENT_HIST_SEQ	  = HIST.RENT_HIST_SEQ
+					LEFT JOIN spb.TB_OPR_MLANG_STATION	  ST2 ON  HIST.RETURN_STATION_ID   = ST2.STATION_ID AND ST2.LANG_CLS_CD = 'LAG_001'
+					LEFT JOIN spb.TB_OPR_STATION			 ST ON  HIST.RETURN_STATION_ID   = ST.STATION_ID
+					LEFT JOIN spb.TB_OPR_MLANG_STATION_GRP  GRP ON  GRP.	  = ST.STATION_GRP_SEQ  AND GRP.LANG_CLS_CD = 'LAG_001'
+					 WHERE 1=1 
+				   ORDER BY A.regDttm DESC, A.bikeId
+				   <if test='pagingYn == "Y"'>
+						LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+				   </if>
+				 </when>   
+
+			<otherwise>
+				<![CDATA[
+				   SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList */
+						  BIKE_ID								 AS bikeId
+						 ,BIKE_NO								 AS bikeNo
+						 ,TERMINAL_ID							 AS terminalId
+						 ,TOT_MOVE_DIST						   AS totMoveDist
+						 ,LOST_YN								 AS lostYn
+						 ,BIKE_BATTERY_STUS_CD					  AS batteryStusCd			  
+						 ,DATE_FORMAT(LOST_DATE, '%Y-%m-%d')	  AS lostDate
+						 ,CONCAT(CENTER_NAME, STATION_NAME)	   AS stationName
+						 ,CONCAT(LPAD(STATION_EQUIP_ORD,3,0), IS_CASCADE)   AS stationEquipOrder
+						 ,MLANG_COM_CD_NAME					   AS bikeStatusName
+						 ,BIKE_STUS_CD							AS bikeStatusCd
+						 ,DATE_FORMAT(MOD_DTTM, '%Y-%m-%d')	   AS regDttm
+						 ,DATE_FORMAT(LAST_CHK_DTTM, '%Y-%m-%d')  AS lastChkDttm
+						 ,DATE_FORMAT(MOD_DTTM, '%Y-%m-%d')	   AS modDttm
+						 ,DATEDIFF(DATE_FORMAT(DATE_ADD(LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_006') DAY), '%Y-%m-%d'), DATE_FORMAT(now(), '%Y-%m-%d') ) AS lastChkRemainDay
+						 ,ENTRPS_CD	  							  AS entrpsCd
+						 , ( SELECT L.MLANG_COM_CD_NAME
+							   FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							  WHERE COM_UP_CD = 'ENT'
+								AND L.LANG_CLS_CD = 'LAG_001'
+								AND S.COM_CD = ENTRPS_CD
+						  ) AS entrpsCdNm
+						  , USE_CNT									AS useCnt 
+						  , A.rentClsCdName as rentClsCdName
+						  , A.RENT_SEQ as rentSeq
+						  , A.elapseTime as elapseTime
+					FROM 
+					(
+						SELECT 
+							BIKE.BIKE_ID, 
+							BIKE.BIKE_NO,
+							BIKE.TERMINAL_ID,
+							BIKE.TOT_MOVE_DIST,
+							BIKE.LAST_CHK_DTTM,
+							BIKE.LOST_YN,
+							BIKE.LOST_DATE,
+							IFNULL((SELECT CD_DESC1 FROM TB_SYS_COM_CD CD WHERE CD.COM_CD = BIKE.BIKE_BATTERY_STUS_CD), '-') AS BIKE_BATTERY_STUS_CD,
+							IF(CEN.CENTER_NAME IS NULL, '', CONCAT('(센)', CEN.CENTER_NAME)) CENTER_NAME,
+							IF(ST.STATION_NAME IS NULL, '', CONCAT('(대)', ST.STATION_NAME)) STATION_NAME,
+							RACK.STATION_EQUIP_ORD,
+							IF(PARK.CASCADE_YN = 'Y', '(C)', '') IS_CASCADE,
+							PARK.CASCADE_YN,
+							BIKE.BIKE_STUS_CD,
+							MCD.MLANG_COM_CD_NAME,
+							BIKE.REG_DTTM,
+							BIKE.MOD_DTTM,
+							BIKE.ENTRPS_CD,
+							BIKE.MOD_ID AS BIKE_MOD_ID,
+							BIKE.USE_CNT,
+							(SELECT MLANG_COM_CD_NAME FROM spb.TB_SYS_MLANG_COM_CD WHERE COM_CD = RT.RENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') 
+							AS rentClsCdName
+						   ,RT.RENT_SEQ  
+						   ,TIMESTAMPDIFF(MINUTE,RT.RENT_DTTM, now())				  AS elapseTime 
+						FROM TB_OPR_BIKE BIKE 
+						LEFT OUTER JOIN TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+						LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID  AND PARK.REG_DTTM = (SELECT MAX(REG_DTTM)
+																														FROM spb.TB_OPR_BIKE_PARKING PARK
+																													   WHERE BIKE_ID =BIKE.BIKE_ID )
+						LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+						LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME
+											 FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+											 WHERE ST.STATION_ID = MST.STATION_ID
+											  AND MST.LANG_CLS_CD = #{lang}				   ) ST ON RACK.LOCATE_ID = ST.STATION_ID
+						JOIN TB_SYS_COM_CD CD ON BIKE.BIKE_STUS_CD = CD.COM_CD AND CD.COM_UP_CD = 'BKS'
+						JOIN TB_SYS_MLANG_COM_CD MCD ON CD.COM_CD = MCD.COM_CD AND MCD.LANG_CLS_CD =  #{lang}   
+						LEFT OUTER JOIN TB_SVC_RENT RT ON BIKE.BIKE_ID=RT.RENT_BIKE_ID													   
+					]]>
+					<trim prefix ="WHERE" prefixOverrides="AND"> 
+						<if test='searchBgnDe != null and searchBgnDe != ""'>
+							<if test='searchType == ""'>
+								<![CDATA[ AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= BIKE.MOD_DTTM  ]]>
+							</if>
+						</if>
+						<if test='searchEndDe != null and searchEndDe != ""'>
+							<if test='searchType == ""'>
+									<![CDATA[ AND BIKE.MOD_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+							</if>
+						</if>
+						<if test='bikeStatusCd != null and bikeStatusCd != ""'>
+							<choose>
+								<when test='searchType == "B"'>
+									AND 1=1  
+								</when>   
+								<otherwise>
+										AND BIKE.BIKE_STUS_CD = #{bikeStatusCd}
+								</otherwise>
+							</choose>
+						</if>
+						<if test='searchType !=null and searchType != ""'>
+							<choose>
+								<when test='searchType == "B"'>
+									AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END  
+								</when>   
+								<when test='searchType == "S"'>
+									AND ST.STATION_NAME LIKE CONCAT(#{searchWord},'%')   
+								</when>
+								<when test='searchType == "C"'>
+									AND CEN.CENTER_NAME LIKE CONCAT(#{searchWord},'%')   
+								</when>
+							</choose>
+						</if>
+						<if test='rglChkSearch != null and rglChkSearch != ""'>
+								AND DATE_FORMAT(NOW(), '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(BIKE.LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_006') - #{rglChkSearch} DAY), '%Y-%m-%d') AND  DATE_FORMAT(DATE_ADD(BIKE.LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_006') DAY), '%Y-%m-%d')
+						</if>
+						<if test='bikeSeCd != null and bikeSeCd != ""'>
+							AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+						</if>
+					</trim>	  
+					   ) A
+					   ORDER BY MOD_DTTM DESC, BIKE_ID DESC
+					   <if test='pagingYn == "Y"'>
+					  <![CDATA[
+					  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+					  ]]>
+					  </if> 
+				</otherwise>
+		</choose>
+	
+	
+	</select>
+
+	<select id="getBikeListCount" parameterType="bikeVo" resultType="int">
+		 
+		<choose>
+
+			<when test='bikeStatusCd == "BKS_013"'>
+				/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_013 자전거 이력조회 */
+			SELECT SUM(CNT)
+			  FROM
+			  (	
+				SELECT COUNT(1) AS CNT
+				  FROM TB_MTC_RELOCATE_HIST A
+				  INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+																			 AND A.RELOCATE_BIKE_ID = Z.BIKE_ID )
+				 WHERE RELOCATE_STR_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+  				 UNION ALL
+  				SELECT COUNT(1)
+				  FROM TB_SVC_RENT_HIST A
+				  INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+																AND A.RENT_BIKE_ID = Z.BIKE_ID )
+				WHERE 1=1
+				  AND RENT_YMD BETWEEN #{searchBgnDe} AND #{searchEndDe}
+				UNION ALL
+				SELECT COUNT(1)
+				  FROM TB_MTC_FAULT_INFO A
+				  INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+															   AND A.EQUIPMENT_ID = Z.BIKE_ID )	
+				WHERE 1=1
+				  AND A.REG_DTTM BETWEEN  STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				  AND A.EQUIPMENT_CLS_CD ='DEV_001'					  
+				  
+				UNION ALL
+				
+				SELECT COUNT(1)
+				  FROM TB_OPR_ROB_BRI A 
+				  LEFT JOIN TB_OPR_RACK B ON ( A.RACK_ID = B.RACK_ID ) LEFT JOIN TB_OPR_STATION C ON ( B.NOW_LOCATE_ID = C.STATION_ID )
+				  INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+																AND A.BIKE_ID = Z.BIKE_ID )   
+				   LEFT JOIN TB_OPR_MLANG_STATION D ON ( C.STATION_ID = D.STATION_ID AND D.LANG_CLS_CD = 'LAG_001' )
+				 WHERE 1=1
+				   AND A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )			
+					
+				UNION ALL
+				
+				SELECT COUNT(1)
+				  FROM TB_OPR_BIKE_LOCATE_HIST A
+				  INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+																  AND A.BIKE_ID = Z.BIKE_ID ) 
+				 WHERE 1=1
+				   AND LOCATE_STR_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				   AND LOCATE_CLS_CD = 'R'
+				UNION ALL
+				
+				SELECT COUNT(1)
+				  FROM TB_MTC_REPAIR_INFO	 A
+				 INNER JOIN TB_OPR_BIKE		  Z	  ON ( Z.BIKE_NO =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+															  AND A.EQUIPMENT_ID = Z.BIKE_ID ) 
+				 WHERE  1=1
+				   AND (  A.REPAIR_CMPT_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					   OR A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ) 
+					   )				
+								  
+  			 ) A
+			</when>
+
+			<when test='bikeStatusCd == "BKS_014"'>
+				/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_014 강제반납 분실 처리건 */
+				SELECT COUNT(1)
+				  FROM TB_OPR_BIKE_LOST_HIST A
+				 INNER JOIN TB_OPR_BIKE	  B ON ( A.BIKE_ID = B.BIKE_ID ) 
+				 WHERE A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				   AND A.TB_OPR_BIKE_RTRVL_SEQ IS NOT NULL
+				   <if test='searchWord !=null and searchWord != ""'>
+				  	AND B.BIKE_NO	   =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+				  </if>
+				  <if test='bikeSeCd != null and bikeSeCd != ""'>
+					AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+				  </if>
+				   <if test='bikeStatusName !=null and bikeStatusName != ""'>
+				  	AND A.BF_BIKE_STUS_CD LIKE CONCAT('%',#{bikeStatusName})
+				  </if>	
+			</when>
+
+
+				<when test='bikeStatusCd == "BKS_015"'>
+				/* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_015 출고 */
+				SELECT COUNT(1)
+				  FROM TB_SVC_ENFRC_RETURN_HIST A
+					 , TB_OPR_BIKE B
+				  LEFT JOIN TB_SYS_MLANG_COM_CD  C ON ( B.BIKE_STUS_CD = C.COM_CD AND C.LANG_CLS_CD = 'LAG_001' )
+				 WHERE A.RENT_BIKE_ID = B.BIKE_ID
+				   AND A.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				   AND B.BIKE_NO	  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+												WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+												ELSE #{searchWord}
+												END
+				   AND A.COMPT_CD  	  LIKE CONCAT('%',#{lostYn})
+				</when>				
+				<when test='bikeStatusCd == "BKS_005"'>
+					   SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_005 */
+							  COUNT(1)
+						FROM TB_OPR_BIKE			  BIKE 
+						LEFT OUTER JOIN TB_OPR_CENTER CEN	ON BIKE.CENTER_ID = CEN.CENTER_ID
+					   WHERE BIKE.BIKE_STUS_CD  = 'BKS_005'
+						 AND BIKE.CENTER_ID	!= 'CEN061'
+						 AND BIKE.MOD_DTTM BETWEEN STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+	
+					<if test='searchType !=null and searchType != ""'>
+					<choose>
+						<when test='searchType == "B"'>
+						AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+						</when>   
+						<when test='searchType == "S"'>
+						AND ST.STATION_NAME LIKE CONCAT(#{searchWord},'%')   
+						</when>
+						<when test='searchType == "C"'>
+						AND CEN.CENTER_NAME LIKE CONCAT(#{searchWord},'%')   
+						</when>
+					</choose>
+					</if>
+					<if test='bikeSeCd != null and bikeSeCd != ""'>
+						AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+					</if>
+				</when>
+				<when test='bikeStatusCd == "BKS_099"'>
+					SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeListCount.BKS_16 */
+						   COUNT(1)
+					  FROM spb.TB_OPR_BIKE_ROB   INFO  
+					 INNER JOIN spb.TB_OPR_BIKE  BIKE  ON ( BIKE.BIKE_ID = INFO.BIKE_ID )	
+				   WHERE BIKE.BIKE_STUS_CD  = 'BKS_016'
+					 AND INFO.REG_DTTM BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					 <if test='searchWord != null and searchWord != ""'>
+					 	AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+					 </if> 
+					 <if test='bikeSeCd != null and bikeSeCd != ""'>
+						AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+					</if>
+				   ORDER BY INFO.REG_DTTM DESC, BIKE.BIKE_ID
+				</when>
+
+				<when test='bikeStatusCd == "BKS_007"'>
+			
+					SELECT  /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeListCount.BKS_007 */
+							COUNT(1)
+					  FROM TB_OPR_BIKE BIKE 
+					  LEFT JOIN TB_OPR_CENTER  CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+  					  JOIN TB_SYS_COM_CD		CD ON BIKE.BIKE_STUS_CD = CD.COM_CD AND CD.COM_UP_CD = 'BKS'
+					  JOIN TB_SYS_MLANG_COM_CD MCD ON CD.COM_CD = MCD.COM_CD AND MCD.LANG_CLS_CD =  'LAG_001'
+					  LEFT JOIN TB_SYS_ADMIN   ADM ON ADM.ADMIN_ID = BIKE.MOD_ID														 
+					 WHERE BIKE.BIKE_STUS_CD = 'BKS_007'
+		  			   AND BIKE.BIKE_NO  LIKE	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			WHEN #{searchWord} = '' THEN '%'
+																			ELSE #{searchWord}
+																			END 
+						AND BIKE.LOST_DATE BETWEEN  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+
+							AND BIKE.BIKE_NO LIKE CONCAT('%',#{searchWord})  
+							<if test='bikeSeCd != null and bikeSeCd != ""'>
+								AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+							  </if>
+
+				</when>
+
+
+				<when test='bikeStatusCd == "BKS_020"'>
+				   
+					SELECT COUNT(1)
+					 FROM TB_OPR_BIKE	   BIKE	
+					WHERE BIKE.BIKE_STUS_CD = 'BKS_007'
+					  AND BIKE.LOST_DATE BETWEEN STR_TO_DATE( #{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE( #{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					  AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END
+					 
+				 </when>
+
+				<otherwise>
+						<![CDATA[
+							SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeListCount */
+								   COUNT(*)
+							  FROM TB_OPR_BIKE BIKE 
+							  LEFT OUTER JOIN TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+							   LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID  AND PARK.REG_DTTM = (SELECT MAX(REG_DTTM)
+																																FROM spb.TB_OPR_BIKE_PARKING PARK
+																															   WHERE BIKE_ID =BIKE.BIKE_ID )
+							  LEFT OUTER JOIN TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+							  LEFT OUTER JOIN 
+							  (
+									SELECT ST.STATION_ID, MST.STATION_NAME
+									FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+									WHERE ST.STATION_ID = MST.STATION_ID
+									AND MST.LANG_CLS_CD = #{lang}
+							  ) ST ON RACK.LOCATE_ID = ST.STATION_ID
+							  JOIN TB_SYS_COM_CD CD ON BIKE.BIKE_STUS_CD = CD.COM_CD AND CD.COM_UP_CD = 'BKS'
+							  JOIN TB_SYS_MLANG_COM_CD MCD ON CD.COM_CD = MCD.COM_CD AND MCD.LANG_CLS_CD =  #{lang}															 
+						]]>
+							  <trim prefix ="WHERE" prefixOverrides="AND"> 
+
+									<if test='searchBgnDe != null and searchBgnDe != ""'>
+											<if test='searchType == ""'>
+													<![CDATA[ AND STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d')  <= BIKE.MOD_DTTM  ]]>
+											</if>
+									</if>
+									<if test='searchEndDe != null and searchEndDe != ""'>
+											<if test='searchType == ""'>
+													<![CDATA[ AND BIKE.MOD_DTTM <=  STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND ]]>
+											</if>
+									</if>
+
+								  <if test='bikeStatusCd != null and bikeStatusCd != ""'>
+								  AND BIKE.BIKE_STUS_CD = #{bikeStatusCd}
+								  </if>
+								  <if test='searchType !=null and searchType != ""'>
+								  <choose>
+									  <when test='searchType == "B"'>
+									  AND BIKE.BIKE_NO  =	CASE WHEN LENGTH(#{searchWord}) = 5 THEN CONCAT('BRC-', #{searchWord})
+																			WHEN LENGTH(#{searchWord}) = 4 THEN CONCAT('BRC-0', #{searchWord})
+																			ELSE #{searchWord}
+																			END 
+									  </when>   
+									  <when test='searchType == "S"'>
+									  AND ST.STATION_NAME LIKE CONCAT(#{searchWord},'%')   
+									  </when>
+									  <when test='searchType == "C"'>
+									  AND CEN.CENTER_NAME LIKE CONCAT(#{searchWord},'%')   
+									  </when>
+								   </choose>
+								  </if>
+								  <if test='bikeSeCd != null and bikeSeCd != ""'>
+									AND BIKE.BIKE_SE_CD = #{bikeSeCd}
+								  </if>
+								  <if test='rglChkSearch != null and rglChkSearch != ""'>
+								   AND DATE_FORMAT(NOW(), '%Y-%m-%d') BETWEEN DATE_FORMAT(DATE_ADD(BIKE.LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_006') - #{rglChkSearch} DAY), '%Y-%m-%d') AND  DATE_FORMAT(DATE_ADD(BIKE.LAST_CHK_DTTM, INTERVAL(SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD = 'MSI_006') DAY), '%Y-%m-%d')
+								  </if>
+							  </trim> 
+				</otherwise>
+
+		</choose>
+	</select>
+	
+	<select id="getBikeInfo" parameterType="bikeVo" resultType="bikeVo">
+		   SELECT 
+				 BIKE.BIKE_ID													  AS bikeId
+				,IF(BIKE.BIKE_NO IS NULL, '' ,BIKE.BIKE_NO )					   AS bikeNo
+				,BIKE.TERMINAL_ID												  AS terminalId
+				,LPAD(RACK.STATION_EQUIP_ORD,3,0)								  AS stationEquipOrder
+				,DATE_FORMAT(BIKE.LAST_CHK_DTTM ,'%Y-%m-%d')					   AS lastChkDttm
+				,BIKE.BIKE_STUS_CD												 AS bikeStatusCd
+				,IF(CEN.CENTER_ID IS NULL, '', CEN.CENTER_ID)					  AS centerId
+				,IF(ST.STATION_ID IS NULL, '', ST.STATION_ID)					  AS stationId
+				,IF(ST.STATION_GRP_SEQ IS NULL , '' ,ST.STATION_GRP_SEQ)		   AS stationGrpSeq
+				,DATE_FORMAT(BIKE.REG_DTTM ,'%Y-%m-%d')							AS regDttm
+				,ENTRPS_CD														   AS entrpsCd
+				,BIKE.BIKE_SE_CD												 AS bikeSeCd
+			FROM spb.TB_OPR_BIKE BIKE 
+			LEFT OUTER JOIN  spb.TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+			LEFT OUTER JOIN TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID  AND PARK.REG_DTTM = (SELECT MAX(REG_DTTM)
+																											FROM spb.TB_OPR_BIKE_PARKING PARK
+																										   WHERE BIKE_ID =BIKE.BIKE_ID )
+			LEFT OUTER JOIN  spb.TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+			LEFT OUTER JOIN (
+							  SELECT ST.STATION_GRP_SEQ, ST.STATION_ID, MST.STATION_NAME
+								FROM TB_OPR_STATION ST, TB_OPR_MLANG_STATION MST
+							   WHERE ST.STATION_ID = MST.STATION_ID
+								 AND MST.LANG_CLS_CD = #{lang}
+							 ) ST ON RACK.LOCATE_ID = ST.STATION_ID 
+			WHERE BIKE.BIKE_NO = #{bikeNo}	   
+	</select>
+
+	<select id="getBikeCurrentInfo" parameterType="bikeVo" resultType="bikeVo">
+		 SELECT BIKE.BIKE_NO													AS bikeNo
+			   ,IF(CEN.CENTER_NAME IS NULL, '', CONCAT('(센)', CEN.CENTER_NAME)) AS centerName
+			   ,IF(ST.STATION_NAME IS NULL, '', CONCAT('(대)', ST.STATION_NAME)) AS stationName
+			   ,MCD.MLANG_COM_CD_NAME										   AS bikeStatusName
+			   ,FORMAT((BIKE.TOT_MOVE_DIST/1000),2,0)						   AS totMoveDist
+			   ,BIKE.USE_CNT												   AS useCnt
+		   FROM spb.TB_OPR_BIKE BIKE 
+		   LEFT OUTER JOIN spb.TB_OPR_CENTER CEN ON BIKE.CENTER_ID = CEN.CENTER_ID
+		   LEFT OUTER JOIN spb.TB_OPR_BIKE_PARKING PARK ON BIKE.BIKE_ID = PARK.BIKE_ID  AND PARK.REG_DTTM = (SELECT MAX(REG_DTTM)
+																											FROM spb.TB_OPR_BIKE_PARKING PARK
+																										   WHERE BIKE_ID =BIKE.BIKE_ID )
+		  
+		   LEFT OUTER JOIN spb.TB_OPR_RACK_LOCATE_INFO RACK ON PARK.RACK_ID = RACK.RACK_ID AND NOW() BETWEEN RACK.LOCATE_STR_DTTM AND RACK.LOCATE_END_DTTM AND RACK.LOCATE_CLS_CD = 'S'
+		   LEFT OUTER JOIN (  SELECT ST.STATION_ID, MST.STATION_NAME
+								FROM spb.TB_OPR_STATION ST, spb.TB_OPR_MLANG_STATION MST
+							   WHERE ST.STATION_ID = MST.STATION_ID
+								 AND MST.LANG_CLS_CD = 'LAG_001'				 ) ST ON RACK.LOCATE_ID = ST.STATION_ID
+		   JOIN spb.TB_SYS_COM_CD CD ON BIKE.BIKE_STUS_CD = CD.COM_CD AND CD.COM_UP_CD = 'BKS'
+		   JOIN spb.TB_SYS_MLANG_COM_CD MCD ON CD.COM_CD = MCD.COM_CD AND MCD.LANG_CLS_CD =  'LAG_001'	
+		  WHERE 1=1
+		  <if test='bikeId != null and bikeId != ""'>
+		  	AND BIKE.BIKE_ID = #{bikeId}	 
+		  </if>
+		  <if test='bikeNo != null and bikeNo != ""'>
+			  AND BIKE.BIKE_NO = #{bikeNo}	 
+		  </if>
+	</select>
+	<select id="getBikeHistoryInfo" parameterType="bikeVo" resultType="bikeRentalVo">
+		  SELECT /* getBikeHistoryInfo */
+		  		 <choose>
+		  			 <when test='rackId == "-"'>
+		  			 	 H.RENT_SEQ										   AS rentHistSeq
+		  			 	,TIMESTAMPDIFF(MINUTE,H.RENT_DTTM, now())			 AS useMi
+		  			 </when>
+		  			 <otherwise>
+		  				 H.RENT_HIST_SEQ									  AS rentHistSeq
+		  				,H.RETURN_ADMIN_ID									  AS adminId
+		  			 </otherwise>
+		  		 </choose>
+			   , E.BIKE_NO 													 AS rentBikeNo   
+			   , H.RENT_CLS_CD											   AS rentClsCd
+			   , E.BIKE_STUS_CD											  AS rentStatusCd
+			   , F.MLANG_COM_CD_NAME										 AS rentStatusName
+			   , G.MLANG_COM_CD_NAME										 AS rentClsCdName
+			   , I.STATION_NAME											  AS rentStationName
+				<if test='rackId == "-"'>
+			   , J.STATION_NO												AS rentStationNo
+			   , MAX(K.STATION_EQUIP_ORD)									AS rentRackId 
+			   </if>   
+			   , DATE_FORMAT(H.RENT_DTTM ,'%Y-%m-%d %H:%i')				  AS rentDttm
+			   
+			   , IFNULL(M.MB_ID ,'GUEST')									AS mbId
+				<if test='rackId != "-"'>
+			   , O.STATION_EQUIP_ORD										 AS returnRackId
+			   , N.STATION_NAME											  AS returnStationName
+			   , P.STATION_NO												AS returnStationNo 
+			   , DATE_FORMAT(H.RETURN_DTTM ,'%Y-%m-%d %H:%i')				AS returnDttm
+			   , FORMAT((H.USE_DIST/1000),2,0)							   AS useDist
+			   , H.USE_MI													AS useMi
+			   , U.USR_SEQ													 AS usrSeq
+			   , (SELECT SUM(C.PENALTY_POINT)
+					FROM  spb.TB_SVC_PENALTY P 
+				   INNER JOIN spb.TB_SVC_PENALTY_CD C ON P.PENALTY_CD = C.PENALTY_CD
+				   WHERE P.RENT_HIST_SEQ = H.RENT_HIST_SEQ)								 AS penaltyPoint
+			   , IF(H.OVER_FEE_YN ='Y', (
+										SELECT FORMAT(IF(OVER_FEE IS NULL,0,OVER_FEE ),0,2)
+										  FROM  spb.TB_SVC_RENT_OVER_FEE
+										 WHERE  RENT_HIST_SEQ = H.RENT_HIST_SEQ
+										)
+					, 0)													 AS overFee
+				</if>
+			   , U.USR_SEQ													 AS usrSeq
+		<choose>
+			<when test='rackId == "-"'>
+				FROM  spb.TB_SVC_RENT H
+			</when>  
+			<otherwise>
+				FROM  spb.TB_SVC_RENT_HIST H
+			</otherwise>
+		</choose>
+				 INNER JOIN spb.TB_SVC_USR				U ON H.USR_SEQ	  = U.USR_SEQ
+			LEFT OUTER JOIN spb.TB_SVC_MB				 M ON M.USR_SEQ	  = U.USR_SEQ
+			LEFT OUTER JOIN spb.TB_OPR_BIKE			   E ON E.BIKE_ID	  = H.RENT_BIKE_ID
+			LEFT OUTER JOIN spb.TB_SYS_MLANG_COM_CD	   F ON E.BIKE_STUS_CD = F.COM_CD		AND F.LANG_CLS_CD =  'LAG_001'
+			LEFT OUTER JOIN spb.TB_SYS_MLANG_COM_CD	   G ON G.COM_CD = H.RENT_CLS_CD		 AND G.LANG_CLS_CD =  'LAG_001'
+			LEFT OUTER JOIN spb.TB_OPR_MLANG_STATION	  I ON H.RENT_STATION_ID = I.STATION_ID AND I.LANG_CLS_CD =  'LAG_001' 
+			<if test='rackId == "-"'>
+			LEFT OUTER JOIN spb.TB_OPR_STATION			J ON H.RENT_STATION_ID = J.STATION_ID 
+			LEFT OUTER JOIN spb.TB_OPR_RACK_LOCATE_INFO   K ON K.RACK_ID = H.RENT_RACK_ID	   AND H.RENT_DTTM   BETWEEN K.LOCATE_STR_DTTM AND K.LOCATE_END_DTTM			
+			LEFT OUTER JOIN spb.TB_OPR_MLANG_STATION	  L ON H.RENT_STATION_ID = L.STATION_ID AND L.LANG_CLS_CD =  'LAG_001'
+			</if>
+			<if test='rackId != "-"'>
+			LEFT OUTER JOIN spb.TB_OPR_RACK_LOCATE_INFO   O ON O.RACK_ID	= H.RETURN_RACK_ID	   AND H.RETURN_DTTM BETWEEN O.LOCATE_STR_DTTM AND O.LOCATE_END_DTTM
+			LEFT OUTER JOIN spb.TB_OPR_STATION			P ON P.STATION_ID = H.RETURN_STATION_ID	
+			LEFT OUTER JOIN spb.TB_OPR_MLANG_STATION	  N ON N.STATION_ID = H.RETURN_STATION_ID AND N.LANG_CLS_CD =  'LAG_001'
+			</if>
+		 <where>
+			 <if test='bikeId != null and bikeId != ""'>
+				 H.RENT_BIKE_ID = #{bikeId}
+			 </if>
+			 <choose>
+				<when test='rackId == "-"'>
+					<if test='rentHistSeq != null and rentHistSeq != ""'>
+						H.RENT_SEQ = #{rentHistSeq}
+					</if>
+				</when>  
+				<otherwise>
+					<if test='rentHistSeq != null and rentHistSeq != ""'>
+						H.RENT_HIST_SEQ = #{rentHistSeq}
+					</if>
+				</otherwise>
+			</choose>
+			
+			<if test='( bikeId == null or bikeId == "" ) and ( rentHistSeq == null or rentHistSeq == "" )'>
+				 1=2
+			 </if>
+			
+			
+			<if test='searchBgnDe != null and searchBgnDe != ""'>
+			 AND RENT_DTTM BETWEEN (DATE_FORMAT(#{searchBgnDe}, '%Y-%m-%d') - INTERVAL 0 SECOND) AND (DATE_FORMAT(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			 </if>
+			 <if test='searchBgnDe == null or searchBgnDe == ""'>
+			 AND RENT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 7 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			 </if>
+		 </where>
+		 <choose>
+			 <when test='rackId == "-"'>
+				 ORDER BY H.RENT_SEQ	   DESC
+			 </when>
+			 <otherwise>
+				 ORDER BY H.RENT_HIST_SEQ  DESC
+			 </otherwise>
+		 </choose>
+		 <if test='pagingYn == "Y"'>
+		 LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		 </if>
+	</select>
+	
+	<select id="getBikeHistoryInfoCount" parameterType="bikeVo" resultType="int">
+		SELECT COUNT(A.RENT_BIKE_ID)
+		  FROM TB_SVC_RENT_HIST A
+		<trim prefix ="WHERE" prefixOverrides="AND"> 
+			 <if test='(bikeId == null or bikeId == "") and (rentHistSeq == null or rentHistSeq == "")'>
+			 AND 1 = 2
+			 </if>
+			 <if test='bikeId != null and bikeId != ""'>
+			 AND RENT_BIKE_ID = #{bikeId}
+			 </if>
+			 <if test='rentHistSeq != null and rentHistSeq != ""'>
+			 AND RENT_HIST_SEQ = #{rentHistSeq}
+			 </if>
+			 
+			 <if test='( bikeId == null or bikeId == "" ) and ( rentHistSeq == null or rentHistSeq == "" )'>
+				 1=2
+			 </if>
+			 
+			 <if test='searchBgnDe != null and searchBgnDe != ""'>
+			 AND RENT_DTTM BETWEEN (DATE_FORMAT(#{searchBgnDe}, '%Y-%m-%d') - INTERVAL 0 SECOND) AND (DATE_FORMAT(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			 </if>
+			 <if test='searchBgnDe == null or searchBgnDe == ""'>
+			 AND RENT_DTTM BETWEEN (DATE_FORMAT(now(), '%Y-%m-%d') - INTERVAL 7 DAY - INTERVAL 0 SECOND) AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			 </if>
+		 </trim>
+	</select>
+	
+	<insert id="addNewBikeDevice" parameterType="bikeVo">
+		INSERT INTO TB_OPR_BIKE
+		(   BIKE_ID
+		   ,BIKE_NO
+		   ,TERMINAL_ID
+		   ,BIKE_STUS_CD
+		   ,TOT_MOVE_DIST
+		   ,LAST_CHK_DTTM
+		   ,REG_DTTM
+		   ,REG_ID
+		   ,LOST_YN
+		   ,CENTER_Id
+		   ,MOD_DTTM
+		   ,MOD_ID
+		   ,ENTRPS_CD
+		   ,BIKE_SE_CD
+		) VALUES (
+			#{bikeId}
+		   ,#{bikeNo}
+		   ,#{terminalId}
+		   ,#{bikeStatusCd}
+		   ,0
+		   ,now()
+		   ,now()
+		   ,#{adminId}
+		   ,'N'
+		   ,#{centerId}
+		   ,now()
+		   ,#{adminId}
+		   ,#{entrpsCd}
+		   ,#{bikeSeCd}
+		)
+	</insert>
+	<update id="setBikeDevice" parameterType="bikeVo">
+	<![CDATA[
+		UPDATE TB_OPR_BIKE
+		   SET MOD_ID	= #{adminId}
+			 , MOD_DTTM = now()
+	]]>
+		<if test='terminalId != null and terminalId != ""'>
+			 ,TERMINAL_ID   = #{terminalId}
+		</if>  
+		<if test='bikeStatusCd != null and bikeStatusCd != ""'>
+			 ,BIKE_STUS_CD   = #{bikeStatusCd}
+		</if>  
+		<if test='bikeSeCd != null and bikeSeCd != ""'>
+			 ,BIKE_SE_CD   = #{bikeSeCd}
+		</if>  
+		<if test='lostYn != null and lostYn != ""'>
+			 , LOST_YN   = #{lostYn}
+			<if test='lostYn == "Y"'>
+			 , LOST_DATE = CURDATE()  
+			</if>
+			<if test='lostYn == "N"'>
+			 , LOST_DATE = null
+			</if>
+		</if> 
+		<if test='centerId != null and centerId != ""'>
+			 ,CENTER_ID = #{centerId}
+		</if>   
+	   
+	   WHERE BIKE_ID = #{bikeId}
+	</update>
+	
+	<insert id="addBikeLocateHist" parameterType="bikeVo">
+		INSERT INTO TB_OPR_BIKE_LOCATE_HIST
+		(   BIKE_ID
+		   ,LOCATE_CLS_CD
+		   ,LOCATE_ID
+		   ,LOCATE_STR_DTTM
+		   ,LOCATE_END_DTTM
+		) VALUES (
+		   #{bikeId}
+		  ,#{locateClsCd}
+		  ,#{locateId}
+		  ,date_add(now() ,interval 1 second)
+		  ,STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+		)
+	</insert>
+	<update id="setBikeHistoryInfo" parameterType="bikeVo">
+		UPDATE TB_OPR_BIKE_LOCATE_HIST 
+		  SET LOCATE_END_DTTM = NOW()
+		WHERE BIKE_ID = #{bikeId} 
+		  AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
+	</update>
+	<select id="getCurrnetLocateInfo" parameterType="String" resultType="bikeVo">
+		SELECT RACK_ID	 AS rackId
+			 , CENTER_ID  AS centerId
+		  FROM TB_OPR_BIKE_LOCATE_INFO
+		 WHERE BIKE_ID = #{bikeId}
+		   AND LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
+	</select>
+	
+	<select id="getChkBikeIDnNo" parameterType="bikeVo" resultType="bikeVo">
+		SELECT IFNULL(BIKE_ID, '')	 AS bikeId
+			  ,IFNULL(BIKE_NO, '')	 AS bikeNo
+		  FROM TB_OPR_BIKE
+		 WHERE BIKE_ID = #{bikeId}
+			OR BIKE_NO = #{bikeNo}
+	</select>  
+	
+	<update id="setMissingTerminal" parameterType="bikeVo">
+		UPDATE TB_IOT_DEVICE
+		   SET DEVICE_STUS_CD = 'DES_007'
+			  ,LOST_DATE	  = STR_TO_DATE(${lostDate},'%Y-%m-%d %H:%i:%S')
+		  WHERE DEVICE_ID = #{terminalId}	 
+	</update>  
+	<update id="setMissingMtcFaultStatus" parameterType="bikeVo">
+		UPDATE TB_MTC_FAULT_INFO 
+		   SET READ_CLS_CD = 'H'
+		WHERE EQUIPMENT_ID = #{bikeId}
+		  AND EQUIPMENT_CLS_CD = 'DEV_001'
+	</update>
+	<select id="getOldBikeInfo" parameterType="String" resultType="bikeVo">
+		SELECT CENTER_ID										   AS centerId
+			   ,BIKE_ID											AS bikeId
+			   ,IFNULL(TERMINAL_ID  ,'')						   AS terminalId
+			   ,IF(EXISTS(SELECT BIKE_ID 
+						 FROM  spb.TB_OPR_BIKE_PARKING
+						 WHERE BIKE_ID = #{bikeId}	 ) , 'P', '') AS isParking
+		  FROM spb.TB_OPR_BIKE
+		 WHERE BIKE_ID = #{bikeId}		  
+	</select>
+	<select id="getStation" parameterType="String" resultType="String">
+		SELECT STATION_SEQ	AS stationId
+		  FROM TB_OPR_STATION
+		 WHERE STATION_NAME LIKE concat(#{searchWord},'%') 
+	</select>   
+	<select id="isBikeParking" parameterType="bikeVo" resultType="String">
+		SELECT IF(ifnull(COUNT(*), 0) = 0 , 'false', 'true' )
+		  FROM TB_OPR_BIKE_PARKING
+		 WHERE BIKE_ID = #{bikeId}
+	</select>	
+	<delete id="delBikeParking" parameterType="bikeVo">
+		DELETE FROM TB_OPR_BIKE_PARKING WHERE BIKE_ID = #{bikeId}
+	</delete>
+	
+	<select id="getBikeRobListCount" parameterType="bikeVo" resultType="int">
+		<choose>
+			<when test='bikeStatusCd == "BKS_007"'>
+					-- 분실
+					SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_007 */
+						   COUNT(1)
+					  FROM TB_OPR_BIKE BIKE 
+					WHERE BIKE.BIKE_STUS_CD = 'BKS_007'
+					  AND BIKE.BIKE_NO LIKE CONCAT('%', #{searchWord})
+					  AND BIKE.LOST_DATE BETWEEN  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				 
+			</when>   
+			<otherwise>
+			   -- BKS_016 도난추정
+				SELECT COUNT(1)
+				  FROM TB_OPR_BIKE_ROB A
+					 , TB_OPR_BIKE C
+				WHERE (  (  C.BIKE_STUS_CD  = 'BKS_005' AND CENTER_ID ='CEN061' ) 
+						   OR C.BIKE_STUS_CD  = 'BKS_016'
+						 )
+				  AND A.BIKE_ID  = C.BIKE_ID
+				  AND A.REG_DTTM BETWEEN  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				<if test='searchType !=null and searchType != ""'>
+					<choose>
+						<when test='searchType == "B"'>
+							AND A.BIKE_ID = (SELECT BIKE_ID FROM TB_OPR_BIKE WHERE BIKE_NO = CONCAT('BRC-',LPAD(#{searchWord}, 5, '0'))) 
+						</when>   
+						<when test='searchType == "R"'>
+							AND A.REG_ID LIKE CONCAT(#{searchWord},'%')   
+						</when>
+						<when test='searchType == "P"'>
+							AND PROCESS_YN LIKE CONCAT(#{searchWord},'%')   
+						</when>
+					</choose>
+				</if>
+			</otherwise>
+			   
+		</choose> 
+	</select>
+	
+	<select id="getBikeRobList" parameterType="bikeVo" resultType="bikeVo">
+		<choose>
+			<when test='bikeStatusCd == "BKS_007"'>
+					SELECT /* com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeMapper.getBikeList.BKS_007 */
+							BIKE.BIKE_ID	 AS bikeId
+						,   BIKE.BIKE_NO	 AS bikeNo
+						,   BIKE.MOD_ID	   AS regId
+						,	BIKE.LOST_DATE	AS regDttm
+ 					 FROM TB_OPR_BIKE BIKE	
+					WHERE BIKE.BIKE_STUS_CD = 'BKS_007'
+					  AND BIKE.BIKE_NO LIKE CONCAT('%', #{searchWord})
+					  AND BIKE.LOST_DATE BETWEEN  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+					ORDER BY BIKE.LOST_DATE DESC 
+			 	<if test='pagingYn == "Y"'>
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			 	</if>
+			</when>   
+			<otherwise>
+				SELECT A.TB_OPR_BIKE_ROB_SEQ 	AS bikeRobSeq
+					 , A.BIKE_ID 				AS bikeID
+					 , C.BIKE_NO				AS bikeNo
+					 , PROCESS_YN 				AS processYn
+					 , A.REG_DTTM  				AS regDttm
+					 , A.REG_ID 				AS regId
+				  FROM TB_OPR_BIKE_ROB A
+					 , TB_OPR_BIKE C
+				 WHERE (  (  C.BIKE_STUS_CD  = 'BKS_005' AND CENTER_ID ='CEN061' ) 
+						   OR C.BIKE_STUS_CD  = 'BKS_016'
+						 )
+				   AND A.BIKE_ID  = C.BIKE_ID
+				   AND A.REG_DTTM BETWEEN  STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
+				  <if test='searchType !=null and searchType != ""'>
+					<choose>
+						<when test='searchType == "B"'>
+							AND A.BIKE_ID = (SELECT BIKE_ID FROM TB_OPR_BIKE WHERE BIKE_NO = CONCAT('BRC-',LPAD(#{searchWord}, 5, '0'))) 
+						</when>   
+						<when test='searchType == "R"'>
+							AND A.REG_ID LIKE CONCAT(#{searchWord},'%')   
+						</when>
+						<when test='searchType == "P"'>
+							AND PROCESS_YN LIKE CONCAT(#{searchWord},'%')   
+						</when>
+					</choose>
+				  </if>
+				ORDER BY A.TB_OPR_BIKE_ROB_SEQ DESC  
+				<if test='pagingYn == "Y"'>
+					LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+			 	</if>
+			</otherwise>
+		</choose>
+	</select>
+	
+	<select id="getQRBikeInfo" parameterType="bikeVo" resultType="bikeVo">
+   	   SELECT  A.BIKE_ID 				AS bikeId
+			 , B.DEVICE_ID 				AS terminalId
+			 , C.RACK_ID 				AS rackId
+			 , A.BIKE_STUS_CD 			AS bikeStatusCd
+			 , D.NOW_LOCATE_ID 			AS stationId
+			 , B.SERIAL_NO 				AS serialNo
+		  FROM TB_OPR_BIKE					A
+	 LEFT JOIN TB_IOT_DEVICE 	 			B ON ( A.TERMINAL_ID = B.DEVICE_ID ) AND B.DEVICE_MODL_CD = 'DM4'
+ 	 LEFT JOIN TB_OPR_BIKE_PARKING 			C ON ( A.BIKE_ID = C.BIKE_ID )
+ 	 LEFT JOIN TB_OPR_RACK 					D ON ( C.RACK_ID = D.RACK_ID )
+		WHERE 
+			1 = 1
+			<if test='( serialNo == null or serialNo == "" ) and ( bikeNo == null or bikeNo == "" )'>
+				AND 1 = 2
+			</if>
+			<if test='serialNo != null and serialNo != ""'>
+			 	AND B.SERIAL_NO = #{serialNo}
+			</if>
+			<if test='bikeNo != null and bikeNo != ""'>
+			 	AND A.BIKE_NO = CONCAT('BRC-', #{bikeNo})
+			</if>	 
+	</select>
+	
+	<select id="getQRBikeStatusCd" parameterType="bikeVo" resultType="bikeVo">
+		 SELECT B.BIKE_STUS_CD  AS bikeStatusCd
+			 , DATE_FORMAT(B.REG_DTTM, '%Y-%m-%d') AS regDttm
+			 , B.TOT_MOVE_DIST  AS totMoveDist
+			 , B.USE_CNT		AS useCnt
+			 , B.BIKE_ID		AS bikeId
+			 , A.SERIAL_NO	  AS serialNo
+		  FROM TB_IOT_DEVICE A, TB_OPR_BIKE B	  
+		 WHERE A.SERIAL_NO = #{serialNo}
+		   AND A.DEVICE_ID = B.TERMINAL_ID
+	</select>
+	
+
+	<select id="getQRBikeInfoPhone" parameterType="bikeVo" resultType="bikeVo">
+	   	SELECT A.*
+	   		 , CONCAT( faultDtl , faultContent ) AS checkDesc
+	   	  FROM
+	   (	  
+			 SELECT A.*
+				 , (
+				 			SELECT REG_DTTM FROM TB_MTC_REPAIR_INFO Z 
+				 			WHERE Z.REPAIR_SEQ = A.repairSeq  
+				 			
+				   ) AS lastChkDttm
+				   
+				 , (
+				 			SELECT Z.FAULT_CONTENT FROM TB_MTC_CHECK_INFO Z 
+				 			WHERE Z.FAULT_SEQ = A.faultSeq 
+				   ) AS faultContent  
+	
+				 , (
+				 			SELECT GROUP_CONCAT(Y.MLANG_COM_CD_NAME) FROM TB_MTC_CHECK_DETL Z, TB_SYS_MLANG_COM_CD Y
+				 			WHERE Z.FAULT_SEQ = A.faultSeq
+				 			  AND Z.BRKDN_STUS_CD = Y.COM_CD
+				 			  AND Y.LANG_CLS_CD  = 'LAG_001'
+				   ) AS faultDtl			   
+				   
+				 , (
+				 			SELECT GROUP_CONCAT(Y.MLANG_COM_CD_NAME) FROM TB_MTC_REPAIR_DETL Z, TB_SYS_MLANG_COM_CD Y
+				 			WHERE Z.REPAIR_SEQ = A.repairSeq
+				 			  AND Z.REPAIR_CLS_CD = Y.COM_CD
+				 			  AND Y.LANG_CLS_CD  = 'LAG_001'
+				 			
+				   ) AS repairDesc
+			 FROM
+			 (
+			 SELECT B.BIKE_STUS_CD  AS bikeStatusCd
+				 , DATE_FORMAT(B.REG_DTTM, '%Y-%m-%d') AS regDttm
+				 , B.TOT_MOVE_DIST  AS totMoveDist
+				 , B.USE_CNT		AS useCnt
+				 , B.BIKE_ID		AS bikeId 
+				 , B.BIKE_STUS_CD   AS bikeStusCd
+				 , C.MLANG_COM_CD_NAME AS bikeStatusName
+				 , (
+					SELECT MAX( D.REPAIR_SEQ )
+					 FROM TB_MTC_REPAIR_INFO D
+					WHERE  B.BIKE_ID = D.EQUIPMENT_ID
+				   ) AS repairSeq
+				 , (
+					 SELECT MAX(FAULT_SEQ) 
+					   FROM TB_MTC_CHECK_INFO D
+					   WHERE  B.BIKE_ID = D.EQUIPMENT_ID			 
+					) AS faultSeq
+				 , B.BIKE_NO AS bikeNo 
+			  FROM TB_OPR_BIKE B	  
+				 , TB_SYS_MLANG_COM_CD C
+			 WHERE B.BIKE_NO = CONCAT( 'BRC-', #{serialNo})
+			   AND B.BIKE_STUS_CD = C.COM_CD
+			   AND C.LANG_CLS_CD ='LAG_001'
+			   ) A
+		) A   
+		   
+	</select>
+
+	
+	<update id="setBikeStatus" parameterType="bikeVo">
+		UPDATE TB_OPR_BIKE
+		   SET BIKE_STUS_CD   = 'BKS_011'
+			 , CENTER_ID	  = NULL
+			 , MOD_DTTM	   = now()
+			 , LOST_YN		= 'N'
+			 , LOST_DATE	  = NULL
+			<if test='adminId != null and adminId != ""'>
+			 , MOD_ID		 = #{adminId}
+			</if>				  
+	   WHERE BIKE_ID = #{bikeId}
+	</update>
+	
+	<select id="chkRelocateHist" parameterType="bikeVo" resultType="int">
+		SELECT count(*) FROM TB_MTC_RELOCATE_HIST
+		WHERE RELOCATE_END_DTTM IS NULL
+		AND RELOCATE_BIKE_ID = #{bikeId}
+	</select>   
+	
+	<insert id="addBikeRelocateHist" parameterType="bikeVo">
+		INSERT INTO TB_MTC_RELOCATE_HIST
+		(   RELOCATE_BIKE_ID
+			, FROM_STATION_ID
+			, FROM_RACK_ID
+			, MOVEAGN_ADMIN_ID
+			, RELOCATE_STR_DTTM
+			, RELOCATE_CMPT_YN
+		) VALUES (
+		   #{bikeId}
+		  ,#{stationId}
+		  ,#{rackId}
+		  ,#{adminId}
+		  ,now()
+		  ,'N'
+		)
+	</insert>
+	
+	<update id="setBikeRelocateHist" parameterType="bikeVo">
+		UPDATE TB_MTC_RELOCATE_HIST 
+		  SET RELOCATE_ADMIN_ID = #{adminId}
+		WHERE TO_STATION_ID = (SELECT NOW_LOCATE_ID FROM TB_OPR_QR_BEACON WHERE BEACON_ID = #{beaconId} )
+		AND RELOCATE_END_DTTM <![CDATA[ > ]]> DATE_FORMAT(DATE_ADD(now(), INTERVAL -10 MINUTE),'%Y-%m-%d %H:%i:%S') 
+	</update>
+	
+	<update id="setBikeRelocateHistNew" parameterType="bikeVo"   >
+		UPDATE TB_MTC_RELOCATE_HIST A
+				INNER JOIN 
+				(
+				SELECT TO_STATION_ID
+				  FROM TB_MTC_RELOCATE_HIST A
+			 	 WHERE A.RELOCATE_END_DTTM <![CDATA[ > ]]>  DATE_ADD( NOW(), INTERVAL -30 MINUTE )
+				   AND A.RELOCATE_BIKE_ID = #{bikeId}
+				) B 
+				ON (	A.TO_STATION_ID = B.TO_STATION_ID 
+					AND A.RELOCATE_END_DTTM <![CDATA[ > ]]>  DATE_ADD( NOW(), INTERVAL -30 MINUTE )
+					AND A.RELOCATE_ADMIN_ID = 'administrator' 
+				   )
+		SET A.RELOCATE_ADMIN_ID = #{adminId}
+	  WHERE	A.TO_STATION_ID = B.TO_STATION_ID 
+		AND RELOCATE_END_DTTM <![CDATA[ > ]]> DATE_FORMAT(DATE_ADD(now(), INTERVAL -30 MINUTE),'%Y-%m-%d %H:%i:%S')
+		AND A.RELOCATE_ADMIN_ID = 'administrator' 		   
+	</update>	
+
+
+
+	<select id="selectRelocateStationId" parameterType="bikeVo" resultType="bikeVo">
+		SELECT TO_STATION_ID	 AS stationId
+			 , #{adminId}		AS adminId
+		  FROM TB_MTC_RELOCATE_HIST A
+		 WHERE RELOCATE_END_DTTM <![CDATA[ > ]]> DATE_FORMAT(DATE_ADD(now(), INTERVAL -30 MINUTE),'%Y-%m-%d %H:%i:%S')
+		   AND RELOCATE_BIKE_ID  = #{bikeId}
+		 ORDER BY A.RELOCATE_END_DTTM  DESC
+		 LIMIT 1   
+	</select>
+	
+	<select id="selectRelocateSeq" parameterType="bikeVo" resultType="bikeVo">
+		SELECT RELOCATE_SEQ	AS rentHistSeq
+			 , #{adminId}	AS adminId
+		  FROM TB_MTC_RELOCATE_HIST  A
+		 WHERE RELOCATE_END_DTTM <![CDATA[ > ]]>  DATE_FORMAT(DATE_ADD(now(), INTERVAL -30 MINUTE),'%Y-%m-%d %H:%i:%S')
+		   AND A.RELOCATE_ADMIN_ID = 'administrator'
+		   AND A.TO_STATION_ID	 = #{stationId}
+	</select>
+	
+	<update id="updateBikeRelocateSeq" parameterType="bikeVo"   >
+	 UPDATE TB_MTC_RELOCATE_HIST A
+		SET A.RELOCATE_ADMIN_ID = #{adminId}
+	  WHERE	A.RELOCATE_ADMIN_ID = 'administrator'
+		AND A.RELOCATE_SEQ	  = #{rentHistSeq} 		   
+	</update>	 
+	
+	<insert id="addDairyRelocate" parameterType="bikeVo">
+		INSERT INTO TB_MTC_DAIRY_REPORT
+		(	 STAT_DATE
+			, WORK_PLACE
+			, WORK_TYPE
+			, BIKE_ID
+			, REG_ID
+			, REG_DTTM
+		) 
+		SELECT CURDATE()
+			 , A.TO_STATION_ID  
+			 , 'DAR_TP_002'
+			 , A.RELOCATE_BIKE_ID
+			 , #{adminId}
+			 , now()  
+		  FROM TB_MTC_RELOCATE_HIST A, TB_SYS_ADMIN C
+		 WHERE RELOCATE_END_DTTM > DATE_FORMAT(DATE_ADD(now(), INTERVAL -10 MINUTE),'%Y-%m-%d %H:%i:%S') 
+		   AND RELOCATE_ADMIN_ID ='administrator'
+		   AND C.ADMIN_ID		= #{adminId}
+		   AND C.ADMIN_GRP_SEQ   IN ( '5', '11', '12')	-- TODO 향후 12 관리자는 삭제 필요
+		   AND A.TO_STATION_ID IN  
+		   (
+		  		SELECT NOW_LOCATE_ID
+		  		  FROM TB_OPR_QR_BEACON
+		  		 WHERE BEACON_ID = #{beaconId}
+		   ) 
+	</insert>
+	
+	
+	<select id="getBikeLog" parameterType="bikeVo" resultType="bikeVo">
+		SELECT BIKE_NO		AS	bikeNo
+			, BIKE_STATUS	AS	bikeStatus
+			, BIKE_LOCK		AS	bikeLock
+			, DEVICE_ID		AS deviceId
+			, TIME_STAMP	AS	bikeTimeStamp
+			, USER_TYPE		AS userType
+			, USERSEQ		AS userSeq
+			, BEACON_ID		AS beaconId
+			, DEV_BATT		AS devBatt
+			, BEACON_BATT	AS beaconBatt
+			, BIKE_BATT		AS bikeBatt
+			, FIRM_FW		AS firmFw
+			, MODEM_FW		AS modemFw
+			, XPOS			As xPos
+			, YPOS			AS yPos
+		FROM TB_OPR_QR_LOG
+		WHERE BIKE_NO = #{bikeNo}
+		AND QR_FRAME IN('주기 보고','대여이벤트','대여완료보고', '반납 완료', '관리자 설치')
+		ORDER BY QR_LOG_SEQ DESC
+		LIMIT 1
+	</select>
+	
+	<select id="getBikeLostLog"  resultType="bikeVo">
+		SELECT C.BIKE_NO AS	bikeNo
+			 , C.XPOS
+			 , C.YPOS 
+			 , C.LAST_DTTM   AS modDttm 
+			 , C.REG_DTTM	AS regDttm
+			 , C.DEV_BATT	AS devBatt	 
+		  FROM PROC_ADMIN.TB_OPR_LOST_BIKE  C
+	</select>
+	
+	<insert id="addDairyReport" parameterType="bikeVo">
+		INSERT INTO TB_MTC_DAIRY_REPORT
+		(	 STAT_DATE
+			, WORK_PLACE
+			, WORK_TYPE
+			, BIKE_ID
+			, REG_ID
+			, REG_DTTM
+		) 
+		SELECT
+				CURDATE()
+			  , #{stationId}
+			  , #{chkType}
+			  , #{bikeId} 
+			  , #{adminId}
+			  , now() 
+		   FROM TB_SYS_ADMIN
+		  WHERE ADMIN_ID = #{adminId}
+			AND ADMIN_GRP_SEQ   IN ( '5', '11', '12')	-- TODO 향후 12 관리자는 삭제 필요 
+	</insert>
+	
+	
+</mapper>

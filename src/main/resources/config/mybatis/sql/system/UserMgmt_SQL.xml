@@ -1,0 +1,575 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.system.usermgmt.service.UserMgmtMapper">
+
+
+	<select id="getAdminManagerList" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" 	resultType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO">
+
+		<![CDATA[
+			SELECT 
+				  USR.ADMIN_ID AS usrId
+				, USR.ADMIN_NAME AS usrName
+				, USR.ADMIN_GRP_SEQ AS usrGrpCd
+				, GRP.GRP_NAME AS grpName
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_TEL_NO),'BRC') as CHAR) AS phoneNo
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_MPN_NO),'BRC') as CHAR) AS mpnNo
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_EMAIL_NAME),'BRC') as CHAR) AS email
+				, USR.DEPT_NAME deptName
+				, DATE_FORMAT(USR.CRE_DTTM, '%Y-%m-%d') as regDate
+				, DATE_FORMAT(USR.MOD_DTTM, '%Y-%m-%d') as modDate
+				, USR.USE_YN AS useYn
+			FROM TB_SYS_ADMIN AS USR
+			INNER JOIN TB_SYS_GRP_CD AS GRP
+			ON USR.ADMIN_GRP_SEQ = GRP.ADMIN_GRP_SEQ 
+			WHERE 1=1
+		]]>
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', USR.ADMIN_TEL_NO)		  AS phoneNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', USR.ADMIN_MPN_NO)		  AS mpnNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', USR.ADMIN_EMAIL_NAME)  AS email -->
+		<if test="searchUsrName != '' and searchUsrName != null">
+			<if test="searchType == 'name'">
+				AND USR.ADMIN_NAME LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+			<if test="searchType == 'id'">
+				AND USR.ADMIN_ID LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+		</if>
+		<if test="searchUsrGrpCd != '' and searchUsrGrpCd != null">
+				<![CDATA[
+					AND USR.ADMIN_GRP_SEQ = #{searchUsrGrpCd}
+				]]>
+		</if>
+		<if test="accs_ctrl_yn != '' and accs_ctrl_yn != null">
+				<![CDATA[
+					AND USR.ACCS_CTRL_YN = #{accs_ctrl_yn}
+				]]>
+		</if>
+		
+			<!-- AND USE_YN = 'Y' -->
+		<![CDATA[	
+			ORDER BY USR.ACCS_CTRL_YN, USR.MOD_DTTM DESC
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+	</select>
+	
+	<select id="getAdminAllSmsList" parameterType="userMgmtVO" resultType="userMgmtVO">
+		<![CDATA[
+			SELECT 
+				 CAST(AES_DECRYPT(UNHEX(USR.ADMIN_MPN_NO),'BRC') as CHAR) AS mpn_no
+			FROM TB_SYS_ADMIN AS USR
+			WHERE 1=1
+		]]>
+		<!-- dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', USR.ADMIN_MPN_NO)		  AS mpn_no -->
+		<if test="searchUsrName != '' and searchUsrName != null">
+			<if test="searchType == 'name'">
+				AND USR.ADMIN_NAME LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+			<if test="searchType == 'id'">
+				AND USR.ADMIN_ID LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+		</if>
+		<if test="searchUsrGrpCd != '' and searchUsrGrpCd != null">
+				<![CDATA[
+					AND USR.ADMIN_GRP_SEQ = #{searchUsrGrpCd}
+				]]>
+		</if>
+		<if test="accs_ctrl_yn != '' and accs_ctrl_yn != null">
+				<![CDATA[
+					AND USR.ACCS_CTRL_YN = #{accs_ctrl_yn}
+				]]>
+		</if>
+	</select>
+	<select id="getAdminManagerCount" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="int">
+
+		<![CDATA[
+			SELECT 
+				COUNT(USR.ADMIN_ID)
+			FROM TB_SYS_ADMIN AS USR
+			INNER JOIN TB_SYS_GRP_CD AS GRP
+			ON USR.ADMIN_GRP_SEQ = GRP.ADMIN_GRP_SEQ 
+			WHERE 1=1
+		]]>
+			<if test="searchUsrName != '' and searchUsrName != null">
+			<if test="searchType == 'name'">
+				AND USR.ADMIN_NAME LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+			<if test="searchType == 'id'">
+				AND USR.ADMIN_ID LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+			</if>
+			<if test="searchUsrGrpCd != '' and searchUsrGrpCd != null">
+					<![CDATA[
+						AND USR.ADMIN_GRP_SEQ = #{searchUsrGrpCd}
+					]]>
+			</if>
+			<if test="accs_ctrl_yn != '' and accs_ctrl_yn != null">
+				<![CDATA[
+					AND USR.ACCS_CTRL_YN = #{accs_ctrl_yn}
+				]]>
+			</if>
+			
+	</select>
+	
+	
+	<select id="getAdminManagerPopList" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" 	resultType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO">
+
+		<![CDATA[
+			SELECT 
+				USR.ADMIN_ID			  AS usrId
+				, USR.ADMIN_NAME		  AS usrName
+				, USR.ADMIN_GRP_SEQ	   AS usrGrpCd
+				, GRP.GRP_NAME AS grpName
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_TEL_NO),'BRC') as CHAR) AS phoneNo
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_MPN_NO),'BRC') as CHAR) AS mpnNo
+				, CAST(AES_DECRYPT(UNHEX(USR.ADMIN_EMAIL_NAME),'BRC') as CHAR) AS email
+				, USR.DEPT_NAME deptName
+				, DATE_FORMAT(USR.CRE_DTTM, '%Y-%m-%d') as regDate
+				, USR.USE_YN AS useYn
+			FROM TB_SYS_ADMIN AS USR
+			INNER JOIN TB_SYS_GRP_CD AS GRP
+			ON USR.ADMIN_GRP_SEQ = GRP.ADMIN_GRP_SEQ
+				AND GRP.READ_AUTH_CD IN ('RAA', 'RAM')
+			WHERE USR.USE_YN = 'Y'
+		]]>
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', USR.ADMIN_TEL_NO)		 AS phoneNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', USR.ADMIN_MPN_NO)		 AS mpnNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', USR.ADMIN_EMAIL_NAME) AS email -->
+			<if test="searchDeptName != ''">
+					AND USR.DEPT_NAME LIKE CONCAT(#{searchDeptName}, '%')
+			</if>
+			<if test="searchUsrId != ''">
+					AND USR.ADMIN_ID LIKE CONCAT(#{searchUsrId}, '%')
+			</if>
+			<if test="searchUsrName != ''">
+					AND USR.ADMIN_NAME LIKE CONCAT(#{searchUsrName}, '%')
+			</if>
+		<![CDATA[
+			ORDER BY USR.CRE_DTTM DESC
+		]]>
+		<if test="isList != null">
+				LIMIT #{startLimit}, #{endLimit}
+		</if>
+		
+	</select>
+	
+	
+	
+	<select id="getAdminManagerPopCount" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="int">
+
+		<![CDATA[
+			SELECT 
+				COUNT(USR.ADMIN_ID)
+			FROM TB_SYS_ADMIN AS USR
+			INNER JOIN TB_SYS_GRP_CD AS GRP
+			ON USR.ADMIN_GRP_SEQ = GRP.ADMIN_GRP_SEQ
+				AND GRP.READ_AUTH_CD IN ('RAA', 'RAM')
+			WHERE USR.USE_YN = 'Y'
+		]]>
+		<if test="searchDeptName != ''">
+			AND USR.DEPT_NAME LIKE CONCAT(#{searchDeptName}, '%')
+		</if>
+		<if test="searchUsrId != ''">
+			AND USR.ADMIN_ID LIKE CONCAT(#{searchUsrId}, '%')
+		</if>
+		<if test="searchUsrName != ''">
+			AND USR.ADMIN_NAME LIKE CONCAT(#{searchUsrName}, '%')
+		</if>
+			
+	</select>
+	
+	<!-- 자전거 입출고 시스템 관련 관리자 정보 INSERT_20160715_JJH_START -->
+	<!-- 
+	<select id="getUsrInfo" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO">
+
+		<![CDATA[
+			SELECT 
+				  ADMIN_ID AS usrId
+				, A.ADMIN_GRP_SEQ AS usrGrpCd
+				, dg_decrypt('TB_SYS_ADMIN','ENC_PWD', A.ENC_PWD) AS encPwd
+				, ADMIN_NAME AS usrName
+				, dg_decrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', ADMIN_TEL_NO)		 AS phoneNo
+				, dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', ADMIN_MPN_NO)		 AS mpnNo
+				, dg_decrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', ADMIN_EMAIL_NAME) AS email
+				, DATE_FORMAT(CRE_DTTM, '%Y-%m-%d') as regDate
+				, USE_YN useYn
+				, EMAIL_RECV_YN
+				, dg_decrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', ADMIN_CARD_NO) AS ADMIN_CARD_NO
+				, ACCS_CTRL_YN
+				, ACCS_CTRL_PUBL_IP
+				, ASSIGN_STATION_ID
+				, ASSIGN_CENTER_ID
+				, B.GRP_NAME
+				, dg_decrypt('TB_SYS_ADMIN', 'ADMIN_CARD_PWD', ADMIN_CARD_PWD) AS adminCardPwd
+			FROM TB_SYS_ADMIN A, 		 TB_SYS_GRP_CD B
+			WHERE A.ADMIN_GRP_SEQ = B.ADMIN_GRP_SEQ   
+		]]>
+		<if test="usrId != ''">
+			AND A.ADMIN_ID = #{usrId}
+		</if>
+			
+	</select>
+	 -->
+	<select id="getUsrInfo" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO">
+
+		<![CDATA[
+			SELECT 
+				  ADMIN_ID AS usrId
+				, A.ADMIN_GRP_SEQ AS usrGrpCd
+				, A.ENC_PWD  AS encPwd
+				, ADMIN_NAME AS usrName
+				, CAST(AES_DECRYPT(UNHEX(ADMIN_TEL_NO),'BRC') as CHAR) AS phoneNo
+				, CAST(AES_DECRYPT(UNHEX(ADMIN_MPN_NO),'BRC') as CHAR) AS mpnNo
+				, CAST(AES_DECRYPT(UNHEX(ADMIN_EMAIL_NAME),'BRC') as CHAR) AS email
+				, DATE_FORMAT(CRE_DTTM, '%Y-%m-%d') as regDate
+				, USE_YN useYn
+				, EMAIL_RECV_YN
+				, CAST(AES_DECRYPT(UNHEX(ADMIN_CARD_NO),'BRC') as CHAR) AS ADMIN_CARD_NO
+				, ACCS_CTRL_YN
+				, ACCS_CTRL_PUBL_IP
+				, ASSIGN_STATION_ID
+				, ASSIGN_STATION_GRP_ID AS assignStationGrpId
+				, ASSIGN_CENTER_ID
+				, B.GRP_NAME
+				, CAST(AES_DECRYPT(UNHEX(ADMIN_CARD_PWD),'BRC') as CHAR) AS adminCardPwd
+				, RELOCATE_CAR_ID AS relocateCarCd
+				, TEAM_SEQ
+				, (SELECT CENTER_ID FROM TB_SYS_TEAM_INFO T WHERE T.TEAM_SEQ=A.TEAM_SEQ) AS CENTER_ID
+				, (SELECT TEAM_ID FROM TB_SYS_TEAM_INFO T WHERE T.TEAM_SEQ=A.TEAM_SEQ) AS TEAM_ID
+			FROM TB_SYS_ADMIN A, 		 TB_SYS_GRP_CD B
+			WHERE A.ADMIN_GRP_SEQ = B.ADMIN_GRP_SEQ   
+		]]>
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', ADMIN_TEL_NO)		 AS phoneNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', ADMIN_MPN_NO)		 AS mpnNo -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', ADMIN_EMAIL_NAME) AS email -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', ADMIN_CARD_NO) AS ADMIN_CARD_NO -->
+		<!-- , dg_decrypt('TB_SYS_ADMIN', 'ADMIN_CARD_PWD', ADMIN_CARD_PWD) AS adminCardPwd -->
+		<if test="usrId != ''">
+			AND A.ADMIN_ID = #{usrId}
+		</if>
+			
+	</select>
+	
+	<!-- 자전거 입출고 시스템 관련 관리자 정보 INSERT_20160715_JJH_START -->
+	<!-- 
+	<insert id="insertUsr" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" >
+
+			INSERT INTO
+				TB_SYS_ADMIN
+			( 
+				ADMIN_ID
+				, ADMIN_GRP_SEQ
+				, ENC_PWD
+				, ADMIN_NAME
+				<if test='phoneNo != null and phoneNo != ""'>
+				, ADMIN_TEL_NO
+				</if>
+				, ADMIN_MPN_NO
+				, USE_YN
+				, ADMIN_EMAIL_NAME
+				, EMAIL_RECV_YN
+				<if test='assign_station_id !=  null and assign_station_id != ""'>
+				, ASSIGN_STATION_ID
+				</if>
+				<if test='assign_center_id !=   null and assign_center_id != ""'>
+				, ASSIGN_CENTER_ID
+				</if>
+				, ACCS_CTRL_YN
+				, ACCS_CTRL_PUBL_IP
+				
+			<if test="admin_card_no != null and admin_card_no != ''">
+				, ADMIN_CARD_NO
+			</if>
+			<if test="adminCardPwd != null and adminCardPwd != ''">
+				, ADMIN_CARD_PWD
+			</if>
+				, CRE_DTTM
+			)
+			VALUES(
+				 #{usrId}
+				, #{usrGrpCd}
+				, dg_encrypt('TB_SYS_ADMIN', 'ENC_PWD', #{encPwd})
+				, #{usrName}
+				<if test='phoneNo != null and phoneNo != ""'>
+				, dg_encrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', #{phoneNo})
+				</if>
+				, dg_encrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', #{mpnNo})
+				, #{useYn}
+				, #{email}
+				, #{email_recv_yn}
+			<if test='assign_station_id !=	null and assign_station_id != ""'>
+				, CONCAT(#{assign_station_id}, '/',  #{admin_grp_seq})
+			</if>
+			<if test='assign_center_id !=   null and assign_center_id != ""'>
+				, #{assign_center_id}
+			</if>
+				, #{accs_ctrl_yn}
+				, #{accs_ctrl_publ_ip}
+			<if test="admin_card_no != null and admin_card_no != ''">
+				, dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', #{admin_card_no})
+			</if>
+			<if test="adminCardPwd != null and adminCardPwd != ''">
+				, dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_PWD', #{adminCardPwd})
+			</if>
+				, SYSDATE()
+				, #{regId}
+				, SYSDATE()
+				, #{regId}
+			)
+	</insert>
+	 -->
+	<insert id="insertUsr" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" >
+
+			INSERT INTO
+				TB_SYS_ADMIN
+			( 
+				ADMIN_ID
+				, ADMIN_GRP_SEQ
+				, ENC_PWD
+				, ADMIN_NAME
+				<if test='phoneNo != null and phoneNo != ""'>
+				, ADMIN_TEL_NO
+				</if>
+				, ADMIN_MPN_NO
+				, USE_YN
+				, ADMIN_EMAIL_NAME
+				, EMAIL_RECV_YN
+				<if test='assign_station_id !=  null and assign_station_id != ""'>
+				, ASSIGN_STATION_ID
+				</if>
+				<if test='assign_center_id !=   null and assign_center_id != ""'>
+				, ASSIGN_CENTER_ID
+				</if>
+				, ACCS_CTRL_YN
+				, ACCS_CTRL_PUBL_IP
+			<if test="admin_card_no != null and admin_card_no != ''">
+				, ADMIN_CARD_NO
+			</if>
+			<if test="adminCardPwd != null and adminCardPwd != ''">
+				, ADMIN_CARD_PWD
+			</if>
+			<if test="relocateCarCd != null and relocateCarCd != ''">
+				, RELOCATE_CAR_ID
+			</if>
+				, CRE_DTTM
+				, MOD_DTTM
+				, CRE_ID
+				, MOD_ID
+				, TEAM_SEQ
+			)
+			VALUES(
+				 #{usrId}
+				, #{usrGrpCd}
+				<!-- , dg_encrypt('TB_SYS_ADMIN', 'ENC_PWD', #{encPwd}) -->
+				<!-- , DG_HASH('TB_SYS_ADMIN','ENC_PWD1',#{encPwd}) -->
+				<!-- , #{encPwd} -->
+				, SHA2(#{encPwd}, 512)
+				, #{usrName}
+				<if test='phoneNo != null and phoneNo != ""'>
+				<!-- , dg_encrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', #{phoneNo}) -->
+				, HEX(AES_ENCRYPT(#{phoneNo},'BRC'))
+				</if>
+				<!-- , dg_encrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', #{mpnNo}) -->
+				, HEX(AES_ENCRYPT(#{mpnNo},'BRC'))
+				, #{useYn}
+				<!-- , dg_encrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', #{email}) -->
+				, HEX(AES_ENCRYPT(#{email},'BRC'))
+				, #{email_recv_yn}
+			<if test='assign_station_id !=	null and assign_station_id != ""'>
+				, CONCAT(#{assign_station_id}, '/',  #{admin_grp_seq})
+			</if>
+			<if test='assign_center_id !=   null and assign_center_id != ""'>
+				, #{assign_center_id}
+			</if>
+				, #{accs_ctrl_yn}
+				, #{accs_ctrl_publ_ip}
+			<if test="admin_card_no != null and admin_card_no != ''">
+				<!-- , dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', #{admin_card_no}) -->
+				, HEX(AES_ENCRYPT(#{admin_card_no},'BRC'))
+			</if>
+			<if test="adminCardPwd != null and adminCardPwd != ''">
+				<!-- , dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_PWD', #{adminCardPwd}) -->
+				, HEX(AES_ENCRYPT(#{adminCardPwd},'BRC'))
+			</if>
+			<if test="relocateCarCd != null and relocateCarCd != ''">
+				, #{relocateCarCd}
+			</if>
+				, SYSDATE()
+				, SYSDATE()
+				, #{cre_Id}
+				, #{cre_Id}
+				, '728'
+			)
+	</insert>
+	<!-- 자전거 입출고 시스템 관련 관리자 정보 INSERT_20160715_JJH_END -->
+	
+	<select id="idCheck" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="int">
+	
+		<![CDATA[
+			SELECT 
+				count(*)
+			FROM TB_SYS_ADMIN
+			WHERE ADMIN_ID = #{usrId}
+		]]>
+	
+	</select>
+	<update id="updateUsr" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" >
+		<![CDATA[
+			UPDATE 
+				TB_SYS_ADMIN
+			SET
+				ADMIN_GRP_SEQ = #{usrGrpCd}
+				, MOD_DTTM = SYSDATE()
+		]]>
+			<if test="( PasswdClear != null and PasswdClear != '' ) and encPwd != null">
+				<!-- , ENC_PWD = dg_encrypt('TB_SYS_ADMIN', 'ENC_PWD', #{encPwd}) -->
+				, ENC_PWD = CASE WHEN ENC_PWD = HEX(AES_ENCRYPT(#{encPwd},'BRC')) THEN ENC_PWD
+							<!-- ELSE DG_HASH('TB_SYS_ADMIN','ENC_PWD1',#{encPwd}) -->
+							<!-- ELSE #{encPwd} -->
+							ELSE SHA2(#{encPwd}, 512)
+							END
+				, LOGIN_FAIL_CNT = 0
+			</if>
+			<if test="email !=	null ">
+				<!-- ,ADMIN_EMAIL_NAME = dg_encrypt('TB_SYS_ADMIN', 'ADMIN_EMAIL_NAME', #{email}) -->
+				,ADMIN_EMAIL_NAME = HEX(AES_ENCRYPT(#{email},'BRC'))
+			</if>
+			<if test="phoneNo !=	null ">
+				<!-- ,ADMIN_TEL_NO = dg_encrypt('TB_SYS_ADMIN', 'ADMIN_TEL_NO', #{phoneNo}) -->
+				,ADMIN_TEL_NO = HEX(AES_ENCRYPT(#{phoneNo},'BRC'))
+			</if>
+			<if test="usrName !=	null ">
+				,ADMIN_NAME = #{usrName}
+			</if>
+			<if test="mpnNo !=	null">
+				<!-- ,ADMIN_MPN_NO = dg_encrypt('TB_SYS_ADMIN', 'ADMIN_MPN_NO', #{mpnNo}) -->
+				,ADMIN_MPN_NO = HEX(AES_ENCRYPT(#{mpnNo},'BRC'))
+			</if>
+			<if test="useYn !=	null">
+				,USE_YN = #{useYn}
+			</if>
+			<if test="email_recv_yn !=	null">
+				,EMAIL_RECV_YN = #{email_recv_yn}
+			</if>
+			<if test="admin_card_no !=	null">
+				<!-- ,ADMIN_CARD_NO = dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', #{admin_card_no}) -->
+				,ADMIN_CARD_NO = HEX(AES_ENCRYPT(#{admin_card_no},'BRC'))
+			</if>
+			<if test="assign_station_id !=	null">
+				,ASSIGN_STATION_ID = CONCAT(#{assign_station_id}, '/',  #{admin_grp_seq})
+			</if>
+			<if test="assign_center_id !=	null">
+				,ASSIGN_CENTER_ID = #{assign_center_id}
+			</if>
+			<if test="accs_ctrl_yn !=	null and accs_ctrl_yn != '' ">
+				,ACCS_CTRL_YN = #{accs_ctrl_yn}
+			</if>
+			<if test="accs_ctrl_publ_ip !=	null and accs_ctrl_publ_ip != ''">
+				,ACCS_CTRL_PUBL_IP = #{accs_ctrl_publ_ip}
+			</if>
+			<if test="adminCardPwd != null and adminCardPwd != ''">
+				<!-- ,ADMIN_CARD_PWD = dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_PWD', #{adminCardPwd}) -->
+				,ADMIN_CARD_PWD = HEX(AES_ENCRYPT(#{adminCardPwd},'BRC'))
+			</if>
+			<if test="relocateCarCd != null and relocateCarCd != ''">
+				, RELOCATE_CAR_ID = #{relocateCarCd}
+			</if>
+			<if test="team_id != null and team_id != ''">
+				, TEAM_SEQ = #{team_id}
+			</if>
+				, MOD_ID = #{mod_Id}
+				, MOD_DTTM = SYSDATE()
+		WHERE
+			ADMIN_ID = #{usrId}
+	</update>
+	
+	<select id="cardNumCheck" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="int">
+	
+		<![CDATA[
+			SELECT 
+				count(ADMIN_CARD_NO)
+			FROM TB_SYS_ADMIN
+			WHERE ADMIN_ID <> #{usrId}
+			AND ADMIN_CARD_NO = HEX(AES_ENCRYPT(#{admin_card_no},'BRC'))
+		]]>
+	<!-- AND ADMIN_CARD_NO =dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', #{admin_card_no}) -->
+	</select>
+	
+	<select id="userCardNumCheck" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="int">
+	
+		<![CDATA[
+			SELECT 
+				count(MB_CARD_NO)
+			FROM TB_SVC_MB_CARD
+			WHERE CARD_USE_CLS_CD = 'R'
+			AND MB_CARD_NO = HEX(AES_ENCRYPT(#{admin_card_no},'BRC'))
+			AND END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%s')
+		]]>
+	<!-- AND MB_CARD_NO = dg_encrypt('TB_SYS_ADMIN', 'ADMIN_CARD_NO', #{admin_card_no}) -->
+	</select>
+	
+	<update id="deleteAdminAjax" parameterType="String">
+		UPDATE TB_SYS_ADMIN
+		SET ASSIGN_STATION_ID = '',
+			ASSIGN_CENTER_ID = '',
+			ENC_PWD = '',
+			ADMIN_TEL_NO = '',
+			ADMIN_MPN_NO = '',
+			ADMIN_EMAIL_NAME = '',
+			LOGIN_FAIL_CNT = NULL,
+			ADMIN_CARD_NO = '',
+			ADMIN_CARD_PWD = '',
+			EMAIL_RECV_YN = 'N',
+			USE_YN = 'N',
+			ACCS_CTRL_YN = ''
+		WHERE 1=1
+		AND ADMIN_ID = #{adminID}
+	</update>
+
+	<insert id="insertUsrHistory" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" >
+
+			INSERT INTO
+				TB_SYS_ADMIN_USE_HIST
+			( 
+				ADMIN_ID
+				,MOD_DTTM
+				, MOD_ID
+				, USE_YN
+				
+			)
+			VALUES(
+				 #{usrId}
+				 , SYSDATE()
+				 , #{mod_Id}
+				, #{useYn}
+				
+			)
+	</insert>
+	
+	<select id="getAdminUseList" parameterType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO" resultType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO">
+
+		<![CDATA[
+			SELECT 
+				  ADMIN_ID AS usrId
+				, USE_YN AS useYn
+				, MOD_ID AS mod_Id
+				, MOD_DTTM AS modDate
+			FROM TB_SYS_ADMIN_USE_HIST   
+		]]>
+			WHERE ADMIN_ID = #{usrId}
+			ORDER BY ADMIN_USE_HIST_SEQ DESC
+	</select>
+	
+	<select id="teamList" parameterType="String" resultType="java.util.HashMap">
+		SELECT
+			A.TEAM_SEQ as teamSeq  
+			, A.TEAM_ID as teamId
+			, (SELECT LA.MLANG_COM_CD_NAME FROM TB_SYS_COM_CD CD, TB_SYS_MLANG_COM_CD LA WHERE  CD.COM_CD = LA.COM_CD AND CD.COM_CD = A.TEAM_ID AND LA.LANG_CLS_CD = 'LAG_001') as teamNm
+		FROM TB_SYS_TEAM_INFO A
+		WHERE 1=1
+		<if test="centerId != null and centerId != ''">
+		AND CENTER_ID = #{centerId}
+		</if>
+		ORDER BY TEAM_ID, CENTER_ID
+	</select>
+</mapper>
+

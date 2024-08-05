@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+	<entry key="driverClassName">org.mariadb.jdbc.Driver</entry>
+	<entry key="url">jdbc:mariadb://14.63.180.206:6800/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="username">0b7f442b02ca3f1894ca33386b6812e4</entry>
+    <entry key="password">594b8174c76d38a0b7050837608025ed</entry>
+
+    <entry key="db2DriverClassName">org.mariadb.jdbc.Driver</entry>
+    <entry key="db2Url">jdbc:mariadb://14.63.180.206:6800/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="db2Username">0b7f442b02ca3f1894ca33386b6812e4</entry>
+    <entry key="db2Password">594b8174c76d38a0b7050837608025ed</entry>
+
+
+    <entry key="db3DriverClassName">org.mariadb.jdbc.Driver</entry>
+    <entry key="db3Url">jdbc:mariadb://14.63.180.206:6800/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="db3Username">0b7f442b02ca3f1894ca33386b6812e4</entry>
+    <entry key="db3Password">594b8174c76d38a0b7050837608025ed</entry>
+
+
+    <entry key="dbPushDriverClassName">org.mariadb.jdbc.Driver</entry>
+    <entry key="dbPushUrl">jdbc:mariadb://14.63.180.206:6900/push?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="dbPushUsername">0b7f442b02ca3f1894ca33386b6812e4</entry>
+    <entry key="dbPushPassword">594b8174c76d38a0b7050837608025ed</entry>
+ 	<!--  통계 DB 추가 -->
+    <entry key="dbStaticsDriverClassName">org.mariadb.jdbc.Driver</entry> 
+    <entry key="dbStaticsUrl">jdbc:mariadb://14.63.180.207:3307/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+    <entry key="dbStaticsUsername">0b7f442b02ca3f1894ca33386b6812e4</entry>
+    <entry key="dbStaticsPassword">594b8174c76d38a0b7050837608025ed</entry>
+ 
+</properties>

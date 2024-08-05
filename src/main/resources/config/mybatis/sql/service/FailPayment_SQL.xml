@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.paymentmgmt.failpayment.service.FailPaymentMapper">
+
+	<select id="getFailPaymentList" parameterType="failPaymentVO" resultType="failPaymentVO">
+		<![CDATA[
+		SELECT A.PAYMENT_FAIL_HIST_SEQ AS paymentFailHistSeq
+			 , A.RENT_DTTM AS rentDttm
+			 , A.RENT_HIST_SEQ AS rentHistSeq
+			 , A.PAYMENT_DTTM AS paymentDttm
+			 , A.PAYMENT_METHOD_CD AS paymentMethodCd
+			 ,(SELECT MLANG_COM_CD_NAME
+			   FROM TB_SYS_MLANG_COM_CD
+			   WHERE COM_CD = A.PAYMENT_METHOD_CD   
+			   AND LANG_CLS_CD = #{lang}) AS paymentMethodCdName
+			 , A.PAYMENT_CLS_CD AS paymentClsCd
+			 , (SELECT MLANG_COM_CD_NAME
+				FROM TB_SYS_MLANG_COM_CD
+				WHERE COM_CD = A.PAYMENT_CLS_CD   
+				AND LANG_CLS_CD = #{lang}) AS paymentClsCdName
+			 , A.PAYMENT_AMT AS paymentAmt
+			 , A.ERR_CD AS errCd
+			 , A.ERR_MSG AS errMsg
+		FROM TB_SVC_PAYMENT_FAIL_HIST A
+		WHERE 1=1
+		]]>
+		<if test='startPaymentDttm != null and startPaymentDttm != ""'>
+		<choose>
+			<when test='endPaymentDttm != null and endPaymentDttm != ""'>
+			AND A.PAYMENT_DTTM  BETWEEN STR_TO_DATE(#{startPaymentDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endPaymentDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</when>
+			<otherwise>
+			AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(#{startPaymentDttm}, '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+			</otherwise>
+		</choose>
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startPaymentDttm != null or startPaymentDttm != "" and endPaymentDttm == null and endPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='rentHistSeq != null and rentHistSeq != ""'>
+		AND A.RENT_HIST_SEQ = #{rentHistSeq}
+		</if>
+		ORDER BY A.PAYMENT_DTTM DESC   
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>
+	</select>
+	
+	<select id="getFailPaymentListCount" parameterType="failPaymentVO" resultType="int">
+		<![CDATA[
+		SELECT COUNT(*)
+		FROM TB_SVC_PAYMENT_FAIL_HIST A
+		WHERE 1=1
+		]]>
+		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
+		AND A.PAYMENT_DTTM  BETWEEN STR_TO_DATE(#{startPaymentDttm}, '%Y-%m-%d') AND (STR_TO_DATE(#{endPaymentDttm}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
+		AND A.PAYMENT_DTTM BETWEEN DATE_FORMAT(now(), '%Y-%m-%d') AND (DATE_FORMAT(now(), '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		</if>
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		<if test='rentHistSeq != null and rentHistSeq != ""'>
+		AND A.RENT_HIST_SEQ = #{rentHistSeq}
+		</if>
+	</select>
+	
+</mapper>

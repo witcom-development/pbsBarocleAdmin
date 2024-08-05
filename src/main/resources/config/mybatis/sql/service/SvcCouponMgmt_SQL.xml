@@ -1,0 +1,740 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
+<mapper namespace="com.dkitec.barocle.admin.service.svccouponmgmt.service.SvcCouponMgmtMapper">
+	
+	<select id="getSvcCouponList" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT COUPON.COUPON_SEQ AS couponSeq
+			   , COUPON.COUPON_NO AS couponNo
+			   , COUPON.USR_SEQ AS usrSeq
+			   , COUPON.USE_USR_SEQ AS useUsrSeq
+			   , COUPON.PAYMENT_CLS_CD AS paymentClsCd
+			   , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COUPON.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			   , COUPON.PAYMENT_SEQ AS paymentSeq
+			   , COUPON.PAYMENT_DTTM AS paymentDttm
+			   , COUPON.COUPON_STR_DTTM AS couponStrDttm
+			   , COUPON.COUPON_END_DTTM AS couponEndDttm
+			   , COUPON.PARTY_USE_CNT AS partyUseCnt
+			   , COUPON.COUPON_USE_YN AS couponUseYn
+			   , COUPON.COUPON_DEL_YN AS couponDelYn
+			   , COUPON.EXTEND_REASON_DESC AS extendReasonDesc
+			   , COUPON.EXTEND_ADMIN_ID AS extendAdminId
+			   , COUPON.EXTEND_DTTM AS extendDttm
+			   , COUPON.PAYMENT_CHNNL_CD AS paymentChnnlCd
+			   , COUPON.COUPON_NAME AS couponName
+			   , COUPON.COUPON_REGIS_YN AS couponRegisYn 
+			   , COUPON.PAYMENT_METHOD_CD AS paymentMethodCd
+			   ,( SELECT MB.MB_NAME FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USR_SEQ LIMIT 1 ) AS mbName
+		FROM TB_SVC_COUPON COUPON							  
+		WHERE 1=1
+		
+		<if test='searchValue != null and searchValue != ""'>
+		 AND COUPON.USR_SEQ = (SELECT A.USR_SEQ FROM TB_SVC_USR A 
+		INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+		WHERE 1=1 AND A.USR_CLS_CD = 'USR_004' AND  B.MB_NAME = #{searchValue} LIMIT 1 )  
+		</if>
+		
+		<if test='couponNo != null and couponNo != ""'>
+		 AND COUPON.COUPON_NO = #{couponNo}
+		</if>
+	   
+		
+		
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != ""'>
+		 AND COUPON.COUPON_DEL_YN = #{couponDelYn}
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "Y"'>
+		 <![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') <= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "N"'>
+		<![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') >= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponUseYn != null and couponUseYn != ""'>
+		 AND COUPON.COUPON_USE_YN = #{couponUseYn}
+		 </if>
+		 	ORDER BY COUPON.COUPON_SEQ DESC
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>			 
+		
+	</select>
+	
+	<select id="getSvcCouponListCount" parameterType="svcCouponMgmtVO" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SVC_COUPON COUPON								 
+		WHERE 1=1
+		<if test='searchValue != null and searchValue != ""'>
+		 AND COUPON.USR_SEQ = (SELECT A.USR_SEQ FROM TB_SVC_USR A 
+		INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+		WHERE 1=1 AND A.USR_CLS_CD = 'USR_004' AND  B.MB_NAME = #{searchValue} LIMIT 1 )  
+		</if>
+		
+		<if test='couponNo != null and couponNo != ""'>
+		 AND COUPON.COUPON_NO = #{couponNo}
+		</if>
+	   
+		
+		
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != ""'>
+		 AND COUPON.COUPON_DEL_YN = #{couponDelYn}
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "Y"'>
+		 <![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') <= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "N"'>
+		<![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') >= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponUseYn != null and couponUseYn != ""'>
+		 AND COUPON.COUPON_USE_YN = #{couponUseYn}
+		 </if>
+		 	ORDER BY COUPON.COUPON_SEQ DESC
+		
+	</select>
+	
+	<select id="checkNewSvcCouponNo" parameterType="String" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SVC_COUPON								 
+		WHERE 1=1
+		AND COUPON_NO = #{newCouponNo}
+	</select>
+	
+	<insert id="insertSvcCoupon" parameterType="svcCouponMgmtVO">
+	INSERT INTO TB_SVC_COUPON
+		(COUPON_NO, PAYMENT_CLS_CD, USR_SEQ, USE_USR_SEQ, PARTY_USE_CNT, COUPON_NAME, COUPON_STR_DTTM , COUPON_END_DTTM, PAYMENT_SEQ, PAYMENT_DTTM, PAYMENT_METHOD_CD)
+	VALUES 
+		(#{couponNo}, #{paymentClsCd},#{usrSeq},0, #{partyUseCnt}, #{couponName},NOW(), NOW() + INTERVAL 1 YEAR, #{paymentSeq}, now(),'BIM_006')
+	</insert>
+	
+	<delete id="deleteSvcCoupon" parameterType="svcCouponMgmtVO">
+	DELETE FROM TB_SVC_COUPON
+	WHERE COUPON_SEQ = #{couponSeq}
+	</delete>
+	
+	<update id="unUseSvcCoupon" parameterType="svcCouponMgmtVO">
+	UPDATE TB_SVC_COUPON SET COUPON_DEL_YN = 'Y'
+	WHERE COUPON_SEQ = #{couponSeq}
+	</update>
+	
+	<update id="useSvcCoupon" parameterType="svcCouponMgmtVO">
+	UPDATE TB_SVC_COUPON SET COUPON_DEL_YN = 'N'
+	WHERE COUPON_SEQ = #{couponSeq}
+	</update>
+	
+	<update id="changeDateSvcCouponProc" parameterType="svcCouponMgmtVO">
+	UPDATE TB_SVC_COUPON 
+	SET COUPON_END_DTTM = #{couponEndDttm}
+	, EXTEND_ADMIN_ID = #{extendAdminId}
+	, EXTEND_DTTM = now()
+	, EXTEND_REASON_DESC = #{extendReasonDesc}
+	
+	WHERE COUPON_SEQ = #{couponSeq}
+	</update>
+	
+	<!-- 관리자에 의한 쿠폰 생성(결제정보)_START -->
+	<insert id="insertSvcCouponPaymentInfo" parameterType="svcCouponMgmtVO" useGeneratedKeys="true" keyProperty="paymentSeq">
+	  	INSERT INTO TB_SVC_PAYMENT
+			(
+			 PAYMENT_DTTM, 
+			 USR_SEQ, 
+			 PAYMENT_CLS_CD, 
+			 PAYMENT_METHOD_CD, 
+			 PAYMENT_STUS_CD, 
+			 MB_SERIAL_NO, 
+			 TOT_AMT, 
+			 CREATE_REASON_DESC, 
+			 CREATE_ADMIN_ID)
+		VALUES
+			(
+			 NOW(), 
+			 #{usrSeq}, 
+			 'BIL_001', 
+			 'BIM_006', 
+			 'BIS_001', 
+			 CONCAT(#{usrSeq}, '_', REPLACE('BIL_001', '_', ''), '_', DATE_FORMAT(NOW(), '%Y%m%d')), 
+			 0, 
+			 '관리자 쿠폰', 
+			 #{adminId}) 
+	</insert>
+	<!--  관리자에 의한 쿠폰 생성(결제정보)_START  -->
+	<select id="getSvcCouponBuyList" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT COUPON.USR_SEQ AS usrSeq
+			  ,COUPON.COUPON_NAME AS couponName
+			  ,COUPON.PAYMENT_CLS_CD AS paymentClsCd
+			  ,(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COUPON.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			  ,DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') AS paymentDttm
+			   , COUPON.PARTY_USE_CNT AS partyUseCnt
+			  , COUNT(COUPON_SEQ) AS couponSeqCnt
+			  , COUNT(CASE WHEN COUPON_REGIS_YN='Y' THEN 1 END) AS couponRegisCnt
+			  , COUNT(CASE WHEN COUPON_USE_YN='Y' THEN 1 END) AS couponUseCnt
+			  ,( SELECT MB.MB_NAME FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USR_SEQ LIMIT 1 ) AS mbName
+		FROM TB_SVC_COUPON COUPON							  
+		WHERE 1=1
+		
+		<if test='searchValue != null and searchValue != ""'>
+		 AND COUPON.USR_SEQ = (SELECT A.USR_SEQ FROM TB_SVC_USR A 
+		INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+		WHERE 1=1 AND A.USR_CLS_CD = 'USR_004' AND  B.MB_NAME = #{searchValue} LIMIT 1 )  
+		</if>
+		
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+			AND COUPON.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		
+		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+			AND COUPON.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		</if>
+		
+		
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != ""'>
+		 AND COUPON.COUPON_DEL_YN = #{couponDelYn}
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "Y"'>
+		 <![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') <= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "N"'>
+		<![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') >= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponUseYn != null and couponUseYn != ""'>
+		 AND COUPON.COUPON_USE_YN = #{couponUseYn}
+		 </if>
+		 	GROUP BY COUPON.USR_SEQ, COUPON_NAME,PAYMENT_CLS_CD ,DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d'), COUPON.PARTY_USE_CNT
+		 	ORDER BY DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') DESC
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>			 
+		
+	</select>
+	
+	<select id="getSvcCouponBuyListCount" parameterType="svcCouponMgmtVO" resultType="int">
+		SELECT COUNT(*) FROM (
+			SELECT COUPON.USR_SEQ AS 	usrSeq 
+				  ,COUPON.COUPON_NAME AS couponName
+				  ,COUPON.PAYMENT_CLS_CD AS paymentClsCd
+				  ,(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COUPON.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+				  ,DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') AS paymentDttm
+				   , COUPON.PARTY_USE_CNT AS partyUseCnt
+				  , COUNT(COUPON_SEQ) AS couponSeqCnt
+				  , COUNT(CASE WHEN COUPON_REGIS_YN='Y' THEN 1 END) AS couponRegisCnt
+				  , COUNT(CASE WHEN COUPON_USE_YN='Y' THEN 1 END) AS couponUseCnt
+			FROM TB_SVC_COUPON COUPON							  
+			WHERE 1=1
+			
+			
+		
+			
+			<if test='searchValue != null and searchValue != ""'>
+			 AND COUPON.USR_SEQ = (SELECT A.USR_SEQ FROM TB_SVC_USR A 
+			INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+			WHERE 1=1 AND A.USR_CLS_CD = 'USR_004' AND  B.MB_NAME = #{searchValue} LIMIT 1 )  
+			</if>
+			
+			<if test='paymentClsCd != null and paymentClsCd != ""'>
+			 AND COUPON.PAYMENT_CLS_CD = #{paymentClsCd}
+			</if>
+		   
+				 
+			<if test='paymentMethodCd != null and paymentMethodCd != ""'>
+				AND COUPON.PAYMENT_METHOD_CD = #{paymentMethodCd}
+			</if>
+			
+			
+			<if test='searchStartDate != null and searchStartDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+			 ]]>
+			 
+			 </if>
+			 <if test='searchStartDate != null and searchStartDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+			 ]]>
+			 </if>
+			 
+			 <if test='couponDelYn != null and couponDelYn != ""'>
+			 AND COUPON.COUPON_DEL_YN = #{couponDelYn}
+			 </if>
+			 
+			 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "Y"'>
+			 <![CDATA[ 
+			 AND DATE_FORMAT(NOW(),'%Y-%m-%d') <= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+			 ]]>
+			 </if>
+			 
+			 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "N"'>
+			<![CDATA[ 
+			 AND DATE_FORMAT(NOW(),'%Y-%m-%d') >= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+			 ]]>
+			 </if>
+			 
+			 <if test='couponUseYn != null and couponUseYn != ""'>
+			 AND COUPON.COUPON_USE_YN = #{couponUseYn}
+			 </if>
+			 GROUP BY COUPON.USR_SEQ, COUPON_NAME,PAYMENT_CLS_CD ,DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d'), COUPON.PARTY_USE_CNT
+					   
+		) A
+	</select>
+	
+	
+	<select id="getSvcCouponBuyDetailList" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT COUPON.COUPON_SEQ AS couponSeq
+			   , COUPON.COUPON_NO AS couponNo
+			   , COUPON.USR_SEQ AS usrSeq
+			   , COUPON.USE_USR_SEQ AS useUsrSeq
+			   , COUPON.PAYMENT_CLS_CD AS paymentClsCd
+			   , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COUPON.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			   , COUPON.PAYMENT_SEQ AS paymentSeq
+			   , COUPON.PAYMENT_DTTM AS paymentDttm
+			   , COUPON.COUPON_STR_DTTM AS couponStrDttm
+			   , COUPON.COUPON_END_DTTM AS couponEndDttm
+			   , COUPON.PARTY_USE_CNT AS partyUseCnt
+			   , COUPON.COUPON_USE_YN AS couponUseYn
+			   , COUPON.COUPON_DEL_YN AS couponDelYn
+			   , COUPON.EXTEND_REASON_DESC AS extendReasonDesc
+			   , COUPON.EXTEND_ADMIN_ID AS extendAdminId
+			   , COUPON.EXTEND_DTTM AS extendDttm
+			   , COUPON.PAYMENT_CHNNL_CD AS paymentChnnlCd
+			   , COUPON.COUPON_NAME AS couponName
+			   , COUPON.COUPON_REGIS_YN AS couponRegisYn 
+			   , COUPON.PAYMENT_METHOD_CD AS paymentMethodCd
+			   ,( SELECT MB.MB_NAME FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USR_SEQ LIMIT 1 ) AS mbName
+		FROM TB_SVC_COUPON COUPON							  
+		WHERE 1=1
+		 AND COUPON.USR_SEQ = #{usrSeq}
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') = #{paymentDttm}
+		 AND COUPON.PAYMENT_CLS_CD = #{paymentClsCd}
+		 AND COUPON.PARTY_USE_CNT = #{partyUseCnt}
+		 AND COUPON.COUPON_NAME = #{couponName}
+	   
+		 	ORDER BY COUPON.COUPON_SEQ DESC
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>			 
+		
+	</select>
+	
+	<select id="getSvcCouponBuyDetailListCount" parameterType="svcCouponMgmtVO" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SVC_COUPON COUPON								 
+		WHERE 1=1
+		AND COUPON.USR_SEQ = #{usrSeq}
+		 AND DATE_FORMAT(COUPON.PAYMENT_DTTM,'%Y-%m-%d') = #{paymentDttm}
+		 AND COUPON.PAYMENT_CLS_CD = #{paymentClsCd}
+		 AND COUPON.PARTY_USE_CNT = #{partyUseCnt}
+		 AND COUPON.COUPON_NAME = #{couponName}
+		
+	</select>
+	
+	<select id="getSvcCouponUseList" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT COUPON.COUPON_SEQ AS couponSeq
+			   , COUPON.COUPON_NO AS couponNo
+			   , COUPON.USR_SEQ AS usrSeq
+			   , COUPON.USE_USR_SEQ AS useUsrSeq
+			   , COUPON.PAYMENT_CLS_CD AS paymentClsCd
+			   , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COUPON.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			   , COUPON.PAYMENT_SEQ AS paymentSeq
+			   , COUPON.PAYMENT_DTTM AS paymentDttm
+			   , COUPON.COUPON_STR_DTTM AS couponStrDttm
+			   , COUPON.COUPON_END_DTTM AS couponEndDttm
+			   , COUPON.PARTY_USE_CNT AS partyUseCnt
+			   , COUPON.COUPON_USE_YN AS couponUseYn
+			   , COUPON.COUPON_DEL_YN AS couponDelYn
+			   , COUPON.EXTEND_REASON_DESC AS extendReasonDesc
+			   , COUPON.EXTEND_ADMIN_ID AS extendAdminId
+			   , COUPON.EXTEND_DTTM AS extendDttm
+			   , COUPON.PAYMENT_CHNNL_CD AS paymentChnnlCd
+			   , COUPON.COUPON_NAME AS couponName
+			   , COUPON.COUPON_REGIS_YN AS couponRegisYn 
+			   , COUPON.PAYMENT_METHOD_CD AS paymentMethodCd
+			   ,( SELECT MB.MB_NAME FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USR_SEQ LIMIT 1 ) AS mbName
+			   ,( SELECT MB.MB_ID FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) AS mbId
+			   ,( SELECT HISTORY.USE_DTTM FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1) AS useDttm
+		FROM TB_SVC_COUPON COUPON							  
+		WHERE 1=1
+	
+		
+		<if test='searchValue != null and searchValue != ""'>
+		 AND COUPON.USR_SEQ = (SELECT A.USR_SEQ FROM TB_SVC_USR A 
+		INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+		WHERE 1=1 AND A.USR_CLS_CD = 'USR_004' AND  B.MB_NAME = #{searchValue} LIMIT 1 )  
+		</if>
+		
+		<if test='couponNo != null and couponNo != ""'>
+		 AND COUPON.COUPON_NO = #{couponNo}
+		</if>
+	   
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+			AND COUPON.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 
+		 AND  ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1) IS NOT NULL
+		 AND ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1)  >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchEndDate != null and searchEndDate != ""'>	
+		 <![CDATA[ 
+		AND  ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1) IS NOT NULL
+		 AND ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1)  <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='searchRegisStartDate != null and searchRegisStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.COUPON_STR_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchRegisEndDate != null and searchRegisEndDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != ""'>
+		 AND COUPON.COUPON_DEL_YN = #{couponDelYn}
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "Y"'>
+		 <![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') <= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "N"'>
+		<![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') >= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponUseYn != null and couponUseYn != ""'>
+		 AND COUPON.COUPON_USE_YN = #{couponUseYn}
+		 </if>
+		 
+		 <if test='usrSearchType == "USER_ID"'>
+			AND  ( SELECT MB.MB_ID FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) =  #{usrSearchKey}
+		</if>
+		
+		<if test='usrSearchType == "MPN_NO"'>
+			<!-- AND  ( SELECT dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ) FROM TB_SVC_USR C WHERE C.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) =  #{usrSearchKey} -->
+			AND  ( SELECT C.USR_MPN_NO FROM TB_SVC_USR C WHERE C.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) =  #{usrSearchKey}
+		</if>
+		
+		 	ORDER BY COUPON.COUPON_SEQ DESC
+		<if test='pagingYn == "Y"'>
+		<![CDATA[
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		]]>
+		</if>			 
+		
+	</select>
+	
+	<select id="getSvcCouponUseListCount" parameterType="svcCouponMgmtVO" resultType="int">
+		SELECT COUNT(*)
+		FROM TB_SVC_COUPON COUPON								 
+		WHERE 1=1
+		<if test='searchValue != null and searchValue != ""'>
+		 AND COUPON.USR_SEQ = (SELECT A.USR_SEQ FROM TB_SVC_USR A 
+		INNER JOIN TB_SVC_MB B ON A.USR_SEQ = B.USR_SEQ 
+		WHERE 1=1 AND A.USR_CLS_CD = 'USR_004' AND  B.MB_NAME = #{searchValue} LIMIT 1 )  
+		</if>
+		
+		<if test='couponNo != null and couponNo != ""'>
+		 AND COUPON.COUPON_NO = #{couponNo}
+		</if>
+	   
+		
+		
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+		 <![CDATA[ 
+		 
+		 AND  ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1) IS NOT NULL
+		 AND ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1)  >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchEndDate != null and searchEndDate != ""'>	
+		 <![CDATA[ 
+		AND  ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1) IS NOT NULL
+		 AND ( SELECT DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') FROM TB_SVC_COUPON_HISTORY HISTORY WHERE HISTORY.COUPON_SEQ = COUPON.COUPON_SEQ LIMIT 1)  <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='searchRegisStartDate != null and searchRegisStartDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.COUPON_STR_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+		 ]]>
+		 
+		 </if>
+		 <if test='searchRegisEndDate != null and searchRegisEndDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='paymentClsCd != null and paymentClsCd != ""'>
+			AND COUPON.PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		
+		 <if test='couponDelYn != null and couponDelYn != ""'>
+		 AND COUPON.COUPON_DEL_YN = #{couponDelYn}
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "Y"'>
+		 <![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') <= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponDelYn != null and couponDelYn != "" and couponDelYn != "N"'>
+		<![CDATA[ 
+		 AND DATE_FORMAT(NOW(),'%Y-%m-%d') >= DATE_FORMAT(COUPON.COUPON_END_DTTM,'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 
+		 <if test='couponUseYn != null and couponUseYn != ""'>
+		 AND COUPON.COUPON_USE_YN = #{couponUseYn}
+		 </if>
+		 
+		 <if test='usrSearchType == "USER_ID"'>
+			AND  ( SELECT MB.MB_ID FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) =  #{usrSearchKey}
+		</if>
+		
+		<if test='usrSearchType == "MPN_NO"'>
+			<!-- AND  ( SELECT dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', C.USR_MPN_NO ) FROM TB_SVC_USR C WHERE C.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) =  #{usrSearchKey} -->
+			AND  ( SELECT C.USR_MPN_NO FROM TB_SVC_USR C WHERE C.USR_SEQ = COUPON.USE_USR_SEQ LIMIT 1 ) =  #{usrSearchKey}
+		</if>
+		 	ORDER BY COUPON.COUPON_SEQ DESC
+		
+	</select>
+	
+	<select id="getSvcCouponStat" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT '합계' AS paymentClsCdName
+		, A.CNT AS cnt
+		, A.REGIS_CNT AS regisCnt 
+		, A.USE_CNT AS useCnt
+		, ROUND(A.REGIS_CNT * 100 / A.CNT ,0) AS regisPer
+		, ROUND(A.USE_CNT * 100 / A.CNT ,0) AS usePer
+		FROM (
+			SELECT COUNT(*) AS CNT
+			, COUNT(CASE WHEN COUPON_REGIS_YN = 'Y' THEN 1 END ) AS REGIS_CNT
+			, COUNT(CASE WHEN COUPON_USE_YN = 'Y' THEN 1 END ) AS USE_CNT		
+			FROM TB_SVC_COUPON
+			WHERE 1=1
+			 <if test='searchStartDate != null and searchStartDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+			 ]]>
+			 
+			 </if>
+			 <if test='searchEndDate != null and searchEndDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+			 ]]>
+			 </if>
+			) A
+		UNION ALL
+		SELECT (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+		, A.CNT AS cnt
+		, A.REGIS_CNT AS regisCnt 
+		, A.USE_CNT AS useCnt
+		, ROUND(A.REGIS_CNT * 100 / A.CNT ,0) AS regisPer
+		, ROUND(A.USE_CNT * 100 / A.CNT ,0) AS usePer
+		FROM (
+			SELECT PAYMENT_CLS_CD, COUNT(*) AS CNT
+			, COUNT(CASE WHEN COUPON_REGIS_YN = 'Y' THEN 1 END ) AS REGIS_CNT
+			, COUNT(CASE WHEN COUPON_USE_YN = 'Y' THEN 1 END ) AS USE_CNT		
+			FROM TB_SVC_COUPON
+			WHERE 1=1
+			 <if test='searchStartDate != null and searchStartDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+			 ]]>
+			 
+			 </if>
+		 <if test='searchEndDate != null and searchEndDate != ""'>	
+		 <![CDATA[ 
+		 AND DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+		 ]]>
+		 </if>
+		 GROUP BY PAYMENT_CLS_CD
+		 ) A
+
+		
+	</select>
+	
+	<select id="getSvcCouponDayStat" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT 
+			<if test='searchValue == "02"'>	
+			DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m') AS paymentDttm
+			</if>
+			<if test='searchValue != "02"'>	
+			DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') AS paymentDttm
+			</if>
+			, COUNT(*) AS cnt 
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_006' THEN 1 END ) AS bilCnt006
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_001' THEN 1 END ) AS bilCnt001
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_002' THEN 1 END ) AS bilCnt002
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_003' THEN 1 END ) AS bilCnt003
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_004' THEN 1 END ) AS bilCnt004
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_005' THEN 1 END ) AS bilCnt005
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_016' THEN 1 END ) AS bilCnt016
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_011' THEN 1 END ) AS bilCnt011
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_012' THEN 1 END ) AS bilCnt012
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_013' THEN 1 END ) AS bilCnt013
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_014' THEN 1 END ) AS bilCnt014
+			,COUNT(CASE WHEN PAYMENT_CLS_CD = 'BIL_015' THEN 1 END ) AS bilCnt015
+			,COUNT(CASE WHEN PAYMENT_CLS_CD != 'BIL_006' AND
+				PAYMENT_CLS_CD != 'BIL_001' AND
+				PAYMENT_CLS_CD != 'BIL_002' AND
+				PAYMENT_CLS_CD != 'BIL_003' AND
+				PAYMENT_CLS_CD != 'BIL_004' AND
+				PAYMENT_CLS_CD != 'BIL_005' AND
+				PAYMENT_CLS_CD != 'BIL_016' AND
+				PAYMENT_CLS_CD != 'BIL_011' AND
+				PAYMENT_CLS_CD != 'BIL_012' AND
+				PAYMENT_CLS_CD != 'BIL_013' AND
+				PAYMENT_CLS_CD != 'BIL_014' AND
+				PAYMENT_CLS_CD != 'BIL_015' THEN 1 END ) AS bilEtcCnt
+	
+		FROM TB_SVC_COUPON COUPON
+		
+		INNER JOIN TB_SVC_COUPON_HISTORY HISTORY ON COUPON.COUPON_SEQ = HISTORY.COUPON_SEQ
+		WHERE 1=1
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+			 ]]>
+		 </if>
+		 <if test='searchEndDate != null and searchEndDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+			 ]]>
+		 </if>
+		GROUP BY  
+		<if test='searchValue == "02"'>
+		DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m')
+		</if>
+		
+		<if test='searchValue != "02"'>
+		DATE_FORMAT(HISTORY.USE_DTTM,'%Y-%m-%d')
+		</if>
+
+
+
+
+	</select>
+	
+	<select id="getSvcCouponBilStat" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+	SELECT COUPON.USR_SEQ AS usrSeq
+	, COUPON.PAYMENT_CLS_CD AS paymentClsCd
+	, COUPON.PAYMENT_SEQ AS paymentSeq
+	, COUPON.PAYMENT_DTTM AS paymentDttm
+	, COUPON.CNT AS cnt
+	, COUPON.USE_CNT AS useCnt
+	,(SELECT MB.MB_NAME FROM TB_SVC_MB MB WHERE MB.USR_SEQ = COUPON.USR_SEQ LIMIT 1) AS mbName
+	, (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = COUPON.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+	,(SELECT PAY.TOT_AMT FROM TB_SVC_PAYMENT PAY WHERE PAY.PAYMENT_SEQ = COUPON.PAYMENT_SEQ LIMIT 1) AS totAmt
+	, ROUND(COUPON.USE_CNT * 100 / COUPON.CNT ,0) AS USE_PER
+	FROM (
+		SELECT USR_SEQ
+		, PAYMENT_CLS_CD
+		, PAYMENT_SEQ
+		, DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') AS PAYMENT_DTTM
+		, COUNT(*) AS CNT
+		, COUNT(CASE WHEN COUPON_USE_YN = 'Y' THEN 1 END ) AS USE_CNT		
+		FROM TB_SVC_COUPON 
+		WHERE 1=1
+		<if test='searchStartDate != null and searchStartDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') >= DATE_FORMAT(#{searchStartDate},'%Y-%m-%d')
+			 ]]>
+		 </if>
+		 <if test='searchEndDate != null and searchEndDate != ""'>	
+			 <![CDATA[ 
+			 AND DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d') <= DATE_FORMAT(#{searchEndDate},'%Y-%m-%d')
+			 ]]>
+		 </if>
+		 
+		<if test='paymentClsCd != null and paymentClsCd != ""'>
+			AND PAYMENT_CLS_CD = #{paymentClsCd}
+		</if>
+		<if test='usrSearchKey != null and usrSearchKey != ""'>
+			AND USR_SEQ = #{usrSearchKey}
+		</if>
+		GROUP BY USR_SEQ, PAYMENT_CLS_CD , PAYMENT_CLS_CD, PAYMENT_SEQ, DATE_FORMAT(PAYMENT_DTTM,'%Y-%m-%d')
+	) COUPON
+	</select>
+	<select id="getCouponMbName" parameterType="svcCouponMgmtVO" resultType="svcCouponMgmtVO">
+		SELECT A.USR_SEQ AS usrSeq, (SELECT MB.MB_NAME FROM TB_SVC_MB MB WHERE MB.USR_SEQ = A.USR_SEQ) AS mbName
+		FROM (
+		SELECT DISTINCT(USR_SEQ) 
+		FROM TB_SVC_COUPON
+		) A
+	</select>
+	
+</mapper>
