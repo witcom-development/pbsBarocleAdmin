@@ -31,7 +31,7 @@
 		<intercept-url pattern="/login.do" access="permitAll" />
 		<intercept-url pattern="/admin/manage/interworkMgmt/listFirmware.do" access="isAuthenticated()" />
 		<intercept-url pattern="/admin/manage/interworkMgmt/listFirmwareUpdateResult.do" access="isAuthenticated()" />
-		<intercept-url pattern="/admin/manage/interworkMgmt/**" access="hasAnyRole('2')" />
+		<!-- <intercept-url pattern="/admin/manage/interworkMgmt/**" access="hasAnyRole('13')" /> -->
 		<intercept-url pattern="/main.do" access="isAuthenticated()" />
 		<intercept-url pattern="/**" access="isAuthenticated()" />
 

@@ -7,7 +7,8 @@
 			<map>
 				<!-- 홈페이지 주소 -->
 <!-- 				<entry key="homeURL" value="http://localhost:8080"/> -->
-				<entry key="homeURL" value="https://abc.bikeseoul.com/"/>
+				<!-- <entry key="homeURL" value="https://abc.bikeseoul.com/"/> -->
+				<entry key="homeURL" value="http://49.247.195.87:6060/"/>
 				
 				<entry key="allowuri" value="/,/main.do,/moveMainPage.do"/>
 				
@@ -18,7 +19,7 @@
 				
 				<!-- NAVER 지도 - 지도 OPEN API -->
 <!--				<entry key="naverMapApiKey" value="OzK5wOvceXWhVeu2ulAk"/> --> <!-- http://localhost:8080 -->
-  				<entry key="naverMapApiKey" value="CLrhqI0ZXD0ykvcxIIWg"/> <!-- https://www.bikeseoul.com:444 -->
+  				<entry key="naverMapApiKey" value="0tvu3iygqg"/> <!-- https://www.bikeseoul.com:444 -->
  				
 				<!-- 베이스 경로  -->
 				<!-- <entry key="basePath" value="D:/dki/barocle/basePath"/> -->
@@ -33,7 +34,7 @@
 				<entry key="ctnDaumURL" value="/upload"/>
 				<entry key="ctnDaumDir" value="/daum"/>
 				<entry key="daumImageAlign" value="C"/>
-				<entry key="fileUploadDir" value="/nas_link/barocle/attachFiles/file_admin/basePath"/>
+				<entry key="fileUploadDir" value="/svc/spb/attachFiles/file_admin/basePath"/>
 				<entry key="fileMaxSize" value="10485760"/>
 				<entry key="allowFileExt" value="jpg,JPG,jpeg,JPEG,png,PNG,gif,GIF"/>
 				<entry key="allowFileDir" value="faq,hikingcourse,notice,opinionboard,photogallery,survey,donor,mobilesurvey,manageBoard,static"/>
@@ -50,10 +51,10 @@
 			  	<entry key="pglrPgSize" value="5"/>
 				
 				<!-- 펌웨어 파일 업로드 경로 -->
-				<entry key="fwUploadDir" value="/nas_link/barocle/attachFiles/file_admin/basePath"/>
+				<entry key="fwUploadDir" value="/svc/spb/attachFiles"/>
 				
 				<!-- 대여소 이미지 파일 업로드 경로 -->
-				<entry key="stationUploadDir" value="/nas_link/barocle/attachFiles/file_admin/basePath/station" />
+				<entry key="stationUploadDir" value="/svc/spb/attachFiles/file_admin/basePath/station" />
 				
 				<!-- LGUPlus 설정 파일 -->
 				<entry key="LGD_CST_MID" value="bike_seoul"/>
