@@ -29,11 +29,11 @@ img {width:100%}
 .menuButton img {display:block}
 .menuButton button {width:50px;height:50px;float:right;}
 .menuButton button:first-child {float:left;border:none}
-.menuArea {height:50px;background:#1cb36e}
+.menuArea {height:50px;background:#F67C00}
 
-.lyLoginStatue {background:#2dd288;overflow:hidden; position:relative}
+.lyLoginStatue {background:#FF9D35;overflow:hidden; position:relative}
 .lyLoginStatue span {display:inline-block; vertical-align:middle;font-size:1.0em;color:#fff;margin-left:5%;padding-left:20px;background:url("/images/bul_login2.png") no-repeat 0 center ;background-size:15px 15px; line-height:3}
-.lyLoginStatue button.btntype {background:#2d9265;color:#fff;font-family:-webkit-text-size-adjust:none; font-family:NanumGothic,’나눔고딕’,ng,sans-serif;font-size:0.9em; line-height:2; padding:0 10px; margin-left:10px}
+.lyLoginStatue button.btntype {background:#C16200;color:#fff;font-family:-webkit-text-size-adjust:none; font-family:NanumGothic,’나눔고딕’,ng,sans-serif;font-size:0.9em; line-height:2; padding:0 10px; margin-left:10px}
 .lyLoginStatue button.close {margin-right:20px; position:absolute; right:0; top:7px}
 .layerMenuArea {position:absolute;top:0;left:0;width:100%;height:100%;z-index:990;display:none} 
 .layerMenu {min-height:100%}
