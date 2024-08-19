@@ -64,13 +64,10 @@
         <thead>
             <tr>
                 <th>그룹명</th>
-										<th>대여소구분</th>
-										<th>대여소명</th>
-										<th>구분</th>
-										<th>거치대수</th>
-										<!-- <th>무선AP</th> -->
-										<th>QR거치대수</th>
-										<th>사용여부</th>
+				<th>대여소구분</th>
+				<th>대여소명</th>
+				<th>구분</th>
+				<th>사용여부</th>
             </tr>
         </thead>
         <tbody>
@@ -85,10 +82,6 @@
 						${stationList.station_name }
 					</td>
                     <td>${stationList.station_cls_cd_name}</td>
-                    <td class="txRight">${stationList.rockCnt}</td>
-                    <td class="tr pr10">${stationList.memo }
-						<c:if test="${list.memo eq ''}">0</c:if>
-					</td>
                     <td class="tx">
                     <c:choose>
 						<c:when test="${stationList.station_use_yn eq 'Y'}">사용</c:when>

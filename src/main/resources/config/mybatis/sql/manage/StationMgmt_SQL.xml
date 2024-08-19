@@ -2,7 +2,7 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "mybatis-3-mapper.dtd">
 <mapper namespace="com.dkitec.barocle.admin.manage.stationmgmt.service.StationMgmtMapper">
 
-	<select id="getStationList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+<!-- 	<select id="getStationList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
 	 SELECT STATION_ID, STATION_NO, STATION_GRP_SEQ, STATION_CLS_CD, MOD_DTTM, DEVICE_ID, STATION_USE_YN, STATION_SE_CD,
 			MOD_ID, LANG_CLS_CD, STATION_NAME, LOCATE_CLS_CD, LOCATE_ID, STATION_GRP_NAME, STATION_CLS_CD_NAME, MEMO, REASON
 		FROM
@@ -102,13 +102,57 @@
 			</if>
 		ORDER BY 
 		<if test="orderColumn != null and orderType != null">
-				<if test='orderColumn.equals("G")'>
-					STATION_GRP_SEQ ${orderType}
-				</if>
-				<if test='orderColumn.equals("S")'>
-					STATION_NO ${orderType}
-				</if>
+			<if test='orderColumn.equals("G")'>
+				STATION_GRP_SEQ ${orderType}
 			</if>
+			<if test='orderColumn.equals("S")'>
+				STATION_NO ${orderType}
+			</if>
+		</if>
+		<if test="orderColumn == null or orderColumn == '' or orderType == null or orderType == ''">	
+		MOD_DTTM DESC
+		</if>
+		<if test="excel == null or excel == ''">
+			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>
+	</select> -->
+	
+	<select id="getStationList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		SELECT ST.STATION_ID
+			, ST.STATION_NO
+			, ST.STATION_GRP_SEQ
+			, ST.STATION_CLS_CD
+			, ST.MOD_DTTM
+			, ST.STATION_USE_YN
+			, ST.STATION_SE_CD
+			, ST.MOD_ID
+			, STN.STATION_NAME
+			, STG.STATION_GRP_NAME
+		FROM TB_OPR_STATION ST
+		LEFT JOIN TB_OPR_MLANG_STATION STN ON ST.STATION_ID = STN.STATION_ID
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP STG ON ST.STATION_GRP_SEQ = STG.STATION_GRP_SEQ
+		WHERE STN.LANG_CLS_CD = 'LAG_001'
+		AND STG.LANG_CLS_CD = 'LAG_001'
+		<if test="search_grp != null and search_grp != ''">
+			AND ST.STATION_GRP_SEQ = #{search_grp}
+		</if>
+		<if test="station_no != null and station_no != ''">
+			AND ST.STATION_NO = LPAD(#{station_no} , 5, '0')
+		</if>
+		<if test="useYN != null and useYN != ''">
+			<if test="searchUse.equals('station_use_yn')">
+				AND ST.STATION_USE_YN  = #{useYN}
+			</if>
+		</if>
+		ORDER BY 
+		<if test="orderColumn != null and orderType != null">
+			<if test='orderColumn.equals("G")'>
+				STATION_GRP_SEQ ${orderType}
+			</if>
+			<if test='orderColumn.equals("S")'>
+				STATION_NO ${orderType}
+			</if>
+		</if>
 		<if test="orderColumn == null or orderColumn == '' or orderType == null or orderType == ''">	
 		MOD_DTTM DESC
 		</if>
@@ -164,7 +208,7 @@
 	   AND _RETURN.STATION_GRP_SEQ = #{station_grp_seq}
 	</select>
 	
-	<select id="getStationListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
+<!-- 	<select id="getStationListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
 	
 		SELECT
 			count(*)
@@ -237,8 +281,26 @@
 					WHERE DEVICE_ID = ''
 				</if>
 			</if>
-		
-		
+	</select> -->
+
+	<select id="getStationListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
+		SELECT COUNT(1)
+		FROM TB_OPR_STATION ST
+		LEFT JOIN TB_OPR_MLANG_STATION STN ON ST.STATION_ID = STN.STATION_ID
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP STG ON ST.STATION_GRP_SEQ = STG.STATION_GRP_SEQ
+		WHERE STN.LANG_CLS_CD = 'LAG_001'
+		AND STG.LANG_CLS_CD = 'LAG_001'
+		<if test="search_grp != null and search_grp != ''">
+			AND ST.STATION_GRP_SEQ = #{search_grp}
+		</if>
+		<if test="station_no != null and station_no != ''">
+			AND ST.STATION_NO = LPAD(#{station_no} , 5, '0')
+		</if>
+		<if test="useYN != null and useYN != ''">
+			<if test="searchUse.equals('station_use_yn')">
+				AND ST.STATION_USE_YN  = #{useYN}
+			</if>
+		</if>
 	</select>
 
 	<select id="getStationGrpRemoteReturnListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">

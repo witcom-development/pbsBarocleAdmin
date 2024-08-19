@@ -878,6 +878,7 @@ function fn_matchingBeacon2(deviceId, oldDeviceId){
 								</table>
 						 </div> 
 						  --%>
+						  <c:if test="${cmd != 'INSERT'}">
 								 <div id="childDiv">
 									<p class="head ttbtncase1">설치 비콘<span><button type="button" class="btnType05" id="btn_addCode">추가</button></span></p>
 									<div class="questionBoxWrap">
@@ -923,7 +924,7 @@ function fn_matchingBeacon2(deviceId, oldDeviceId){
 									   </c:forEach>
 									</div>
 								</div>
-								
+								</c:if>
 								<div class="btnArea">
 									<c:if test="${cmd == 'INFO'}">
 										<span class="left"><button id="btn_list" class="btnType01 bc_gray">목록</button></span><!-- onclick="fn_list(); return false;" -->

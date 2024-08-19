@@ -246,7 +246,7 @@ $(function() {
 											</div>
 											<div class="section">
 												<label for="aaa1" class="laType02">정거장번호</label>
-												<span class="input-text07"><input type="text" name="station_no" class=""/></span>
+												<span class="input-text07"><input type="text" name="station_no" class="" value="${searchVO.station_no }"/></span>
 												<button class="btn-srh03 btncase1" onclick="fn_Search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button>
 											</div>
 											<div class="section pright">
@@ -294,8 +294,6 @@ $(function() {
 										<th>아파트명</th>
 										<th>정거장명</th>
 										<th>구분</th>
-										<!-- <th>무선AP</th> -->
-										<!-- <th>거치대수</th> -->
 										<th>사용여부</th>
 									</tr>
 								</thead>
@@ -309,12 +307,6 @@ $(function() {
 												${list.station_name }</a>
 											</td>
 											<td class="tc">${list.station_cls_cd_name }</td>
-											<%-- 
-											<td class="tr pr10">${list.memo }
-											<c:if test="${list.memo eq ''}">0</c:if>
-											</td>
-											 --%>
-											<%-- <td class="pl10">${list.device_id }</td> --%>
 											<td class="tc">
 											<c:choose>
 												<c:when test="${list.station_use_yn eq 'Y'}">사용</c:when>
