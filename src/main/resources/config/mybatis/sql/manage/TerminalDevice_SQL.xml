@@ -7,15 +7,15 @@
 	<![CDATA[	
 		SELECT D.DEVICE_ID														  AS deviceID
 			 ,(SELECT FIRMWARE_VER
-				 FROM spb.TB_IOT_FIRMWARE
+				 FROM TB_IOT_FIRMWARE
 				WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
 				  AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)							 AS softWareFw 
 			 ,(SELECT FIRMWARE_VER
-				 FROM spb.TB_IOT_FIRMWARE
+				 FROM TB_IOT_FIRMWARE
 				WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
 				  AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)							AS imageFW 
 			  ,(SELECT FIRMWARE_VER
-				  FROM spb.TB_IOT_FIRMWARE
+				  FROM TB_IOT_FIRMWARE
 				 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
 				   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)						   AS voiceFW 
 			  ,D.DEVICE_STUS_CD													 AS deviceStatusCd
@@ -29,15 +29,15 @@
 			  ,D.SERIAL_NO														  AS serialNo
 			  ,(CASE 
 				   WHEN T.LOCATE_CLS_CD = 'C' THEN (SELECT CONCAT('(C)',CENTER_NAME) 
-													  FROM spb.TB_OPR_CENTER 
+													  FROM TB_OPR_CENTER 
 													 WHERE CENTER_ID = T.LOCATE_ID)
 				   ELSE CONCAT('(B)',(SELECT BIKE_NO 
-									   FROM spb.TB_OPR_BIKE
+									   FROM TB_OPR_BIKE
 									  WHERE BIKE_ID = T.LOCATE_ID)) 
 				END)																  AS locateId
 			  ,T.LOCATE_CLS_CD														AS locateClsCd
 			  ,DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')							   AS lastChkDttm
-		  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+		  FROM  TB_IOT_DEVICE D  LEFT OUTER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
 			ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
 		 WHERE DEVICE_MODL_CD ='DM2' 
 		  
@@ -93,15 +93,15 @@
 		  FROM (
 				SELECT D.DEVICE_ID														  AS deviceID
 					 ,(SELECT FIRMWARE_VER
-						 FROM spb.TB_IOT_FIRMWARE
+						 FROM TB_IOT_FIRMWARE
 						WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
 						  AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)							 AS softWareFw 
 					 ,(SELECT FIRMWARE_VER
-						 FROM spb.TB_IOT_FIRMWARE
+						 FROM TB_IOT_FIRMWARE
 						WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
 						  AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)							AS imageFW 
 					  ,(SELECT FIRMWARE_VER
-						  FROM spb.TB_IOT_FIRMWARE
+						  FROM TB_IOT_FIRMWARE
 						 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
 						   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)						   AS voiceFW 
 					  ,D.DEVICE_STUS_CD													 AS deviceStatusCd
@@ -115,30 +115,30 @@
 					  ,D.SERIAL_NO														  AS serialNo
 					  ,(CASE 
 						   WHEN T.LOCATE_CLS_CD = 'C' THEN (SELECT CONCAT('(C)',CENTER_NAME) 
-															  FROM spb.TB_OPR_CENTER 
+															  FROM TB_OPR_CENTER 
 															 WHERE CENTER_ID = T.LOCATE_ID)
 						   ELSE CONCAT('(B)',(SELECT BIKE_NO 
-											   FROM spb.TB_OPR_BIKE
+											   FROM TB_OPR_BIKE
 											  WHERE BIKE_ID = T.LOCATE_ID)) 
 						END)																  AS locateId
 					  ,T.LOCATE_CLS_CD														AS locateClsCd
 					  ,DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')							   AS lastChkDttm
 					  ,D.ENTRPS_CD	  														  AS entrpsCd
 					  ,(SELECT L.MLANG_COM_CD_NAME
-							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							WHERE COM_UP_CD = 'ENT'
 							  AND L.LANG_CLS_CD = 'LAG_001'
 							  AND S.COM_CD = D.ENTRPS_CD) AS entrpsCdNm 
 							  
 					  ,CASE WHEN D.DEVICE_MODL_CD = 'DM2' THEN IFNULL((SELECT BIKE_BATTERY_STUS_CD
-								 FROM spb.TB_OPR_BIKE
+								 FROM TB_OPR_BIKE
 								WHERE BIKE_ID = T.LOCATE_ID )  ,'')
 							WHEN D.DEVICE_MODL_CD = 'DM4' THEN IFNULL((SELECT USE_CNT
-								 FROM spb.TB_OPR_BIKE
+								 FROM TB_OPR_BIKE
 								WHERE BIKE_ID = T.LOCATE_ID )  ,'')	
 						END AS batteryStusCd 
 					   ,IFNULL((SELECT BIKE_STUS_CD
-								 FROM spb.TB_OPR_BIKE
+								 FROM TB_OPR_BIKE
 								WHERE BIKE_ID = T.LOCATE_ID )  ,'')		AS bikeStusCd 
 					   ,(SELECT GROUP_CONCAT(MLANG.COM_CD) FROM TB_MTC_FAULT_INFO INSPECT 
 					   INNER JOIN TB_MTC_FAULT_DETL DETL ON INSPECT.FAULT_SEQ = DETL.FAULT_SEQ AND INSPECT.READ_CLS_CD = 'S'
@@ -149,7 +149,7 @@
 					   INNER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE T.LOCATE_ID = INSPECT.EQUIPMENT_ID 
 					   ) AS errStusCdName
 			   
-				  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+				  FROM  TB_IOT_DEVICE D  LEFT OUTER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
 					ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
 				 WHERE (DEVICE_MODL_CD ='DM2' OR DEVICE_MODL_CD ='DM4')
 				  
@@ -196,7 +196,7 @@
 	<select id="getTerminalCount" parameterType="terminalVo" resultType="int">
 		<!-- 
 		SELECT COUNT(D.DEVICE_ID)
-		  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+		  FROM  TB_IOT_DEVICE D  LEFT OUTER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
 			ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
 		 WHERE DEVICE_MODL_CD ='DM2'  
 		<if test='searchBgnDe != null and searchBgnDe != ""'>
@@ -226,15 +226,15 @@
 		  FROM (
 			SELECT D.DEVICE_ID														  AS deviceID
 				 ,(SELECT FIRMWARE_VER
-					 FROM spb.TB_IOT_FIRMWARE
+					 FROM TB_IOT_FIRMWARE
 					WHERE FIRMWARE_CLS_CD = 'FWD_001'	 
 					  AND FIRMWARE_SEQ = D.SW_FIRMWARE_SEQ)							 AS softWareFw 
 				 ,(SELECT FIRMWARE_VER
-					 FROM spb.TB_IOT_FIRMWARE
+					 FROM TB_IOT_FIRMWARE
 					WHERE FIRMWARE_CLS_CD = 'FWD_002'	 
 					  AND FIRMWARE_SEQ = D.IMG_FIRMWARE_SEQ)							AS imageFW 
 				  ,(SELECT FIRMWARE_VER
-					  FROM spb.TB_IOT_FIRMWARE
+					  FROM TB_IOT_FIRMWARE
 					 WHERE FIRMWARE_CLS_CD = 'FWD_003'	 
 					   AND FIRMWARE_SEQ = D.VCE_FIRMWARE_SEQ)						   AS voiceFW 
 				  ,D.DEVICE_STUS_CD													 AS deviceStatusCd
@@ -248,15 +248,15 @@
 				  ,D.SERIAL_NO														  AS serialNo
 				  ,(CASE 
 					   WHEN T.LOCATE_CLS_CD = 'C' THEN (SELECT CONCAT('(C)',CENTER_NAME) 
-														  FROM spb.TB_OPR_CENTER 
+														  FROM TB_OPR_CENTER 
 														 WHERE CENTER_ID = T.LOCATE_ID)
 					   ELSE CONCAT('(B)',(SELECT BIKE_NO 
-										   FROM spb.TB_OPR_BIKE
+										   FROM TB_OPR_BIKE
 										  WHERE BIKE_ID = T.LOCATE_ID)) 
 					END)																  AS locateId
 				  ,T.LOCATE_CLS_CD														AS locateClsCd
 				  ,DATE_FORMAT(D.LAST_CHK_DTTM, '%Y-%m-%d')							   AS lastChkDttm
-			  FROM  spb.TB_IOT_DEVICE D  LEFT OUTER JOIN spb.TB_IOT_TERMINAL_LOCATE_INFO T
+			  FROM  TB_IOT_DEVICE D  LEFT OUTER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
 				ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
 			 WHERE (DEVICE_MODL_CD ='DM2' OR DEVICE_MODL_CD ='DM4') 
 			  
@@ -314,21 +314,21 @@
 			  ,T.LOCATE_CLS_CD									 AS locateClsCd
 			  ,T.LOCATE_ID										 AS locateId
 			  ,IFNULL((SELECT BIKE_NO
-						 FROM spb.TB_OPR_BIKE
+						 FROM TB_OPR_BIKE
 						WHERE BIKE_ID = T.LOCATE_ID )  ,'')		AS bikeNo
 			  ,D.ENTRPS_CD	  									   AS entrpsCd
 			  ,DATE_FORMAT(D.REG_DTTM, '%Y-%m-%d')				 AS regDttm 
 			  ,D.DEVICE_MODL_CD										AS deviceModlCd
 			  
 			  ,CASE WHEN D.DEVICE_MODL_CD = 'DM2' THEN IFNULL((SELECT BIKE_BATTERY_STUS_CD
-				  			FROM spb.TB_OPR_BIKE
+				  			FROM TB_OPR_BIKE
 				  			WHERE BIKE_ID = T.LOCATE_ID )  ,'')
 			  			WHEN D.DEVICE_MODL_CD = 'DM4' THEN IFNULL((SELECT USE_CNT
-			  				FROM spb.TB_OPR_BIKE
+			  				FROM TB_OPR_BIKE
 			  				WHERE BIKE_ID = T.LOCATE_ID )  ,'')
 			  	END AS batteryStusCd
 			  ,IFNULL((SELECT BIKE_STUS_CD
-					  		FROM spb.TB_OPR_BIKE
+					  		FROM TB_OPR_BIKE
 					  		WHERE BIKE_ID = T.LOCATE_ID )  ,'')		AS bikeStusCd
 			  ,(SELECT GROUP_CONCAT(MLANG.COM_CD) FROM TB_MTC_FAULT_INFO INSPECT
 			   INNER JOIN TB_MTC_FAULT_DETL DETL ON INSPECT.FAULT_SEQ = DETL.FAULT_SEQ AND INSPECT.READ_CLS_CD = 'S'
@@ -339,7 +339,7 @@
 			   INNER JOIN TB_SYS_MLANG_COM_CD MLANG ON DETL.FAULT_CLS_CD = MLANG.COM_CD AND MLANG.LANG_CLS_CD = 'LAG_001' WHERE T.LOCATE_ID = INSPECT.EQUIPMENT_ID 
 			   ) AS errStusCdName
 			  
-		  FROM spb.TB_IOT_DEVICE D  INNER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
+		  FROM TB_IOT_DEVICE D  INNER JOIN TB_IOT_TERMINAL_LOCATE_INFO T
 			ON T.DEVICE_ID = D.DEVICE_ID AND T.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')
 		  WHERE D.DEVICE_ID = #{deviceId}
 	 ]]>
@@ -430,7 +430,7 @@
 		 WHERE BIKE_ID =  #{bikeId} 
 		 <!--
 		 (SELECT BIKE_ID
-			FROM spb.TB_OPR_BIKE
+			FROM TB_OPR_BIKE
 			WHERE BIKE_NO =  #{bikeNo})-->
 		 
 	</update>
@@ -438,7 +438,7 @@
 	<select id="getTerminalLocateHistory" parameterType="terminalVo" resultType="terminalVo" >
 	<![CDATA[
 		SELECT (SELECT BIKE_NO
-				  FROM spb.TB_OPR_BIKE 
+				  FROM TB_OPR_BIKE 
 				 WHERE BIKE_ID = LOCATE_ID)				   AS bikeNo,
 			   DATE_FORMAT(LOCATE_STR_DTTM ,'%Y-%m-%d %H:%i') AS locateStrDttm,
 			   LOCATE_ADMIN_ID								AS locateAdminId,

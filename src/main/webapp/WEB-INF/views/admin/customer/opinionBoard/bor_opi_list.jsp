@@ -110,16 +110,12 @@
 						<p class="tb_numlist">총 <c:out value="${opinionBoardView.totalRecordCount}"/>건</p>
 						<table class="tb_type01">
 							<colgroup>
-								<col style="width:30%" />
-								<col style="width:10%" />
+								<col style="width:auto" />
+								<col style="width:15%" />
 								<col style="width:8%" />
 								<col style="width:8%" />
-								<col style="width:10%" />
 								<col style="width:8%" />
-								<col style="width:9%" />
-								<col style="width:5%" />
-								<col style="width:8%" />
-								<col style="width:5%" />
+								<col style="width:12%" />
 							</colgroup>
 							<thead>
 								<tr>
@@ -127,12 +123,8 @@
 									<th>작성자</th>
 									<th>등록일</th>
 									<th>공개여부</th>
-									<th>담당자</th>
 									<th>답변일</th>
 									<th>답변결과</th>
-									<th>답변기간</th>
-									<th>답변기한</th>
-									<th>남은기간</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -165,25 +157,6 @@
 												</td>
 												<td class="tc">
 													<c:choose>
-														<c:when test="${opinionBoardVO.adminId==null || opinionBoardVO.adminId== ''}">
-															<%-- <a href="#" onclick="fn_chooseAdmin(${opinionBoardVO.qnaSeq}); return false;">미지정</a> --%>
-															<a href="/common/pop/adminSchPop.do" class="winNewPop modal"  title="담당자 조회" data-width="440" data-height="455" data-pmt="&usrGrpCd=001&qnaSeq=<c:out value='${opinionBoardVO.qnaSeq}'/>">미지정</a>
-														</c:when>
-														
-														<c:when test="${userSessionVO.usrGrpCd == '12'}">
-															<a href="/common/pop/adminSchPop.do" class="winNewPop modal"  title="담당자 조회" data-width="440" data-height="455" data-pmt="&usrGrpCd=001&qnaSeq=<c:out value='${opinionBoardVO.qnaSeq}'/>"><c:out value="${opinionBoardVO.adminId}"/></a>
-														</c:when>
-														<c:when test="${userSessionVO.usrGrpCd == '15'}">
-															<a href="/common/pop/adminSchPop.do" class="winNewPop modal"  title="담당자 조회" data-width="440" data-height="455" data-pmt="&usrGrpCd=001&qnaSeq=<c:out value='${opinionBoardVO.qnaSeq}'/>"><c:out value="${opinionBoardVO.adminId}"/></a>
-														</c:when>
-														
-														<c:otherwise>
-															<c:out value="${opinionBoardVO.adminId}"/>
-														</c:otherwise>
-													</c:choose>
-												</td>
-												<td class="tc">
-													<c:choose>
 														<c:when test="${opinionBoardVO.qnaProcessStusCD=='D'}">
 															<%-- <fmt:formatDate value="${opinionBoardVO.modDttm}" pattern="MM-dd"/> --%>
 															<fmt:parseDate var="modDttm" value="${opinionBoardVO.modDttm}" pattern="yyyy-MM-ddHH:mm:ss" />
@@ -197,37 +170,6 @@
 														<c:when test="${opinionBoardVO.qnaProcessStusCD=='D'}">답변완료</c:when>
 														<c:otherwise>처리중</c:otherwise>
 													</c:choose>
-												</td>
-												<td class="tc">
-													<c:choose>
-														<c:when test="${opinionBoardVO.deadline == null || opinionBoardVO.deadline == ''}">
-															<%-- <a href="#" onclick="fn_chooseAdmin(${opinionBoardVO.qnaSeq}); return false;"></a> --%>
-															<a href="/common/pop/deadlineSchPop.do" class="winNewPop modal"  title="답변기한" data-width="440" data-height="455" data-pmt="&qnaSeq=<c:out value='${opinionBoardVO.qnaSeq}'/>">7일</a>
-														</c:when>
-														<c:otherwise>
-															<c:out value="${opinionBoardVO.deadline}"/>
-														</c:otherwise>
-													</c:choose>
-												</td>
-												<td class="tc">
-													<%-- <fmt:formatDate value="${opinionBoardVO.deadline_Date}" pattern="MM-dd"/> --%>
-													<fmt:parseDate var="deadline_Date" value="${opinionBoardVO.deadline_Date}" pattern="yyyy-MM-ddHH:mm:ss" />
-													<fmt:formatDate value="${deadline_Date}" pattern="MM-dd"/></td>
-												</td>
-												<td class="tc">
-												<jsp:useBean id="today" class="java.util.Date" />
-												<fmt:formatDate var="now" value="${today}" pattern="yyyyMMdd" />
-												<fmt:parseDate var="deadline_Date" value="${opinionBoardVO.deadline_Date}" pattern="yyyy-MM-ddHH:mm:ss" />
-												<fmt:formatDate var="deadline_Date" value="${deadline_Date}" pattern="yyyyMMdd" />
-													<c:choose>
-														<c:when test="${opinionBoardVO.qnaProcessStusCD=='D'}"></c:when>
-														<c:when test="${deadline_Date - now le 0}">
-															<font color="red">${now - deadline_Date}일</font>
-														</c:when>
-														<c:otherwise>
-															${deadline_Date - now}일
-														</c:otherwise>
-													</c:choose> 
 												</td>
 											</tr>
 										</c:forEach>

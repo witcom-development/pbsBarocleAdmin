@@ -1,5 +1,6 @@
 package com.dkitec.barocle.admin.customer.opinionboard.controller;
 
+import java.net.URLDecoder;
 import java.util.Map;
 
 import javax.annotation.Resource;
@@ -14,19 +15,19 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import com.dkitec.cfood.core.CfoodException;
-import com.dkitec.cfood.core.web.annotation.RequestCategory;
-import com.dkitec.cfood.core.web.annotation.RequestName;
+import com.dkitec.barocle.admin.customer.opinionboard.service.OpinionBoardService;
 import com.dkitec.barocle.admin.customer.opinionboard.vo.OpinionBoardVO;
 import com.dkitec.barocle.admin.customer.opinionboard.vo.OpinionBoardVO.OpinionBoardDeleteVal;
 import com.dkitec.barocle.admin.customer.opinionboard.vo.OpinionBoardVO.OpinionBoardEditVal;
 import com.dkitec.barocle.admin.customer.opinionboard.vo.OpinionBoardVO.OpinionBoardListVal;
 import com.dkitec.barocle.admin.customer.opinionboard.vo.OpinionBoardVO.OpinionBoardPersistVal;
-import com.dkitec.barocle.admin.customer.opinionboard.service.OpinionBoardService;
 import com.dkitec.barocle.admin.login.security.filter.EgovSessionCookieUtil;
 import com.dkitec.barocle.base.BaseController;
 import com.dkitec.barocle.util.webutil.HttpUtil;
 import com.dkitec.barocle.util.webutil.WebUtil;
+import com.dkitec.cfood.core.CfoodException;
+import com.dkitec.cfood.core.web.annotation.RequestCategory;
+import com.dkitec.cfood.core.web.annotation.RequestName;
 
 import egovframework.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 
@@ -56,6 +57,10 @@ public class OpinionBoardController extends BaseController {
 		String resultPage = "/admin/customer/opinionBoard/bor_opi_list";
 		
 		try{
+			// 검색어 한글 꺠짐 수정
+			if(opinionBoardVO.getSearchValue() != null || "".equals(opinionBoardVO.getSearchValue()))
+				opinionBoardVO.setSearchValue( new String(opinionBoardVO.getSearchValue().getBytes("8859_1"), "UTF-8") );
+			
 			// 총 레코드 개수를 가져온다.
 			opinionBoardVO.setTotalRecordCount(opinionBoardService.listOpinionBoardCount(opinionBoardVO));
 			// 페이징

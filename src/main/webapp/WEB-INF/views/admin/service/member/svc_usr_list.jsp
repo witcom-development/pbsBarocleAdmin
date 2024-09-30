@@ -77,7 +77,7 @@ function fn_MemberDetail(seq){
 
 function fn_excel(){
 	// 2018.11.22 추가	
-	if ( $("#searchStartDate").val() == "2015-09-01" ) {
+	if ( $("#searchStartDate").val() == "2024-09-01" ) {
 		if( this.confirm("조회 시작일이 " + $("#searchStartDate").val() + " 맞으신가요 ?") == false ) return;
 	}
 
@@ -149,36 +149,36 @@ function fn_excel(){
 										<span class="dash">~</span>
 										<span class="selectDate input-datepick04"><input type="text" class="datepicker input-datepick04" title="선택 날짜" id="searchEndDate" name="searchEndDate" readonly/></span>
 									</div>
-									<div class="section pright">
+									<!-- <div class="section pright">
 										<label for="a1" class="laType02">사용자구분</label>
 										<select class="select-category03" id="usr_cls_cd" name="usr_cls_cd">
 											<option value="">선택</option>
 											<option value="USR_001">내국인</option>
-											<!-- <option value="USR_002">외국인</option> -->
-											<!-- <option value="Y">안전교육이수자</option> -->
+											<option value="USR_002">외국인</option>
+											<option value="Y">안전교육이수자</option>
 										</select>
-									</div>
+									</div> -->
 									<div class="section">
 										<label for="aa1" class="laType02">구분</label>
 										<select class="select-category07" id="searchParameter" name="searchParameter" style="width: 105px;">
 											<option value="PHONE">휴대번호</option>
-											<option value="ID">ID</option>
-											
+											<!-- <option value="ID">ID</option> -->
 										</select>
 										<span class="input-text08"><input type="text" class="" id="searchValue" name="searchValue"></span>
+										<button class="btn-srh03 btncase1 mdbtncase1" onclick="fn_search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button>
 									</div>
-									<div class="section pright">
-<!-- 										<label for="a44" class="laType02">벌점</label> -->
-<!-- 										<span class="input-text08"><input type="text" id="penalty_point" name="penalty_point" class="tr" maxlength="5"/>이상</span> -->
-<!-- 										<button class="btn-srh03 btncase1 mdbtncase1" onclick="fn_search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button> -->
+									<!-- <div class="section pright">
+										<label for="a44" class="laType02">벌점</label>
+										<span class="input-text08"><input type="text" id="penalty_point" name="penalty_point" class="tr" maxlength="5"/>이상</span>
+										<button class="btn-srh03 btncase1 mdbtncase1" onclick="fn_search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button>
 
 										<label for="a44" class="laType02">결제구분</label>
 										<span class="input-text08">
 										<select class="select-category03" id="comPaymentClsCd" name="paymentClsCd">
 											<option value="">선택</option>
 										</select>
-										<button class="btn-srh03 btncase1 mdbtncase1" onclick="fn_search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button>
-									</div>
+										
+									</div> -->
 									<!-- 
 									<div class="section">
 										<label for="aa1" class="laType02">결제구분</label>
@@ -207,20 +207,20 @@ function fn_excel(){
 						<table class="tb_type01">
 							<colgroup>
 								<col style="width:5%"/><!--15-10-05 추가  -->
-								<col style="width:15%"/>
+								<%-- <col style="width:15%"/> --%>
 								<col style="width:18%"/>
 								<%-- <col style="width:10%"/> --%>
-								<col style="width:18%"/>
+								<%-- <col style="width:18%"/> --%>
 								<col style="width:18%"/>
 								<!--[if gt IE 8]><!--><col style="width:15%" class="mhid"/><!--<![endif]-->
 							</colgroup>
 							<thead>
 								<tr>
 									<th><input type="checkbox" id="chkAll"/></th><!--15-10-05 추가  -->
-									<th>아이디</th>
+									<!-- <th>아이디</th> -->
 									<th>휴대폰번호</th>
 									<!-- <th>성별</th> -->
-									<th>출생년도</th>
+									<!-- <th>출생년도</th> -->
 									<th>사용자구분</th>
 									<!--[if gt IE 8]><!--><th class="mhid">가입일</th><!--<![endif]-->
 								</tr>
@@ -229,10 +229,10 @@ function fn_excel(){
 								<c:forEach var="mb"	items="${memberList }">
 									<tr>
 										<td class="tc"><input type="checkbox"/></td><!--15-10-05 추가  -->
-										<td class="title"><a href="#" onclick="fn_MemberDetail('${mb.usr_seq }'); return false;">${mb.mb_id }</a></td>
-										<td class="tc">${mb.usr_mpn_no }</td>
+										<%-- <td class="title"><a href="#" onclick="fn_MemberDetail('${mb.usr_seq }'); return false;">${mb.mb_id }</a></td> --%>
+										<td class="tc"><a href="#" onclick="fn_MemberDetail('${mb.usr_seq }'); return false;">${mb.usr_mpn_no }</a></td>
 										<%-- <td class="tc">${mb.sex_cd =='F'?'여':'남' }</td> --%>
-										<td class="tc">${mb.usr_birth_date }</td>
+										<%-- <td class="tc">${mb.usr_birth_date }</td> --%>
 										<td class="title pl10">${mb.mlang_com_cd_name }</td>
 										<!--[if gt IE 8]><!-->
 										<td class="mhid tc">

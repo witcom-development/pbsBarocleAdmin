@@ -4,9 +4,9 @@
 	<select id="memberListPaymentCnt"	parameterType="memberMgmtVO"	resultType="int">
 		SELECT  /* MemberMgmt_SQL.memberListPaymentCnt */
 				COUNT(1)
-		  FROM spb.TB_SVC_USR USR
-		  LEFT JOIN  spb.TB_SVC_MB	  MB   ON ( USR.USR_SEQ = MB.USR_SEQ ) 
-		  LEFT OUTER JOIN spb.TB_SVC_VOUCHER V ON MB.USR_SEQ = V.USR_SEQ
+		  FROM TB_SVC_USR USR
+		  LEFT JOIN  TB_SVC_MB	  MB   ON ( USR.USR_SEQ = MB.USR_SEQ ) 
+		  LEFT OUTER JOIN TB_SVC_VOUCHER V ON MB.USR_SEQ = V.USR_SEQ
 		 WHERE 1=1
 		   AND MB.LEAVE_YN = 'N'
 		   AND REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
@@ -53,10 +53,10 @@
 			 <!-- ,  dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO) AS USR_MPN_NO --> 
 			 <!-- ,  USR_MPN_NO AS USR_MPN_NO -->
 			 ,  CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS USR_MPN_NO
-		  FROM spb.TB_SVC_USR USR 
-LEFT OUTER JOIN spb.TB_SYS_MLANG_COM_CD Z   ON ( USR.USR_CLS_CD = Z.COM_CD AND  LANG_CLS_CD = 'LAG_001' )
-LEFT OUTER JOIN spb.TB_SVC_MB		   MB  ON ( USR.USR_SEQ = MB.USR_SEQ ) 
-LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
+		  FROM TB_SVC_USR USR 
+LEFT OUTER JOIN TB_SYS_MLANG_COM_CD Z   ON ( USR.USR_CLS_CD = Z.COM_CD AND  LANG_CLS_CD = 'LAG_001' )
+LEFT OUTER JOIN TB_SVC_MB		   MB  ON ( USR.USR_SEQ = MB.USR_SEQ ) 
+LEFT OUTER JOIN TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 		  WHERE 1=1
 			AND 1=1 -- MB.LEAVE_YN = 'N'
 			AND REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
@@ -88,10 +88,10 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 	<select id="memberListCnt" parameterType="memberMgmtVO"	resultType="int">
 		  SELECT /** 회원 목록 건수 조회 */
 				  COUNT(1)
-			FROM spb.TB_SVC_USR USR 
-	   LEFT JOIN spb.TB_SVC_MB  MB   ON ( USR.USR_SEQ = MB.USR_SEQ )
+			FROM TB_SVC_USR USR 
+	   LEFT JOIN TB_SVC_MB  MB   ON ( USR.USR_SEQ = MB.USR_SEQ )
 	   <if test='usr_cls_cd != null and "Y".toString() eq usr_cls_cd'>
-	   LEFT JOIN spb.TB_SVC_SFT_CERT_USR C ON USR.USR_MPN_NO = C.USR_MPN_NO
+	   LEFT JOIN TB_SVC_SFT_CERT_USR C ON USR.USR_MPN_NO = C.USR_MPN_NO
 	   </if>  
 		   WHERE 1=1
 			AND USR.REG_DTTM BETWEEN STR_TO_DATE(#{searchStartDate } , '%Y-%m-%d %H:%i:%s') AND (STR_TO_DATE(#{searchEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
@@ -139,12 +139,12 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 				 , CASE WHEN MB.LEAVE_YN = 'Y' THEN CONCAT( '탈회회원(', MB.LEAVE_DTTM, ')' ) 
 				   ELSE MLANG_COM_CD_NAME
 				   END AS MLANG_COM_CD_NAME
-			  FROM spb.TB_SVC_USR USR 
-			LEFT JOIN spb.TB_SVC_MB  MB ON ( USR.USR_SEQ = MB.USR_SEQ )
+			  FROM TB_SVC_USR USR 
+			LEFT JOIN TB_SVC_MB  MB ON ( USR.USR_SEQ = MB.USR_SEQ )
 			<if test='usr_cls_cd != null and "Y".toString() eq usr_cls_cd'>
-			LEFT JOIN spb.TB_SVC_SFT_CERT_USR C ON USR.USR_MPN_NO = C.USR_MPN_NO
+			LEFT JOIN TB_SVC_SFT_CERT_USR C ON USR.USR_MPN_NO = C.USR_MPN_NO
 			</if>  
-				 , spb.TB_SYS_MLANG_COM_CD COM 
+				 , TB_SYS_MLANG_COM_CD COM 
 			  WHERE 1=1 
 			  <!-- USR.USR_SEQ = MB.USR_SEQ -->
 			   AND COM.COM_CD = USR.USR_CLS_CD
@@ -626,7 +626,6 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 				(SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD  WHERE COM_CD = A.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001' ) METHOD_CD, 
 				PAYMENT_STUS_CD,
 				<!-- shoh2999 -->
-				IF(ISNULL(CP.PAYMENT_SEQ)  ,'N','Y') as certDisYn,
 			<!-- 2020-12-15 상태코드는 아직 승인이지만 환불 진행중 인 상태일 때 환불 진행중 표시 -->	
 			<![CDATA[	
 				CASE WHEN A.PAYMENT_STUS_CD = 'BIS_001'
@@ -647,7 +646,6 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 			]]>	
 			FROM TB_SVC_PAYMENT A
 			LEFT JOIN TB_SVC_MB B ON  ( A.USR_SEQ = B.USR_SEQ )
-			LEFT JOIN TB_SVC_SFT_CERT_PAYMENT CP ON ( A.PAYMENT_SEQ = CP.PAYMENT_SEQ )
 			WHERE 1=1 
 			AND  A.USR_SEQ = #{usr_seq}
 
@@ -679,7 +677,6 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 				'0' AS MILEAGE_PAYMENT_AMT, 	'0' AS RENT_OVER_FEE_SUM,
 				NULL AS CANCEL_DTTM, 	NULL AS CANCEL_REASON_DESC, NULL AS	CANCEL_ADMIN_ID,
 				<!-- shoh2999 -->
-				'' as certDisYn,
 				B.MB_ID
 			FROM TB_SVC_PAYMENT_FAIL_HIST A
 			LEFT JOIN TB_SVC_MB B ON ( A.USR_SEQ = B.USR_SEQ )
@@ -769,16 +766,16 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 				RENT.RENT_RACK_ID,
 				RENT.RENT_CLS_CD,
 				CONCAT((SELECT MLANG_COM_CD_NAME
-					FROM spb.TB_SYS_MLANG_COM_CD
+					FROM TB_SYS_MLANG_COM_CD
 					WHERE COM_CD = RENT_CLS_CD 
 					 AND LANG_CLS_CD = 'LAG_001') 
 					 	,' | '
 					 	,IFNULL((SELECT MLANG_COM_CD_NAME
-					FROM spb.TB_SYS_MLANG_COM_CD
+					FROM TB_SYS_MLANG_COM_CD
 					WHERE COM_CD = RENT_MTH_CD 
 					 AND LANG_CLS_CD = 'LAG_001')
 							   ,(SELECT MLANG_COM_CD_NAME
-					FROM spb.TB_SYS_MLANG_COM_CD
+					FROM TB_SYS_MLANG_COM_CD
 					WHERE COM_CD = 'CHN_001'
 					 AND LANG_CLS_CD = 'LAG_001') ))		 CLS_CD,
 				'-' AS RETURN_STATION_ID,
@@ -800,16 +797,16 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 			(SELECT STATION_NAME FROM TB_OPR_MLANG_STATION  WHERE STATION_ID = A.RENT_STATION_ID AND LANG_CLS_CD = 'LAG_001' ) RENT_STATION,
 			A.RENT_RACK_ID,	A.RENT_CLS_CD,
 			CONCAT((SELECT MLANG_COM_CD_NAME
-					FROM spb.TB_SYS_MLANG_COM_CD
+					FROM TB_SYS_MLANG_COM_CD
 					WHERE COM_CD = RENT_CLS_CD 
 					 AND LANG_CLS_CD = 'LAG_001') 
 					 	,' | '
 					 	,IFNULL((SELECT MLANG_COM_CD_NAME
-					FROM spb.TB_SYS_MLANG_COM_CD
+					FROM TB_SYS_MLANG_COM_CD
 					WHERE COM_CD = RENT_MTH_CD 
 					 AND LANG_CLS_CD = 'LAG_001')
 							   ,(SELECT MLANG_COM_CD_NAME
-					FROM spb.TB_SYS_MLANG_COM_CD
+					FROM TB_SYS_MLANG_COM_CD
 					WHERE COM_CD = 'CHN_001'
 					 AND LANG_CLS_CD = 'LAG_001') ))	  CLS_CD,
 			A.RETURN_STATION_ID,
@@ -1044,33 +1041,24 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 	</update>
 	
 		<select id="listUserOut" parameterType="userOutMgmtVO" resultType="userOutMgmtVO">
-		SELECT	MB_ID											AS mbId
-			   ,SEX_CD											AS sexCd
-			   <!-- ,dg_decrypt_date('TB_SVC_USR','USR_BIRTH_DATE',USR_BIRTH_DATE) AS usrBirthDate -->
-			   <!-- ,USR_BIRTH_DATE AS usrBirthDate -->
-			   ,CAST(AES_DECRYPT(UNHEX(USR_BIRTH_DATE),'BRC') as CHAR) AS usrBirthDate
+		SELECT	CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR)		AS mbId
 			   ,MLANG_COM_CD_NAME								AS leaveReasonCd
 			   ,DATE_FORMAT(LEAVE_DTTM , '%Y-%m-%d')			AS leaveDttm
 			   ,blklistYn
 		FROM
 		(
-			SELECT	MB_ID											
-				   ,SEX_CD											
-				   ,USR_BIRTH_DATE									
+			SELECT	USR_MPN_NO
 				   ,LEAVE_REASON_CD									
 				   ,LEAVE_DTTM		
 				   ,IF(B.USR_SEQ IS NULL = 1, 'N', 'Y')						AS blklistYn								
 			FROM	
 			(
-				SELECT	A.USR_SEQ
-					   ,MB_ID
-					   ,SEX_CD
-					   ,USR_BIRTH_DATE				   
-					   ,LEAVE_REASON_CD
-					   ,LEAVE_DTTM
-				FROM	TB_SVC_MB A, TB_SVC_USR B
-				WHERE	A.USR_SEQ = B.USR_SEQ
-				AND		LEAVE_YN = 'Y'
+				SELECT USR_SEQ
+					, USR_MPN_NO		   
+					,LEAVE_REASON_CD
+					,LEAVE_DTTM
+				FROM	TB_SVC_USR
+				WHERE	LEAVE_YN = 'Y'
 				<if test='leaveStrDate != null and leaveStrDate != ""'>
 					<![CDATA[
 					AND LEAVE_DTTM >= STR_TO_DATE(#{leaveStrDate}, '%Y-%m-%d') 
@@ -1081,14 +1069,12 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 					AND LEAVE_DTTM <=  (STR_TO_DATE(#{leaveEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
 					]]>
 				</if>
-				<if test='mbId != null and mbId != ""'>
-					AND MB_ID LIKE CONCAT( #{mbId}, '%')
-				</if>
-				
-					
 				 <if test='mbId == null or mbId == ""'>		
 				 	AND 1=2
 				 </if>
+				 <if test='mbId != null and mbId != ""'>
+					AND USR_MPN_NO = HEX(AES_ENCRYPT(#{mbId},'BRC'))
+				</if>
 				 
 			) A LEFT OUTER JOIN 
 			(
@@ -1107,32 +1093,27 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 		SELECT	COUNT(*)
 		FROM
 		(
-			SELECT	MB_ID											
-				   ,SEX_CD											
-				   ,USR_BIRTH_DATE									
+			SELECT	USR_MPN_NO
 				   ,LEAVE_REASON_CD									
 				   ,LEAVE_DTTM										
 			FROM	
 			(
-				SELECT	A.USR_SEQ
-					   ,MB_ID
-					   ,SEX_CD
-					   ,USR_BIRTH_DATE				   
+				SELECT	USR_SEQ
+					   ,USR_MPN_NO
 					   ,LEAVE_REASON_CD
 					   ,LEAVE_DTTM
-				FROM	TB_SVC_MB A, TB_SVC_USR B
-				WHERE	A.USR_SEQ = B.USR_SEQ
+				FROM	TB_SVC_USR
+				WHERE	USR_SEQ
 				AND		LEAVE_YN = 'Y'
 				<if test='leaveStrDate != null and leaveStrDate != ""'>
 					AND LEAVE_DTTM BETWEEN STR_TO_DATE(#{leaveStrDate}, '%Y-%m-%d') AND (STR_TO_DATE(#{leaveEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
-				</if>
-				<if test='mbId != null and mbId != ""'>
-					AND MB_ID LIKE CONCAT( #{mbId}, '%')
-				</if>
-				
+				</if>				
 				 <if test='mbId == null or mbId == ""'>		
 				 	AND 1=2
 				 </if>
+				 <if test='mbId != null and mbId != ""'>
+					AND USR_MPN_NO = HEX(AES_ENCRYPT(#{mbId},'BRC'))
+				</if>
 				
 			) A LEFT OUTER JOIN 
 			(
@@ -1148,28 +1129,19 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 	
 	<select id="listBlackList" parameterType="blackListMgmtVO" resultType="blackListMgmtVo">
 		SELECT	USR_SEQ												AS usrSeq
-			   ,MB_ID												AS mbId
-			   <!-- ,dg_decrypt('TB_SVC_MB', 'MB_TEL_NO', MB_TEL_NO)	 AS mbTelNo -->
-			   <!-- ,MB_TEL_NO	 AS mbTelNo -->
-			   ,CAST(AES_DECRYPT(UNHEX(MB_TEL_NO),'BRC') as CHAR) AS mbTelNo
-			   <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', USR_MPN_NO)  AS usrMpnNo -->
-			   <!-- ,USR_MPN_NO  AS usrMpnNo -->
 			   ,CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
 			   ,MLANG_COM_CD_NAME									AS blkListReasonCd
 			   ,DATE_FORMAT(BLKLIST_REG_DTTM, '%Y-%m-%d')			AS blkListRegDttm
 		FROM
 		(
-			SELECT	A.USR_SEQ											
-				   ,MB_ID												
-				   ,MB_TEL_NO
+			SELECT	A.USR_SEQ
 				   ,(SELECT USR_MPN_NO FROM TB_SVC_USR WHERE USR_SEQ = A.USR_SEQ) AS USR_MPN_NO											
 				   ,BLKLIST_REASON_CD									
 				   ,BLKLIST_REG_DTTM			
-			FROM	TB_SVC_USR_BLKLIST A, TB_SVC_MB B, TB_SVC_USR C
-			WHERE	A.USR_SEQ = B.USR_SEQ
+			FROM	TB_SVC_USR_BLKLIST A, TB_SVC_USR C
+			WHERE	A.USR_SEQ = C.USR_SEQ
 			AND	 C.USR_SEQ = A.USR_SEQ
-			AND	 B.USR_SEQ = C.USR_SEQ
-			AND		LEAVE_YN = 'N'
+			AND	 C.LEAVE_YN = 'N'
 			<if test='modStrDate != null and modStrDate != ""'>
 				<![CDATA[
 					AND BLKLIST_REG_DTTM >= STR_TO_DATE(#{modStrDate}, '%Y-%m-%d') 
@@ -1180,14 +1152,7 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 					AND BLKLIST_REG_DTTM <= (STR_TO_DATE(#{modEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
 				]]>
 			</if>
-			<if test='mbId != null and mbId != ""'>
-				AND MB_ID LIKE CONCAT( #{mbId}, '%')
-			</if>
-		
-			
 			<if test='mbTelNo != null and mbTelNo != ""'>
-				<!-- AND USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{mbTelNo}) -->
-				<!-- AND USR_MPN_NO = #{mbTelNo} -->
 				AND USR_MPN_NO = HEX(AES_ENCRYPT(#{mbTelNo},'BRC'))
 			</if>
 			ORDER BY BLKLIST_REG_DTTM DESC
@@ -1201,14 +1166,12 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 		SELECT	COUNT(*)
 		FROM
 		(
-			SELECT	A.USR_SEQ											
-				   ,MB_ID												
-				   ,MB_TEL_NO											
+			SELECT	A.USR_SEQ
 				   ,BLKLIST_REASON_CD									
 				   ,BLKLIST_REG_DTTM			
-			FROM	TB_SVC_USR_BLKLIST A, TB_SVC_MB B
-			WHERE	A.USR_SEQ = B.USR_SEQ
-			AND		LEAVE_YN = 'N'
+			FROM	TB_SVC_USR_BLKLIST A, TB_SVC_USR C
+			WHERE	A.USR_SEQ = C.USR_SEQ
+			AND		C.LEAVE_YN = 'N'
 			<if test='modStrDate != null and modStrDate != ""'>
 				<![CDATA[
 					AND BLKLIST_REG_DTTM >= STR_TO_DATE(#{modStrDate}, '%Y-%m-%d') 
@@ -1219,13 +1182,8 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 					AND BLKLIST_REG_DTTM <= (STR_TO_DATE(#{modEndDate}, '%Y-%m-%d')  + INTERVAL 1 DAY - INTERVAL 1 SECOND)
 				]]>
 			</if>
-			<if test='mbId != null and mbId != ""'>
-				AND MB_ID LIKE CONCAT( #{mbId}, '%')
-			</if>
 			<if test='mbTelNo != null and mbTelNo != ""'>
-				<!-- AND MB_TEL_NO = dg_encrypt('TB_SVC_MB', 'MB_TEL_NO', #{mbTelNo}) -->
-				<!-- AND MB_TEL_NO = #{mbTelNo} -->
-				AND MB_TEL_NO = HEX(AES_ENCRYPT(#{mbTelNo},'BRC'))
+				AND USR_MPN_NO = HEX(AES_ENCRYPT(#{mbTelNo},'BRC'))
 			</if>
 			ORDER BY BLKLIST_REG_DTTM DESC
 		) A, TB_SYS_MLANG_COM_CD B
@@ -2409,12 +2367,12 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 					CPR.AUTH_YN,
 					(   
 						SELECT SUM(PENALTY_POINT)
-						FROM spb.TB_SVC_PENALTY E, spb.TB_SVC_PENALTY_CD F
+						FROM TB_SVC_PENALTY E, TB_SVC_PENALTY_CD F
 						WHERE E.PENALTY_CD = F.PENALTY_CD 
 						AND E.USR_SEQ = USR.USR_SEQ
 						AND E.READ_CLS_CD = 'S'
 					) PENALTY_POINT
-				FROM  spb.TB_SVC_USR USR , spb.TB_SVC_MB  MB , spb.TB_SVC_USR_CPR CPR
+				FROM  TB_SVC_USR USR , TB_SVC_MB  MB , TB_SVC_USR_CPR CPR
 				WHERE USR.USR_SEQ = MB.USR_SEQ
 				AND USR.USR_SEQ = CPR.USR_SEQ
 				AND MB.LEAVE_YN = 'N'
@@ -2484,12 +2442,12 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 					MB.MB_TEL_NO,
 					(   
 						SELECT SUM(PENALTY_POINT)
-						FROM spb.TB_SVC_PENALTY E, spb.TB_SVC_PENALTY_CD F
+						FROM TB_SVC_PENALTY E, TB_SVC_PENALTY_CD F
 						WHERE E.PENALTY_CD = F.PENALTY_CD 
 						AND E.USR_SEQ = USR.USR_SEQ
 						AND E.READ_CLS_CD = 'S'
 					) PENALTY_POINT
-				FROM  spb.TB_SVC_USR USR , spb.TB_SVC_MB  MB 
+				FROM  TB_SVC_USR USR , TB_SVC_MB  MB 
 				WHERE USR.USR_SEQ = MB.USR_SEQ
 				AND MB.LEAVE_YN = 'N'
 		) A 
@@ -2537,7 +2495,7 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 				CPR.JURIR_NO AS jurirNo,
 				CPR.JURIR_FILE AS jurirFile,
 				CPR.AUTH_YN AS authYn
-		FROM spb.TB_SVC_MB MB, spb.TB_SVC_USR USR, spb.TB_SVC_USR_CPR CPR
+		FROM TB_SVC_MB MB, TB_SVC_USR USR, TB_SVC_USR_CPR CPR
 		WHERE MB.USR_SEQ = USR.USR_SEQ AND USR.USR_SEQ = CPR.USR_SEQ
 		<if test="searchStartDate!='' and searchStartDate!=null">
 			<![CDATA[
@@ -2567,7 +2525,7 @@ LEFT OUTER JOIN spb.TB_SVC_VOUCHER	  V 	ON MB.USR_SEQ = V.USR_SEQ
 	
 	<select id="cprMemberListCnt" parameterType="memberMgmtVO"	resultType="int">
 	SELECT COUNT(*)
-	FROM spb.TB_SVC_MB MB, spb.TB_SVC_USR USR, spb.TB_SVC_USR_CPR CPR
+	FROM TB_SVC_MB MB, TB_SVC_USR USR, TB_SVC_USR_CPR CPR
 	WHERE MB.USR_SEQ = USR.USR_SEQ AND USR.USR_SEQ = CPR.USR_SEQ
 	<if test="searchStartDate!='' and searchStartDate!=null">
 		<![CDATA[

@@ -44,9 +44,8 @@
 	</div>
 	
 	<a href="#" class="popclose"><img src="/images/btn_close.png" alt="팝업닫기" /></a>
-	<!-- <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=4791tlnwi5&callback=draw&submodules=geocoder"></script> -->
-	<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=1if4e5yo6i&callback=draw&submodules=geocoder"></script>
-	<!-- <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=782hpigcuy&submodules=geocoder"></script> -->
+	<!-- <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=0tvu3iygqg&callback=draw&submodules=geocoder"></script> -->
+	<script type="text/javascript" src="https://oapi.map.naver.com/openapi/v3/maps.js?ncpClientId=0tvu3iygqg&submodules=geocoder"></script>
 	<!-- http -->
 	<script src="http://dmaps.daum.net/map_js_init/postcode.v2.js"></script>
 	<!-- https -->
@@ -84,7 +83,7 @@
 				size: new naver.maps.Size( 600, 400),
 				center: new naver.maps.LatLng(37.5675451, 126.9773356), //지도의 초기 중심 좌표
 				zoom: 14, //지도의 초기 줌 레벨
-				minZoom: 1, //지도의 최소 줌 레벨
+				minZoom: 6, //지도의 최소 줌 레벨
 				zoomControl: true, //줌 컨트롤의 표시 여부
 				zoomControlOptions: { //줌 컨트롤의 옵션
 					position: naver.maps.Position.LEFT_BOTTOM
@@ -118,26 +117,42 @@
 				opener.parent.document.getElementById('station_longitude').value = e.coord.x;
 				
 				naver.maps.Service.reverseGeocode({
-					location: new naver.maps.LatLng(e.coord.y, e.coord.x),
-					orders:addr
+					//location: new naver.maps.LatLng(e.coord.y, e.coord.x),
+					//orders:addr
+					coords: e.coord,
+					orders: [
+					            naver.maps.Service.OrderType.ADDR,
+					            naver.maps.Service.OrderType.ROAD_ADDR
+					        ].join(',')
 				}, function(status, response) {
 					if (status !== naver.maps.Service.Status.OK) {
 						return alert('네이버 맵 서비스 에러!');
 					}
 					// do Something
-					var items = response.result.items;
+					var items = response.v2.results;
 					
-					var isRoadAdressIdx = 0; 
+					/*var isRoadAdressIdx = 0; 
 					for( var i in items ){
 						if (items[i].isRoadAddress == true ) {
 							isRoadAdressIdx = i;
 							break;
 						}
 					}
-					
-   					var item = items[isRoadAdressIdx];
-   					 $("#addr").val(item.address);
-   						opener.parent.document.getElementById('station_addr1').value = item.address;
+					*/
+					var isRoadAdressIdx = 0; 
+					for( var i in items ){
+						if (items[i].name == "roadaddr" ) {
+							isRoadAdressIdx = i;
+							break;
+						}
+					}
+   					//var item = items[isRoadAdressIdx];
+					var item = response.v2.address.roadAddress;
+					if(item == ""){		// 도로명이 없을 경우 지번으로 넣어줌
+						item = response.v2.address.jibunAddress;
+					}
+   					 $("#addr").val(item);
+   						opener.parent.document.getElementById('station_addr1').value = item;
 						opener.parent.document.getElementById('station_addr2').value = $("#parkingLocationDiv").val();
 				});
 				
@@ -203,7 +218,7 @@
 	 						opener.parent.document.getElementById('station_latitude').value = item.y;
 	 						opener.parent.document.getElementById('station_longitude').value = item.x;
 	 						opener.parent.document.getElementById('station_addr1').value = addr;
-	 					   opener.parent.document.getElementById('station_addr2').value = $("#parkingLocationDiv").val();
+	 						opener.parent.document.getElementById('station_addr2').value = $("#parkingLocationDiv").val();
 	 						
 	 					});
 	 					
@@ -219,7 +234,81 @@
 	 			// iframe을 넣은 element를 보이게 한다.
 	 			element_wrap.style.display = 'block';
 	 		});
-		}	
+		}
+		
+		function makeAddress(item) {
+		    if (!item) {
+		        return;
+		    }
+
+		    var name = item.name,
+		        region = item.region,
+		        land = item.land,
+		        isRoadAddress = name === 'roadaddr';
+
+		    var sido = '', sigugun = '', dongmyun = '', ri = '', rest = '';
+
+		    if (hasArea(region.area1)) {
+		        sido = region.area1.name;
+		    }
+
+		    if (hasArea(region.area2)) {
+		        sigugun = region.area2.name;
+		    }
+
+		    if (hasArea(region.area3)) {
+		        dongmyun = region.area3.name;
+		    }
+
+		    if (hasArea(region.area4)) {
+		        ri = region.area4.name;
+		    }
+
+		    if (land) {
+		        if (hasData(land.number1)) {
+		            if (hasData(land.type) && land.type === '2') {
+		                rest += '산';
+		            }
+
+		            rest += land.number1;
+
+		            if (hasData(land.number2)) {
+		                rest += ('-' + land.number2);
+		            }
+		        }
+
+		        if (isRoadAddress === true) {
+		            if (checkLastString(dongmyun, '면')) {
+		                ri = land.name;
+		            } else {
+		                dongmyun = land.name;
+		                ri = '';
+		            }
+
+		            if (hasAddition(land.addition0)) {
+		                rest += ' ' + land.addition0.value;
+		            }
+		        }
+		    }
+
+		    return [sido, sigugun, dongmyun, ri, rest].join(' ');
+		}
+
+		function hasArea(area) {
+		    return !!(area && area.name && area.name !== '');
+		}
+
+		function hasData(data) {
+		    return !!(data && data !== '');
+		}
+
+		function checkLastString (word, lastString) {
+		    return new RegExp(lastString + '$').test(word);
+		}
+
+		function hasAddition (addition) {
+		    return !!(addition && addition.value);
+		}
 	</script>
 	
 </body>

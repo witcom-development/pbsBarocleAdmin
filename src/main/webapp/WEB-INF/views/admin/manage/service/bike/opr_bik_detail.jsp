@@ -246,7 +246,7 @@
 											<th rowspan="2">대여구분</th>
 											<th colspan="2">대여</th>
 											<th colspan="2">반납</th>
-											<!--[if gt IE 8]><!--><th rowspan="2" class="mhid">대여자 ID</th><!--<![endif]-->
+											<!--[if gt IE 8]><!--><th rowspan="2" class="mhid">대여자 정보</th><!--<![endif]-->
 											<!--[if gt IE 8]><!--><th rowspan="2" class="mhid">이용거리(km)</th><!--<![endif]-->
 											<!--[if gt IE 8]><!--><th rowspan="2" class="mhid">이용시간(분)</th><!--<![endif]-->
 										</tr>
@@ -273,7 +273,7 @@
 											<!--[if gt IE 8]><!--><td class="mhid">${info.mbId }</td><!--<![endif]-->
 											end --%>
 											<!-- 대여현황목록 회원정보 연동 링크 start_cms_20161104 -->
-											<td class="mhid" ><a href="#"  id="${info.usrSeq }" name="usrSeq">${info.mbId }</a></td>
+											<td class="mhid" ><a href="#"  id="${info.usrSeq }" name="usrSeq">${info.usrMpnNo }</a></td>
 											<!-- end -->
 											<!--[if gt IE 8]><!--><td class="mhid">${info.useDist }</td><!--<![endif]-->
 											<!--[if gt IE 8]><!--><td class="mhid">${info.useMi }</td><!--<![endif]-->

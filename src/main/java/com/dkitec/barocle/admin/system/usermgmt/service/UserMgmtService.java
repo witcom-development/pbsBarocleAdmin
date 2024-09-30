@@ -67,4 +67,6 @@ public interface UserMgmtService {
 
 	List<TeamMgmtVO> teamList(TeamMgmtVO stationVo) throws Exception;
 	
+	List<UserMgmtVO> getAptGrpList() throws Exception;
+	
 }

@@ -1,9 +1,14 @@
 package com.dkitec.barocle.admin.customer.notice.controller;
 
 import java.io.File;
-import java.text.DateFormat;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -18,12 +23,12 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 import org.springframework.web.servlet.ModelAndView;
 
-import com.dkitec.cfood.core.CfoodException;
-import com.dkitec.cfood.core.web.annotation.RequestCategory;
-import com.dkitec.cfood.core.web.annotation.RequestName;
 import com.dkitec.barocle.admin.customer.notice.service.NoticeService;
+import com.dkitec.barocle.admin.customer.notice.vo.FileVO;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO.NoticeAllVal;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO.NoticeDeleteVal;
@@ -31,13 +36,13 @@ import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO.NoticeEditVal;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO.NoticeListVal;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO.NoticePersistVal;
 import com.dkitec.barocle.admin.login.security.filter.EgovSessionCookieUtil;
-import com.dkitec.barocle.admin.login.vo.UserSessionVO;
-import com.dkitec.barocle.admin.manage.stationgroup.vo.StationGroupMgmtVO;
 import com.dkitec.barocle.admin.manage.stationmgmt.service.StationMgmtService;
-import com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO;
 import com.dkitec.barocle.base.BaseController;
 import com.dkitec.barocle.util.webutil.StringUtil;
 import com.dkitec.barocle.util.webutil.WebUtil;
+import com.dkitec.cfood.core.CfoodException;
+import com.dkitec.cfood.core.web.annotation.RequestCategory;
+import com.dkitec.cfood.core.web.annotation.RequestName;
 
 import egovframework.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
 
@@ -68,6 +73,10 @@ public class NoticeController extends BaseController {
 		String resultPage = "/admin/customer/notice/bor_not_list";
 		
 		try{
+			// 검색어 한글 깨짐 막음
+			if(noticeVO.getSearchValue() != null || "".equals(noticeVO.getSearchValue()))
+				noticeVO.setSearchValue( new String(noticeVO.getSearchValue().getBytes("8859_1"), "UTF-8") );
+			
 			// 총 레코드 개수를 가져온다.
 			noticeVO.setTotalRecordCount(noticeService.listNoticeCount(noticeVO));
 			// 페이징
@@ -100,12 +109,12 @@ public class NoticeController extends BaseController {
 	 * mode=edit,noticeSeq=y 수정
 	 * 위와 같은 값이 존재하면 해당 로직으로 처리한다.
 	 */
-	@RequestName(value="editNotice")
+/*	@RequestName(value="editNotice")
 	@RequestMapping(value="/noticeEdit.do")
 	public String editNotice(@Validated(NoticeEditVal.class) NoticeVO noticeVO, BindingResult result, HttpServletRequest request, Model model) throws Exception {
 		
 		/* validator check */
-		if(result.hasErrors()){ throw new CfoodException("admin.customer.notice.noticeEdit.bindingexception"); }
+/*		if(result.hasErrors()){ throw new CfoodException("admin.customer.notice.noticeEdit.bindingexception"); }
 		
 		boolean bResult = false;
 		String resultPage = "/admin/customer/notice/bor_not_detail";
@@ -132,85 +141,6 @@ public class NoticeController extends BaseController {
 				model.addAttribute("seqNo",noticeVO.getNoticeSeq());
 				model.addAttribute("daumEditorImageList", noticeService.listDaumEditorVO(noticeVO));
 			}
-			//} else if(getPersistMode.equalsIgnoreCase("templateStation")) {
-			/*else if("templateStation".equalsIgnoreCase(getPersistMode)) {	
-				
-				StationGroupMgmtVO stationVo = new StationGroupMgmtVO();
-				stationVo.setStation_id(noticeVO.getNoticeStationId());
-				
-				List<StationMgmtVO> stationVoResList = stationMgmtService.getStationNameInfo(stationVo);
-				
-				for (int i=0;i<stationVoResList.size();i++){
-					
-					if(stationVoResList.get(i).getLang_cls_cd().equals("LAG_001")){
-						
-						noticeView.setNoticeTitle(stationVoResList.get(i).getStation_name()+" 임시 폐쇄 안내");
-						DateFormat sdFormat = new SimpleDateFormat("yyyy-MM-dd");
-						Date nowDate = new Date();
-						
-						//2020-10-30 : 날짜가 없을 시 현재날짜로
-						String tempDate = "";
-						String tempDate1 = "";
-						
-						if(noticeVO.getPostStrDttm() != null && noticeVO.getPostEndDttm() != null){
-							
-							tempDate = sdFormat.format(noticeVO.getPostStrDttm());
-							tempDate1 = sdFormat.format(noticeVO.getPostEndDttm());
-							
-						}else if(noticeVO.getPostStrDttm() != null && noticeVO.getPostEndDttm() == null){
-							
-							tempDate = sdFormat.format(noticeVO.getPostStrDttm());
-							
-						}else{
-							
-							tempDate = sdFormat.format(nowDate);
-							tempDate1 = sdFormat.format(nowDate);
-							
-						}
-						
-						noticeView.setNoticeTextContent("안녕하세요? \n"
-								+"아파트 자전거 바로클입니다. \n"
-                                +"\n"
-                                +"\n"
-                                +"아래 대여소를 임시 폐쇄하오니 \n"
-                                +"이용에 착오 없으시길 바랍니다. \n"
-                                +"\n"
-                                +"\n"
-                                +"임시폐쇄대여소 : "+stationVoResList.get(i).getStation_name()+"\n"
-								+"사용중단기간 :"+tempDate+"~"+tempDate1+"마감시까지\n"
-								+"사용중단사유 :\n"
-								+"\n"
-								+"\n"
-								+"이용에 불편드려 죄송합니다.\n"
-								+"※ 불편사항 또는 문의사항 연락처 : 02-542-7781 \n");
-						
-						noticeView.setNoticeHTMLContent("안녕하세요? \n"
-								+"아파트 자전거 바로클입니다. <br>"
-                                +"<br>"
-                                +"<br>"
-                                +"아래 대여소를 임시 폐쇄하오니 <br>"
-                                +"이용에 착오 없으시길 바랍니다. <br>"
-                                +"<br>"
-                                +"<br>"
-                                +"임시폐쇄대여소 : "+stationVoResList.get(i).getStation_name()+"<br>"
-								+"사용중단기간 :"+tempDate+"~"+tempDate1+"마감시까지<br>"
-								+"사용중단사유 : <br>"
-								+"<br>"
-								+"<br>"
-								+"이용에 불편드려 죄송합니다.<br>"
-								+"※ 불편사항 또는 문의사항 연락처 : 02-542-7781 <br>");
-						
-					}
-					
-				}
-				
-				noticeView.setSiteClsCD("admin");
-				noticeView.setPostStrDttm(noticeVO.getPostStrDttm());
-				noticeView.setPostEndDttm(noticeVO.getPostEndDttm());
-				
-			}*/
-			
-			// else MODE_WRITE;
 			
 			// 현재 화면를 가져온다.
 			noticeView.setCurrentPageNo(noticeVO.getCurrentPageNo());
@@ -228,12 +158,112 @@ public class NoticeController extends BaseController {
 		
 		return bResult ? resultPage : ERROR_PAGE;
 	}
+*/	
+	/* NOTE : 상세/등록/수정 화면
+	 * mode=null 상세
+	 * mode=view,noticeSeq=x 상세
+	 * mode=edit,noticeSeq=y 수정
+	 * 위와 같은 값이 존재하면 해당 로직으로 처리한다.
+	 */
+	@RequestName(value="editNotice")
+	@RequestMapping(value="/noticeEdit.do")
+	public String editNotice(@Validated(NoticeEditVal.class) NoticeVO noticeVO, BindingResult result, HttpServletRequest request, Model model) throws Exception {
+		boolean bResult = false;
+		String resultPage = "/admin/customer/notice/bor_not_detail";
+		
+		try {
+			NoticeVO noticeView = new NoticeVO();	// 입력 수정 동시에 사용할 변수 선언
+			List<FileVO> imgList  = new ArrayList<>();
+			List<FileVO> fileList = new ArrayList<>();
+			
+			if(MODE_EDIT.equals(noticeVO.getMode()) && noticeVO.getNoticeSeq() > 0 ){
+				// 공지 내용 조회
+				noticeView = noticeService.viewNotice2(noticeVO);
+				
+				if( noticeView != null && noticeView.getAtchFileID() != null && noticeView.getAtchFileID().startsWith(","))
+					noticeView.setAtchFileID(noticeView.getAtchFileID().replaceFirst(",", ""));
+				
+				if( noticeView != null && noticeView.getAtchFileID() != null && "0".compareTo(noticeView.getAtchFileID()) < 0 ) {
+					
+					String atchFileId = noticeView.getAtchFileID();
+					String[] attachArr = atchFileId.split(",");
+					
+					if( attachArr.length == 0 ) {
+						noticeVO.setAtchFileID(atchFileId);
+						
+						FileVO fileVo = noticeService.getBBSImage(noticeVO);
+						
+						if( fileVo != null && fileVo.getImgURL() != null ) {
+						
+							String fileType = (fileVo.getImgURL().toUpperCase()).substring( fileVo.getImgURL().length() -3 );
+							
+							switch( fileType ) {
+							case "JPEG" :
+							case "JPG" :
+							case "PNG" :
+							case "BMP" :
+								imgList.add(fileVo);
+								break;
+							default :
+								fileList.add(fileVo);
+							}
+						}						
+					}
+					
+					for( String imgAttach : attachArr) {
+						
+						if( "".equals(imgAttach )) continue;
+						
+						noticeVO.setAtchFileID(imgAttach);
+						
+						FileVO fileVo = noticeService.getBBSImage(noticeVO);
+						
+						if( fileVo 				  == null ) continue;
+						if( fileVo.getImgURL()  == null ) continue;
+						String fileType = (fileVo.getImgURL().toUpperCase()).substring( fileVo.getImgURL().length() -3 );
+						
+						switch( fileType ) {
+						case "JPEG" :
+						case "JPG" :
+						case "PNG" :
+						case "BMP" :
+							imgList.add(fileVo);
+							break;
+						default :
+							fileList.add(fileVo);
+						}
+						
+					}
+					
+				
+				}
+				
+			}else{
+				noticeView.setNoticeSeq(0);
+			}
+			
+			model.addAttribute("bbsBoardVO"   , noticeView );
+			model.addAttribute("bbsImgList"   , imgList );
+			model.addAttribute("bbsFileList"  , fileList );
+			String homeURL		=  super.propertiesService.getString("homeURL");
+			model.addAttribute("homeURL"		, homeURL );
+			
+			bResult = true;		// 정상				
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			e.printStackTrace();
+			throw new CfoodException("fail.common.msg",e);
+		}
+		
+		return bResult ? resultPage : ERROR_PAGE;
+	}
 	
 	/* NOTE : 상세/등록/수정 화면
 	 * /admin/customer/notice/noticeInsert.do || /admin/customer/notice/noticeUpdate.do 와 같이 uri를 확인하여 현재 요청 모드를 설정한다.
 	 */
 	@RequestName(value="persistNotice")
-	@RequestMapping(value={"/noticeInsert.do","/noticeUpdate.do"})
+	@RequestMapping(value="/noticeUpdate.do")
 	public String persistNotice(@Validated(NoticePersistVal.class) NoticeVO noticeVO, BindingResult result, HttpServletRequest request, Model model) {
 		
 		/* Validator error */
@@ -367,6 +397,83 @@ public class NoticeController extends BaseController {
 		return bResult ? resultPage : ERROR_PAGE;
 	}
 	
+	/* NOTE : 상세/등록/수정 화면
+	 * /admin/customer/notice/noticeInsert.do || /admin/customer/notice/noticeUpdate.do 와 같이 uri를 확인하여 현재 요청 모드를 설정한다.
+	 */
+	@RequestName(value="noticeInsert")
+	@RequestMapping(value="/noticeInsert.do")
+	public String noticeInsert( NoticeVO vo, BindingResult result, HttpServletRequest request, Model model) {
+		
+		/* Validator error */
+		if(result.hasErrors()) {
+			model.addAttribute(RESULT_MESSAGE, super.setResultMessage(result));
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;
+		}
+		
+		/* get set session */
+		try {
+			vo.setRegID((String)EgovSessionCookieUtil.getSessionAttribute(request, "usrId"));
+			vo.setModID((String)EgovSessionCookieUtil.getSessionAttribute(request, "usrId"));
+		} catch (Exception e){ 
+			model.addAttribute(RESULT_MESSAGE, "로그인 사용자 정보 없음. 재로그인 필요");
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;
+		}
+		
+		try {
+			
+			if( vo.getNoticeSeq() == 0 ) {
+				noticeService.insertNotice(vo); 
+
+				String getAttachNo = vo.getImgSeq();
+				
+				if( getAttachNo != null && !"".equals(getAttachNo) ) {	
+					String[] attachArr = getAttachNo.split(",");
+					
+					if( attachArr.length == 0 ) {
+						vo.setImgSeq(getAttachNo);
+						noticeService.updateImage(vo); 
+					}
+					
+					for( String imgAttach : attachArr) {
+						vo.setImgSeq(imgAttach);
+						noticeService.updateImage(vo); 
+					}
+				}
+			} else {
+				
+				noticeService.updateNotice(vo);
+				String getAttachNo = vo.getImgSeq();
+				if( getAttachNo != null && !"".equals(getAttachNo) ) {
+					String[] attachArr = getAttachNo.split(",");
+					
+					if( attachArr.length == 0 ) {
+						vo.setImgSeq(getAttachNo);
+						noticeService.updateImage(vo); 
+					}
+					
+					for( String imgAttach : attachArr) {
+						vo.setImgSeq(imgAttach);
+						noticeService.updateImage(vo); 
+					}
+				}
+			}
+			
+			model.addAttribute("BOARD_SEQ", vo.getNoticeSeq());
+			model.addAttribute(CHECK_RESULT, true);
+			return JSONVIEW;
+			
+			//if(bResult) resultPage += String.valueOf(returnVO.getDistSeq());
+		} catch (Exception e) {
+			model.addAttribute(RESULT_MESSAGE, e.getLocalizedMessage());
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;
+		}
+		
+		
+	}
+	
 	@RequestName(value="deleteNotice")
 	@RequestMapping(value="/noticeDelete.do")
 	public String deleteNotice(@Validated(NoticeDeleteVal.class) NoticeVO noticeVO, HttpServletRequest request, BindingResult result, Model model) {
@@ -444,6 +551,223 @@ public class NoticeController extends BaseController {
 			e.printStackTrace();
 		}
         return mav;
+	}
+	
+	@RequestName(value="fileUpload")
+	@RequestMapping(value="/fileUpload.do")
+	public String daumeditorFileUploadPersist (@Validated FileVO FileVO, BindingResult result, HttpServletRequest request, Model model)  {
+		
+		String currentPageName = String.valueOf(request.getParameter("currentPageName"));
+		String bbsSeq          = String.valueOf(request.getParameter("noticeSeq"));
+		String bbsClsCd        = "CTM_001";
+		
+		// currentPageName값은 현재 작성중인 페이지 메뉴와 이미지가 저장될 경로를 결정한다. 이에 currentPageName을 값은 daumeditor.properties에 정의된 daumFiledir값으로 유효성을 검사해야 한다.
+		if(!"null".equalsIgnoreCase(currentPageName)&&!"".equals(currentPageName)&&propertiesService.getString("allowFileDir").indexOf(currentPageName)>=0){
+			FileVO.setBbsClsCD(currentPageName);
+			FileVO.setImgPath(currentPageName + "/");
+			currentPageName = "/" + (String)request.getParameter("currentPageName") + "/";
+		} else {
+			model.addAttribute(CHECK_RESULT, "파일 업로드 기능에 실패하였습니다.");
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;
+		}
+		
+		boolean bResult = false;
+		String tempFileURL = "";
+		
+		try{
+			
+			// 이미지 받아오기
+			MultipartHttpServletRequest multiRequest = (MultipartHttpServletRequest)request;
+			multiRequest.setCharacterEncoding(propertiesService.getString("fileEncoding"));
+			final Map<String, MultipartFile> files = multiRequest.getFileMap();
+			
+			if( files == null ) {
+				model.addAttribute(CHECK_RESULT, "파일 업로드 기능에 실패하였습니다.");
+				model.addAttribute(CHECK_RESULT, false);
+				return JSONVIEW;
+			}
+			
+			String fileUploadDir 	=   propertiesService.getString("fileUploadDir");
+			String ctnDaumDir 		= 	propertiesService.getString("ctnDaumDir");
+			
+			String ctnDaumURL 		=   propertiesService.getString("ctnDaumURL");
+			
+			// 저장 경로 설정 및 생성
+			File saveFolder = new File( fileUploadDir + ctnDaumDir+currentPageName);
+			
+			if (!saveFolder.exists() || saveFolder.isFile()){ saveFolder.mkdirs(); }
+			
+			// 저장 파일 설정
+			Iterator<Map.Entry<String, MultipartFile>> itr = files.entrySet().iterator();
+			tempFileURL = ctnDaumURL + ctnDaumDir + currentPageName;
+			
+			Map.Entry<String, MultipartFile> entry = itr.next();
+			MultipartFile file = entry.getValue();
+			
+			if ( "".equals(file.getOriginalFilename())) {
+				model.addAttribute(CHECK_RESULT, "파일명칭이 미존재합니다.");
+				model.addAttribute(CHECK_RESULT, false);
+				return JSONVIEW;
+			}	
+			
+			// set new name
+			String orgFileName = file.getOriginalFilename();
+			int dot = orgFileName.lastIndexOf(".");
+			String fileExtension = null;
+			if(dot!=-1){ fileExtension = orgFileName.substring(dot); } // includes "."
+			
+			
+			FileVO.setBbsClsCD(bbsClsCd);
+			
+			// 파일 설정
+			String fileNameExtension = new SimpleDateFormat("yyyyMMddHHmmsss").format(Calendar.getInstance().getTime()) + fileExtension;
+			// 파일 명
+			String fileName = orgFileName.substring(0, dot) + fileNameExtension;
+			
+			// 파일 경로
+			String newFileNameExe = String.valueOf(request.getParameter("currentPageName")) + "_img" + "_" + fileNameExtension;
+			FileVO.setImgName(fileName);
+			
+			String homeURL			=  super.propertiesService.getString("homeURL");
+			
+			FileVO.setImgURL(homeURL + tempFileURL + newFileNameExe);
+			
+			String originalFilePath = fileUploadDir + ctnDaumDir + currentPageName;
+			
+			File newFile = new File(originalFilePath + newFileNameExe);
+	    	file.transferTo(newFile);
+	     
+			// 파일 저장
+			FileVO.setImgSize((int)file.getSize());
+			
+			// 파일 업데이트 (커멘트 값있을 경우 커멘트 값 업뎃 )
+		
+			System.out.println("bbsSeq["+bbsSeq+"]");
+			if( bbsSeq != null && "0".compareTo(bbsSeq) < 0  && !"".equals(bbsSeq)  && !"null".equals(bbsSeq) ) {
+				
+				FileVO.setNoticeSeq( Integer.parseInt( bbsSeq) );
+				// 등록한 이미지 DB에 저장 : TB_COM_DAUM_IMG
+				System.out.println("FileVO================>"+FileVO);
+				noticeService.bbsImage(FileVO);
+				System.out.println("bbsImageeeeeeeeeeeeeeeeeeeeeeeeeeeee");
+					
+				NoticeVO bbsVo= new NoticeVO();
+				bbsVo.setNoticeSeq( Integer.parseInt( bbsSeq));
+				bbsVo.setImgSeq( FileVO.getImgSeq() + "");
+				bbsVo.setModID((String)EgovSessionCookieUtil.getSessionAttribute(request, "usrId"));
+				System.out.println("bbsVo================>"+bbsVo);
+				noticeService.appendBbsImage(bbsVo);
+					
+			} else {
+				model.addAttribute(CHECK_RESULT, "파일 저장에 실패했습니다.");
+				model.addAttribute(CHECK_RESULT, false);
+			}
+			
+			bResult = true;
+				
+		} catch (Exception e) {
+			e.printStackTrace();
+			
+			model.addAttribute(CHECK_RESULT, e.getLocalizedMessage());
+			model.addAttribute(CHECK_RESULT, false);
+		} 
+		
+		model.addAttribute("imgSeq", FileVO.getImgSeq());
+		model.addAttribute("imageurl", FileVO.getImgURL());
+		model.addAttribute("imageName", FileVO.getImgName());
+		model.addAttribute(CHECK_RESULT, bResult);
+		
+		return JSONVIEW;
+	}
+	
+	@RequestName(value="deleteImage")
+	@RequestMapping(value={"/deleteImage.do"})
+	public String boardDeleteImage( NoticeVO vo, BindingResult result, HttpServletRequest request, Model model) {
+ 
+		/* Validator error */
+		if(result.hasErrors()) {
+			model.addAttribute(RESULT_MESSAGE, super.setResultMessage(result));
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;
+		}
+		 
+		if( vo.getNoticeSeq() == 0 ) {
+			model.addAttribute(RESULT_MESSAGE, "게시판 정보가 없습니다.");
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;			
+		}
+		
+		if( vo.getAtchFileID() == null || "".equals(vo.getAtchFileID())  ) {
+			model.addAttribute(RESULT_MESSAGE, "이미지 정보가 없습니다.");
+			model.addAttribute(CHECK_RESULT, false);
+			return JSONVIEW;			
+		}
+		 
+		try {
+			fileDelete(vo);
+			
+			noticeService.deleteBBSImage(vo); 
+			if( vo.getNoticeSeq() > 0 ) noticeService.updateBbsImage(vo); 
+			
+			// 파일 삭제	
+			model.addAttribute(RESULT_MESSAGE, "정상적으로 삭제되었습니다.");
+			model.addAttribute(CHECK_RESULT, true);
+			 
+			// 페이지 이동
+			
+		} catch (Exception e) {
+			
+			model.addAttribute(RESULT_MESSAGE, e.getLocalizedMessage());
+			model.addAttribute(CHECK_RESULT, false);
+			
+			return JSONVIEW;
+		}
+		
+		return JSONVIEW;
+	}
+	
+	private void fileDelete(NoticeVO vo) throws Exception, IOException {
+		
+		// imgSeq에 , 으로 시작될 경우
+		if( vo.getAtchFileID() != null && vo.getAtchFileID().startsWith(",")) vo.setAtchFileID(vo.getAtchFileID().replaceFirst(",", ""));
+		
+		String getAttachNo = vo.getAtchFileID();
+		
+		if( getAttachNo != null && !"".equals(getAttachNo)  ) {
+			String[] attachArr = getAttachNo.split(",");
+			if( attachArr.length == 0 ) {
+				
+				vo.setAtchFileID(getAttachNo);
+				fileImgSeqDelete(vo);
+				
+			} else {
+				for( String imgAttach : attachArr) {
+					vo.setAtchFileID(imgAttach);
+					fileImgSeqDelete(vo);
+				}
+			}
+		}
+	}
+	
+	private void fileImgSeqDelete(NoticeVO vo) throws Exception, IOException {
+		FileVO imageVo = noticeService.getBBSImage(vo);
+		String fileUrl = imageVo.getImgURL();
+		String homeURL			=  super.propertiesService.getString("homeURL");
+		fileUrl = fileUrl.replace(homeURL, "");
+		fileUrl = fileUrl.replace("/upload", "");
+		
+		String fileUploadDir 	=   propertiesService.getString("fileUploadDir");
+		
+		String fullFilePath     = "";
+		
+		fullFilePath = fileUploadDir.concat(fileUrl);
+		
+		// 저장 경로 설정 및 생성
+		Path filePath = Paths.get(fullFilePath);
+		
+		// 파일 삭제
+		Files.delete(filePath);
 	}
 	
 	/* NOTE : 상세/등록/수정 화면

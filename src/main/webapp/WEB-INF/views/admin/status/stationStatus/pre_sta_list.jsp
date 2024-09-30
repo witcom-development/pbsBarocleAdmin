@@ -207,10 +207,7 @@
                                 <c:if test="${status.count > ((paginationInfo.currentPageNo -1) * paginationInfo.recordCountPerPage)}">
                                 <c:if test="${status.count <= (paginationInfo.currentPageNo * paginationInfo.recordCountPerPage)}">
                                 <tr>
-					                <td class="title tl"><a href="#" id="${ info.stationId }">
-					                <c:if test="${info.stationSeCd eq 'RAK_001' }">(LCD+QR 반납가능)</c:if>
-                                    <%-- <c:if test="${info.stationSeCd ne 'RAK_001' }">(신규)</c:if> --%>
-                                        ${ info.stationName }</a></td>
+					                <td class="title tl"><a href="#" id="${ info.stationId }">${ info.stationName }</a></td>
 					                <td class="title tr pr10" title="자전거 거치중 수/전체 거치대수(점검수)">${ info.parkingRack }/${ info.rackTotCnt }(${ info.brokenRackTotCnt })</td>
 					                <td class="title tr pr10" title="연결반납 자전거 수/전체 자전거 수(점검수)">${ info.parkingBikeTotCnt }/${ info.parkingRack }(${ info.brokenBikeTotCnt })</td>
 					                <td class="title tr pr10">${ info.shared }</td>

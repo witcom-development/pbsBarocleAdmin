@@ -162,26 +162,23 @@
 	</select>
 	
 	<select id="getStationGrpRemoteReturnList" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
-	SELECT /** 대리반납정거장 목록 조회 */
-	       _RETURN.REMOTE_RETURN_SEQ
-	     , _RETURN.STATION_GRP_SEQ
-	     , _RETURN.REMOTE_LATITUDE
-	     , _RETURN.REMOTE_LOGITUDE
-	     , _RETURN.REMOTE_USE_YN
-	     , _RETURN.REMOTE_STATION_NAME
-	     , STATION_GRP_NAME 
-	  FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
-	     , TB_OPR_MLANG_STATION_GRP GRP 
-	 WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
-	   AND GRP.LANG_CLS_CD = 'LAG_001'
-<!-- 		<if test="lang != null and lang != ''"> -->
-<!-- 			AND GRP.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang}) -->
-<!-- 		</if> -->
-		<if test="remote_station_name != null and remote_station_name != ''">
-			AND _RETURN.REMOTE_STATION_NAME = #{remote_station_name}
+		SELECT /** 대리반납정거장 목록 조회 */
+		       _RETURN.REMOTE_RETURN_SEQ
+		     , _RETURN.STATION_GRP_SEQ
+		     , _RETURN.REMOTE_LATITUDE
+		     , _RETURN.REMOTE_LOGITUDE
+		     , _RETURN.REMOTE_USE_YN
+		     , _RETURN.REMOTE_STATION_NAME
+		     , STATION_GRP_NAME 
+		  FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
+		     , TB_OPR_MLANG_STATION_GRP GRP 
+		 WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
+		 AND GRP.LANG_CLS_CD = 'LAG_001'
+		<if test="search_grp != null and search_grp != ''">
+			AND _RETURN.STATION_GRP_SEQ = #{search_grp}
 		</if>
-		<if test="reg_id != null and reg_id != ''">
-			AND _RETURN.REG_ID = #{reg_id}
+		<if test="remote_station_name != null and remote_station_name != ''">
+			AND _RETURN.REMOTE_STATION_NAME LIKE CONCAT('%', #{remote_station_name}, '%')
 		</if>
 		<if test="useYN != null and useYN != ''">
 			<if test="searchUse.equals('remote_use_yn')">
@@ -304,15 +301,18 @@
 	</select>
 
 	<select id="getStationGrpRemoteReturnListCnt" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO" resultType="int">
-	SELECT /** 대리반납정거장 목록 건수 조회 */
-	       count(*) 
-	  FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
-	     , TB_OPR_MLANG_STATION_GRP GRP 
-	 WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
-	   AND GRP.LANG_CLS_CD = 'LAG_001'
+		SELECT /** 대리반납정거장 목록 건수 조회 */
+		       count(*)
+		FROM TB_OPR_STATION_GRP_REMOTE_RETURN _RETURN
+		     , TB_OPR_MLANG_STATION_GRP GRP 
+		WHERE _RETURN.STATION_GRP_SEQ = GRP.STATION_GRP_SEQ
+		AND GRP.LANG_CLS_CD = 'LAG_001'
 <!-- 		<if test="lang != null and lang != ''"> -->
 <!-- 			AND GRP.LANG_CLS_CD = (SELECT COM_CD FROM TB_SYS_COM_CD WHERE ADD_VAL1 = #{lang}) -->
 <!-- 		</if> -->
+		<if test="search_grp != null and search_grp != ''">
+			AND _RETURN.STATION_GRP_SEQ = #{search_grp}
+		</if>
 		<if test="remote_station_name != null and remote_station_name != ''">
 			AND _RETURN.REMOTE_STATION_NAME = #{remote_station_name}
 		</if>
@@ -442,6 +442,12 @@
 		   AND LANG_CLS_CD = 'LAG_001' 
 	</select>
 	
+	<select id="remoteStationDuplNameCheck"	parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO"	resultType="int">
+		SELECT COUNT(1)
+		FROM TB_OPR_STATION_GRP_REMOTE_RETURN
+		WHERE REMOTE_STATION_NAME = #{station_name}
+	</select>
+	
 	
 	<select id="getStationNo"	resultType="int">
 		<![CDATA[
@@ -506,9 +512,9 @@
 		     ) VALUES (
 		       #{remote_return_seq}
 		     , #{station_grp_seq}
-		     , #{remote_latitude}
-		     , #{remote_logitude}
-		     , #{remote_use_yn}
+		     , #{station_latitude}
+		     , #{station_longitude}
+		     , #{station_use_yn}
 		     , #{remote_station_name}
 		     , SYSDATE()
 		     , #{reg_id}
@@ -563,6 +569,13 @@
 				, UNUSE_END_DTTM = '0000-00-00 00:00:00'
 			</if>
 	  WHERE STATION_ID = #{station_id}
+	</update>
+	
+	<update id="updateStationName" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">
+		UPDATE TB_OPR_MLANG_STATION
+			SET STATION_NAME = #{station_name}
+		WHERE STATION_ID = #{station_id}
+		AND LANG_CLS_CD = #{lang_cls_cd}
 	</update>
 
 	<update id="updateStationGrpRemoteReturn" parameterType="com.dkitec.barocle.admin.manage.stationmgmt.vo.StationMgmtVO">

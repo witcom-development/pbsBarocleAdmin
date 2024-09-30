@@ -135,7 +135,7 @@
 				,ADD_VAL1			AS addVal1
 				,ADD_VAL2			AS addVal2
 				,ADD_VAL3			AS addVal3
-			FROM spb.TB_SYS_COM_CD
+			FROM TB_SYS_COM_CD
 		   WHERE COM_UP_CD = #{comUpCd} ;
 	</select>
 	<select id="getAdmComCodeList" parameterType="commonCodeVo" resultType="commonCodeVo">
@@ -249,14 +249,14 @@
 	 
 	<select id="getUpcodeDspOrdNum" resultType="int">
 		SELECT COUNT(COM_CD)+1
-		  FROM spb.TB_SYS_COM_CD
+		  FROM TB_SYS_COM_CD
 		  WHERE COM_UP_CD IS NULL   
 	</select>
 	
 	<select id="getStationGrp" parameterType="commonStationVO" resultType= "commonStationVO">
 		SELECT A.STATION_GRP_SEQ		AS stationId
 			  ,B.STATION_GRP_NAME	   AS stationName
-		  FROM spb.TB_OPR_STATION_GRP A INNER JOIN TB_OPR_MLANG_STATION_GRP B
+		  FROM TB_OPR_STATION_GRP A INNER JOIN TB_OPR_MLANG_STATION_GRP B
 			ON A.STATION_GRP_SEQ = B.STATION_GRP_SEQ
 		 WHERE B.LANG_CLS_CD = #{lang} 
 		ORDER BY A.STATION_GRP_SEQ  
@@ -264,7 +264,7 @@
 	<select id="getStation" parameterType="commonStationVO" resultType= "commonStationVO">
 		SELECT A.STATION_ID		 AS stationId
 			  ,B.STATION_NAME	   AS stationName
-		  FROM spb.TB_OPR_STATION A INNER JOIN spb.TB_OPR_MLANG_STATION B
+		  FROM TB_OPR_STATION A INNER JOIN TB_OPR_MLANG_STATION B
 			ON A.STATION_ID = B.STATION_ID
 		  WHERE A.STATION_GRP_SEQ = #{stationId}
 			AND B.LANG_CLS_CD = #{lang}
@@ -273,14 +273,14 @@
 	<select id="getCenterInfo" resultType="commonCenterVo">
 		SELECT CENTER_ID   AS centerId
 			  ,CENTER_NAME AS centerName
-		  FROM spb.TB_OPR_CENTER
+		  FROM TB_OPR_CENTER
 		 WHERE CENTER_CLS_CD IN ( 'CEN_001', 'CEN_002' )
 	</select>
 
 	<select id="getCenterMallInfo" resultType="commonCenterVo">
 		SELECT REPLACE(CENTER_ID,'CEN','') AS centerId
 			  ,CENTER_NAME AS centerName
-		  FROM spb.TB_OPR_CENTER
+		  FROM TB_OPR_CENTER
 		 WHERE CENTER_CLS_CD = 'CEN_003'
 		   AND USE_YN = 'Y'
 	</select>
@@ -296,9 +296,9 @@
 	<select id="getUserInfo" parameterType="userMgmtVO" resultType="userMgmtVO">
 	   SELECT ADMIN_ID	 AS  usrId
 			 ,ADMIN_NAME   AS  usrName
-		 FROM spb.TB_SYS_ADMIN  
+		 FROM TB_SYS_ADMIN  
 		WHERE ADMIN_GRP_SEQ in (SELECT ADMIN_GRP_SEQ
-								 FROM spb.TB_SYS_GRP_CD
+								 FROM TB_SYS_GRP_CD
 								WHERE ADMIN_CLS_CD =  CONCAT('ADM_' ,#{usrGrpCd}) )
 								
 		<if test='usrName != null and usrName != ""'>
@@ -310,9 +310,9 @@
    <select id="getRepBikeAdminInfo" parameterType="userMgmtVO" resultType="userMgmtVO">
 	   SELECT ADMIN_ID	 AS  usrId
 			 ,ADMIN_NAME   AS  usrName
-	   FROM spb.TB_SYS_ADMIN  
+	   FROM TB_SYS_ADMIN  
 	   WHERE ADMIN_GRP_SEQ in (  SELECT ADMIN_GRP_SEQ
-								 FROM spb.TB_SYS_GRP_CD
+								 FROM TB_SYS_GRP_CD
 								 WHERE ADMIN_CLS_CD =  CONCAT('ADM_' ,#{usrGrpCd})
 								 AND ADMIN_GRP_SEQ='21' )					
 	   <if test='usrName != null and usrName != ""'>
@@ -325,7 +325,7 @@
 		 SELECT PENALTY_CD	AS penaltyCd
 			   ,PENALTY_NAME  AS penaltyName
 			   ,PENALTY_POINT AS penaltyPoint
-		   FROM spb.TB_SVC_PENALTY_CD
+		   FROM TB_SVC_PENALTY_CD
 		  WHERE USE_YN = 'Y'	 
 		  ORDER BY PENALTY_NAME 
 	</select>	

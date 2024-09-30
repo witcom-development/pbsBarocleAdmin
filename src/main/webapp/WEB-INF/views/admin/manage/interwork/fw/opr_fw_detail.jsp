@@ -78,7 +78,7 @@
 											<td>
 												<select class="select-category01" id="deviceModlCd" name="deviceModlCd">
 													<option value="">선택</option>
-													<option value="DM2" <c:if test="${firmware.deviceModlCd == 'DM2'}">selected="selected"</c:if>>단말기</option>
+													<%-- <option value="DM2" <c:if test="${firmware.deviceModlCd == 'DM2'}">selected="selected"</c:if>>단말기</option> --%>
 													<option value="DM4" <c:if test="${firmware.deviceModlCd == 'DM4'}">selected="selected"</c:if>>QR단말기</option>
 													<%-- <option value="DM6" <c:if test="${firmware.deviceModlCd == 'DM6'}">selected="selected"</c:if>>전기단말기</option> --%>
 												</select>

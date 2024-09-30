@@ -1,10 +1,17 @@
 package com.dkitec.barocle.admin.service.paymentmgmt.payment.controller;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.math.BigInteger;
 import java.net.URI;
+import java.net.URL;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
+import java.security.KeyStore;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -13,8 +20,15 @@ import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.Valid;
+
+import lgdacom.XPayClient.XPayClient;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
@@ -29,9 +43,6 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.client.RestTemplate;
 
-import com.dkitec.cfood.core.CfoodException;
-import com.dkitec.cfood.core.web.annotation.RequestCategory;
-import com.dkitec.cfood.core.web.annotation.RequestName;
 import com.dkitec.barocle.admin.login.security.filter.EgovSessionCookieUtil;
 import com.dkitec.barocle.admin.login.vo.UserSessionVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.ToSHA256Hex;
@@ -48,6 +59,9 @@ import com.dkitec.barocle.util.payment.KakaoPayUtil;
 import com.dkitec.barocle.util.payment.NaverPayUtil;
 import com.dkitec.barocle.util.payment.TmoneyPayUtil;
 import com.dkitec.barocle.util.webutil.HttpUtil;
+import com.dkitec.cfood.core.CfoodException;
+import com.dkitec.cfood.core.web.annotation.RequestCategory;
+import com.dkitec.cfood.core.web.annotation.RequestName;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -56,7 +70,6 @@ import com.mainpay.sdk.utils.MakeID;
 import com.mainpay.sdk.utils.ParseUtils;
 
 import egovframework.rte.ptl.mvc.tags.ui.pagination.PaginationInfo;
-import lgdacom.XPayClient.XPayClient;
 
 
 @Controller
@@ -354,7 +367,7 @@ public class PaymentController extends BaseController {
 	private boolean canclePayType(Map<String, String> paramMap) {
 		boolean returnVal;
 		switch( paramMap.get("paymentMethodCd") ) {
-		case "BIM_001" :
+		case "BIM_001" :	returnVal = mainPayCancelAPI(paramMap);		break;		// 메인페이 결제 취소 추가
 		case "BIM_002" :
 		case "BIM_003" :	returnVal = false;	// payGate는 아예 리턴
 		case "BIM_007" :	returnVal = paycoCancelAPI(paramMap);		break;
@@ -381,6 +394,115 @@ public class PaymentController extends BaseController {
 		default :	returnVal = false;
 		}
 		return returnVal;
+	}
+	
+	public boolean mainPayCancelAPI (Map<String, String> parmaMap) {
+		
+		boolean result = false;
+
+		try {
+			
+			//String API_BASE = "https://dev-relay.mainpay.co.kr";				// TEST API URL
+			//String mbrNo = "100011"; // 테스트 가맹점 번호
+			//String apiKey = "U1FVQVJFLTEwMDAxMTIwMTgwNDA2MDkyNTMyMTA1MjM0"; // 테스트 apiKey
+					
+			String API_BASE = "https://relay.mainpay.co.kr";                               // REAL API URL
+			String mbrNo = "114549";                                                       // REAL 가맹점번호
+			String apiKey = "LovY3SkcSKoB9m3aihyaqw404jgrfsXWedHoUlPOOWlJ";                // REAL apiKey
+			
+			
+			//String apiUrl = API_BASE + "/v1/api/payments/payment/card-auto/cancel";			// 신용카드 정기결제 결제 취소 요청 API
+			String apiUrl = API_BASE + "/v1/api/payments/payment/card-auto/cancel";			// 신용카드 정기결제 결제 취소 요청 API
+			java.text.SimpleDateFormat format = new java.text.SimpleDateFormat ( "yyyyMMddHHmmss");
+			java.text.SimpleDateFormat format2 = new java.text.SimpleDateFormat ( "yyMMddHHmmss");
+			Date date = new Date();
+			String TODAY = format.format(date);
+			parmaMap.put("mbrNo", mbrNo); // SPC Networks에서 부여한 가맹점번호 (상점 ID)
+			parmaMap.put("mbrRefNo", MakeID.orderNo("BRC_"+TODAY, 20)); // 가맹점에서 나름대로 정한 중복되지 않는 주문번호
+			parmaMap.put("clinetType","MERCHANT");
+			
+			Map<String, String> parameters = new HashMap<String, String>();
+			
+			parameters.put("mbrNo", mbrNo); // SPC Networks에서 부여한 가맹점번호 (상점 ID)
+			parameters.put("mbrRefNo", "BRC_"+TODAY); // 가맹점에서 나름대로 정한 중복되지 않는 주문번호
+			parameters.put("orgRefNo",parmaMap.get("tId"));	// 원거래 승인번호
+			parameters.put("orgTranDate",parmaMap.get("paymentConfmDttm"));	// 원거래 승인일자
+			parameters.put("payType",parmaMap.get("paymentConfmPaytype"));
+			parameters.put("paymethod","CARD");
+			parameters.put("amount",String.valueOf(parmaMap.get("totAmt")));
+			parameters.put("timestamp", TODAY);	// 가맹점 시스템 시각 (yyyyMMddHHmmssSSS)+
+			// 결제 위변조 방지 서명값 생성
+			String key = mbrNo+"|BRC_"+TODAY+"|"+String.valueOf(parmaMap.get("totAmt"))+"|"+apiKey+"|"+TODAY;
+			String signature = ToSHA256Hex.toSHA256Hex(key);
+			parameters.put("signature",signature);
+			
+			
+			SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+			TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			
+			trustManagerFactory.init((KeyStore) null);
+            sslContext.init(null, (TrustManager[]) trustManagerFactory.getTrustManagers(), null);
+            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            
+            HashMap<String, Object> params = new HashMap<String, Object>();
+
+            StringBuilder postData = new StringBuilder();
+            for(Map.Entry<String,String> param : parameters.entrySet())
+            {
+            	if(postData.length() != 0)
+            		postData.append('&');
+            	postData.append(param.getKey());
+            	postData.append('=');
+            	postData.append(String.valueOf(param.getValue()));
+            }
+
+ 			System.out.println("Send Data " + postData.toString());
+            
+ 			byte[] postDataBytes = postData.toString().getBytes();
+ 			
+ 			URL obj = new URL(apiUrl); // 호출할 URL
+            HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+            con.setConnectTimeout(10000); //10초
+            con.setReadTimeout(10000); //10초
+            con.setSSLSocketFactory(sslSocketFactory);
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+            con.setDoOutput(true);
+            con.getOutputStream().write(postDataBytes); // POST 호출
+
+ 			
+ 			//httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
+ 			
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            String line;
+            String returnStr = "";
+            while ((line = in.readLine()) != null) {
+            	returnStr = line;
+                System.out.println("LINE : " + line);
+            }
+            System.out.println("returnStr : " + returnStr);
+            
+            //makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청] " +"[callUrl :" + apiUrl +" ] " + parameters.toString() , "Y");
+    		//makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청 결과] " + returnStr , "Y");
+			
+			Map responseMap = ParseUtils.fromJson(returnStr, Map.class);
+			String resultCode = (String) responseMap.get("resultCode");
+			String resultMessage = (String) responseMap.get("resultMessage");
+	
+			if( ! "200".equals(resultCode)) {	// API 호출 실패		
+				System.out.println(returnStr); 
+				result = false;
+				
+			} else {
+				result = true;
+			}
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+			result = false;
+		}
+			   	
+		return result;
 	}
 	
 	public boolean lgUplusCancelAPI (Map<String, String> parmaMap) {
@@ -814,62 +936,6 @@ public boolean tmoneyPayCancelAPI (Map<String, String> parmaMap) {
 		return result;
 	}
 
-public boolean mainPayCancelAPI (Map<String, String> parmaMap) {
-	
-	boolean result = false;
-	
-	//String API_BASE = "https://dev-relay.mainpay.co.kr";				// TEST API URL
-	//String mbrNo = "100011"; // 테스트 가맹점 번호
-	//String apiKey = "U1FVQVJFLTEwMDAxMTIwMTgwNDA2MDkyNTMyMTA1MjM0"; // 테스트 apiKey
-	
-	String API_BASE = "https://relay.mainpay.co.kr";                                                  // REAL API URL
-	String mbrNo = "107022";                                                                           // REAL 가맹점번호
-	String apiKey = "U1FVQVJFLTEwNzAyMjIwMjEwNTI0MTQzNjM3MTU1NTk1";                // REAL apiKey
-
-	
-	String apiUrl = API_BASE + "/v1/api/payments/payment/card-auto/cancel";			// 신용카드 정기결제 결제 취소 요청 API
-	java.text.SimpleDateFormat format = new java.text.SimpleDateFormat ( "yyyyMMddHHmmss");
-	Date date = new Date();
-	String TODAY = format.format(date);
-	parmaMap.put("mbrNo", mbrNo); // SPC Networks에서 부여한 가맹점번호 (상점 ID)
-	//parmaMap.put("mbrRefNo", MakeID.orderNo("WG_"+TODAY, 20)); // 가맹점에서 나름대로 정한 중복되지 않는 주문번호
-	parmaMap.put("clinetType","MERCHANT");
-	
-	Map<String, String> parameters = new HashMap<String, String>();
-	
-	parameters.put("mbrNo", mbrNo); // SPC Networks에서 부여한 가맹점번호 (상점 ID)
-	parameters.put("mbrRefNo", MakeID.orderNo("WG_"+TODAY, 20)); // 가맹점에서 나름대로 정한 중복되지 않는 주문번호
-	parameters.put("orgRefNo",parmaMap.get("orgRefNo"));
-	parameters.put("orgTranDate",parmaMap.get("orgTranDate"));
-	parameters.put("amount",String.valueOf(parmaMap.get("amount")));
-	//parameters.put("amount","9000");
-	parameters.put("clinetType","MERCHANT");
-	//parameters.put("orderCertifyKey",parmaMap.get("orderCertifyKey"));
-	
-	
-	
-	String responseJson = ""; 
-	try {
-		responseJson = (String)HttpSendTemplate.post(apiUrl, parameters, apiKey);
-		//responseJson = getSSLConnection(apiUrl, parameters, apiKey);
-
-		Map responseMap = ParseUtils.fromJson(responseJson, Map.class);
-		String resultCode = (String) responseMap.get("resultCode");
-		String resultMessage = (String) responseMap.get("resultMessage");
-
-		if( ! "200".equals(resultCode)) {	// API 호출 실패		
-			System.out.println(responseJson); 
-			result = false;
-			
-		} else {
-			result = true;
-		}
-	} catch(Exception e) {
-		result = false;
-	}
-	return result;
-}
-
 	/*
 	 * 이용권 체크 / 쿠폰번호 조회 _cms_20161205
 	 */
@@ -889,5 +955,52 @@ public boolean mainPayCancelAPI (Map<String, String> parmaMap) {
 			throw new CfoodException("admin.common.controller.obstacleCnt");
 		}
 		return JSONVIEW;
+	}
+	
+	public void makeServiceCheckApiLogFile(String logText, String logYn) {
+		
+		if(logYn.equals("Y")){
+			String filePath   = "/MainPayLogs";
+		  	java.text.SimpleDateFormat dateformat = new java.text.SimpleDateFormat("yyyyMMdd HH:mm:ss");
+		  	String nowTotDate = dateformat.format(new java.util.Date());
+		  	Integer nowdate = Integer.parseInt( nowTotDate.substring(0, 8) );
+		   
+			String fileName = "adminW_check_log_" + nowdate + ".txt"; //생성할 파일명
+		  	String logPath = filePath + File.separator + fileName; 
+		  
+		  	File folder = new File(filePath); //로그저장폴더
+		  	File f 		= new File(logPath);  //파일을 생성할 전체경로
+		  
+		  	try{
+		  	
+		  		if(folder.exists() == false) {
+		   			folder.mkdirs();
+				}
+
+		   		if (f.exists() == false){
+		    		f.createNewFile(); //파일생성
+		   		}
+
+		   		// 파일쓰기
+		   		FileWriter fw = null;
+
+		   		try {
+
+		   			fw = new FileWriter(logPath, true); //파일쓰기객체생성
+		   			fw.write(logText +"\n"); //파일에다 작성
+
+		   		} catch(IOException e) {
+		   			throw e;
+		   		} finally {
+		   			if(fw != null) fw.close(); //파일핸들 닫기
+		   		}
+
+		  	}catch (IOException e) { 
+		  		int result = 0;
+		   		//System.out.println(e.toString()); //에러 발생시 메시지 출력
+		  	}
+		}else{
+			return;
+		}
 	}
 }

@@ -3,7 +3,7 @@
 		<div id="footer">
 			<div class="foot">
 				<input type="hidden" id="mainPage" name="mainPage"  value="${mainPage }">
-				<p>Copyright ⓒ 2015 All right reserved</p>
+				<p>Copyright ⓒ 2024 All right reserved</p>
 			</div>
 		</div>
 		<form id="sessionLogoutForm" action="/j_spring_security_logout" method='POST'>

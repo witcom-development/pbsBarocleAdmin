@@ -15,6 +15,7 @@ public interface StationMgmtMapper {
 
 	public int stationNumberCheck(StationMgmtVO stationVo);
 	public int stationDuplNameCheck(StationMgmtVO stationVo);
+	public int remoteStationDuplNameCheck(StationMgmtVO stationVo);
 	public int getStationNo(StationMgmtVO stationVo);
 	public int getStationGrpRemoteReturnNo(StationMgmtVO stationVo);
 	public List<StationMgmtVO> getGroupStationList(StationMgmtVO vo);

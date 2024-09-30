@@ -571,5 +571,13 @@
 		</if>
 		ORDER BY TEAM_ID, CENTER_ID
 	</select>
+	
+	<select id="getAptGrpList" resultType="com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO">
+		SELECT grp.STATION_GRP_SEQ AS aptSeq, mlang.STATION_GRP_NAME AS aptName
+		FROM TB_OPR_STATION_GRP grp
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP mlang ON grp.STATION_GRP_SEQ = mlang.STATION_GRP_SEQ
+		WHERE mlang.LANG_CLS_CD='LAG_001'
+		ORDER BY grp.STATION_GRP_SEQ
+	</select>
 </mapper>
 

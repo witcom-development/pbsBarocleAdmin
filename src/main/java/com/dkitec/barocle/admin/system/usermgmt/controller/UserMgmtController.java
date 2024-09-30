@@ -189,6 +189,9 @@ public class UserMgmtController{
 	        //유인아파트 목록
 	        List<StationGroupMgmtVO> group = stationGroupMgmtService.getHumanStationGroupNameList(null);
 	        
+	        // 아파트 목록
+	        List<UserMgmtVO> aptList = usrService.getAptGrpList();
+	        
 	        //재배치 차량 목록_20160714_JJH
 	        java.util.List<java.util.Map> returnMap = relocationCarService.getRelocateCarList();
 	        model.addAttribute("relocateCarList", returnMap);
@@ -210,6 +213,7 @@ public class UserMgmtController{
 	     	
 	     	model.addAttribute("centerList", codeList);
 //	        model.addAttribute("center", center);
+	     	model.addAttribute("aptList", aptList);
 	        model.addAttribute("group", group);
 	        model.addAttribute("searchFrm", usrVO);
 	        model.addAttribute("inputFrm", new UserMgmtVO());

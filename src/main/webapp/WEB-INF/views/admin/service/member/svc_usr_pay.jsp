@@ -73,12 +73,12 @@ function getAction(idx){
 		case 0: actionValue = "/admin/service/member/memberInfo.do"; 			break;
 		case 1: actionValue = "/admin/service/member/memberPaymentList.do";		break;
 		case 2:	actionValue = "/admin/service/member/memberUseList.do";			break;
-		case 3:	actionValue = "/admin/service/member/memberMileage.do";			break;
+		/* case 3:	actionValue = "/admin/service/member/memberMileage.do";			break;
 		case 4: actionValue = "/admin/service/member/memberPenalty.do";			break;
-		case 5: actionValue = "/admin/service/member/memberRefundList.do";		break;
-		case 6: actionValue = "/admin/service/member/memberUnpaidList.do";  	break;
-		case 7:	actionValue = "/admin/service/member/memberVoucherList.do"; 	break;
-		case 8:	actionValue = "/admin/service/member/memberGiftList.do"; 		break;
+		case 5: actionValue = "/admin/service/member/memberRefundList.do";		break; */
+		case 3: actionValue = "/admin/service/member/memberUnpaidList.do";  	break;
+		/* case 7:	actionValue = "/admin/service/member/memberVoucherList.do"; 	break;
+		case 8:	actionValue = "/admin/service/member/memberGiftList.do"; 		break; */
 	}
 	return actionValue;
 }
@@ -213,22 +213,22 @@ function canclePayment(paymentSeq,paymentDttm,mbId){
 							<li><a href="#">회원정보</a></li>
 							<li class="on"><a href="#">결제이력</a></li>
 							<li><a href="#">이용이력</a></li>
-							<li><a href="#">마일리지 이력</a></li>
+							<!-- <li><a href="#">마일리지 이력</a></li>
 							<li><a href="#">벌점이력</a></li>
-							<li><a href="#">환불이력</a></li>
+							<li><a href="#">환불이력</a></li> -->
 							<li><a href="#">미납이력</a></li>
-							<li><a href="#">이용권</a></li>
-							<li><a href="#">선물</a></li>
+							<!-- <li><a href="#">이용권</a></li>
+							<li><a href="#">선물</a></li> -->
 						</ul>
 						<select  id="mobiletableList" class="tablist_m">
 							<option value="0">회원정보</option>
 							<option value="1"  selected="selected">결제이력</option>
 							<option value="2">이용이력</option>
-							<option value="3">마일리지이력</option>
+							<!-- <option value="3">마일리지이력</option>
 							<option value="4">벌점이력</option>
-							<option value="5">환불이력</option>
+							<option value="5">환불이력</option> -->
 							<option value="6">미납이력</option>
-							<option value="7">이용권</option>
+							<!-- <option value="7">이용권</option> -->
 						</select>
 						<!-- 모바일 검색조건 S-->
 						<div class="shBox_m mt20">
@@ -263,28 +263,22 @@ function canclePayment(paymentSeq,paymentDttm,mbId){
 						<table class="tb_type01">
 							<colgroup>
 								<col style="width:18%"/>
-								<col style="width:12%"/>
+								<%-- <col style="width:12%"/> --%>
 								<col style="width:18%"/>
 								<col style="width:18%"/>
 								<col style="width:11%"/>
-								<col style="width:11%"/>
-								<!--[if gt IE 8]><!--><col style="width:12%" class="mhid"/><!--<![endif]-->
 								<!--[if gt IE 8]><!--><col style="width:12%" class="mhid"/><!--<![endif]-->
 								<!--[if gt IE 8]><!--><col style="width:12%" class="mhid"/><!--<![endif]--> <!-- 20200511 이용권번호 -->
-								<col style="width:10%"/>
 							</colgroup>
 							<thead>
 								<tr>
-									<th>결제구분</th>
-									<th>결제방법</th>
-									<th>결제일시</th>
 									<th>승인번호</th>
+									<th>결제일시</th>
+									<!-- <th>결제구분</th> -->
+									<th>결제방법</th>
 									<th>결제금액</th>
-									<th>환불예정액</th>
 									<!--[if gt IE 8]><!--><th class="mhid">결제상태</th><!--<![endif]-->
-									<!--[if gt IE 8]><!--><th class="mhid">쿠폰번호</th><!--<![endif]--> <!-- 20200511 이용권번호 -->
 									<!--[if gt IE 8]><!--><th class="mhid">결제취소</th><!--<![endif]--> <!-- 20200511 이용권번호 -->
-									<th>할인여부</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -296,7 +290,8 @@ function canclePayment(paymentSeq,paymentDttm,mbId){
 									</script>
 									
 									<tr>
-										<td class="title pl10">
+										<td class="tc">${payment.payment_confm_no }</td>
+										<%-- <td class="title pl10">
 											<c:choose>
 												<c:when test="${payment.cls_cd ne null}">
 												${payment.cls_cd }
@@ -305,18 +300,14 @@ function canclePayment(paymentSeq,paymentDttm,mbId){
 													<a href="/admin/service/member/memberVoucherClsReg.do" title="이용권 구분 지정" data-width="440" data-height="455" data-pmt="&payment_seq=<c:out value='${payment.payment_seq}'/>"  class="winNewPop modal">지정</a>
 												</c:otherwise>
 											</c:choose>
-										</td>
-										<td class="title pl10">${payment.method_cd }</td>
+										</td> --%>
 										<td class="tc">
 											<fmt:parseDate var="dateString" value="${payment.payment_dttm }" pattern="yyyy-MM-ddHH:mm:ss" />
 											<fmt:formatDate value="${dateString}" pattern="yyyy-MM-dd HH:mm" />	
 										</td>
-										<td class="tc">${payment.payment_confm_no }</td>
+										<td class="title pl10">${payment.method_cd }</td>
 										<td class="tr pr10">
 											<fmt:formatNumber pattern="#,###" value="${payment.tot_amt }"></fmt:formatNumber>
-										</td>
-										<td class="tr pr10"><!-- 환불예정액자리 -->
-											${payment.refund_amt }
 										</td>
 										<!--[if gt IE 8]><!--><td class="mhid tc">
 											<c:choose>
@@ -340,9 +331,6 @@ function canclePayment(paymentSeq,paymentDttm,mbId){
 										</td><!--<![endif]-->
 										
 										<td class="tr pr10"><!-- 20200511 이용권번호 -->
-											${payment.coupon_no }
-										</td>
-										<td class="tr pr10"><!-- 20200511 이용권번호 -->
  
 		<c:choose>
 		    <c:when test="${payment.payment_stus_cd=='BIS_001' && payment.cls_cd=='초과요금' }">										
@@ -350,11 +338,6 @@ function canclePayment(paymentSeq,paymentDttm,mbId){
 		 	</c:when>
 		</c:choose>	
 							
-										</td>
-										<td class="tr pr10"><!-- shoh2999 인증제 할인 -->
-										<c:if test="${payment.certDisYn == 'Y'}">
-											인증제 할인
-										</c:if>
 										</td>
 									</tr>
 								

@@ -155,12 +155,12 @@ public class MemberMgmtController extends BaseController{
 			// 2020-08-11 변경
 			if( !"".equals(StringUtil.nullToBlank( memberVo.getSearchValue()))
 				) {
-				memberVo.setSearchStartDate("2015-09-01");	
-			} else {
+				memberVo.setSearchStartDate("2023-09-01");	
+			}/* else {
 				if(  diffOfDate(memberVo.getSearchStartDate(), memberVo.getSearchEndDate()) > 7 ) {
 					memberVo.setSearchStartDate( strDay );
 				}	
-			}
+			}*/
 			
 			// total count
 			paginationInfo.setTotalRecordCount(memberMgmtService.memberListCnt(memberVo));
@@ -305,12 +305,6 @@ public class MemberMgmtController extends BaseController{
 	    	model.put("useVoucherYn", useVoucherYn);
 	    	model.put("remainVoucherYn", remainVoucherYn);
 	    	model.put("blackListYn", blackListYn);
-	    	
-	    	//shoh2999
-			SafetyCertInfoVO safetyCertInfoVO = new SafetyCertInfoVO();
-			safetyCertInfoVO.setUsrUsrSeq(memberVo.getUsr_seq());
-			SafetyCertInfoVO rtnSafetyCertInfoVO = safetyCertService.getCertInfo(safetyCertInfoVO);
-			model.addAttribute("safetyCertInfoVO", rtnSafetyCertInfoVO);//shoh2999
 	    	
 	    	bResult = true;
 	    	

@@ -31,7 +31,7 @@
 							<th class="top">아이디</th>
 							<td class="top" name="usrMainId">${paymentVO.usrMainId}</td>
 						</tr>
-						<tr>
+						<%-- <tr>
 							<th>이용권 사용 유무</th>
 							<td name="usrMainId">
 								<c:if test="${paymentVO.useYn == 'Y'}">
@@ -52,7 +52,7 @@
 									가능
 								</c:if>	
 							</td>
-						</tr>
+						</tr> --%>
 						<tr>
 							<th>취소 사유</th>
 							<td><textarea class="detatextarea" maxlength=250 name="cancelReasonDesc">${paymentVO.cancelReasonDesc}</textarea></td>

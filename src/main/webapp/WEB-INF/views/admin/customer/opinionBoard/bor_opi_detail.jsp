@@ -134,26 +134,6 @@
 												<fmt:formatDate value="${modDttm}" pattern="yyyy-MM-dd HH:mm:ss"/>
 											</td>
 										</tr>
-										<tr>
-											<th>답변기한</th>
-											<td>
-												<%-- <fmt:formatDate value="${opinionBoardView.usr_regDttm}" pattern="yyyy-MM-dd"/> ~ 
-												<fmt:formatDate value="${opinionBoardView.deadline_Date}" pattern="yyyy-MM-dd"/> --%>
-												<fmt:parseDate var="usr_regDttm" value="${opinionBoardView.usr_regDttm}" pattern="yyyy-MM-ddHH:mm:ss" />
-												<fmt:formatDate value="${usr_regDttm}" pattern="yyyy-MM-dd"/> ~ 
-												<fmt:parseDate var="deadline_Date" value="${opinionBoardView.deadline_Date}" pattern="yyyy-MM-ddHH:mm:ss" />
-												<fmt:formatDate value="${deadline_Date}" pattern="yyyy-MM-dd"/>
-											</td>
-										</tr>
-										<tr>
-											<th>연장여부</th>
-											<td>
-											<c:choose>
-												<c:when test="${opinionBoardView.deadline != ''}">1회 연장되었습니다.</c:when>
-												<c:otherwise>0회 연장되었습니다.</c:otherwise>
-											</c:choose>
-											</td>
-										</tr>
 									</tbody>
 								</table>
 								<div class="btnArea">

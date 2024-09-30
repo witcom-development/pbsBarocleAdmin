@@ -361,10 +361,10 @@
 <%-- 								</c:if> --%>
 								<br/>
 								<!--  QR 자전거 관리 -->
-<!-- 								<a href="javascript:goQrScan('move');" class="myButton">자전거 이동</a> -->
-<!-- 								<a href="javascript:goQrScan('check');" class="myButton">자전거 확인</a> -->
-<!-- 								<a href="javascript:goQrScan('relocate');" class="myButton">재배치 완료</a> -->
-<!-- 								<a href="javascript:goQrScan('reset');" class="myButton">단말기 리셋</a> -->
+								<a href="javascript:goQrScan('move');" class="myButton">자전거 이동</a>
+								<a href="javascript:goQrScan('check');" class="myButton">자전거 확인</a>
+								<a href="javascript:goQrScan('relocate');" class="myButton">재배치 완료</a>
+								<a href="javascript:goQrScan('reset');" class="myButton">단말기 리셋</a>
 								<!--  QR 자전거 관리 -->
 								<!-- 20210514 분재직원용 -->
 								<%-- 

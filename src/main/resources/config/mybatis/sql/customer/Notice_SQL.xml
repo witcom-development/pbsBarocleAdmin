@@ -15,15 +15,9 @@
 			<if test="searchValue!='' and searchValue!=null">
 				AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
 			</if>
-			<if test="mainNoticeYN=='Y'.toString()">
-				AND MAIN_NOTICE_YN = 'Y'
-			</if>
-			<if test="mainNoticeYN=='N'.toString()">
-				AND MAIN_NOTICE_YN = 'N'
-			</if>
 	</select>
 	
-	<select id="listNotice" parameterType="noticeVO" resultType="noticeVO">
+	<!-- <select id="listNotice" parameterType="noticeVO" resultType="noticeVO">
 		SELECT	A.
 				NOTICE_SEQ AS noticeSeq,
 				CATE_CD AS cateCD,
@@ -65,14 +59,38 @@
 					<if test="searchValue!='' and searchValue!=null">
 						AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
 					</if>
-					<if test="mainNoticeYN=='Y'.toString()">
-						AND MAIN_NOTICE_YN = 'Y'
-					</if>
-					<if test="mainNoticeYN=='N'.toString()">
-						AND MAIN_NOTICE_YN = 'N'
-					</if>
 				) A
 		 ORDER BY SORT_ORD DESC, NOTICE_SEQ DESC
+		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
+	</select> -->
+	
+	<select id="listNotice" parameterType="noticeVO" resultType="noticeVO">
+		SELECT
+			NOTICE_SEQ AS noticeSeq,
+			CATE_CD AS cateCD,
+			SITE_CLS_CD AS siteClsCD,
+			NOTICE_NO AS noticeNO,
+			NOTICE_TITLE AS noticeTitle,
+			SORT_ORD AS sortOrd,
+			POST_STR_DTTM AS postStrDttm,
+			POST_END_DTTM AS postEndDttm,
+			MAIN_NOTICE_YN AS mainNoticeYN,
+			REG_DTTM AS regDttm,
+			REG_ID AS regID,
+			MOD_DTTM AS modDttm,
+			MOD_ID AS modID
+		FROM	TB_COM_NOTICE
+		WHERE	1=1
+		<if test="searchStartDate!='' and searchStartDate!=null">
+			AND DATE_FORMAT(POST_STR_DTTM,'%Y-%m-%d') &gt;= #{searchStartDate}
+		</if>
+		<if test="searchEndDate!='' and searchEndDate!=null">
+			AND DATE_FORMAT(POST_END_DTTM,'%Y-%m-%d') &lt;= #{searchEndDate}
+		</if>
+		<if test="searchValue!='' and searchValue!=null">
+			AND ( NOTICE_TITLE LIKE CONCAT('%',#{searchValue},'%') OR NOTICE_TEXT_CONTENT LIKE CONCAT('%',#{searchValue},'%') )
+		</if>
+		ORDER BY NOTICE_SEQ DESC
 		LIMIT	#{firstRecordIndex},#{recordCountPerPage}
 	</select>
 	
@@ -183,11 +201,12 @@
 				#{noticeTitle}, #{noticeTextContent}, #{noticeHTMLContent},
 				#{replyYN}
 				, 
-				CASE WHEN #{topYN} = 'Y' THEN MAX(SORT_ORD) + 1
+				<!-- CASE WHEN #{topYN} = 'Y' THEN MAX(SORT_ORD) + 1
 				ELSE MAX(NOTICE_SEQ) + 1
-				END
+				END -->
+				MAX(NOTICE_SEQ) + 1
 				, 
-				#{mainNoticeYN}, 
+				#{useYN}, 
 				#{postStrDttm}, #{postEndDttm}, #{popupYN},
 				#{postStrDttm}, #{postEndDttm}, #{mainNoticeYN},
 				#{postStrDttm}, #{postEndDttm},
@@ -323,4 +342,85 @@
 		AND A.PUSH_YN='Y'
 		AND B.LEAVE_YN='N'
 	</select>
+	
+	<select id="viewNotice2" parameterType="noticeVO" resultType="noticeVO">
+		SELECT NOTICE_SEQ AS noticeSeq
+			, NOTICE_NO AS noticeNo
+			, NOTICE_TITLE AS noticeTitle
+			, NOTICE_TEXT_CONTENT AS noticeTextContent
+			, NOTICE_HTML_CONTENT AS noticeHTMLContent
+			, READ_CNT AS readCnt
+			, USE_YN AS useYN
+			, POST_STR_DTTM AS postStrDttm
+			, POST_END_DTTM AS postEndDttm
+			, MAIN_NOTICE_YN AS mainNoticeYN
+			, REG_DTTM AS regDttm
+			, REG_ID AS regID
+			, MOD_DTTM AS modDttm
+			, MOD_ID AS modID
+			, ATCH_FILE_ID AS atchFileID
+		FROM TB_COM_NOTICE
+		WHERE NOTICE_SEQ = #{noticeSeq}
+	</select>
+	
+	<select id="getBBSImage" parameterType="noticeVO" resultType="fileVO">
+		SELECT	IMG_SEQ					AS imgSeq
+			 ,  IMG_PATH 				AS imgPath
+			 ,  IMG_URL  				AS imgURL
+			 ,	IMG_NAME				AS imgName
+		FROM	TB_COM_EDITOR_IMG
+		WHERE   IMG_SEQ    = #{atchFileID} 
+		ORDER BY BBS_SEQ ASC
+	</select>
+	
+	<update id="updateImage" parameterType="noticeVO">
+		UPDATE TB_COM_EDITOR_IMG
+		SET BBS_SEQ = #{noticeSeq}
+		WHERE IMG_SEQ = #{imgSeq}
+	</update>
+	
+	<insert id="bbsImage" parameterType="fileVO" useGeneratedKeys="true" keyProperty="imgSeq">
+		INSERT INTO TB_COM_EDITOR_IMG
+		(
+			BBS_CLS_CD, BBS_SEQ, IMG_PATH, IMG_URL, IMG_NAME, IMG_SIZE
+		)
+		VALUES
+		(	
+			#{bbsClsCD} , #{noticeSeq}, #{imgPath}, #{imgURL}, #{imgName}, #{imgSize}
+		) 
+		  
+	</insert>
+	
+	<update id="appendBbsImage" parameterType="noticeVO">
+		UPDATE TB_COM_NOTICE
+		SET ATCH_FILE_ID		 = CASE WHEN ATCH_FILE_ID IS NULL THEN #{imgSeq}
+		                           ELSE CONCAT( ATCH_FILE_ID, ',', #{imgSeq} )
+		                           END
+		  , MOD_DTTM 			 = NOW()
+		  ,	MOD_ID 				 = #{modID}
+	  WHERE NOTICE_SEQ 			 = #{noticeSeq}
+	</update>
+	
+	<update id="deleteBBSImage" parameterType="noticeVO">
+		DELETE  FROM	TB_COM_EDITOR_IMG
+		WHERE   IMG_SEQ    = #{imgSeq}
+	</update>
+	
+	<update id="updateBbsImage" parameterType="noticeVO">
+		UPDATE TB_COM_NOTICE
+		SET ATCH_FILE_ID		= REPLACE( REPLACE
+												( 
+													REPLACE ( ATCH_FILE_ID , concat( #{atchFileID}, ',') 
+																, '' )
+													, 
+														concat(',' , #{atchFileID}) 
+														, '' 
+												)
+												, #{atchFileID}
+										  , '')    
+		  , MOD_DTTM 			 = NOW()
+		  ,	MOD_ID 				 = #{modID}
+	  WHERE NOTICE_SEQ 			 = #{noticeSeq}
+	</update>
+	
 </mapper>

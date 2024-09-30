@@ -50,8 +50,8 @@
 	
 	<select id="listOpinionBoardCount" parameterType="opinionBoardVO" resultType="int">
 		 SELECT COUNT(IA.QNA_SEQ) AS qnaSeq
-		   FROM TB_COM_QNA_INFO IA 
-LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
+		 FROM TB_COM_QNA_INFO IA 
+		 LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
 			 ON IA.QNA_SEQ=IB.QNA_SEQ
 		  WHERE IA.OPEN_YN = 'Y'
 				<!-- 시민의견수렴_등록일로만 조회 _cms_20161214-->
@@ -76,10 +76,7 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 					AND IA.QNA_PROCESS_STUS_CD IS NULL
 				</if>
 				<if test="comCd!='' and comCd!=null">
-					AND ( IA.ADMIN_ID = #{comCd}
-						  OR
-						  IA.CATE_CD  = #{comCd}
-						)  
+					AND IA.CATE_CD  = #{comCd}
 				</if>
 	</select>
 	
@@ -88,8 +85,6 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 				QNA_SEQ,
 				QESTN_TITLE,
 				READ_CNT,
-				<!-- dg_decrypt('TB_COM_QNA_INFO', 'EMAIL_ADDR', EMAIL_ADDR) AS EMAIL_ADDR, -->
-				<!-- EMAIL_ADDR AS EMAIL_ADDR, -->
 				CAST(AES_DECRYPT(UNHEX(EMAIL_ADDR),'BRC') as CHAR) AS EMAIL_ADDR,
 				USR_REG_DTTM,
 				USR_REG_ID,
@@ -99,14 +94,11 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 				OPEN_YN,
 				USE_YN,
 				SECRET_YN,
-				REG_DTTM,
+				A.REG_DTTM,
 				REG_ID,
-				MOD_DTTM,
+				A.MOD_DTTM,
 				MOD_ID,
-				ADMIN_ID,
-				DEADLINE,
-				DEADLINE_DATE
-			   <!-- DATE_ADD(USR_REG_DTTM, INTERVAL 7 DAY) AS DEADLINE_DATE -->
+				ADMIN_ID
 		FROM
 				(
 					SELECT  IA.QNA_SEQ,
@@ -159,14 +151,11 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 								AND IA.QNA_PROCESS_STUS_CD IS NULL
 							</if>
 							<if test="comCd!='' and comCd!=null">
-								AND ( IA.ADMIN_ID = #{comCd}
-									  OR
-									  IA.CATE_CD  = #{comCd}
-									)
+								AND IA.CATE_CD  = #{comCd}
 							</if>
 				) A
-				, TB_SVC_MB B
-			WHERE A.USR_REG_ID = B.MB_ID
+				, TB_SVC_USR B
+			WHERE A.USR_REG_ID = B.USR_SEQ
 			ORDER BY A.QNA_SEQ DESC
 			LIMIT #{firstRecordIndex},#{recordCountPerPage}
 	</select>
@@ -179,9 +168,6 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 				IA.QESTN_HTML_CONTENT,
 				IA.QESTN_ATCH_FILE_ID,
 				IA.READ_CNT,
-				<!-- dg_decrypt('TB_COM_QNA_INFO', 'EMAIL_ADDR', IA.EMAIL_ADDR) AS EMAIL_ADDR, -->
-				<!-- IA.EMAIL_ADDR AS EMAIL_ADDR, -->
-				CAST(AES_DECRYPT(UNHEX(IA.EMAIL_ADDR),'BRC') as CHAR) AS EMAIL_ADDR
 				IA.REG_DTTM AS USR_REG_DTTM,
 				IA.REG_ID AS USR_REG_ID,
 				IA.MOD_DTTM AS USR_MOD_DTTM,
@@ -205,10 +191,7 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 					  FROM TB_SYS_COM_CD
 					 WHERE COM_CD = IA.CATE_CD
 				) AS CD_NM,
-				CASE WHEN IA.SECRET_YN = 'Y' THEN '비공개' ELSE '공개' END AS OPEN_NM,
-				IA.DEADLINE,
-				<!-- DATE_ADD(IA.REG_DTTM, INTERVAL 7 DAY) AS DEADLINE_DATE -->
-				IA.DEADLINE_DATE
+				CASE WHEN IA.SECRET_YN = 'Y' THEN '비공개' ELSE '공개' END AS OPEN_NM
 		   FROM TB_COM_QNA_INFO IA 
 LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB 
 			 ON IA.QNA_SEQ = IB.QNA_SEQ
@@ -341,11 +324,10 @@ LEFT OUTER JOIN TB_COM_QNA_INFO_REPLY IB
 	
 	<select id="gubunList" resultType="OpinionBoardVO">
 		SELECT CD_DESC1 AS cdDesc1
-			 , COM_CD AS comCd 
-		  FROM TB_SYS_COM_CD
-		 WHERE COM_UP_CD IN ( 'QIA' , 'OPI' )
-	  ORDER BY COM_UP_CD
-			 , DSP_ORD
+				, COM_CD AS comCd
+		FROM TB_SYS_COM_CD
+		WHERE COM_UP_CD = 'CTM_003'
+		ORDER BY DSP_ORD
 	</select>
 	
 	<update id="insertAdminInfo" parameterType="opinionBoardVO">

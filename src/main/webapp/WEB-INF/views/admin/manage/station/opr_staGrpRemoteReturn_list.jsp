@@ -80,7 +80,7 @@ $(function() {
 	if("${searchVO.useYN}" != ""){
 		switch ( "${searchVO.useYN}" ){
 			case "Y" : $("#useYN").prop('selectedIndex', 1); break;
-			case "N" : $("#useYN").prop('selectedIndex', 3);  break;
+			case "N" : $("#useYN").prop('selectedIndex', 2);  break;
 		}
 	}else{
 		$("#useYN").prop('selectedIndex', 0);
@@ -223,7 +223,7 @@ $(function() {
 											</div>
 											 -->
 											<div class="section">
-												<label for="aa1" class="laType02">아파트</label>
+												<label for="aa1" class="laType03">아파트</label>
 												<select class="select-category04" id="search_grp" name="search_grp">
 													<option value="">선택</option>
 													<c:forEach items="${group }" var="group">
@@ -231,31 +231,23 @@ $(function() {
 													</c:forEach>
 												</select>
 											</div>
+											
 											<div class="section pright">
-												<label for="aa21" class="laType02">대리정거장명</label>
-												<!-- 
-												<select class="select-category05" id="search_name" name="search_name">
-													<option value="">선택</option>
-												</select>
-												 -->
-												<span class="input-text07"><input type="text" name="remote_station_name" class=""/></span>
-												<!-- <button class="btn-srh03 btncase1" onclick="fn_Search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button> -->
-											</div>
-											<div class="section">
-												<label for="aaa1" class="laType02">등록자ID</label>
-												<span class="input-text07"><input type="text" name="reg_id" class=""/></span>
-												<button class="btn-srh03 btncase1" onclick="fn_Search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button>
-											</div>
-											<div class="section pright">
-												<label for="a1" class="laType02">대리사용여부</label>
+												<label for="a1" class="laType03">대리사용여부</label>
 												<input type="hidden" id="useY" name="searchUse" value="remote_use_yn">
 												<span>
-													<select class="select-category04" id="useYN" name="useYN">
+													<select class="select-category06" id="useYN" name="useYN">
 														<option value="">전체</option>
 														<option value="Y">사용</option>
 														<option value="N">미사용</option>
 													</select>	
 												</span>
+											</div>
+											
+											<div class="section">
+												<label for="aa21" class="laType03">대리정거장명</label>
+												<span class="input-text07"><input type="text" name="remote_station_name" class=""/></span>
+												<button class="btn-srh03 btncase1" onclick="fn_Search(); return false;"><img src="/images/searchIcon.gif" alt="검색" /></button>
 											</div>
 										</div>	
 										

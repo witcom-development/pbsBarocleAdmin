@@ -15,7 +15,7 @@ import com.dkitec.barocle.util.sms.vo.SmsMessageVO;
 public interface StationMgmtService {
 
 	public void stationGroupModify(StationMgmtVO stationVo, ApService apService);
-	public void stationGrpRemoteReturnGroupModify(StationMgmtVO stationVo, ApService apService);
+	public void stationGrpRemoteReturnGroupModify(StationMgmtVO stationVo);
 	public void insertStationGrpRemoteReturnInfo(StationMgmtVO stationVo);
 	public void updateStationGrpRemoteReturnInfo(StationMgmtVO stationVo);
 	
@@ -23,6 +23,8 @@ public interface StationMgmtService {
 	//public void stationGroupModify(StationMgmtVO stationVo);
 
 	public String stationNumberCheck(StationMgmtVO stationVo);
+	
+	public String remoteStationNumberCheck(StationMgmtVO stationVo);
 
 	public List<StationMgmtVO> getGroupStationList(StationMgmtVO vo);
 

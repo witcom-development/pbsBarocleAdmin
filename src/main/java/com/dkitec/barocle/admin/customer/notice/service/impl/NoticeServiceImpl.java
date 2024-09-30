@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO;
 import com.dkitec.barocle.admin.customer.notice.service.NoticeMapper;
 import com.dkitec.barocle.admin.customer.notice.service.NoticeService;
+import com.dkitec.barocle.admin.customer.notice.vo.FileVO;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO;
 import com.dkitec.barocle.datasource.DataSource;
 import com.dkitec.barocle.datasource.DataSourceType;
@@ -65,6 +66,19 @@ public class NoticeServiceImpl implements NoticeService {
 	@Override
 	@Transactional(readOnly=true)
 	@DataSource(DataSourceType.MASTER)
+	public NoticeVO viewNotice2(NoticeVO noticeVO) throws Exception {
+		NoticeVO returnVO = null;
+		try{
+			returnVO = noticeMapper.viewNotice2(noticeVO);
+		} catch (Exception e){
+			throw e;
+		}
+		return returnVO;
+	}
+	
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.MASTER)
 	public List<DaumEditorVO> listDaumEditorVO(NoticeVO noticeVO) throws Exception {
 		return noticeMapper.getDaumEditorImage(noticeVO);
 	}
@@ -83,7 +97,7 @@ public class NoticeServiceImpl implements NoticeService {
 	@DataSource(DataSourceType.MASTER)
 	public NoticeVO updateNotice(NoticeVO noticeVO) throws Exception {
 		@SuppressWarnings("unused") int resultModify = noticeMapper.updateNotice(noticeVO);
-		this.updateDaumEditorImage(noticeVO,true);
+		//this.updateDaumEditorImage(noticeVO,true);
 		return noticeVO;
 	}
 	
@@ -227,5 +241,43 @@ public class NoticeServiceImpl implements NoticeService {
 	public List<PushVO> getPushTargetList() throws Exception {
 		
 		return noticeMapper.getPushTargetList();
+	}
+	
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.STATICS)
+	public FileVO getBBSImage(NoticeVO vo) throws Exception {
+		return noticeMapper.getBBSImage(vo);
+	}
+	
+	@Override
+	@DataSource(DataSourceType.MASTER)
+	public int updateImage(NoticeVO vo) throws Exception {
+		// * 이미지 파일을 업로드 했다면 noticeVO.imageList에 파일명이 저장되어 있다.
+		return noticeMapper.updateImage(vo);
+	}
+	
+	@Override
+	@DataSource(DataSourceType.MASTER)
+	public int bbsImage(FileVO vo)  throws Exception {
+		return noticeMapper.bbsImage(vo);
+	}
+	
+	@Override
+	@DataSource(DataSourceType.MASTER)
+	public int appendBbsImage(NoticeVO vo)  throws Exception {
+		return noticeMapper.appendBbsImage(vo);
+	}
+	
+	@Override
+	@DataSource(DataSourceType.MASTER)
+	public int deleteBBSImage(NoticeVO vo)  throws Exception {
+		return noticeMapper.deleteBBSImage(vo);
+	}
+	
+	@Override
+	@DataSource(DataSourceType.MASTER)
+	public int updateBbsImage(NoticeVO vo)  throws Exception {
+		return noticeMapper.updateBbsImage(vo);
 	}
 }

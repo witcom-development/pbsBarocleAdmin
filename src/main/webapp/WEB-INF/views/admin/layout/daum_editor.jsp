@@ -2,19 +2,19 @@
 											    <font color="red"><form:errors path="content"/></font>
 											    <div id="tx_trex_container" class="tx-editor-container">
 											        <!-- 사이드바 -->
-											        <div id="tx_sidebar" class="tx-sidebar">
-											            <div class="tx-sidebar-boundary">
+											        <!-- <div id="tx_sidebar" class="tx-sidebar">
+											            <div class="tx-sidebar-boundary"> -->
 											                <!-- 사이드바 / 첨부 -->
-											                <ul class="tx-bar tx-bar-left tx-nav-attach">
+											               <!--  <ul class="tx-bar tx-bar-left tx-nav-attach"> -->
 											                    <!-- 이미지 첨부 버튼 시작 --><!--
 											                    @decsription
 											                    <li></li> 단위로 위치를 이동할 수 있다.
 											                    -->
-											                    <li class="tx-list">
+											                    <!-- <li class="tx-list">
 											                        <div unselectable="on" id="tx_image" class="tx-image tx-btn-trans">
 											                            <a href="javascript:;" title="사진" class="tx-text">사진</a>
 											                        </div>
-											                    </li>
+											                    </li> -->
 											                    <!-- <li class="tx-list">
 																	<div unselectable="on" id="tx_file" class="tx-file tx-btn-trans">
 																		<a href="javascript:;" title="파일" class="tx-text">파일</a>
@@ -32,15 +32,15 @@
 											                           
 											                        </ul>
 											                    </li> -->
-											                </ul>
+											               <!--  </ul> -->
 											                <!-- 사이드바 / 우측영역 -->
-											                <ul class="tx-bar tx-bar-right">
+											                <!-- <ul class="tx-bar tx-bar-right">
 											                    <li class="tx-list">
 											                        <div unselectable="on" class="tx-btn-lrbg tx-fullscreen" id="tx_fullscreen">
 											                            <a href="javascript:;" class="tx-icon" title="넓게쓰기 (Ctrl+M)">넓게쓰기</a>
 											                        </div>
 											                    </li>
-											                </ul>
+											                </ul> -->
 <!-- 											                <ul class="tx-bar tx-bar-right tx-nav-opt"> -->
 <!-- 											                    <li class="tx-list"> -->
 <!-- 											                        <div unselectable="on" class="tx-switchtoggle" id="tx_switchertoggle"> -->
@@ -48,8 +48,8 @@
 <!-- 											                        </div> -->
 <!-- 											                    </li> -->
 <!-- 											                </ul> -->
-											            </div>
-											        </div>
+											           <!--  </div>
+											        </div> -->
 											        <!-- 툴바 - 기본 시작 --><!--
 											        @decsription
 											        툴바 버튼의 그룹핑의 변경이 필요할 때는 위치(왼쪽, 가운데, 오른쪽) 에 따라 <li> 아래의 <div>의 클래스명을 변경하면 된다.
@@ -60,7 +60,7 @@
 											        -->
 											        <div id="tx_toolbar_basic" class="tx-toolbar tx-toolbar-basic">
 											            <div class="tx-toolbar-boundary">
-											                <ul class="tx-bar tx-bar-left">
+											                <!-- <ul class="tx-bar tx-bar-left">
 											                    <li class="tx-list">
 											                        <div id="tx_fontfamily" unselectable="on" class="tx-slt-70bg tx-fontfamily">
 											                            <a href="javascript:;" title="글꼴">굴림</a>
@@ -281,7 +281,7 @@
 											                            <a href="javascript:;" class="tx-icon" title="툴바 더보기">툴바 더보기</a>
 											                        </div>
 											                    </li>
-											                </ul>
+											                </ul> -->
 											            </div>
 											        </div>
 											        <!-- 툴바 - 기본 끝 --><!-- 툴바 - 더보기 시작 -->

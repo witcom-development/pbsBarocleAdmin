@@ -6,10 +6,10 @@
 				 H.RENT_HIST_SEQ												   AS rentHistSeq
 				,B.BIKE_NO														   AS rentBikeNo	   
 				,H.RENT_STATION_ID												 AS rentStationId
-				,(SELECT STATION_NAME FROM  spb.TB_OPR_MLANG_STATION WHERE STATION_ID = H.RENT_STATION_ID  AND LANG_CLS_CD = #{lang}  )
+				,(SELECT STATION_NAME FROM  TB_OPR_MLANG_STATION WHERE STATION_ID = H.RENT_STATION_ID  AND LANG_CLS_CD = #{lang}  )
 																				   AS rentStationName
 				,H.RETURN_STATION_ID											   AS returnStationId
-				,(SELECT STATION_NAME FROM  spb.TB_OPR_MLANG_STATION WHERE STATION_ID = H.RETURN_STATION_ID AND LANG_CLS_CD = #{lang}		  )						   
+				,(SELECT STATION_NAME FROM  TB_OPR_MLANG_STATION WHERE STATION_ID = H.RETURN_STATION_ID AND LANG_CLS_CD = #{lang}		  )						   
 																				   AS returnStationName
 				,H.USE_MI														  AS useMi
 				<!-- 회원정보 연동(링크)하기 위해 추가. cms_20161104 -->
@@ -31,9 +31,9 @@
 			   <!-- , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( U.USR_MPN_NO  , '카드결제고객' )))   -->
 			   , IFNULL( L.MB_ID,  IFNULL ( Y.SERIAL_NO ,  IFNULL( CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR), '카드결제고객' )))
 																					 AS mbId
-			   , ( SELECT NOW_STATION_EQUIP_ORD FROM spb.TB_OPR_RACK WHERE RACK_ID = H.RENT_RACK_ID )								 
+			   , ( SELECT NOW_STATION_EQUIP_ORD FROM TB_OPR_RACK WHERE RACK_ID = H.RENT_RACK_ID )								 
 																				  AS rentRackId	
-			   , (SELECT NOW_STATION_EQUIP_ORD FROM spb.TB_OPR_RACK WHERE RACK_ID = H.RETURN_RACK_ID )
+			   , (SELECT NOW_STATION_EQUIP_ORD FROM TB_OPR_RACK WHERE RACK_ID = H.RETURN_RACK_ID )
 																				  AS returnRackId   
 			   , DATE_FORMAT(H.RENT_DTTM   ,'%Y-%m-%d %H:%i')					 AS rentDttm
 			   , DATE_FORMAT(H.RETURN_DTTM ,'%Y-%m-%d %H:%i')					 AS returnDttm	
@@ -45,7 +45,8 @@
 																				  AS rentClsCdName
 			   , H.RETURN_DTTM													  AS returnDttm
 			   , B.BIKE_SE_CD													  AS bikeSeCd
-		   FROM  spb.TB_SVC_RENT_HIST H 
+			   , CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR)			AS usrMpnNo
+		   FROM  TB_SVC_RENT_HIST H 
 		  INNER JOIN TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
 		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "PHONE"'>
 			   <!-- AND USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchWord}) -->
@@ -64,7 +65,7 @@
 		  </if>
 		  LEFT JOIN TB_SVC_SERIAL_NO_HIST  Y ON ( H.USR_SEQ AND Y.VOUCHER_SEQ = H.VOUCHER_SEQ AND U.USR_CLS_CD IN ( 'USR_002', 'USR_003')  )
 		  <if test='returnStationGrpSeq !=null and returnStationGrpSeq != "" and  returnStationId == ""'>
-		  INNER JOIN spb.TB_OPR_STATION X ON ( STATION_GRP_SEQ = #{returnStationGrpSeq} AND H.RETURN_STATION_ID = X.STATION_ID  )
+		  INNER JOIN TB_OPR_STATION X ON ( STATION_GRP_SEQ = #{returnStationGrpSeq} AND H.RETURN_STATION_ID = X.STATION_ID  )
 		  </if>
 		  <trim prefix="WHERE" prefixOverrides="AND|OR">
 			  <if test='returnStationId != null and returnStationId !=""'>
@@ -86,7 +87,7 @@
 	
 	<select id="getRentHistoryAllCnt" parameterType="bikeRentalVo" resultType="int">
 		  SELECT COUNT(*)
-			FROM  spb.TB_SVC_RENT_HIST H
+			FROM  TB_SVC_RENT_HIST H
 		   INNER JOIN TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
 		  <if test='searchWord != null and searchWord != "" and searchParameter != null and searchParameter == "PHONE"'>
 			   <!-- AND USR_MPN_NO = DG_ENCRYPT('TB_SVC_USR', 'USR_MPN_NO', #{searchWord}) -->
@@ -103,7 +104,7 @@
 		  INNER JOIN TB_SVC_SERIAL_NO_HIST Z ON ( Z.USR_SEQ = H.USR_SEQ AND Z.VOUCHER_SEQ = H.VOUCHER_SEQ AND SERIAL_NO = #{searchWord} )
 		  </if>
 		  <if test='returnStationGrpSeq !=null and returnStationGrpSeq != "" and  returnStationId == ""'>
-		  INNER JOIN spb.TB_OPR_STATION X ON ( STATION_GRP_SEQ = #{returnStationGrpSeq} AND H.RETURN_STATION_ID = X.STATION_ID  )
+		  INNER JOIN TB_OPR_STATION X ON ( STATION_GRP_SEQ = #{returnStationGrpSeq} AND H.RETURN_STATION_ID = X.STATION_ID  )
 		  </if>
 		  <trim prefix="WHERE" prefixOverrides="AND|OR">
 			  <if test='returnStationId != null and returnStationId !=""'>
@@ -124,45 +125,45 @@
 		 	   ,H.RETURN_ADMIN_ID										  AS adminId
 		 <!-- 현재 대여중인 자전거 목록_20160602_JJH_END -->
 			   ,(SELECT MLANG_COM_CD_NAME 
-				   FROM spb.TB_SYS_MLANG_COM_CD
+				   FROM TB_SYS_MLANG_COM_CD
 				  WHERE COM_CD =  H.RENT_CLS_CD  
 					AND LANG_CLS_CD =  #{lang}		 )				  AS rentClsCdName
 			   ,(SELECT BIKE_NO 
-				   FROM spb.TB_OPR_BIKE
+				   FROM TB_OPR_BIKE
 				  WHERE BIKE_ID = H.RENT_BIKE_ID	   )				  AS rentBikeNo	
 				  
 			   ,(SELECT MLANG_COM_CD_NAME 
-				   FROM spb.TB_SYS_MLANG_COM_CD
+				   FROM TB_SYS_MLANG_COM_CD
 				  WHERE COM_CD =  (SELECT BIKE_STUS_CD
-									 FROM spb.TB_OPR_BIKE
+									 FROM TB_OPR_BIKE
 									WHERE BIKE_ID = H.RENT_BIKE_ID)  
 					AND LANG_CLS_CD =  #{lang}					)	   AS rentStatusName
 			   ,(SELECT BIKE_STUS_CD
-				   FROM spb.TB_OPR_BIKE
+				   FROM TB_OPR_BIKE
 				  WHERE BIKE_ID = H.RENT_BIKE_ID)						 AS rentStatusCd
 			   ,H.RENT_BIKE_ID											AS rentBikeId
 			   ,(SELECT TERMINAL_ID
 				   FROM TB_OPR_BIKE
 				  WHERE BIKE_ID = H.RENT_BIKE_ID	   )				  AS terminalId
 			   ,(SELECT STATION_NAME
-				   FROM spb.TB_OPR_MLANG_STATION
+				   FROM TB_OPR_MLANG_STATION
 				  WHERE STATION_ID = H.RENT_STATION_ID
 					AND LANG_CLS_CD =#{lang}		   )				  AS rentStationName
 			   ,(SELECT NOW_STATION_EQUIP_ORD
-				   FROM spb.TB_OPR_RACK
+				   FROM TB_OPR_RACK
 				  WHERE RACK_ID = H.RENT_RACK_ID	   )				  AS rentRackId	
 			   ,(SELECT NOW_STATION_EQUIP_ORD
-				   FROM spb.TB_OPR_RACK
+				   FROM TB_OPR_RACK
 				  WHERE RACK_ID = H.RETURN_RACK_ID	 )				  AS returnRackId   
 			   ,(SELECT STATION_NAME  
-				   FROM  spb.TB_OPR_MLANG_STATION
+				   FROM  TB_OPR_MLANG_STATION
 				  WHERE STATION_ID = H.RETURN_STATION_ID
 					AND LANG_CLS_CD =  'LAG_001'		  )			   AS returnStationName
 			   ,DATE_FORMAT(H.RENT_DTTM   ,'%Y-%m-%d %H:%i')			  AS rentDttm
 			   ,DATE_FORMAT(H.RETURN_DTTM ,'%Y-%m-%d %H:%i')			  AS returnDttm
 			   ,H.USE_MI												  AS useMi
 			   ,(SELECT IFNULL(MB_ID ,'GUEST')
-				   FROM spb.TB_SVC_MB
+				   FROM TB_SVC_MB
 				  WHERE USR_SEQ = H.USR_SEQ)							  AS mbId
 			   ,H.USR_SEQ												 AS userSeq   
 			   <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO )	 AS usrMpnNo	-->
@@ -170,12 +171,12 @@
 			   ,CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
 			   ,H.RENT_CLS_CD											 AS rentClsCd
 			   ,(SELECT MLANG_COM_CD_NAME
-				   FROM spb.TB_SYS_MLANG_COM_CD
+				   FROM TB_SYS_MLANG_COM_CD
 				  WHERE COM_CD = H.RENT_CLS_CD 
 					AND LANG_CLS_CD = #{lang}		 )				   AS rentClsCdName
 			   ,(CASE	
 					 WHEN H.OVER_FEE_YN = 'Y' THEN (SELECT FORMAT(OVER_FEE ,0,2) 
-													  FROM spb.TB_SVC_RENT_OVER_FEE
+													  FROM TB_SVC_RENT_OVER_FEE
 													 WHERE RENT_HIST_SEQ = H.RENT_HIST_SEQ)
 					 ELSE 0
 				 END)													 AS overFee
@@ -183,9 +184,9 @@
 			   ,DATE_FORMAT(V.VOUCHER_END_DTTM ,'%Y-%m-%d %H:%i')		 AS voucherEndDttm
 			   ,U.RENT_ENC_PWD											AS rentEncPwd
 			   ,(SELECT BIKE_SE_CD
-				   FROM spb.TB_OPR_BIKE
+				   FROM TB_OPR_BIKE
 				  WHERE BIKE_ID = H.RENT_BIKE_ID)						 AS bikeSeCd
-		   FROM  spb.TB_SVC_RENT_HIST H INNER JOIN spb.TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
+		   FROM  TB_SVC_RENT_HIST H INNER JOIN TB_SVC_USR U ON H.USR_SEQ = U.USR_SEQ
 		   LEFT OUTER JOIN TB_SVC_VOUCHER V ON H.VOUCHER_SEQ = V.VOUCHER_SEQ
 		 WHERE H.RENT_HIST_SEQ = #{rentHistSeq}
 	</select>
@@ -194,7 +195,7 @@
 			  ,C.PENALTY_NAME  AS penaltyName
 			  ,C.PENALTY_POINT AS penaltyPoint
 			  ,C.PENALTY_CD	AS penaltyCd
-		  FROM spb.TB_SVC_PENALTY P INNER JOIN  spb.TB_SVC_PENALTY_CD C
+		  FROM TB_SVC_PENALTY P INNER JOIN  TB_SVC_PENALTY_CD C
 			ON P.PENALTY_CD = C.PENALTY_CD 
 		 <trim prefix="WHERE" prefixOverrides="AND | OR">
 			<if test='userSeq != null and userSeq != ""'>

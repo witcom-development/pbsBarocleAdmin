@@ -131,6 +131,11 @@ public class UserMgmtVO extends PagingVO implements Serializable{
 	// 소속 대여소 그룹 아이디
 	private String assignStationGrpId;
 	
+	// 아파트 그룹 seq
+	private String aptSeq;
+	// 아파트 그룹명
+	private String aptName;
+	
 	
 	public String getTeam_seq() {
 		return team_seq;
@@ -550,6 +555,7 @@ public class UserMgmtVO extends PagingVO implements Serializable{
 				+ ", checkSum=" + checkSum + ", pageIndex=" + pageIndex
 				+ ", adminCardPwd=" + adminCardPwd + ", relocateCarCd="
 				+ relocateCarCd + ", cre_Id=" + cre_Id + ", mod_Id=" + mod_Id +", preUseYn=" + preUseYn
+				+", aptSeq=" + aptSeq +", aptName=" + aptName
 				+ "]";
 	}
 
@@ -559,6 +565,22 @@ public class UserMgmtVO extends PagingVO implements Serializable{
 
 	public void setAssignStationGrpId(String assignStationGrpId) {
 		this.assignStationGrpId = assignStationGrpId;
+	}
+
+	public String getAptSeq() {
+		return aptSeq;
+	}
+
+	public void setAptSeq(String aptSeq) {
+		this.aptSeq = aptSeq;
+	}
+
+	public String getAptName() {
+		return aptName;
+	}
+
+	public void setAptName(String aptName) {
+		this.aptName = aptName;
 	}
 	
 }

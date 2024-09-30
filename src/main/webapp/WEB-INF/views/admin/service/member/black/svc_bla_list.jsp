@@ -56,15 +56,13 @@
 											<span class="dash">~</span>
 											<span class="selectDate input-datepick04"><input type="text" class="datepicker input-datepick04" title="선택 날짜" id="modEndDate" name="modEndDate" readonly/></span>
 										</div>
-										<div class="section pright">
+										<!-- <div class="section pright">
 											<label for="mbId" class="laType02">회원 ID</label>
 											<span class="input-text08"><input type="text" id="mbId" name="mbId" /></span>
-										</div>
-										<div class="section">
+										</div> -->
+										<div class="section pright">
 											<label for="mbTelNo" class="laType02">휴대폰번호</label>
-											<span class="input-text08"><input type="text" id="mbTelNo" name="mbTelNo" /></span>
-										</div>
-										<div class="section pright etccase1">
+											<span class="input-text07"><input type="text" id="mbTelNo" name="mbTelNo" /></span>
 											<button class="btn-srh03 btncase1 mdbtncase1" type="button" id="searchBtn"><img src="/images/searchIcon.gif" alt="검색" /></button>
 										</div>
 									</div>
@@ -78,7 +76,7 @@
 						<table id="urlTable" class="tb_type01">
 							<colgroup>
 								<col style="width:5%"/>
-								<col style="width:20%"/>
+								<%-- <col style="width:20%"/> --%>
 								<col style="width:15%"/>
 								<col style="width:30%"/>
 								<col style="width:20%"/>
@@ -86,7 +84,7 @@
 							<thead>
 								<tr>
 									<th><input type="checkbox" id="checkAll"/></th>
-									<th>아이디</th>
+									<!-- <th>아이디</th> -->
 									<th>휴대폰번호</th>
 									<th>등록이유</th>
 									<th>수정일</th>
@@ -98,11 +96,11 @@
 						            <td class="tc">
 						                <input type="checkbox" name="delCheckList" value="${result.usrSeq },${result.blkListStrDate }"/>
 						            </td>
-						            <td class="pl10">
+						            <%-- <td class="pl10">
 						                <a href="#" id="${result.usrSeq }">${result.mbId }</a>
-						            </td>
+						            </td> --%>
 						            <td class="pl10">
-						                ${result.usrMpnNo }
+						                <a href="#" id="${result.usrSeq }">${result.usrMpnNo }</a>
 						            </td>
 						            <td class="pl10">
 						                ${result.blkListReasonCd }
@@ -114,7 +112,7 @@
 						    </c:forEach>
 						    <c:if test='${fn:length(blackListList) == 0}'>
 						        <tr>
-						            <td style="text-align:center" colspan="5"><spring:message code="search.nodata.msg" /></td>
+						            <td style="text-align:center" colspan="4"><spring:message code="search.nodata.msg" /></td>
 					            </tr>
 					        </c:if>
 							</tbody>

@@ -90,7 +90,7 @@
 										</select>
 										<span class="input-text08"><input type="text" class="" name="usrSearchKey"></span>
 									</div>
-									<div class="section">
+									<!-- <div class="section">
 										<label for="paymentClsCd" class="laType02">결제구분</label>
 										<select id="paymentClsCd" name="paymentClsCd">
 											<option value="">선택</option>
@@ -101,7 +101,7 @@
 										<select id="paymentMethodCd" name="paymentMethodCd">
 											<option value="">선택</option>
 										</select>
-									</div>
+									</div> -->
 									<div class="section">
 										<label for="paymentStusCd" class="laType02">결제상태</label>
 										<select id="paymentStusCd" name="paymentStusCd">
@@ -115,7 +115,7 @@
 									</div>
 									
 									<!-- 20180914 -->
-									<div class="section">
+									<!-- <div class="section">
 										<label for="usrClsCd" class="laType02">회원구분</label>
 										<select id="usrClsCd" name="usrClsCd">
 											<option value="">선택</option>
@@ -129,16 +129,16 @@
 											<option value="2">통계</option>
 										</select>
 									</div>
-									
+									 -->
 									
 								</div>
                             </fieldset>
                         </div>
                         
-                        <p class="head mhid">결제요약(단위: 천원 )</p>
+                        <%-- <p class="head mhid">결제요약(단위: 천원 )</p>
                         <div class="didBox2 mhid">
                         	수입금  : [ 일계 :  ${paymentStatCol.totAmt} ] , [  누계 :  ${paymentStatCol.totAmtMileage} ]
-                        </div>
+                        </div> --%>
                          
 						<p class="head ttbtncase1">결제상세</p>
                         <p class="tb_numlist">총 ${paginationInfo.getTotalRecordCount()} 건</p>
@@ -297,9 +297,9 @@
                         <form id="serialNoInfoDetail" name="serialNoInfoDetail"></form>
                         <div class="btnArea tr">
 							<button class="btnType01" id="cancelPopBtn">결제취소</button>
-							<button class="btnType01" id="refundPopBtn">환불처리</button>
+							<!-- <button class="btnType01" id="refundPopBtn">환불처리</button>
 							
-							<button class="btnType01" id="cancelPorcePopBtn">강제취소</button>
+							<button class="btnType01" id="cancelPorcePopBtn">강제취소</button> -->
 							
 							<!--[if gt IE 8]><!--><!-- <button class="btnType01 mhid" id="excelViewBtn">엑셀</button> --><!--<![endif]-->
 						</div>
@@ -405,7 +405,8 @@
         });
       	
       	//사용자
-      	customCodeList = [{comCd:"USR_MPN_NO", comCdName:"휴대폰"},{comCd:"MB_ID", comCdName:"회원ID"},{comCd:"SERIAL_NO", comCdName:"대여번호"},{comCd:"USR_CLS_CD", comCdName:"회원구분"}];
+      	//customCodeList = [{comCd:"USR_MPN_NO", comCdName:"휴대폰"},{comCd:"MB_ID", comCdName:"회원ID"},{comCd:"SERIAL_NO", comCdName:"대여번호"},{comCd:"USR_CLS_CD", comCdName:"회원구분"}];
+      	customCodeList = [{comCd:"USR_MPN_NO", comCdName:"휴대폰"}];
         //20170517 대여일련번호 추가_JHN  //20180914  회원구분 추가
       	commCdBox.makeComboBox('CC', _this.usrSearchType, customCodeList, "usrSearchType");
       	
@@ -493,7 +494,7 @@
     	//추가 : 2017.05.18_JHN
     	if($("[name='usrSearchType']").val() == "USR_MPN_NO"){
     		var usrSearchKey = $("[name='usrSearchKey']").val();
-    		usrSearchKey = autoHypenPhone(usrSearchKey);
+    		//usrSearchKey = autoHypenPhone(usrSearchKey);
     		$("[name='usrSearchKey']").val(usrSearchKey);
     	}
     	

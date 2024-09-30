@@ -698,6 +698,25 @@ public class StationMgmtController {
 	}
 	
 	/**
+	 * 원격반납 정거장 명 중복체크
+	 * @param manager
+	 * @param result
+	 * @param model
+	 * @param request
+	 * @param response
+	 * @return
+	 */
+	@RequestName(value="remoteStationNumberCheck")
+	@RequestMapping(value="remoteStationNumberCheck")
+	public String remoteStationNumberCheck(StationMgmtVO stationVo, BindingResult result, ModelMap model, HttpServletRequest request, HttpServletResponse response) {
+		String rt = stationMgmtService.remoteStationNumberCheck(stationVo);
+		model.put("result", rt);
+		
+		return IConstants.JSONVIEW;
+		
+	}
+	
+	/**
 	 * 네이버 API 연동 주소 위경도 변환
 	 * @param manager
 	 * @param result
@@ -844,35 +863,23 @@ public class StationMgmtController {
 		String rt = "";
 		
 		if(userSessionVO == null) {	
-			rt = "실패";
+			rt = "실패(로그인정보가 없습니다.)";
 			bResult = false;
 			throw new CfoodException(getMessage("error.invalidSession"));
 		}
 		
 		if (!result.hasErrors()) {
 			model.put("result", "");
-		} 
-//		else if (userSessionVO.getUsrGrpCd().equals("5")){ 
-//			model.put("result", result.getAllErrors().get(0).getDefaultMessage());
-//			return getReturnUrl("opr_sta_tmp_close"); // 배송직원용 간략한 대여소 상세화면 
-//		}
-		else {
+		}else {
 			model.put("result", result.getAllErrors().get(0).getDefaultMessage());
 			return getReturnUrl("opr_staGrpRemoteReturn_upd");
 		}
 		
 		stationVo.setUser(userSessionVO.getUsrId());
 		
-//		if (userSessionVO.getUsrGrpCd().equals("5")){ 
-//			stationMgmtService.stationGroupModify05(stationVo); // 배송직원용 간략한 대여소 상세화면 수정할때 
-//		}else {
-			stationMgmtService.stationGrpRemoteReturnGroupModify(stationVo, apService);
-//		}
+		stationMgmtService.stationGrpRemoteReturnGroupModify(stationVo);
 		
 		stationVo.setLang(request.getLocale().getLanguage());
-			
-		// 수정할때만 적용
-//		if (  stationVo.getCmd().equals("UPDATE") ) setNotice(stationVo);	
 		
 		rt = "성공";	bResult = true;
 		model.put("rtMsg",	rt );

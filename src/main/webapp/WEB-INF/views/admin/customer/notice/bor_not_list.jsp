@@ -89,8 +89,8 @@
 						<table class="tb_type01">
 							<caption>고객센터</caption>
 								<colgroup>
-									<col style="width:30%"/>
-									<col style="width:10%"/>
+									<col style="width:auto"/>
+									<%-- <col style="width:10%"/> --%>
 									<col style="width:10%"/>
 									<col style="width:12.5%"/>
 									<col style="width:12.5%"/>
@@ -98,7 +98,7 @@
 							<thead>
 								<tr>
 									<th>제목</th>
-									<th>공지대상</th>
+									<!-- <th>공지대상</th> -->
 									<th>공지여부</th>
 									<th>공지시작일</th>
 									<th>공지종료일</th>
@@ -110,10 +110,11 @@
 										<c:forEach items="${noticeList}" var="noticeList" varStatus="status">
 											<tr>
 												<td class="title"><a href="/admin/customer/notice/noticeEdit.do?mode=edit&noticeSeq=<c:out value='${noticeList.noticeSeq}'/><c:if test="${noticeView.currentPageNo!=0}">&currentPageNo=<c:out value='${noticeView.currentPageNo}'/></c:if><c:out value='${parameterInfo}' escapeXml='false'/>"><c:out value="${noticeList.noticeTitle}"/></a></td>
-												<td class="title">
+												<%-- <td class="title">
 													<c:if test="${fn:indexOf(noticeList.siteClsCD,'admin')>-1}">관리자</c:if>
 													<c:if test="${fn:indexOf(noticeList.siteClsCD,',')>-1}">,</c:if>
 													<c:if test="${fn:indexOf(noticeList.siteClsCD,'user')>-1}">사용자</c:if>
+												</td> --%>
 												<td class="tc">
 													<c:choose>
 														<c:when test="${noticeList.mainNoticeYN=='Y'}">공개</c:when>

@@ -81,13 +81,13 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <th>전화번호</th>
+                                    <th>휴대폰 번호</th>
                                     <td>${rentInfo.usrMpnNo }</td>
                                 </tr>
-                                <tr>
+                                <%-- <tr>
                                     <th>대여구분</th>
                                     <td>${rentInfo.rentClsCdName }</td>
-                                </tr>
+                                </tr> --%>
                                 <tr>
                                     <th>대여일시</th>
                                     <td>${rentInfo.rentDttm }</td>
@@ -109,7 +109,7 @@
                                     <td></td>
                                 </tr>
                                 <tr>
-                                    <th>추가과금</th>
+                                    <th>후불결제금액</th>
                                     <td>${rentInfo.overFee}</td>
                                 </tr>
                                 <tr>
@@ -136,10 +136,10 @@
                                     <th>대여가능시간</th>
                                     <td>${rentInfo.voucherStrDttm}~ ${rentInfo.voucherEndDttm}</td>
                                 </tr>
-                                <tr>
+                                <%-- <tr>
                                     <th>임시대여번호</th>
-                                    <td><%-- <span class="renNum">${rentInfo.rentEncPwd}</span> --%> <button class="btnType02" id="smsBtn">sms발송</button></td>
-                                </tr>
+                                    <td><span class="renNum">${rentInfo.rentEncPwd}</span> <button class="btnType02" id="smsBtn">sms발송</button></td>
+                                </tr> --%>
                             </tbody>
                         </table>
                         <div class="btnArea tl">
@@ -181,22 +181,21 @@
     	
     	if('${rentInfo.adminId}' != null && '${rentInfo.adminId}' != "")
     	{
-    		$(".tb_type02 > tbody > tr").eq(10).find("td").text(timeTxt);
-    	}else{
     		$(".tb_type02 > tbody > tr").eq(9).find("td").text(timeTxt);
+    	}else{
+    		$(".tb_type02 > tbody > tr").eq(8).find("td").text(timeTxt);
     	}
     	
-    	var mbId = '${rentInfo.mbId}' === "" ? "GUEST" : '${rentInfo.mbId}';
+    	var mbId = '${rentInfo.mbId}' === "" ? '${rentInfo.usrMpnNo}' : '${rentInfo.mbId}';
     	if(mbId !== 'GUEST'){
     		if('${rentInfo.adminId}' != null && '${rentInfo.adminId}' != ""){
-    			$(".tb_type02 > tbody > tr").eq(14).css("display", "none");
-                $(".tb_type02 > tbody > tr").eq(15).css("display", "none");
+    			$(".tb_type02 > tbody > tr").eq(12).css("display", "none");
+                $(".tb_type02 > tbody > tr").eq(13).css("display", "none");
     		}else{
-    			$(".tb_type02 > tbody > tr").eq(13).css("display", "none");
-                $(".tb_type02 > tbody > tr").eq(14).css("display", "none");
+    			$(".tb_type02 > tbody > tr").eq(11).css("display", "none");
+                $(".tb_type02 > tbody > tr").eq(12).css("display", "none");
     		}
     	}
-    	
     	
     	if('${rentInfo.adminId}' != null && '${rentInfo.adminId}' != "")
     	{
@@ -260,7 +259,7 @@
 	                 if(data) {
 	                     
 	                     if(data.penaltyList.length > 0) {
-	                         $(".tb_type02 > tbody > tr").eq(12).find("td").empty();
+	                         $(".tb_type02 > tbody > tr").eq(10).find("td").empty();
 	                         var pSize = data.penaltyList.length;
 	                         var $displayList = [];
 	                         for(var i=0; i < pSize; i+=1) {
@@ -276,7 +275,7 @@
 	                             pTot += parseInt(data.penaltyList[i].penaltyPoint);
 	                         }
 	                         
-	                         $(".tb_type02 > tbody > tr").eq(12).find("td").append($displayList);  
+	                         $(".tb_type02 > tbody > tr").eq(10).find("td").append($displayList);  
 	                         $("#penaltyTot").text(pTot);  
 	                     }
 	                     

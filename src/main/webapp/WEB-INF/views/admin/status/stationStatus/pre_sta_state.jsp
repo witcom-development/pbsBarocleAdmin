@@ -117,8 +117,8 @@
 												<span class="input-text12"><input type="text" class="" id="searchWord" value="${condition.paramSearchWord}"/></span>
 												<button type="button" name="reSet" id="reSetBtn" class="btn-srh03 btncase1" style="color:white"></button>
 											</div>
-											<div class="section pright etccase3">
-												<!-- 
+											<!-- <div class="section pright etccase3">
+												
 												<label for="batteryStusCd" class="laType03">센터/팀</label>
 												<select id="batteryStusCd" name="batteryStusCd" style="width:80px">
 													<option value="">선택</option>
@@ -126,16 +126,16 @@
 												<select id="searchType" name="searchType" required="true"  style="width:auto">
 													<option value="">선택</option>
 												</select>
-												 -->
+												
 												<label for="stationSeCd" class="laType03">대여소 구분</label>
 												<select class="select-category02" id="a12" name="stationSeCd">
 													<option value="">선택</option>
 													<option value="RAK_001">(LCD+QR 반납가능)</option>
-													<!-- <option value="RAK_002">신규(QR)</option> -->
-													<!-- <option value="RAK_003">새싹거치대여소</option> -->
+													<option value="RAK_002">신규(QR)</option>
+													<option value="RAK_003">새싹거치대여소</option>
 												</select>
 												
-											</div>
+											</div> -->
 										</div>
 									</fieldset>
 								</div>
@@ -203,10 +203,7 @@
 								<tbody> 
 								<c:forEach var="info" items="${stationList}" varStatus="status" end="100" >
 									<tr>
-										<td class="title tl"><a href="#" id="${ info.stationId }" >
-											<c:if test="${info.stationSeCd eq 'RAK_001' || info.stationSeCd eq 'RAK_003' || info.stationSeCd eq '' }">(LCD+QR 반납가능)</c:if>
-											<%-- <c:if test="${info.stationSeCd eq 'RAK_002' || info.stationSeCd eq 'RAK_004' }">(신규)</c:if> --%>
-											${ info.stationName }</a></td>
+										<td class="title tl"><a href="#" id="${ info.stationId }" >${ info.stationName }</a></td>
 										<%-- <td class="title tr pr10" title="자전거 거치중 수/QR자전거 수/새싹 자전거 수">${info.parkingBike}</td> --%>
 										<%-- <td class="title tr pr10" title="연결반납 자전거 수/QR자전거 수/전체 자전거 수(점검수)">${info.systemWarning})</td> --%>
 										<td class="title tr pr10">${ info.shared }</td>

@@ -48,7 +48,7 @@
 		FROM
 			SOMQ_LOG
 		WHERE	1=1
-			AND ifnull(send_count,0) &lt; CAST((SELECT ADD_VAL1 FROM spb.TB_SYS_COM_CD WHERE COM_CD ='MSI_016') AS UNSIGNED)
+			AND ifnull(send_count,0) &lt; CAST((SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD ='MSI_016') AS UNSIGNED)
 			AND ifnull(auto_send_yn,'N') = 'N'
 			AND ((type = 'S' AND result &gt; 6) OR (type = 'M' AND result &gt; 1000)) 
 	</select>

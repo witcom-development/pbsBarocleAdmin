@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO;
+import com.dkitec.barocle.admin.customer.notice.vo.FileVO;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO;
 import com.dkitec.barocle.util.push.PushVO;
 
@@ -14,6 +15,8 @@ public interface NoticeService {
 	public List<NoticeVO> listNotice(NoticeVO noticeVO) throws Exception;
 	
 	public Map<String,NoticeVO> viewNotice(NoticeVO noticeVO) throws Exception;
+	
+	public NoticeVO viewNotice2(NoticeVO noticeVO) throws Exception;
 	
 	public List<DaumEditorVO> listDaumEditorVO(NoticeVO noticeVO) throws Exception;
 	
@@ -37,5 +40,15 @@ public interface NoticeService {
 	//public NoticeVO replyBbs(NoticeVO noticeVO) throws Exception;
 	
 	//public NoticeVO commentBbs(NoticeVO noticeVO) throws Exception;
+	
+	public FileVO getBBSImage(NoticeVO vo) throws Exception;
+	
+	public int updateImage(NoticeVO noticeVO) throws Exception;
+	
+	public int bbsImage(FileVO vo)  throws Exception;
+	
+	public int appendBbsImage(NoticeVO vo)  throws Exception;
+	public int deleteBBSImage(NoticeVO vo)  throws Exception;
+	public int updateBbsImage(NoticeVO vo)  throws Exception;
 
 }

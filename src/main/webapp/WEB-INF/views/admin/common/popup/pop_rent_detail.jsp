@@ -48,8 +48,8 @@
 					</c:choose> 
 					
                     <tr>
-                        <th>이용자(ID)</th>
-                        <td>${detailInfo.mbId}</td>
+                        <th>이용자</th>
+                        <td>${detailInfo.usrMpnNo}</td>
                     </tr>
                     <tr>
                         <th>대여구분</th>
@@ -64,12 +64,12 @@
                         <td>${detailInfo.returnDttm}</td>
                     </tr>
                     <tr>
-                        <th>대여대여소/거치대 번호</th>
-                        <td>${detailInfo.rentStationName}/${detailInfo.rentRackId}</td>
+                        <th>대여대여소</th>
+                        <td>${detailInfo.rentStationName}</td>
                     </tr>
                     <tr>
-                        <th>반납대여소/거치대 번호</th>
-                        <td>${detailInfo.returnStationName}/${detailInfo.returnRackId}</td>
+                        <th>반납대여소</th>
+                        <td>${detailInfo.returnStationName}</td>
                     </tr>
                     <tr>
                         <th>대여시간</th>

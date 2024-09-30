@@ -34,15 +34,15 @@
 		   ,#{ADMIN_ID}
 		   ,'N'
 		   ,( SELECT CENTER_ID
-				FROM spb.TB_OPR_CENTER
+				FROM TB_OPR_CENTER
 				WHERE REPLACE(CENTER_NAME,' ','') = REPLACE( #{LOCATE_NAME},' ',''))
 		   ,(SELECT S.COM_CD
-							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							WHERE COM_UP_CD = 'ENT'
 							  AND L.LANG_CLS_CD = 'LAG_001'
 							  AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{ENTRPS_CD},' ', '') ) 
 		   ,(SELECT B.COM_CD
-		   					FROM spb.TB_SYS_COM_CD B INNER JOIN spb.TB_SYS_MLANG_COM_CD LA ON B.COM_CD = LA.COM_CD
+		   					FROM TB_SYS_COM_CD B INNER JOIN TB_SYS_MLANG_COM_CD LA ON B.COM_CD = LA.COM_CD
 		   					WHERE COM_UP_CD = 'BIK'
 		   					AND LA.LANG_CLS_CD = 'LAG_001'
 							  AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{BIKE_SE_CD},' ', '') ) 
@@ -66,7 +66,7 @@
 			   ,now()
 			   ,CONCAT(#{LAST_CHK_DTTM}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
 			   ,(SELECT S.COM_CD
-							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							WHERE COM_UP_CD = 'ENT'
 							  AND L.LANG_CLS_CD = 'LAG_001'
 							  AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{ENTRPS_CD},' ', '') )
@@ -91,7 +91,7 @@
 			   ,NOW()
 			   ,CONCAT(#{LAST_CHK_DTTM}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
 			   ,(SELECT S.COM_CD
-							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							WHERE COM_UP_CD = 'ENT'
 							  AND L.LANG_CLS_CD = 'LAG_001'
 							  AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{ENTRPS_CD},' ', '') ) 
@@ -114,12 +114,12 @@
 				, #{TALK_END_DT}
 				, #{TALK_TNO}
 				, <!-- #{CONSL_LCD} -->(SELECT COM_CD
-					FROM spb.TB_SYS_CALL_COM_CD
+					FROM TB_SYS_CALL_COM_CD
 					WHERE COM_UP_CD IS NULL
 					AND REPLACE(CD_DESC1,' ', '') = REPLACE(#{CONSL_LCD},' ', ''))
 				, <!-- #{CONSL_MCD} -->(SELECT COM.COM_CD
-					FROM spb.TB_SYS_CALL_COM_CD COM,
-						spb.TB_SYS_CALL_COM_CD COMUP
+					FROM TB_SYS_CALL_COM_CD COM,
+						TB_SYS_CALL_COM_CD COMUP
 					WHERE COM.COM_UP_CD = COMUP.COM_CD
 					AND REPLACE(COMUP.CD_DESC1,' ', '') = REPLACE(#{CONSL_LCD},' ', '')
 					AND REPLACE(COM.CD_DESC1,' ', '') = REPLACE(#{CONSL_MCD},' ', ''))
@@ -144,7 +144,7 @@
 		   ,'RAS_003'
 		   ,CONCAT(#{LAST_CHK_DTTM}, ' ', DATE_FORMAT(NOW(),'%H:%i:%s'))
 		   ,(SELECT A.STATION_ID
-			   FROM spb.TB_OPR_STATION A, spb.TB_OPR_MLANG_STATION G 
+			   FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION G 
 			  WHERE A.STATION_ID = G.STATION_ID
 				AND REPLACE(G.STATION_NAME,' ','') = REPLACE(#{LOCATE_NAME},' ','') 
 				AND G.LANG_CLS_CD = 'LAG_001')  
@@ -155,7 +155,7 @@
 		   ,now()
 		   ,#{ADMIN_ID}
 		   ,(SELECT S.COM_CD
-							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							WHERE COM_UP_CD = 'ENT'
 							  AND L.LANG_CLS_CD = 'LAG_001'
 							  AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{ENTRPS_CD},' ', '') ) 
@@ -176,7 +176,7 @@
 			   #{DEVICE_ID}
 			  ,'C'
 			  ,( SELECT CENTER_ID
-				   FROM spb.TB_OPR_CENTER
+				   FROM TB_OPR_CENTER
 				  WHERE REPLACE(CENTER_NAME,' ','') = REPLACE( #{LOCATE_NAME},' ',''))
 			  ,DATE_ADD(now() ,interval 1 second)
 			  ,STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S')  
@@ -215,7 +215,7 @@
 			   ,STR_TO_DATE('9999-12-31 23:59:59','%Y-%m-%d %H:%i:%S') 
 			   ,'C'
 			   ,( SELECT CENTER_ID
-				 FROM spb.TB_OPR_CENTER
+				 FROM TB_OPR_CENTER
 				 WHERE REPLACE(CENTER_NAME,' ','') = REPLACE( #{LOCATE_NAME},' ',''))
 			   ,#{ADMIN_ID}
 		   )  
@@ -234,7 +234,7 @@
 		   #{DEVICE_ID}
 		  ,'S'
 		  , (SELECT A.STATION_ID
-				FROM spb.TB_OPR_STATION A, spb.TB_OPR_MLANG_STATION G 
+				FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION G 
 				WHERE A.STATION_ID = G.STATION_ID
 				 AND REPLACE(G.STATION_NAME,' ','') = REPLACE(#{LOCATE_NAME},' ','') 
 				 AND G.LANG_CLS_CD = 'LAG_001')
@@ -247,7 +247,7 @@
 	</insert>
 	<select id="chkSerialNo" parameterType="HashMap" resultType="int">
 		SELECT COUNT(*)
-		  FROM spb.TB_IOT_DEVICE
+		  FROM TB_IOT_DEVICE
 		 WHERE SERIAL_NO = #{SERIAL_NO}
 		 <choose>
 		 <when test='DEV_TYPE == "DEV_002"'>
@@ -261,12 +261,12 @@
 	
 	<select id="chkExistCenter" parameterType="String" resultType="int">
 		SELECT COUNT(*)
-		 FROM spb.TB_OPR_CENTER
+		 FROM TB_OPR_CENTER
 		 WHERE REPLACE(CENTER_NAME,' ','') = REPLACE(#{CENTER_NAME},' ','') 
 	</select>  
 	<select id="chkExistStation" parameterType="String" resultType="int">
 	   SELECT COUNT(*)
-		FROM spb.TB_OPR_STATION A, spb.TB_OPR_MLANG_STATION G 
+		FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION G 
 		WHERE A.STATION_ID = G.STATION_ID
 		 AND REPLACE(G.STATION_NAME,' ','') = REPLACE(#{STATION_NAME},' ','') 
 		 AND G.LANG_CLS_CD = 'LAG_001'
@@ -274,9 +274,9 @@
 	
 	<select id="isExistChkEquipOrder" parameterType="HashMap" resultType="int" >
 		 SELECT COUNT(*)
-		   FROM spb.TB_OPR_RACK
+		   FROM TB_OPR_RACK
 		  WHERE NOW_LOCATE_ID =  (SELECT A.STATION_ID
-									FROM spb.TB_OPR_STATION A, spb.TB_OPR_MLANG_STATION G 
+									FROM TB_OPR_STATION A, TB_OPR_MLANG_STATION G 
 									WHERE A.STATION_ID = G.STATION_ID
 									 AND REPLACE(G.STATION_NAME,' ','') = REPLACE(#{LOCATE_NAME},' ','') 
 									 AND G.LANG_CLS_CD = 'LAG_001')
@@ -285,81 +285,81 @@
 	</select>
 	<select id="isAlreadyExistTeminal" parameterType="String" resultType="int">
 		SELECT IF(TERMINAL_ID IS NOT NULL AND TERMINAL_ID !='' ,1,0)
-		 FROM spb.TB_OPR_BIKE
+		 FROM TB_OPR_BIKE
 		 WHERE BIKE_ID = #{LOCATE_ID}
 	</select>	
 	<select id="isExistBikeId" parameterType="String" resultType="String">
 		SELECT BIKE_ID
-		 FROM spb.TB_OPR_BIKE
+		 FROM TB_OPR_BIKE
 		 WHERE BIKE_ID = #{DEVICE_ID}
 	</select> 
 	<select id="isChkExistBikeNo" parameterType="String" resultType="int">
 		SELECT COUNT(*)
-		 FROM spb.TB_OPR_BIKE
+		 FROM TB_OPR_BIKE
 		 WHERE BIKE_NO = #{DEVICE_NO}
 	</select> 
 	<select id="chkExistDeviceId" parameterType="HashMap" resultType="int" >
 		<choose>
 		<when test='DEV_TYPE == "DEV_001"'>
 			SELECT COUNT(BIKE_ID)
-			  FROM spb.TB_OPR_BIKE
+			  FROM TB_OPR_BIKE
 			 WHERE BIKE_ID = #{DEVICE_ID}   
 		</when>
 		<when test='DEV_TYPE == "DEV_002"'>
 			SELECT COUNT(DEVICE_ID)
-			  FROM spb.TB_IOT_DEVICE
+			  FROM TB_IOT_DEVICE
 			 WHERE DEVICE_ID = #{DEVICE_ID}
 			   AND DEVICE_MODL_CD= 'DM2'   
 		</when>
 		<when test='DEV_TYPE == "DEV_003"'>  
 			SELECT COUNT(DEVICE_ID)
-			  FROM spb.TB_IOT_DEVICE
+			  FROM TB_IOT_DEVICE
 			 WHERE DEVICE_ID = #{DEVICE_ID}
 			   AND DEVICE_MODL_CD= 'DM1'
 		</when>
 		<otherwise>
 			SELECT COUNT(RACK_ID)
-			  FROM spb.TB_OPR_RACK
+			  FROM TB_OPR_RACK
 			 WHERE RACK_ID = #{DEVICE_ID}
 		</otherwise>		
 		</choose>
 	</select>	
 	<update id="setTerminalIdToBike" parameterType="HashMap">
-		UPDATE spb.TB_OPR_BIKE
+		UPDATE TB_OPR_BIKE
 		  SET TERMINAL_ID = #{DEVICE_ID}
 		WHERE BIKE_ID = #{LOCATE_ID}  
 	</update>	
 	
 	<select id="chkExistParts" parameterType="String" resultType="int">
 		SELECT COUNT(*)
-		  FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+		  FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 		  WHERE COM_UP_CD = 'PAR'
 			AND L.LANG_CLS_CD = 'LAG_001'
 			AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{PART_NAME},' ', '') 
 	</select>	
 	<select id="isStockExistChk" parameterType="HashMap" resultType="int">
 		SELECT COUNT(*)
-		  FROM spb.TB_MTC_STOCK_LIST
+		  FROM TB_MTC_STOCK_LIST
 		 WHERE CENTER_ID = (SELECT CENTER_ID
-							  FROM spb.TB_OPR_CENTER
+							  FROM TB_OPR_CENTER
 							 WHERE REPLACE(CENTER_NAME,' ', '') = REPLACE(#{CENTER_NAME},' ', '')  )
 		   AND PART_CD  = (SELECT S.COM_CD
-							 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							WHERE COM_UP_CD = 'PAR'
 							  AND L.LANG_CLS_CD = 'LAG_001'
 							  AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{PART_CD},' ', '') )				   
 	</select>	
 	<insert id="addDevicePartStockitem" parameterType="HashMap">
-		INSERT INTO spb.TB_MTC_STOCK_LIST (
+		INSERT INTO TB_MTC_STOCK_LIST (
 			 CENTER_ID
 			,PART_CD
 			,STOCK_QUNT
 		) VALUES (
 		   (SELECT CENTER_ID
-			  FROM spb.TB_OPR_CENTER
+			  FROM TB_OPR_CENTER
 			 WHERE REPLACE(CENTER_NAME,' ', '') = REPLACE(#{CENTER_NAME},' ', '')  )
 		  ,(SELECT S.COM_CD
-			  FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+			  FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 			 WHERE COM_UP_CD = 'PAR'
 			   AND L.LANG_CLS_CD = 'LAG_001'
 			   AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{PART_CD},' ', '') ) 
@@ -367,13 +367,13 @@
 		)
 	</insert>
 	<update id="setDevicePartStockitem" parameterType="HashMap">
-		UPDATE spb.TB_MTC_STOCK_LIST
+		UPDATE TB_MTC_STOCK_LIST
 		   SET STOCK_QUNT = (STOCK_QUNT + #{STOCK_QUNT})
 		 WHERE CENTER_ID = (SELECT CENTER_ID
-							  FROM spb.TB_OPR_CENTER
+							  FROM TB_OPR_CENTER
 							 WHERE REPLACE(CENTER_NAME,' ', '') = REPLACE(#{CENTER_NAME},' ', '')  )
 		  AND PART_CD	= (SELECT S.COM_CD
-							  FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+							  FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							 WHERE COM_UP_CD = 'PAR'
 							   AND L.LANG_CLS_CD = 'LAG_001'
 							   AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{PART_CD},' ', '') )   
@@ -381,7 +381,7 @@
 	
 	<select id="chkExistEntrps" parameterType="String" resultType="int">
 		SELECT COUNT(S.COM_CD)
-		FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+		FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							 WHERE COM_UP_CD = 'ENT'
 							   AND L.LANG_CLS_CD = 'LAG_001'
 							   AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{ENTRPS_CD_NM},' ', '') 
@@ -389,7 +389,7 @@
 	
 	 <select id="chkExistBikeSeCd" parameterType="String" resultType="int">
 		SELECT COUNT(S.COM_CD)
-		FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+		FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 							 WHERE COM_UP_CD = 'BIK'
 							   AND L.LANG_CLS_CD = 'LAG_001'
 							   AND REPLACE(MLANG_COM_CD_NAME,' ', '') = REPLACE(#{BIKE_SE_CD},' ', '') 

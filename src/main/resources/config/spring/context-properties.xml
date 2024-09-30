@@ -8,7 +8,8 @@
 				<!-- 홈페이지 주소 -->
 <!-- 				<entry key="homeURL" value="http://localhost:8080"/> -->
 				<!-- <entry key="homeURL" value="https://abc.bikeseoul.com/"/> -->
-				<entry key="homeURL" value="http://49.247.195.87:6060/"/>
+				<!-- <entry key="homeURL" value="http://49.247.195.87:6060/"/> -->
+				<entry key="homeURL" value="http://175.125.130.64:8080/"/>
 				
 				<entry key="allowuri" value="/,/main.do,/moveMainPage.do"/>
 				

@@ -72,12 +72,12 @@ function getAction(idx){
 		case 0: actionValue = "/admin/service/member/memberInfo.do"; 			break;
 		case 1: actionValue = "/admin/service/member/memberPaymentList.do";		break;
 		case 2:	actionValue = "/admin/service/member/memberUseList.do";			break;
-		case 3:	actionValue = "/admin/service/member/memberMileage.do";			break;
+		/* case 3:	actionValue = "/admin/service/member/memberMileage.do";			break;
 		case 4: actionValue = "/admin/service/member/memberPenalty.do";			break;
-		case 5: actionValue = "/admin/service/member/memberRefundList.do";		break;
-		case 6: actionValue = "/admin/service/member/memberUnpaidList.do";  	break;
-		case 7:	actionValue = "/admin/service/member/memberVoucherList.do"; 	break;
-		case 8:	actionValue = "/admin/service/member/memberGiftList.do"; 		break;
+		case 5: actionValue = "/admin/service/member/memberRefundList.do";		break; */
+		case 3: actionValue = "/admin/service/member/memberUnpaidList.do";  	break;
+		/* case 7:	actionValue = "/admin/service/member/memberVoucherList.do"; 	break;
+		case 8:	actionValue = "/admin/service/member/memberGiftList.do"; 		break; */
 	}
 	return actionValue;
 }
@@ -130,22 +130,22 @@ function linkPage(no){
 							<li><a href="#">회원정보</a></li>
 							<li><a href="#">결제이력</a></li>
 							<li><a href="#">이용이력</a></li>
-							<li><a href="#">마일리지 이력</a></li>
+							<!-- <li><a href="#">마일리지 이력</a></li>
 							<li><a href="#">벌점이력</a></li>
-							<li><a href="#">환불이력</a></li>
+							<li><a href="#">환불이력</a></li> -->
 							<li class="on"><a href="#">미납이력</a></li>
-							<li><a href="#">이용권</a></li>
-							<li><a href="#">선물</a></li>
+							<!-- <li><a href="#">이용권</a></li>
+							<li><a href="#">선물</a></li> -->
 						</ul>
 						<select  id="mobiletableList" class="tablist_m">
 							<option value="0">회원정보</option>
 							<option value="1">결제이력</option>
 							<option value="2" >이용이력</option>
-							<option value="3">마일리지이력</option>
+							<!-- <option value="3">마일리지이력</option>
 							<option value="4">벌점이력</option>
-							<option value="5">환불이력</option>
-							<option value="6" selected="selected">미납이력</option>
-							<option value="7">이용권</option>
+							<option value="5">환불이력</option> -->
+							<option value="3" selected="selected">미납이력</option>
+							<!-- <option value="7">이용권</option> -->
 						</select>
 						<!-- 모바일 검색조건 S-->
 						<div class="shBox_m mt20">

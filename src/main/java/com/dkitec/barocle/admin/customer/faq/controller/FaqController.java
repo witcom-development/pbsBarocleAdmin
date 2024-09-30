@@ -62,6 +62,10 @@ public class FaqController extends BaseController {
 		String resultPage = "/admin/customer/faq/bor_faq_list";
 		
 		try{
+			// 검색어 한글 꺠짐 수정
+			if(faqVO.getSearchValue() != null || "".equals(faqVO.getSearchValue()))
+				faqVO.setSearchValue( new String(faqVO.getSearchValue().getBytes("8859_1"), "UTF-8") );
+			
 			// 총 레코드 개수를 가져온다.
 			faqVO.setTotalRecordCount(faqService.listFaqCount(faqVO));
 			// 페이징
@@ -79,7 +83,7 @@ public class FaqController extends BaseController {
 			model.addAttribute("paginationInfo",paginationInfo);
 			model.addAttribute("paginationMobileInfo",paginationMobileInfo);
 			// 카테고리 목록
-			model.addAttribute("categoryList",faqService.listFaqCategory(new CategoryVO(),"FAQ"));
+			model.addAttribute("categoryList",faqService.listFaqCategory(new CategoryVO(),"CTM_002"));
 			
 			bResult = true;		// 정상
 			
@@ -126,7 +130,7 @@ public class FaqController extends BaseController {
 			model.addAttribute("faqView",faqView);		// 공지사항 내용
 			
 			// 카테고리 목록
-			model.addAttribute("categoryList",faqService.listFaqCategory(new CategoryVO(),"FAQ"));
+			model.addAttribute("categoryList",faqService.listFaqCategory(new CategoryVO(),"CTM_002"));
 						
 			bResult = true;		// 정상
 			
@@ -145,7 +149,7 @@ public class FaqController extends BaseController {
 		if(result.hasErrors()){
 			model.addAttribute("faqView", faqVO);
 			try {
-				model.addAttribute("categoryList",faqService.listFaqCategory(new CategoryVO(),"FAQ"));
+				model.addAttribute("categoryList",faqService.listFaqCategory(new CategoryVO(),"CTM_002"));
 			} catch (Exception e) { throw new CfoodException("admin.customer.faq.faqPersist.bindingexception",e); }
 			model.addAttribute("resultError", super.setResultMessage(result));
 			return "/admin/customer/faq/bor_faq_detail";

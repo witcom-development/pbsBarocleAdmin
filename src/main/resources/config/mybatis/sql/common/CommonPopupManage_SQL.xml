@@ -239,35 +239,35 @@
 					  ,A.BIKE_STUS_CD				   		AS deviceStatusCd
 					  ,(
 						 SELECT MLANG_COM_CD_NAME
-						   FROM spb.TB_SYS_MLANG_COM_CD 
+						   FROM TB_SYS_MLANG_COM_CD 
 						  WHERE COM_CD = A.BIKE_STUS_CD 
 							AND LANG_CLS_CD = #{lang} 
 						)   									AS deviceStatusName
 				   <if test ='bikeNo != null and bikeNo !=""'>	
 					  ,(
 						 SELECT FAULT_CONTENT						
-						   FROM	spb.TB_MTC_FAULT_INFO
+						   FROM	TB_MTC_FAULT_INFO
 						  WHERE FAULT_SEQ = MAX(D.FAULT_SEQ)	 
 						)  										AS faultContent
 					  ,(
 						 SELECT MLANG_COM_CD_NAME
-						   FROM spb.TB_MTC_REPORT_DETL   	A
-					 INNER JOIN spb.TB_SYS_MLANG_COM_CD 	B 	ON A.BRKDN_STUS_CD = B.COM_CD
+						   FROM TB_MTC_REPORT_DETL   	A
+					 INNER JOIN TB_SYS_MLANG_COM_CD 	B 	ON A.BRKDN_STUS_CD = B.COM_CD
 						  WHERE A.FAULT_SEQ = MAX(D.FAULT_SEQ)
 							AND LANG_CLS_CD = #{lang} 
 						)  										AS reportContent
 					  ,(
 					  	 SELECT DATE_FORMAT(MAX(REG_DTTM),'%Y-%m-%d %H:%i:%s')
-					  	   FROM spb.TB_MTC_BAT_REPLACE_INFO
+					  	   FROM TB_MTC_BAT_REPLACE_INFO
 					  	  WHERE BIKE_NO = CASE WHEN LENGTH(#{bikeNo}) BETWEEN 1 AND 5 THEN CONCAT('BRC-',LPAD(#{bikeNo},5,'0'))
 																			ELSE 'X'
 																			END
 						)										AS batReplaceTime	
 				   </if>		   
-				  FROM spb.TB_OPR_BIKE 						A 
-				  LEFT OUTER JOIN spb.TB_OPR_BIKE_PARKING 	B 		ON A.BIKE_ID = B.BIKE_ID
-				  LEFT OUTER JOIN spb.TB_OPR_RACK 			C 		ON B.RACK_ID = C.RACK_ID
-				  LEFT OUTER JOIN spb.TB_MTC_FAULT_INFO 	D 		ON A.BIKE_ID = D.EQUIPMENT_ID AND A.BIKE_STUS_CD ='BKS_001' AND D.READ_CLS_CD = 'S'
+				  FROM TB_OPR_BIKE 						A 
+				  LEFT OUTER JOIN TB_OPR_BIKE_PARKING 	B 		ON A.BIKE_ID = B.BIKE_ID
+				  LEFT OUTER JOIN TB_OPR_RACK 			C 		ON B.RACK_ID = C.RACK_ID
+				  LEFT OUTER JOIN TB_MTC_FAULT_INFO 	D 		ON A.BIKE_ID = D.EQUIPMENT_ID AND A.BIKE_STUS_CD ='BKS_001' AND D.READ_CLS_CD = 'S'
 			
 				<trim prefix="WHERE" prefixOverrides="AND"> 
 				<if test ='bikeNo == null or bikeNo ==""'>
@@ -310,12 +310,12 @@
 			  ,A.BIKE_NO						AS bikeNo
 			  ,A.BIKE_STUS_CD				   AS deviceStatusCd
 			  ,(SELECT MLANG_COM_CD_NAME
-				 FROM spb.TB_SYS_MLANG_COM_CD 
+				 FROM TB_SYS_MLANG_COM_CD 
 				WHERE COM_CD = A.BIKE_STUS_CD 
 				  AND LANG_CLS_CD = #{lang} )	AS deviceStatusName
-		  FROM spb.TB_OPR_BIKE A 
-		  LEFT OUTER JOIN spb.TB_OPR_BIKE_PARKING B ON A.BIKE_ID = B.BIKE_ID
-		  LEFT OUTER JOIN spb.TB_OPR_RACK C ON B.RACK_ID = C.RACK_ID
+		  FROM TB_OPR_BIKE A 
+		  LEFT OUTER JOIN TB_OPR_BIKE_PARKING B ON A.BIKE_ID = B.BIKE_ID
+		  LEFT OUTER JOIN TB_OPR_RACK C ON B.RACK_ID = C.RACK_ID
 	]]>
 		<trim prefix="WHERE" prefixOverrides="AND"> 
 		<choose>
@@ -367,22 +367,22 @@
 	<select id="getPenaltyDetailInfo" parameterType="penaltyVo" resultType="penaltyVo">
 		SELECT PENALTY_CD   AS penaltyCd
 			  ,PENALTY_DESC AS penaltyDesc
-		  FROM spb.TB_SVC_PENALTY	 
+		  FROM TB_SVC_PENALTY	 
 		 WHERE PENALTY_SEQ = #{penaltySeq}
 	</select>	
 	
 	<!-- 2017.07.04_라이브 소스 비교의 따른 변경_JHN -->
 	<!-- <delete id="delRentPenaltyImpose" parameterType="penaltyVo">
-		DELETE FROM spb.TB_SVC_PENALTY WHERE PENALTY_SEQ = #{penaltySeq}
+		DELETE FROM TB_SVC_PENALTY WHERE PENALTY_SEQ = #{penaltySeq}
 	</delete> -->
 	<update id="delRentPenaltyImpose" parameterType="penaltyVo">
-		UPDATE spb.TB_SVC_PENALTY 
+		UPDATE TB_SVC_PENALTY 
 		  SET READ_CLS_CD = 'H'
 		WHERE PENALTY_SEQ = #{penaltySeq}
 	</update>
 	
 	<insert id="addRentPenaltyImpose" parameterType="penaltyVo">
-		INSERT INTO spb.TB_SVC_PENALTY (
+		INSERT INTO TB_SVC_PENALTY (
 			 USR_SEQ
 			,PENALTY_CD
 			,REG_ID
@@ -407,7 +407,7 @@
 		 SELECT SMS_SEQ	   AS smsSeq
 			   ,ORIGNL_MSG	AS smsMsg
 			   ,SEND_CLS_NAME AS sendClsName
-		   FROM spb.TB_SYS_SMS
+		   FROM TB_SYS_SMS
 		  WHERE AUTO_SEND_YN = 'N'
 	</select>
 	<select id="getTroubleReportInfo" parameterType="troubleReportVo" resultType="troubleReportVo">
@@ -554,17 +554,17 @@
 	
 	<select id="isBlackList" parameterType="penaltyVo" resultType="int">
 		SELECT IF((SELECT SUM(PENALTY_POINT)
-						  FROM spb.TB_SVC_PENALTY_CD A, spb.TB_SVC_PENALTY B 
+						  FROM TB_SVC_PENALTY_CD A, TB_SVC_PENALTY B 
 						 WHERE A.PENALTY_CD = B.PENALTY_CD
 						   AND B.USR_SEQ = #{usrSeq}
 						   <![CDATA[ AND B.READ_CLS_CD = 'S' ) >= (SELECT ADD_VAL1 
-						  FROM spb.TB_SYS_COM_CD
+						  FROM TB_SYS_COM_CD
 						 WHERE COM_CD = 'MSI_002'), 1,0) AS isBlack ]]> <!-- 2017.07.04_라이브 소스 비교의 따른 추가(AND B.READ_CLS_CD = 'S')_JHN -->
 		  FROM DUAL
 	</select>
 	<select id="existBlackUsr" parameterType="penaltyVo" resultType="int" >
 		SELECT COUNT(USR_SEQ)
-		  FROM spb.TB_SVC_USR_BLKLIST
+		  FROM TB_SVC_USR_BLKLIST
 		 WHERE USR_SEQ = #{usrSeq}  
 	</select>   
 	

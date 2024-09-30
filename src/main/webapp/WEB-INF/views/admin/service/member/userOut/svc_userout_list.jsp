@@ -57,7 +57,7 @@
 											<span class="selectDate input-datepick04"><input type="text" class="datepicker input-datepick04" title="선택 날짜" id="leaveEndDate" name="leaveEndDate" readonly/></span>
 										</div>
 										<div class="section pright">
-											<label for="a22" class="laType02">회원아이디</label>
+											<label for="a22" class="laType02">휴대폰 번호</label>
 											<span class="input-text07"><input type="text" id="mbId" name="mbId" /></span>
 											<button class="btn-srh03 btncase1 mdbtncase1"><img src="/images/searchIcon.gif" alt="검색" id="searchBtn"/></button>
 										</div>
@@ -69,20 +69,16 @@
 						<table class="tb_type01">
 							<colgroup>
 								<col style="width:15%"/>
-								<%-- <col style="width:18%"/> --%>
-								<col style="width:18%"/>
 								<col style="width:15%"/>
 								<col style="width:15%"/>
-								<!--[if gt IE 8]><!--><col style="width:14%" class="mhid"/><!--<![endif]-->
+								<col style="width:14%"/>
 							</colgroup>
 							<thead>
 								<tr>
-									<th>아이디</th>
-									<!-- <th>성별</th> -->
-									<th>생년월</th>
+									<th>휴대폰 번호</th>
 									<th>탈퇴 이유</th>
 									<th>블랙리스트 여부</th>
-									<!--[if gt IE 8]><!--><th class="mhid">탈퇴일</th><!--<![endif]-->
+									<th>탈퇴일</th>
 								</tr>
 							</thead>
 							<tbody>
@@ -90,12 +86,6 @@
 						        <tr>
 						            <td>
 						                ${result.mbId }
-						            </td>
-						            <%-- <td>
-						                ${result.sexCd == 'M' ? '남' : '여' }
-						            </td> --%>
-						            <td >
-						                ${result.usrBirthDate }
 						            </td>
 						            <td>
 						                ${result.leaveReasonCd }
@@ -110,7 +100,7 @@
 						    </c:forEach>
 						    <c:if test='${fn:length(userOutList) == 0}'>
 						        <tr>
-						            <td style="text-align:center" colspan="5"><spring:message code="search.nodata.msg" /></td>
+						            <td style="text-align:center" colspan="4"><spring:message code="search.nodata.msg" /></td>
 					            </tr>
 					        </c:if>
 							</tbody>

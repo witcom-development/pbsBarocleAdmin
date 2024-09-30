@@ -1,6 +1,6 @@
 
 <!-- <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=zc9ttduqic&callback=draw"></script> -->
-<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=1if4e5yo6i&callback=draw"></script>
+<script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=0tvu3iygqg&callback=draw"></script>
 <script type="text/javascript" src="/js/stationCommonMapv.js"></script>
 <script type="text/javascript" src="/js/common_barocle.js"></script>
 <script type="text/javascript">

@@ -237,79 +237,32 @@ public class StationMgmtServiceImpl extends EgovAbstractServiceImpl implements S
 	@Override
 	@Transactional(rollbackFor = Exception.class)
 	@DataSource(DataSourceType.MASTER)
-	public void stationGrpRemoteReturnGroupModify(StationMgmtVO stationVo, ApService apService) {
+	public void stationGrpRemoteReturnGroupModify(StationMgmtVO stationVo) {
 	//public void stationGroupModify(StationMgmtVO stationVo) {
-		
-		if(stationVo.getCmd().equals("INSERT")){
+		System.out.println("getCmd("+stationVo.getCmd()+")");
+		if("INSERT".equals(stationVo.getCmd())){
 			
 			try {
-				// 대여소 등록 station_no 를 이용하여 station_id 생성 
-//				int stationGrpRemoteReturnNum = mapper.getStationGrpRemoteReturnNo(stationVo);
-//				String station_grp_seq = Integer.toString(stationGrpRemoteReturnNum);
-//				stationVo.setStation_grp_seq(station_grp_seq);
-				
-				
-				
-				for(int i=0; i < stationVo.getCodeList().size(); i++){
-					stationVo.setLang_cls_cd(stationVo.getCodeList().get(i)); 
-					stationVo.setStation_name(stationVo.getNameList().get(i));
-//					mapper.insertStationGrpRemoteReturnName(stationVo);
-					mapper.insertStationGrpRemoteReturn(stationVo);
-				}
-				
-				// 신규 정거장에는 거치대 정보를 넣어준다. 2020-01-13
-				// 정거장 구분없이 거치대 정보를 넣어줌 2020-02-04
-//				mapper.insertNewStationRack1(stationVo);
-//				mapper.insertNewStationRack2(stationVo);
-				 
-				// 2021 01 19 locate_info 등록
-//				mapper.insertTB_OPR_RACK_LOCATE_INFO(stationVo);
+				mapper.insertStationGrpRemoteReturn(stationVo);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new CfoodException("admin.manage.station.stationGrpRemoteReturnGroupModify");
 			}
 			
-		}else if(stationVo.getCmd().equals("UPDATE")){
+		}else if("UPDATE".equals(stationVo.getCmd())){
 			try {
-//				if(stationVo.getHistYn().equals("Y")){
-//					mapper.insertStationHist(stationVo);
-//				}
 				mapper.updateStationGrpRemoteReturn(stationVo);
-//				if (stationVo.getStationGrpRemoteReturnList() != null ){
-//				for(int i=0; i < stationVo.getStationGrpRemoteReturnList().size(); i++){
-//					stationVo.setStation_grp_seq(stationVo.getStationGrpRemoteReturnList().get(i));
-//					stationVo.setRemote_station_name(stationVo.getStationGrpRemoteReturnList().get(i));
-//					stationVo.setRemote_latitude(stationVo.getStationGrpRemoteReturnList().get(i));
-//					stationVo.setRemote_logitude(stationVo.getStationGrpRemoteReturnList().get(i));
-//					stationVo.setRemote_use_yn(stationVo.getStationGrpRemoteReturnList().get(i));
-////					stationVo.setStation_name(stationVo.getNameList().get(i));
-////					mapper.updateStationGrpRemoteReturnName(stationVo);
-//					mapper.updateStationGrpRemoteReturn(stationVo);
-//				}
-//				}
 				 
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new CfoodException("admin.manage.station.stationGrpRemoteReturnGroupModify");
 			}
 			
-		}else if(stationVo.getCmd().equals("DELETE")){
+		}else if("DELETE".equals(stationVo.getCmd())){
 			
 			try {
-//				String ap = mapper.getStationDeviceID(stationVo);
-//				if(ap != null){
-//					ApVO apVo = new ApVO();
-//					apVo.setDeviceId(ap);
-//					apVo.setAdminId("TESTER");
-//					apVo.setLocateClsCd("C");
-//					apVo.setLocateId(mapper.getCenterId());
-//					mapper.updateApHist(apVo);
-//					apMapper.addApLocateHist(apVo);
-//				}
-				
 				mapper.deleteStationGrpRemoteReturn(stationVo);
-//				mapper.deleteStationName(stationVo);
 				
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -317,14 +270,6 @@ public class StationMgmtServiceImpl extends EgovAbstractServiceImpl implements S
 			}
 			
 		}
-		//STATION VER 동록
-//		try {
-//			mapper.updateStationVersion(stationVo);
-//			mapper.insertStationVersion(stationVo);
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			throw new CfoodException("admin.manage.station.stationGroupModify");
-//		}
 		
 	}
 
@@ -398,6 +343,22 @@ public class StationMgmtServiceImpl extends EgovAbstractServiceImpl implements S
 		
 		if(stationVo.getStation_name()!= null && !stationVo.getStation_name().equals("")){
 			if( mapper.stationDuplNameCheck(stationVo) > 0 ){
+				return "중복";
+			}
+		}
+		
+		return IConstants.OK;
+	}
+	
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.SLAVE01)
+	public String remoteStationNumberCheck(StationMgmtVO stationVo) {
+		
+		logger.debug(stationVo);
+		
+		if(stationVo.getStation_name()!= null && !stationVo.getStation_name().equals("")){
+			if( mapper.remoteStationDuplNameCheck(stationVo) > 0 ){
 				return "중복";
 			}
 		}

@@ -833,7 +833,29 @@ $(document).ready(function(){
 												<p class="mt10">이름은 영문/한글로 시작해 영문+한글+숫자로 2자리 이상 20자리 이하</p>
 											</td>
 										</tr>
-										<tr class="stationAdmin">
+										
+										<tr class="teamId">
+											<th><em>*</em> 소속 아파트</th>
+											<td>
+												<select class="select-category01" id="teamId" name="teamId">
+													<option value="">선택</option>
+													<c:forEach items="${aptList }" var="aptList" varStatus="status">
+													<option value="${aptList.aptSeq }"><c:out value="${aptList.aptName}"/></option>
+													<%-- <c:if test="${inputFrm.center_id == centerList.comCd}">
+														<option value="${centerList.comCd }" selected="selected"><c:out value="${centerList.comCdName}"/></option>
+													</c:if>
+													<c:if test="${inputFrm.center_id != centerList.comCd}">
+														<option value="${centerList.comCd }"><c:out value="${centerList.comCdName}"/></option>
+													</c:if> --%>
+													</c:forEach>
+												</select>&nbsp;
+												<select class="select-category01" id="team_id" name="team_id" required="true">
+													<option value="">선택</option>
+												</select>
+											</td>
+										</tr>
+										
+										<%-- <tr class="stationAdmin">
 											<th>유인대여소</th>
 											<td>
 												<select class="select-category03" name="admin_grp_seq" id="admin_grp_seq">
@@ -846,26 +868,9 @@ $(document).ready(function(){
 													<option value="">대여소</option>
 												</select>
 											</td>
-										</tr>
-										<%-- 
-										<tr class="centerAdmin">
-											<th><em>*</em> 센터</th>
-											<td>
-												<select class="select-category03" name="assign_center_id" required="true">
-													<option value="">선택</option>
-													
-													<c:forEach items="${center}" var="center" varStatus="status">
-													
-														<option clscd="${center.centerClsCD}" value="${center.centerID }"><c:out value="${center.centerName}"/></option>
-														
-													</c:forEach>
-													
-												</select>
-											</td>
-										</tr>
-										 --%>
-										<%-- 
-										<tr class="teamAdmin">
+										</tr> --%>
+										
+										<%-- <tr class="teamAdmin">
 											<th><em>*</em> 팀</th>
 											<td>
 												<select class="select-category01" id="teamCenter" name="teamCenter">
@@ -883,8 +888,8 @@ $(document).ready(function(){
 													<option value="">선택</option>
 												</select>
 											</td>
-										</tr>
-										 --%>
+										</tr> --%>
+										
 										<tr class="relocateAdmin">
 											<th><em>*</em> 재배치차량</th>
 											<td>

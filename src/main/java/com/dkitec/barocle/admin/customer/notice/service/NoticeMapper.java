@@ -3,6 +3,7 @@ package com.dkitec.barocle.admin.customer.notice.service;
 import java.util.List;
 
 import com.dkitec.barocle.admin.customer.daumeditor.vo.DaumEditorVO;
+import com.dkitec.barocle.admin.customer.notice.vo.FileVO;
 import com.dkitec.barocle.admin.customer.notice.vo.NoticeVO;
 import com.dkitec.barocle.util.push.PushVO;
 
@@ -16,6 +17,8 @@ public interface NoticeMapper {
 	public List<NoticeVO> listNotice(NoticeVO noticeVO);
 	
 	public NoticeVO viewNotice(NoticeVO noticeVO);
+	
+	public NoticeVO viewNotice2(NoticeVO noticeVO);
 	
 	public List<DaumEditorVO> getDaumEditorImage(NoticeVO noticeVO);
 	
@@ -42,4 +45,15 @@ public interface NoticeMapper {
 	public int insertPush(PushVO pushVO);
 	
 	public List<PushVO> getPushTargetList();
+	
+	public FileVO getBBSImage(NoticeVO vo);
+	
+	public int updateImage(NoticeVO noticeVO);
+	
+	public int bbsImage(FileVO FileVO);
+	
+	public int appendBbsImage(NoticeVO vo);
+	public int deleteBBSImage(NoticeVO vo);
+	public int updateBbsImage(NoticeVO vo);
+	
 }

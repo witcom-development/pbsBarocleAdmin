@@ -41,4 +41,6 @@ public interface UserMgmtMapper {
 	
 	public List<TeamMgmtVO> teamList(TeamMgmtVO teamVO) throws Exception;
 	
+	public List<UserMgmtVO> getAptGrpList() throws Exception;
+	
 }

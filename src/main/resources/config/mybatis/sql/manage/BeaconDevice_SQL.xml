@@ -22,14 +22,14 @@
 			, IOT.SERIAL_NO AS serialNo 
 			, IOT.ENTRPS_CD AS entrpsCd
 			,IF(QR.NOW_LOCATE_CLS_CD   ='S',CONCAT('(s)',(SELECT STATION_NAME
-										FROM spb.TB_OPR_MLANG_STATION
+										FROM TB_OPR_MLANG_STATION
 									   WHERE STATION_ID = QR.NOW_LOCATE_ID
 										 AND LANG_CLS_CD = 'LAG_001')), '')	AS stationName
 		   ,IF(QR.NOW_LOCATE_CLS_CD  ='C', CONCAT('(c)',(SELECT CENTER_NAME
-										 FROM spb.TB_OPR_CENTER
+										 FROM TB_OPR_CENTER
 										WHERE CENTER_ID = QR.NOW_LOCATE_ID)) ,'')   AS centerName
 			,(SELECT L.MLANG_COM_CD_NAME
-			FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+			FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 			WHERE COM_UP_CD = 'ENT'
 			AND L.LANG_CLS_CD = 'LAG_001'
 			AND S.COM_CD = IOT.ENTRPS_CD) AS entrpsCdNm
@@ -49,7 +49,7 @@
 			 
 		<if test='stationGrpSeq != null and stationGrpSeq != "" and (stationId == null or  stationId == "")'>
 			AND QR.NOW_LOCATE_ID IN (SELECT STATION_ID
-				FROM spb.TB_OPR_STATION
+				FROM TB_OPR_STATION
 				WHERE STATION_GRP_SEQ = #{stationGrpSeq})
 		</if>
 		<if test='searchType !=null and searchType != ""'>
@@ -84,7 +84,7 @@
 		</if>
 		<if test='stationGrpSeq != null and stationGrpSeq != "" and (stationId == null or  stationId == "")'>
 			AND QR.NOW_LOCATE_ID IN (SELECT STATION_ID
-								FROM spb.TB_OPR_STATION
+								FROM TB_OPR_STATION
 							   WHERE STATION_GRP_SEQ = #{stationGrpSeq})
 		</if>
 		<if test='searchType !=null and searchType != ""'>
@@ -111,14 +111,14 @@
 			, IOT.SERIAL_NO AS serialNo
 			, IOT.ENTRPS_CD AS entrpsCd
 			,IF(QR.NOW_LOCATE_CLS_CD   ='S',CONCAT('(s)',(SELECT STATION_NAME
-													  FROM spb.TB_OPR_MLANG_STATION
+													  FROM TB_OPR_MLANG_STATION
 													 WHERE STATION_ID = NOW_LOCATE_ID
 													   AND LANG_CLS_CD = 'LAG_001')), '')	AS stationName
 			,IF(QR.NOW_LOCATE_CLS_CD  ='C', CONCAT('(c)',(SELECT CENTER_NAME
-													   FROM spb.TB_OPR_CENTER
+													   FROM TB_OPR_CENTER
 													  WHERE CENTER_ID = NOW_LOCATE_ID)) ,'')   AS centerName  
 			,(SELECT L.MLANG_COM_CD_NAME
-						 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+						 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 						WHERE COM_UP_CD = 'ENT'
 						  AND L.LANG_CLS_CD = 'LAG_001'
 						  AND S.COM_CD = ENTRPS_CD) AS entrpsCdNm
@@ -200,14 +200,14 @@
 			, IOT.SERIAL_NO AS serialNo
 			, IOT.ENTRPS_CD AS entrpsCd
 			,IF(QR.NOW_LOCATE_CLS_CD   ='S',CONCAT('(s)',(SELECT STATION_NAME
-													  FROM spb.TB_OPR_MLANG_STATION
+													  FROM TB_OPR_MLANG_STATION
 													 WHERE STATION_ID = NOW_LOCATE_ID
 													   AND LANG_CLS_CD = 'LAG_001')), '')	AS stationName
 			,IF(QR.NOW_LOCATE_CLS_CD  ='C', CONCAT('(c)',(SELECT CENTER_NAME
-													   FROM spb.TB_OPR_CENTER
+													   FROM TB_OPR_CENTER
 													  WHERE CENTER_ID = NOW_LOCATE_ID)) ,'')   AS centerName  
 			,(SELECT L.MLANG_COM_CD_NAME
-						 FROM spb.TB_SYS_COM_CD S INNER JOIN spb.TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
+						 FROM TB_SYS_COM_CD S INNER JOIN TB_SYS_MLANG_COM_CD L ON S.COM_CD = L.COM_CD
 						WHERE COM_UP_CD = 'ENT'
 						  AND L.LANG_CLS_CD = 'LAG_001'
 						  AND S.COM_CD = ENTRPS_CD) AS entrpsCdNm

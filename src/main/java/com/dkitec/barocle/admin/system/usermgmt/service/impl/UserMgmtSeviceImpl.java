@@ -262,4 +262,12 @@ public class UserMgmtSeviceImpl extends EgovAbstractServiceImpl implements UserM
 		result = userMapper.teamList(teamVo);
 		return result;
 	}
+	
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.SLAVE01)
+	public List<UserMgmtVO> getAptGrpList() throws Exception {
+		List<UserMgmtVO> result = userMapper.getAptGrpList();
+		return result;
+	}
 }

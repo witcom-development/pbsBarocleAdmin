@@ -107,24 +107,24 @@
 		case 2:
 			actionValue = "/admin/service/member/memberUseList.do";
 			break;
-		/* case 3:
+		case 3:
 			actionValue = "/admin/service/member/memberMileage.do";
 			break;
 		case 4:
 			actionValue = "/admin/service/member/memberPenalty.do";
 			break;
-		case 3:
+		case 5:
 			actionValue = "/admin/service/member/memberRefundList.do";
-			break; */
-		case 3:
+			break;
+		case 6:
 			actionValue = "/admin/service/member/memberUnpaidList.do";
 			break;
-		/* case 7:
+		case 7:
 			actionValue = "/admin/service/member/memberVoucherList.do";
 			break;
 		case 8:
 			actionValue = "/admin/service/member/memberGiftList.do";
-			break; */
+			break;
 		}
 		return actionValue;
 	}
@@ -625,25 +625,24 @@
 							<li class="on"><a href="#">회원정보</a></li>
 							<li><a href="#">결제이력</a></li>
 							<li><a href="#">이용이력</a></li>
-							<!-- <li><a href="#">마일리지 이력</a></li>
+							<li><a href="#">마일리지 이력</a></li>
 							<li><a href="#">벌점이력</a></li>
-							<li><a href="#">환불이력</a></li> -->
+							<li><a href="#">환불이력</a></li>
 							<li><a href="#">미납이력</a></li>
-							<!-- <li><a href="#">이용권</a></li>
-							<li><a href="#">선물</a></li> -->
+							<li><a href="#">이용권</a></li>
+							<li><a href="#">선물</a></li>
 						</ul>
 						<select  id="mobiletableList" class="tablist_m">
 							<option value="0" selected="selected">회원정보</option>
 							<option value="1">결제이력</option>
 							<option value="2" >이용이력</option>
-							<!-- <option value="3">마일리지이력</option>
+							<option value="3">마일리지이력</option>
 							<option value="4">벌점이력</option>
-							<option value="5">환불이력</option> -->
-							<option value="3">미납이력</option>
-							<!-- <option value="7">이용권</option>
-							<option value="8">선물</option> -->
+							<option value="5">환불이력</option>
+							<option value="6">미납이력</option>
+							<option value="7">이용권</option>
+							<option value="8">선물</option>
 						</select>
-						<input type="hidden" name="usr_seq" id="usr_seq" value="${info.usr_seq }">
 						<table class="tb_type02 mt20">
 								<colgroup>
 									<col style="width:20%" />
@@ -652,6 +651,31 @@
 									<col style="width:30%" />
 								</colgroup>
 							<tbody>
+								<tr>
+									<th>아이디</th>
+									<td>
+										${info.mb_id }
+										<input type="hidden" name="usr_seq" id="usr_seq" value="${info.usr_seq }">
+									</td>
+									<th>생년월일</th>
+									<td>${info.usr_birth_date }</td>
+								</tr>
+								<tr>
+									<th>성별</th>
+									<td>
+										<c:choose>
+									      <c:when test="${info.sex_cd == 'M'}">남</c:when>
+									      <c:otherwise>여</c:otherwise>
+									    </c:choose>
+									</td>
+									<th>즐겨찾기</th>
+									<td>
+										<select name="mainType" id="mainType" >
+											<option value="map">지도보기</option>
+											<option value="text">즐겨찾기</option>
+										</select>
+									 </td>
+								</tr>
 								<tr>
 									<th>휴대폰번호/분실여부</th>
 									<td colspan="3"> 
@@ -668,17 +692,88 @@
 									</td>
 								</tr>
 								<tr>
-									<th>결제 수단 정보</th>
-									<td colspan="3"> ${addCharge.mlang_com_cd_name}&nbsp;&nbsp; 
+									<th>법적 대리인 정보</th>
+									<td colspan="3">
+										<span class="input-text09"><input type="text" maxlength="3" name="mpnNoP1"/></span>
+										<span class="dash">-</span>
+										<span class="input-text09"><input type="text" maxlength="4" name="mpnNoP2"/></span>
+										<span class="dash">-</span>
+										<span class="input-text09"><input type="text" maxlength="4" name="mpnNoP3"/></span>
+										<span class="pl10"><button class="btnType02"  onclick="fn_MemberParentCheckSms();" type="button">보호자확인 SMS</button></span>
+										<!-- 2018-09-20 추가 -->
+										 / ${info.parent_birth_date } / ${info.parent_sex_cd }
+									</td>
+								</tr>
+								<tr>
+									<th>이메일</th>
+									<td>${info.mb_email_name }</td>
+									<th>체중</th>
+									<td>${info.mb_wgt }</td>
+								</tr>
+								<tr>
+									<th>추가 과금 수단</th>
+									<td>${addCharge.mlang_com_cd_name}&nbsp;&nbsp; 
 										<!-- 20210809 추가 -->
 										<c:if test="${fn:length(addCharge.mlang_com_cd_name) > 0}">
 											<button class="btnType02"  onclick="fn_DeltePaymentMethod();" type="button">삭제</button>
 										</c:if>
 										
 									</td>
+									<th>사용자 구분</th>
+									<td>${info.mlang_com_cd_name }</td>
 								</tr>
 								<tr>
 								</tr>
+								<tr>
+									<th>대여 회원 카드 </th>
+									<td colspan="3">
+										( ${cardInfo.mlang_com_cd_name } ) 
+										<script type="text/javascript">
+											 switch( grpCd ) {
+												 case "15" :
+												 case "12" :	 
+													 document.write("${cardInfo.mb_card_no }");
+												break;	 
+												default :											 
+												if("${cardInfo.mb_card_no }".length == 19){
+													var str = "${cardInfo.mb_card_no }";
+													document.write(str.substring(0, 4)+" - " +str.substring(5, 9) +" - **** - " +str.substring(15));
+												}
+											 }
+										</script>
+										/ 등록일 : ${cardInfo.reg_dttm}
+									</td>
+								</tr>
+								<tr>
+									<th>환승 회원 카드 </th>
+									<td  colspan="3">
+										( ${transCardInfo.mlang_com_cd_name } ) 
+										 <script type="text/javascript">
+										 switch( grpCd ) {
+											 case "15" :
+											 case "12" :	 
+												 document.write("${transCardInfo.mb_card_no }");
+											break;	 
+											default :											 
+											if(("${transCardInfo.mb_card_no }".length == 18) || ("${transCardInfo.mb_card_no }".length == 19)){
+												var str = "${transCardInfo.mb_card_no }";
+												document.write(str.substring(0, 4)+" - " +str.substring(5, 9) +" - **** - " +str.substring(15));
+											}
+										 }
+										</script>
+										/ 등록일 : ${transCardInfo.reg_dttm}
+									</td>
+								</tr>
+								<c:if test="${safetyCertInfoVO ne null}">
+								<tr>
+									<th>안전교육 합격자 <br> 여부</th>
+									<td>합격자</td>
+									<th>합격자 인증제 <br> 할인기간(2년)</th>
+									<td>
+									          ${fn:substring(safetyCertInfoVO.disSDttm,0,10)} ~  ${fn:substring(safetyCertInfoVO.disEDttm,0,10)}
+									</td>
+								</tr>
+								</c:if>
 								<tr>
 									<th>앱 정보</th>
 									<td colspan="3">
@@ -712,6 +807,8 @@
 								
 								
 									<button class="btnType01" style="padding:12px; background: #A0522D;" onclick="fn_push(); return false;">푸쉬정보 조회</button>
+								
+									<button class="btnType01" style="padding:12px; background: #8B4513" onclick="fn_Reset(); return false;">비번 초기화</button>
 								
 									<button class="btnType01" style="padding:12px;" onclick="fn_Unsubscribe(); return false;">강제 회원탈퇴</button>
 								

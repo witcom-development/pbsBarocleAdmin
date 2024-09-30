@@ -70,8 +70,6 @@
 										<label for="aa1" class="laType03">구분</label>
 										<select class="select-category07" id="searchParameter" name="searchParameter" style="width: 110px;">
 											<option value="PHONE">휴대전화번호</option>
-											<option value="ID">ID</option>
-											<option value="RENT_NO">대여번호</option>
 										</select>
 										<span class="input-text08"><input type="text" name="searchWord"/></span>
 									</div>
@@ -89,19 +87,13 @@
 										</select>
 										<button type="button" class="btn-srh03 btncase1" id="searchBtn"><img src="/images/searchIcon.gif" alt="검색" /></button>
 									</div>
-									<div class="section">
-										<label for="a22" class="laType03">자전거구분</label>
-										<select class="select-category03" id="a11" name="bikeSeCd">
-											<option value="">선택</option>
-										</select>
-									</div>
 								</div>
 				   		</div>
 					<!--검색조건 E-->
 							<p class="tb_numlist mt20">총 ${paginationInfo.getTotalRecordCount()} 건</p>
 							<table class="tb_type01">
 								<colgroup>
-									<col style="width:5%"/>
+									<%-- <col style="width:5%"/> --%>
 									<col style="width:18%"/>
 									<col style="width:20%"/>
 									<col style="width:20%"/>
@@ -111,7 +103,7 @@
 								</colgroup>
 								<thead>
 									<tr>
-										<th>대여<br/>구분</th>
+										<!-- <th>대여<br/>구분</th> -->
 										<th>대여일시</th>
 										<th>대여대여소</th>
 										<th>반납대여소</th>
@@ -123,7 +115,7 @@
 								<tbody>
 									<c:forEach var="rent" items="${rentList}" varStatus="loop">
 									<tr>
-										<td class="pl10">${ rent.rentClsCdName}</td>
+										<%-- <td class="pl10">${ rent.rentClsCdName}</td> --%>
 										<td class="pl10">${ rent.rentDttm}</td>
 										<td class="pl10">${ rent.rentStationName}</td>
 										<td class="pl10">${ rent.returnStationName}</td>
@@ -132,7 +124,7 @@
 										<td class="pl10">${ rent.mbId}</td>
 										--%>
 										<!-- 대여이력 회원정보 연동 링크 start_cms_20161104 -->
-										<td class="pl10" ><a href="#"  id="${rent.usrSeq },${rent.voucherSeq}" name="usrSeq" value="${rent.usrClsCd}">${ rent.mbId}</a></td>
+										<td class="pl10" ><a href="#"  id="${rent.usrSeq },${rent.voucherSeq}" name="usrSeq" value="${rent.usrClsCd}">${ rent.usrMpnNo}</a></td>
 										<!-- end -->
 										<!--[if gt IE 8]><!--><td class="mhid tr pr10">${ rent.useMi}</td><!--<![endif]-->
 									</tr>

@@ -1,6 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
 <properties>
+
+	<!-- 
+	※ 테스트 정보
+	49.247.195.87:3306/spb
+	spb
+	spbdb1234!@#$
+	
+	※ 상용 정보
+	49.247.195.87:3306/spb
+	spb
+	spbdb1234!@#$
+	 -->
+
 	<entry key="driverClassName">org.mariadb.jdbc.Driver</entry>
 	<entry key="url">jdbc:mariadb://49.247.195.87:3306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
 	<entry key="username">spb</entry>

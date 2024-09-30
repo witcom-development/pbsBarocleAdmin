@@ -64,28 +64,29 @@
                                 <fieldset>
                                     <legend>검색 옵션</legend>
                                     <div class="shBoxSection">
-                                        <div class="section">
+                                        <!-- <div class="section">
                                             <label for="mbId" class="laType02"  style="ime-mode:disable;" >회원ID</label>
                                             <input type="text"  id="mbId" name="mbId" >
                                         </div>
                                         <div class="section pright">   
                                             <label for="searchWord" class="laType02">대여번호</label>
                                             <input type="text"  id="searchWord" name="searchWord" >
-                                        </div>   
+                                        </div>  -->  
                                         <div class="section">
                                             <label for="rentBikeNo" class="laType02">자전거번호</label>
                                             <input type="text"  id="rentBikeNo" name="rentBikeNo" >
                                          </div>   
                                         <div class="section pright">
-                                            <label for="usrMpnNo" class="laType02">전화번호</label>
+                                            <label for="usrMpnNo" class="laType02">휴대폰번호</label>
                                             <input type="text"  id="usrMpnNo" name="usrMpnNo" >
+                                            <button type="button"  id="searchBtn"  class="btn-srh03 btncase1"><img src="/images/searchIcon.gif" alt="검색" /></button>
                                         </div>
                                         
-                                        <div class="section etccase3">
+                                        <!-- <div class="section etccase3">
                                             <label for="c22" class="laType03">장기미반납</label>
                                             <span class="input-ck01"><input type="checkbox" class="vm" id="c22"/></span>
                                             <button type="button"  id="searchBtn"  class="btn-srh03 btncase1"><img src="/images/searchIcon.gif" alt="검색" /></button>
-                                        </div>
+                                        </div> -->
                                     </div>
                                 </fieldset>
                         	</div>
@@ -99,8 +100,6 @@
                                 <table class="tb_type01 mt20">
                                     <colgroup>
                                         <col style="width:5%"/>
-                                        <col style="width:10%"/>
-                                        <col style="width:3%"/>
                                         <col style="width:22%"/>
                                         <col style="width:11%"/>
                                         <col style="width:8%"  class="mhid"/>
@@ -111,8 +110,6 @@
                                     <thead>
                                         <tr>
                                             <th><input type="checkbox" id="chkAll"/></th>
-                                            <th>대여구분</th>
-                                            <th>S</th>
                                             <th>대여대여소</th>
                                             <th class="mhid">대여시작시간</th>
                                             <th>경과<br/>시간</th>
@@ -125,8 +122,6 @@
                                         <c:forEach var="rent" items="${rentList}" varStatus="loop">
                                         <tr>
                                             <td class="tc"><input type="checkbox" /></td>
-                                            <td class="pl10">${rent.rentClsCdName}</td>
-                                            <td class="pl10">${rent.returnRackId}</td>
                                             <td class="pl10">${rent.rentStationName }</td>
                                             <td class="mhid tc mhid">${rent.rentDttm }</td>
                                             <td class="tr pr10">${rent.elapseTime }</td>

@@ -32,7 +32,7 @@
 										AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ 
 										AND B.USR_CLS_CD IN ( 'USR_002',  'USR_003' )
 								  )
-							, DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) 
+							, CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR)
 								)
 						) 
 			   END
@@ -59,9 +59,9 @@
 	   			/*! USE INDEX (PRIMARY) */  
 	  </if> 			
 	  INNER JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
-	  <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
+	  <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO" and usrSearchKey!= null and usrSearchKey != ""'>
 			 	<!-- AND B.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
-			 	AND B.USR_MPN_NO = #{usrSearchKey}
+			 	AND B.USR_MPN_NO = HEX(AES_ENCRYPT(#{usrSearchKey},'BRC'))
 	  </if>
 	  <if test='usrClsCd != null and usrClsCd != "" '><!-- 20180914 -->
 				AND B.USR_CLS_CD = #{usrClsCd}
@@ -82,15 +82,6 @@
 										AND B.USR_CLS_CD IN ( 'USR_002',  'USR_003' )
 										AND SERIALNO.SERIAL_NO = #{usrSearchKey}
 		</if>
-		<if test='@com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) == 10'>
-		  INNER JOIN TB_SVC_PAYMENT_METHOD D ON  A.USR_SEQ = D.USR_SEQ
-		   <![CDATA[
-							 
-				   AND   B.USR_CLS_CD = 'USR_002'
-				   <!-- AND   D.CARD_NO = dg_encrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))) -->
-				   AND   D.CARD_NO = CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))
-			]]>																													
-  		</if>
 	  WHERE 1=1
 		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
 		AND A.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00') AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
@@ -127,7 +118,7 @@
 		 </if>   
 		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
 			 	<!-- AND B.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
-			 	AND B.USR_MPN_NO  = #{usrSearchKey}
+			 	AND B.USR_MPN_NO  = HEX(AES_ENCRYPT(#{usrSearchKey},'BRC'))
 	 	</if>
 	 	<if test='usrClsCd != null and usrClsCd != "" '><!-- 20180914 -->
 			   AND B.USR_CLS_CD = #{usrClsCd}
@@ -143,20 +134,6 @@
 		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="EMAIL"'> <!-- 2021-07-02 이메일 선택시에만 조회 -->
 			  INNER JOIN TB_SVC_USR_NONMB_EMAIL EMAIL ON ( A.USR_SEQ = EMAIL.USR_SEQ AND EMAIL.NONMB_EMAIL_NAME = #{usrSearchKey} )
 		</if>
-		
-		
-		<if test='@com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) == 10'>
-				  INNER JOIN TB_SVC_PAYMENT_METHOD D ON  A.USR_SEQ = D.USR_SEQ
-					 AND (
-						 <![CDATA[
-								B.USR_CLS_CD = 'USR_002'	
-						   <!-- AND  D.CARD_NO = dg_encrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))) -->
-							 AND  D.CARD_NO = CONCAT(SUBSTR( TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')),1,6) , '******', SUBSTR(  TRIM(REPLACE(#{paymentConfmNoSeacrhKey},'*','')) ,7,4))
-							 ]]>																													
-						 )
-					
-		  
-	 	</if>
 	 	
 				WHERE 1=1
 		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
@@ -504,20 +481,9 @@
 			 , A.CANCEL_REASON_DESC AS cancelReasonDesc
 			 , A.CANCEL_ADMIN_ID AS cancelAdminId
 			 <!-- , dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO)			   AS usrMpnNo -->
-			 , B.USR_MPN_NO			   AS usrMpnNo
+			 , CAST(AES_DECRYPT(UNHEX(B.USR_MPN_NO),'BRC') as CHAR)		   AS usrMpnNo
 			 , C.MB_ID AS mbId
-			 , (CASE WHEN C.MB_ID IS NOT NULL THEN C.MB_ID 
-			 		 ELSE <!-- dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) --> <!-- 20170517 대여일련번호 --> 
-			 				(CASE	WHEN B.USR_CLS_CD = 'USR_003'
-					 				THEN (CASE 	WHEN SERIALNO.SERIAL_NO IS NULL
-								 				<!-- THEN dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) -->
-								 				THEN B.USR_MPN_NO
-												ELSE SERIALNO.SERIAL_NO
-												END)
-									 <!-- ELSE dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) -->
-									 ELSE B.USR_MPN_NO
-									 END)
-			 		 END) AS usrMainId
+			 , CAST(AES_DECRYPT(UNHEX(B.USR_MPN_NO),'BRC') as CHAR) AS usrMainId
 		FROM TB_SVC_PAYMENT A
 		   , TB_SVC_USR B
 		LEFT JOIN TB_SVC_MB C ON B.USR_SEQ = C.USR_SEQ
@@ -575,8 +541,12 @@
 				PAY.TOT_AMT AS totAmt,
 				PAY.ORDER_CERTIFY_KEY AS orderCertifyKey,
 				PAY.PAYMENT_CLS_CD AS paymentClsCd,
-				PAY.USR_SEQ AS usrSeq
+				PAY.USR_SEQ AS usrSeq,
+				PAY.PAYMENT_CONFM_DTTM AS paymentConfmDttm,
+				PAY.PAYMENT_CONFM_PAYTYPE AS paymentConfmPaytype,
+				PYM.BILLING_KEY AS billingKey
 		FROM TB_SVC_PAYMENT PAY LEFT JOIN TB_SVC_USR USR ON PAY.USR_SEQ = USR.USR_SEQ
+		LEFT JOIN TB_SVC_PAYMENT_METHOD PYM ON PAY.USR_SEQ = PYM.USR_SEQ
 		WHERE 1=1
 		AND PAYMENT_SEQ = #{paymentSeq}
 		 

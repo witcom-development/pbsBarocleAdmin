@@ -81,7 +81,7 @@
 	
 	<select id="getStationListCount" resultType="int" parameterType="statusVo">
 	  SELECT count(*) 
-		FROM spb.TB_OPR_STATION S INNER JOIN spb.TB_OPR_MLANG_STATION M 
+		FROM TB_OPR_STATION S INNER JOIN TB_OPR_MLANG_STATION M 
 		  ON S.STATION_ID = M.STATION_ID
 	   WHERE M.LANG_CLS_CD = #{lang} 
 	   <if test='stationId != null and stationId != ""'>
@@ -107,13 +107,13 @@
 	<select id="getCurrentStationDetail" parameterType="statusVo" resultType="statusVo" >	 
 		SELECT A.STATION_ID											  AS stationId
 			  ,(SELECT STATION_NAME
-				  FROM spb.TB_OPR_MLANG_STATION
+				  FROM TB_OPR_MLANG_STATION
 				 WHERE STATION_ID = A.STATION_ID
 				   AND LANG_CLS_CD = #{lang}	)						AS stationName  
 			  ,INSERT(A.STATION_POST_NO,4,0,'-')						 AS stationPostNo
 			  ,CONCAT(A.STATION_ADDR1,A.STATION_ADDR2)				   AS stationAddr
 			  ,IF(exists((SELECT DELAY_SEQ
-						   FROM spb.TB_OPR_DELAY
+						   FROM TB_OPR_DELAY
 						  WHERE now() between DELAY_STR_DATE AND DELAY_END_DATE)),'운휴',
 								  														 case when A.STATION_USE_YN = 'T' THEN '임시폐쇄'
 								  															  when A.STATION_USE_YN = 'S' THEN '임시폐쇄 예정'
@@ -121,28 +121,28 @@
 																							  when A.STATION_USE_YN = 'C' THEN '폐쇄'
 																							  ELSE '운영중' END ) AS currnetStatus
 			  ,A.MEMO AS memo			
-		  FROM spb.TB_OPR_STATION A
+		  FROM TB_OPR_STATION A
 		 WHERE A.STATION_ID = #{stationId}
 	</select>	  
 	<select id="getStationApList" parameterType="statusVo" resultType="apVo">  
 		SELECT A.DEVICE_ID																					  AS deviceId
 			  ,(SELECT MLANG_COM_CD_NAME
-				  FROM spb.TB_SYS_MLANG_COM_CD
+				  FROM TB_SYS_MLANG_COM_CD
 				 WHERE COM_CD = D.DEVICE_STUS_CD
 				   AND LANG_CLS_CD = #{lang})																   AS deviceStatusName
 			  ,D.DEVICE_STUS_CD																				 AS deviceStatusCd
 			  ,IF(EXISTS(SELECT EQUIPMENT_ID
-						   FROM spb.TB_MTC_FAULT_INFO 
+						   FROM TB_MTC_FAULT_INFO 
 						  WHERE EQUIPMENT_ID =  A.DEVICE_ID 
 							AND READ_CLS_CD = 'S'
 							AND EQUIPMENT_CLS_CD = 'DEV_003'), (SELECT DATE_FORMAT(REG_DTTM, '%Y-%m-%d %H:%i') 
-																  FROM spb.TB_MTC_FAULT_INFO 
+																  FROM TB_MTC_FAULT_INFO 
 																 WHERE EQUIPMENT_ID =  A.DEVICE_ID 
 																   AND READ_CLS_CD = 'S'
 																   AND EQUIPMENT_CLS_CD = 'DEV_003'
 																 ORDER BY FAULT_SEQ DESC
 																 LIMIT 1), '-' )	 AS regDttm	
-		   FROM spb.TB_IOT_AP_LOCATE_INFO A INNER JOIN spb.TB_IOT_DEVICE D ON A.DEVICE_ID = D.DEVICE_ID
+		   FROM TB_IOT_AP_LOCATE_INFO A INNER JOIN TB_IOT_DEVICE D ON A.DEVICE_ID = D.DEVICE_ID
 		  WHERE A.LOCATE_END_DTTM = STR_TO_DATE('9999-12-31 23:59:59', '%Y-%m-%d %H:%i:%s') 
 			AND A.LOCATE_CLS_CD = 'S'
 			AND A.LOCATE_ID = #{stationId}
@@ -170,37 +170,37 @@
 						  , A.CASCADE_YN										   AS cascadeYn
 						  , (
 									SELECT MAX(FAULT_SEQ)
-									  FROM spb.TB_MTC_FAULT_INFO Z																
+									  FROM TB_MTC_FAULT_INFO Z																
 									 WHERE EQUIPMENT_ID = A.BIKE_ID																
 									   AND READ_CLS_CD = 'S'													   
 									   AND EQUIPMENT_CLS_CD  = 'DEV_001'
 							   ) AS FAULT_SEQ
 							  , (
 									SELECT MAX(FAULT_SEQ)
-									  FROM spb.TB_MTC_CHECK_INFO Z																
+									  FROM TB_MTC_CHECK_INFO Z																
 									 WHERE EQUIPMENT_ID = A.BIKE_ID																
 									   AND READ_CLS_CD = 'S'													   
 									   AND EQUIPMENT_CLS_CD  = 'DEV_001'
 							   ) AS CHECK_SEQ  
 						  , R.NOW_STATION_EQUIP_ORD
 						  , (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = R.NOW_LOCATE_ID AND LANG_CLS_CD = 'LAG_001') AS stationName
-					   FROM spb.TB_OPR_BIKE_PARKING A 
-					  INNER JOIN spb.TB_OPR_BIKE B ON A.BIKE_ID = B.BIKE_ID
-					  INNER JOIN spb.TB_OPR_RACK R ON A.RACK_ID = R.RACK_ID
-				 		LEFT JOIN spb.TB_SYS_COM_CD CD ON B.BIKE_BATTERY_STUS_CD = CD.COM_CD 
-				 		LEFT JOIN spb.TB_SYS_MLANG_COM_CD Z ON Z.COM_CD = B.BIKE_STUS_CD AND LANG_CLS_CD = 'LAG_001'
-				 		LEFT JOIN spb.TB_OPR_BIKE_EVENT   Y ON A.BIKE_ID = Y.BIKE_ID
+					   FROM TB_OPR_BIKE_PARKING A 
+					  INNER JOIN TB_OPR_BIKE B ON A.BIKE_ID = B.BIKE_ID
+					  INNER JOIN TB_OPR_RACK R ON A.RACK_ID = R.RACK_ID
+				 		LEFT JOIN TB_SYS_COM_CD CD ON B.BIKE_BATTERY_STUS_CD = CD.COM_CD 
+				 		LEFT JOIN TB_SYS_MLANG_COM_CD Z ON Z.COM_CD = B.BIKE_STUS_CD AND LANG_CLS_CD = 'LAG_001'
+				 		LEFT JOIN TB_OPR_BIKE_EVENT   Y ON A.BIKE_ID = Y.BIKE_ID
 					   WHERE R.NOW_LOCATE_CLS_CD = 'S'
 					   AND R.NOW_LOCATE_ID   = #{stationId}
 					   
 				 ) A
-		  LEFT JOIN spb.TB_MTC_FAULT_INFO   INFO   ON ( A.FAULT_SEQ = INFO.FAULT_SEQ )
-		  LEFT JOIN spb.TB_MTC_FAULT_DETL   DETL   ON ( A.FAULT_SEQ = DETL.FAULT_SEQ )  
-		  LEFT JOIN spb.TB_SYS_MLANG_COM_CD C	  ON ( C.COM_CD	= DETL.FAULT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) 
+		  LEFT JOIN TB_MTC_FAULT_INFO   INFO   ON ( A.FAULT_SEQ = INFO.FAULT_SEQ )
+		  LEFT JOIN TB_MTC_FAULT_DETL   DETL   ON ( A.FAULT_SEQ = DETL.FAULT_SEQ )  
+		  LEFT JOIN TB_SYS_MLANG_COM_CD C	  ON ( C.COM_CD	= DETL.FAULT_CLS_CD AND LANG_CLS_CD = 'LAG_001' ) 
 		  
-		  LEFT JOIN spb.TB_MTC_CHECK_INFO   C_INFO   ON ( A.CHECK_SEQ = C_INFO.FAULT_SEQ )
-		  LEFT JOIN spb.TB_MTC_CHECK_DETL   C_DETL   ON ( A.CHECK_SEQ = C_DETL.FAULT_SEQ )  
-		  LEFT JOIN spb.TB_SYS_MLANG_COM_CD CC	  ON ( CC.COM_CD	= C_DETL.BRKDN_STUS_CD AND CC.LANG_CLS_CD = 'LAG_001' ) 
+		  LEFT JOIN TB_MTC_CHECK_INFO   C_INFO   ON ( A.CHECK_SEQ = C_INFO.FAULT_SEQ )
+		  LEFT JOIN TB_MTC_CHECK_DETL   C_DETL   ON ( A.CHECK_SEQ = C_DETL.FAULT_SEQ )  
+		  LEFT JOIN TB_SYS_MLANG_COM_CD CC	  ON ( CC.COM_CD	= C_DETL.BRKDN_STUS_CD AND CC.LANG_CLS_CD = 'LAG_001' ) 
 	
 		  ORDER BY bikeNo
 		  
@@ -208,25 +208,25 @@
 	<select id="getStationArmList"  parameterType="statusVo" resultType="armVo">
 		SELECT B.RACK_ID											  AS rackId
 			  ,(SELECT MLANG_COM_CD_NAME
-				  FROM spb.TB_SYS_MLANG_COM_CD
+				  FROM TB_SYS_MLANG_COM_CD
 				 WHERE COM_CD = B.RACK_STUS_CD
 				   AND LANG_CLS_CD = #{lang})						 AS rackStatusName
 			  ,IFNULL(B.RACK_STUS_CD,'-')							 AS rackStatusCd
 			  ,B.NOW_STATION_EQUIP_ORD								AS stationEquipOrder
 			 <!-- ,IFNULL(A.CASCADE_YN,'N')							   AS cascadeYn-->
 			  ,IF(EXISTS(SELECT EQUIPMENT_ID
-						   FROM spb.TB_MTC_FAULT_INFO 
+						   FROM TB_MTC_FAULT_INFO 
 						  WHERE EQUIPMENT_ID =  B.RACK_ID
 							AND READ_CLS_CD = 'S'
 							AND EQUIPMENT_CLS_CD = 'DEV_004'), (SELECT DATE_FORMAT(REG_DTTM, '%Y-%m-%d %H:%i') 
-																  FROM spb.TB_MTC_FAULT_INFO 
+																  FROM TB_MTC_FAULT_INFO 
 																 WHERE EQUIPMENT_ID = B.RACK_ID
 																  AND READ_CLS_CD = 'S'
 																  AND EQUIPMENT_CLS_CD= 'DEV_004'
 																 ORDER BY FAULT_SEQ DESC
 																 LIMIT 1),'-')		   AS regDttm 
 		   , C.QRTEXT	AS qrText
-		  FROM spb.TB_OPR_RACK B  LEFT OUTER JOIN spb.TB_OPR_QRCODE C ON B.RACK_ID = C.RACKID
+		  FROM TB_OPR_RACK B  LEFT OUTER JOIN TB_OPR_QRCODE C ON B.RACK_ID = C.RACKID
 		  WHERE B.NOW_LOCATE_CLS_CD = 'S'
 			AND B.NOW_LOCATE_ID = #{stationId}
  <![CDATA[  AND B.RACK_STUS_CD <> 'RAS_002'		]]>
@@ -235,16 +235,16 @@
 	<select id="getStationRackTotInfo" parameterType="statusVo" resultType="armVo">	 
 		SELECT COUNT(T.RACK_ID)									AS rackTotCnt
 			  ,IFNULL(SUM(IF(EXISTS(SELECT RACK_ID
-							   FROM spb.TB_OPR_BIKE_PARKING
+							   FROM TB_OPR_BIKE_PARKING
 							   WHERE RACK_ID = T.RACK_ID
 								 AND CASCADE_YN ='N') ,1, 0)) ,0)  AS keepBikeRackCnt
 			  ,IFNULL(SUM(IF(EXISTS(SELECT RACK_ID
-							   FROM spb.TB_OPR_BIKE_PARKING
+							   FROM TB_OPR_BIKE_PARKING
 							  WHERE RACK_ID = T.RACK_ID
 								 AND CASCADE_YN ='Y') ,1, 0)),0)   AS cascadeRackCnt			
 		 FROM (
 			  SELECT B.RACK_ID						 
-				FROM spb.TB_OPR_RACK B
+				FROM TB_OPR_RACK B
 			   WHERE B.NOW_LOCATE_CLS_CD = 'S'
 				 AND B.NOW_LOCATE_ID =  #{stationId}
 	   <![CDATA[ AND B.RACK_STUS_CD <> 'RAS_002'		]]> ) AS T
@@ -453,7 +453,7 @@
 	
 	
 	<update id="exeRentBookingCancelProc" parameterType="armVo" >
-		UPDATE spb.TB_OPR_RACK 
+		UPDATE TB_OPR_RACK 
 		   SET RACK_STUS_CD = #{rackStatusCd}
 			  ,TEMP_RESVE_DTTM = null
 		WHERE RACK_ID = #{rackId}
@@ -469,7 +469,7 @@
 				  a.STATION_NAME	   AS stationName,
 				  c.STATION_GRP_NAME   AS stationGrpName,
 				  d.TEAM_NAME		   AS teamNm
-		  FROM spb.TB_OPR_MLANG_STATION a, spb.TB_OPR_STATION b, spb.TB_OPR_MLANG_STATION_GRP c , TB_SYS_TEAM_INFO d
+		  FROM TB_OPR_MLANG_STATION a, TB_OPR_STATION b, TB_OPR_MLANG_STATION_GRP c , TB_SYS_TEAM_INFO d
 		 WHERE a.LANG_CLS_CD = 'LAG_001' 
 			AND c.LANG_CLS_CD = 'LAG_001' 
 			AND a.STATION_ID = b.STATION_ID 
