@@ -44,5 +44,8 @@ public interface PaymentMapper {
 	public int getRefundTempAmt(RefundVO paymentVO);		// 20200118
 	
 	public int insertAccount(RefundVO paymentVO);	// 20200118
+	
+	public int addPaymentInfo(PaymentVO paymentVO);
+	public int setOverFeePayComplete(PaymentVO paymentVO);
 
 }

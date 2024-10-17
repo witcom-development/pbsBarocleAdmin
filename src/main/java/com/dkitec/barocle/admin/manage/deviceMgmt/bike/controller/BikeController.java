@@ -491,18 +491,18 @@ public class BikeController extends BaseController {
 			
 			try {
 				
-					if (bikeVo.getRackId().length() == 5 || bikeVo.getRackId().contains("SSBK-") || bikeVo.getRackId().contains("BRC-") ) {
+					/*if (bikeVo.getRackId().length() == 5 || bikeVo.getRackId().contains("SSBK-") || bikeVo.getRackId().contains("BRC-") ) {
 						if (bikeVo.getRackId().contains("SSBK-") || bikeVo.getRackId().contains("BRC-")) {
 							// 시리얼 번호 획득
 							bikeVo.setSerialNo(String.valueOf(Integer.parseInt(bikeVo.getRackId().replace("SSBK-", "").replace("BRC-", ""))));
 						}
-					}	
-					bikeVo = bikeService.getQRBikeStatusCd(bikeVo);
-					if(bikeVo != null && bikeVo.getBikeStatusCd() != null && !"".equals(bikeVo.getBikeStatusCd())){
-						
-						bikeStatusCd = bikeVo.getBikeStatusCd();
-						result = true;
-					}
+					}*/
+				bikeVo.setSerialNo(bikeVo.getRackId());
+				bikeVo = bikeService.getQRBikeStatusCd(bikeVo);
+				if(bikeVo != null && bikeVo.getBikeStatusCd() != null && !"".equals(bikeVo.getBikeStatusCd())){
+					bikeStatusCd = bikeVo.getBikeStatusCd();
+					result = true;
+				}
 					
 			} catch (Exception e) {
 					

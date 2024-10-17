@@ -340,10 +340,10 @@
 							<div style="color:bisque; visibility: hidden; display: none;" name="favorite">
 								<a href="/getStationCurrentStatus.do" class="myButton">정거장 현황</a>
 								<a href="/getBikeList.do" class="myButton">자전거 조회</a>
-								<a href="/inspectBikeList.do" class="myButton">장애관리</a>
-								<a href="/repairBikeList.do" class="myButton">수리관리</a>
+								<!-- <a href="/inspectBikeList.do" class="myButton">장애관리</a> -->
+								<!-- <a href="/repairBikeList.do" class="myButton">수리관리</a> -->
 <!-- 								<a href="/getExeImpulseList.do" class="myButton">강제반납관리</a> -->
-								<a href="/admin/manage/station/stationList.do" class="myButton">정거장개폐</a>
+								<!-- <a href="/admin/manage/station/stationList.do" class="myButton">정거장개폐</a> -->
 <!-- 								<a href="javascript:hold()" class="myButton">관리직<br/>게시판</a> -->
 <!-- 								<a href="/admin/board/distribute/distBoardList.do" class="myButton">관리직<br/>게시판</a> -->
 								<!-- 20210117 경정비실적조회 -->
@@ -363,7 +363,7 @@
 								<!--  QR 자전거 관리 -->
 								<a href="javascript:goQrScan('move');" class="myButton">자전거 이동</a>
 								<a href="javascript:goQrScan('check');" class="myButton">자전거 확인</a>
-								<a href="javascript:goQrScan('relocate');" class="myButton">재배치 완료</a>
+								<!-- <a href="javascript:goQrScan('relocate');" class="myButton">재배치 완료</a> -->
 								<a href="javascript:goQrScan('reset');" class="myButton">단말기 리셋</a>
 								<!--  QR 자전거 관리 -->
 								<!-- 20210514 분재직원용 -->

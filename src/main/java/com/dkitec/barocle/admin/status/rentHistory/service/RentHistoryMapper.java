@@ -14,6 +14,7 @@ package com.dkitec.barocle.admin.status.rentHistory.service;
 import java.util.List;
 
 import com.dkitec.barocle.admin.status.rentHistory.vo.PenaltyVO;
+import com.dkitec.barocle.admin.status.rentHistory.vo.ReturnReqVO;
 import com.dkitec.barocle.admin.status.rentStatus.vo.BikeRentalVO;
 import com.dkitec.barocle.admin.system.commonCodeMgmt.vo.CommonCodeVO;
 
@@ -80,5 +81,8 @@ public interface RentHistoryMapper {
 	 */ 
 	List<PenaltyVO> getPenaltyList(BikeRentalVO rentalVo);
 
+	List<ReturnReqVO> getReturnReqList(ReturnReqVO returnReqVo);
+	
+	int getReturnReqListCnt(ReturnReqVO returnReqVo);
 
 }

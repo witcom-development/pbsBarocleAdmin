@@ -151,7 +151,13 @@ public class RentStatusServiceImpl implements RentStatusService {
 	@DataSource(DataSourceType.MASTER)
 	public int exeImpulseBikeReturn(BikeRentalVO currentInfo) {
         int result = 0;
+        String rentHIstSeq = "";
         result =  rentStatusMapper.addRentHistory(currentInfo);
+        rentHIstSeq = currentInfo.getRentHistSeq();
+        //if(currentInfo.getReturnStationId() != null || "".equals(currentInfo.getReturnStationId())){
+        	// 반납 정거장 정보가 있을 경우 parking정보 넣어준다.		-> 강반시 파킹정보는 넣어주지 않는걸로 수정
+        	//result = rentStatusMapper.insertParkingInfo2(currentInfo);
+        //}
         result =  rentStatusMapper.delCurrnetRentData(currentInfo);
         if(currentInfo.getOverFeeYn().equals("Y")){
         	result = rentStatusMapper.addOverFeeInfo(currentInfo);
@@ -223,6 +229,8 @@ public class RentStatusServiceImpl implements RentStatusService {
 			throw new CfoodException("");
 		}
 		
+		if("enf".equals(currentInfo.getViewFlg()))
+				result = Integer.parseInt(rentHIstSeq);
 		
 		return result;
 	}

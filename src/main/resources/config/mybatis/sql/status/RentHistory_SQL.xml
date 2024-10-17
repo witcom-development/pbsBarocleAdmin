@@ -83,7 +83,7 @@
 		  <if test='pageYn != null and pageYn == "Y"'>
 		  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 		  </if>	
-	</select>	
+	</select>
 	
 	<select id="getRentHistoryAllCnt" parameterType="bikeRentalVo" resultType="int">
 		  SELECT COUNT(*)
@@ -209,4 +209,51 @@
 			</if> 
 		 </trim>   
 	</select>
+	
+	<select id="getReturnReqList" parameterType="returnReqVO" resultType="returnReqVO">
+		SELECT B.BIKE_ID		AS bikeId
+			, B.BIKE_NO		AS bikeNo
+			, B.XPOS			AS xpos
+			, B.YPOS			AS ypos
+			, B.STATION_ID	AS staionId
+			, S.STATION_GRP_SEQ	AS stationGrpSeq
+			, SG.STATION_GRP_NAME AS stationGrpName
+		FROM TB_OPR_BIKE B
+		LEFT JOIN TB_OPR_STATION S ON B.STATION_ID = S.STATION_ID
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP SG ON S.STATION_GRP_SEQ = SG.STATION_GRP_SEQ
+		WHERE B.BIKE_STUS_CD = 'BKS_019'
+		AND SG.LANG_CLS_CD = 'LAG_001'
+		<if test='bikeNo != null and bikeNo != ""'>
+			AND B.BIKE_NO = #{bikeNo}
+		</if>
+		<if test='stationGrpSeq != null and stationGrpSeq != ""'>
+			AND S.STATION_GRP_SEQ = #{stationGrpSeq}
+		</if>
+		<if test='stationId != null and stationId != ""'>
+			AND B.STATION_ID = #{stationId}
+		</if>
+		ORDER BY S.STATION_GRP_SEQ, S.STATION_ID
+		<if test='pagingYn != null and pagingYn == "Y"'>
+		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
+		</if>	
+	</select>
+	
+	<select id="getReturnReqListCnt" parameterType="returnReqVO" resultType="int">
+		SELECT COUNT(1)
+		FROM TB_OPR_BIKE B
+		LEFT JOIN TB_OPR_STATION S ON B.STATION_ID = S.STATION_ID
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP SG ON S.STATION_GRP_SEQ = SG.STATION_GRP_SEQ
+		WHERE B.BIKE_STUS_CD = 'BKS_019'
+		AND SG.LANG_CLS_CD = 'LAG_001'
+		<if test='bikeNo != null and bikeNo != ""'>
+			AND B.BIKE_NO = #{bikeNo}
+		</if>
+		<if test='stationGrpSeq != null and stationGrpSeq != ""'>
+			AND S.STATION_GRP_SEQ = #{stationGrpSeq}
+		</if>
+		<if test='stationId != null and stationId != ""'>
+			AND B.STATION_ID = #{stationId}
+		</if>
+	</select>
+	
 </mapper>

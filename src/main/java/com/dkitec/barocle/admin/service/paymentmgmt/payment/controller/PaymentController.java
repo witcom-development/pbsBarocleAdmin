@@ -482,8 +482,8 @@ public class PaymentController extends BaseController {
             }
             System.out.println("returnStr : " + returnStr);
             
-            //makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청] " +"[callUrl :" + apiUrl +" ] " + parameters.toString() , "Y");
-    		//makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청 결과] " + returnStr , "Y");
+            makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청] " +"[callUrl :" + apiUrl +" ] " + parameters.toString() , "Y");
+    		makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청 결과] " + returnStr , "Y");
 			
 			Map responseMap = ParseUtils.fromJson(returnStr, Map.class);
 			String resultCode = (String) responseMap.get("resultCode");

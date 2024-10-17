@@ -37,8 +37,10 @@ public class PaymentVO extends PagingVO implements Serializable {
 	@Pattern(regexp="^[A-Z]*_[0-9]{3}$" , message="공통코드 형식이 아닙니다.")
 	private String paymentStusCd;
 	private String paymentStusCdName;
+	private String mbSerialNo;
 	private String paymentConfmNo;
 	private String paymentConfmDttm;
+	private String paymentConfmPaytype;
 	private String paymentReqDttm;
 	private int totAmt;
 	private int mileagePaymentAmt;
@@ -78,7 +80,41 @@ public class PaymentVO extends PagingVO implements Serializable {
 	private String billingKey;
 	private String billingCertifyKey;
 	
+	private String resultCD;
+	private int rentHistSeq;
+	private String processReasonDesc;
 	
+	
+	public String getProcessReasonDesc() {
+		return processReasonDesc;
+	}
+	public void setProcessReasonDesc(String processReasonDesc) {
+		this.processReasonDesc = processReasonDesc;
+	}
+	public int getRentHistSeq() {
+		return rentHistSeq;
+	}
+	public void setRentHistSeq(int rentHistSeq) {
+		this.rentHistSeq = rentHistSeq;
+	}
+	public String getResultCD() {
+		return resultCD;
+	}
+	public void setResultCD(String resultCD) {
+		this.resultCD = resultCD;
+	}
+	public String getMbSerialNo() {
+		return mbSerialNo;
+	}
+	public void setMbSerialNo(String mbSerialNo) {
+		this.mbSerialNo = mbSerialNo;
+	}
+	public String getPaymentConfmPaytype() {
+		return paymentConfmPaytype;
+	}
+	public void setPaymentConfmPaytype(String paymentConfmPaytype) {
+		this.paymentConfmPaytype = paymentConfmPaytype;
+	}
 	public String getIsSearchGb() {
 		return isSearchGb;
 	}
@@ -349,6 +385,8 @@ public class PaymentVO extends PagingVO implements Serializable {
 				+ ", usrSearchType=" + usrSearchType + ", usrSearchKey="
 				+ usrSearchKey 
 				+ ", isSerchGb =" + isSearchGb + 
+				", mbSerialNo =" + mbSerialNo + 
+				", paymentConfmPaytype =" + paymentConfmPaytype + 
 				"]";
 	}
 	

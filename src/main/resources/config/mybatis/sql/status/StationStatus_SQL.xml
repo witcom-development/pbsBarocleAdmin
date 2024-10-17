@@ -16,9 +16,8 @@
 	]]>		 
 	</select>  
 	<select id="getStationStautsList" resultType="statusVo" parameterType="statusVo">
-		{ call PROC_ADMIN.getStationStautsListReal_QR2( #{stationId}, #{stationGrpSeq}, #{paramSearchType}, #{paramSearchWord},#{firstRecordIndex}, #{recordCountPerPage}
-											  , #{orderColumn},#{stationOrderType},#{sharedOrderType}, #{batteryStusCd}, #{stationSeCd}
-		)}
+		{ call PROC_ADMIN.getStationStautsListReal_QR( #{stationId}, #{stationGrpSeq}, #{paramSearchType}, #{paramSearchWord},#{firstRecordIndex}, #{recordCountPerPage}
+											  , #{orderColumn},#{stationOrderType},#{sharedOrderType}, '', '') }
 	</select>
    
 	<select id="getStationStautsListNew" resultType="stationVo" parameterType="stationVo">
@@ -162,9 +161,7 @@
 					 SELECT B.BIKE_ID											 AS bikeId
 						  , B.BIKE_NO											 AS bikeNo
 						  , IF(SUBSTRING(BIKE_NO,5,5) >= 30000, B.USE_CNT,(IFNULL( CD.CD_DESC1, '-')))	  AS batteryStusCd
-						  , CASE WHEN Y.BIKE_ID IS NULL THEN Z.MLANG_COM_CD_NAME	
-							ELSE CONCAT('행사용(', Y.BIKE_CENTER, ')' )
-							END													AS bikeStatusName 
+						  , Z.MLANG_COM_CD_NAME									AS bikeStatusName 
 						  , B.BIKE_STUS_CD										 AS bikeStatusCd
 						  , R.NOW_STATION_EQUIP_ORD								AS stationEquipOrder
 						  , A.CASCADE_YN										   AS cascadeYn
@@ -189,7 +186,6 @@
 					  INNER JOIN TB_OPR_RACK R ON A.RACK_ID = R.RACK_ID
 				 		LEFT JOIN TB_SYS_COM_CD CD ON B.BIKE_BATTERY_STUS_CD = CD.COM_CD 
 				 		LEFT JOIN TB_SYS_MLANG_COM_CD Z ON Z.COM_CD = B.BIKE_STUS_CD AND LANG_CLS_CD = 'LAG_001'
-				 		LEFT JOIN TB_OPR_BIKE_EVENT   Y ON A.BIKE_ID = Y.BIKE_ID
 					   WHERE R.NOW_LOCATE_CLS_CD = 'S'
 					   AND R.NOW_LOCATE_ID   = #{stationId}
 					   
@@ -468,15 +464,14 @@
 		 SELECT   b.STATION_ID		 AS stationId,
 				  a.STATION_NAME	   AS stationName,
 				  c.STATION_GRP_NAME   AS stationGrpName,
-				  d.TEAM_NAME		   AS teamNm
-		  FROM TB_OPR_MLANG_STATION a, TB_OPR_STATION b, TB_OPR_MLANG_STATION_GRP c , TB_SYS_TEAM_INFO d
+				  c.STATION_GRP_SEQ		AS stationGrpSeq
+		  FROM TB_OPR_MLANG_STATION a, TB_OPR_STATION b, TB_OPR_MLANG_STATION_GRP c
 		 WHERE a.LANG_CLS_CD = 'LAG_001' 
 			AND c.LANG_CLS_CD = 'LAG_001' 
 			AND a.STATION_ID = b.STATION_ID 
 			-- 임시폐쇄 예정
 			AND b.STATION_USE_YN IN ('Y','T','S')
 			AND c.STATION_GRP_SEQ = b.STATION_GRP_SEQ
-			AND b.TEAM_SEQ = d.TEAM_SEQ;
 	</select> 
 	  
 </mapper>

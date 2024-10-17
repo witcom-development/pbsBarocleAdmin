@@ -1,12 +1,13 @@
 package com.dkitec.barocle.admin.service.paymentmgmt.payment.service;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.dkitec.cfood.core.CfoodException;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.vo.PaymentStatVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.vo.PaymentVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.refund.vo.RefundVO;
+import com.dkitec.cfood.core.CfoodException;
 
 public interface PaymentService {
 	public List<PaymentVO> getPaymentList(PaymentVO paymentVO) throws CfoodException;
@@ -37,4 +38,6 @@ public interface PaymentService {
 	public int getRefundTempAmt(RefundVO paymentVO) throws CfoodException;  //20200118 
 	
 	public int insertAccount(RefundVO paymentVO);  //20200118 회원 정보 입력
+	
+	public int addChargeInfo(@SuppressWarnings("rawtypes") HashMap chargeResult) throws CfoodException;
 }

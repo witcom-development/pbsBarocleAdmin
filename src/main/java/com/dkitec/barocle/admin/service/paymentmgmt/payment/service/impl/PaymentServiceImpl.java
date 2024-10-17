@@ -1,5 +1,8 @@
 package com.dkitec.barocle.admin.service.paymentmgmt.payment.service.impl;
 
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -7,9 +10,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dkitec.cfood.core.CfoodException;
 import com.dkitec.barocle.admin.common.service.CommonPopupMapper;
 import com.dkitec.barocle.admin.service.paymentmgmt.mileage.vo.MileageVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.service.PaymentMapper;
@@ -19,6 +22,7 @@ import com.dkitec.barocle.admin.service.paymentmgmt.payment.vo.PaymentVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.refund.vo.RefundVO;
 import com.dkitec.barocle.datasource.DataSource;
 import com.dkitec.barocle.datasource.DataSourceType;
+import com.dkitec.cfood.core.CfoodException;
 
 @Service("paymentService")
 public class PaymentServiceImpl implements PaymentService {
@@ -241,5 +245,31 @@ public class PaymentServiceImpl implements PaymentService {
 	@DataSource(DataSourceType.MASTER)
 	public int insertAccount(RefundVO paymentVO)  {
 		return paymentMapper.insertAccount(paymentVO);
+	}
+	
+	@Override
+	@Transactional(readOnly= false, propagation = Propagation.REQUIRED, rollbackFor={Exception.class, SQLException.class})
+	@DataSource(DataSourceType.MASTER)
+	public int addChargeInfo(@SuppressWarnings("rawtypes") HashMap chargeResult) throws CfoodException{
+		int result = 0;
+		
+		PaymentVO paymentVO = new PaymentVO();
+		paymentVO.setUsrSeq(new BigInteger((String)chargeResult.get("usrSeq")));
+		paymentVO.setPaymentMethodCd("BIM_008");
+		int totAmt = Integer.parseInt(chargeResult.get("totAmt").toString());
+		paymentVO.setTotAmt(totAmt);
+		paymentVO.setMbSerialNo((String)chargeResult.get("mbrRefNo"));
+		paymentVO.setPaymentConfmNo((String)chargeResult.get("refNo"));
+		paymentVO.setPaymentConfmPaytype((String)chargeResult.get("payType"));
+		paymentVO.setPaymentConfmDttm((String)chargeResult.get("tranDate"));
+		paymentVO.setResultCD("0000");
+		int rentHistSeq = Integer.parseInt(chargeResult.get("rentHistSeq").toString());
+		paymentVO.setRentHistSeq(rentHistSeq);
+		paymentVO.setProcessReasonDesc((String)chargeResult.get("processReasonDesc"));
+		
+		result = paymentMapper.addPaymentInfo(paymentVO);
+		result = paymentMapper.setOverFeePayComplete(paymentVO);
+		
+		return result;
 	}
 }

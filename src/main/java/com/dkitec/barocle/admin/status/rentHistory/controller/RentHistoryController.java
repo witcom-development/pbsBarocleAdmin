@@ -28,8 +28,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import com.dkitec.cfood.core.CfoodException;
 import com.dkitec.cfood.core.web.annotation.RequestCategory;
 import com.dkitec.cfood.core.web.annotation.RequestName;
+import com.dkitec.barocle.admin.manage.stationgroup.service.StationGroupMgmtService;
+import com.dkitec.barocle.admin.manage.stationgroup.vo.StationGroupMgmtVO;
 import com.dkitec.barocle.admin.status.rentHistory.service.RentHistoryService;
 import com.dkitec.barocle.admin.status.rentHistory.vo.PenaltyVO;
+import com.dkitec.barocle.admin.status.rentHistory.vo.ReturnReqVO;
 import com.dkitec.barocle.admin.status.rentStatus.vo.BikeRentalVO;
 import com.dkitec.barocle.admin.system.commonCodeMgmt.vo.CommonCodeVO;
 import com.dkitec.barocle.base.BaseController;
@@ -54,6 +57,7 @@ public class RentHistoryController extends BaseController {
 	private static final String RETURN_URL = "/admin/status/rentHistory/";
 	
 	@Resource(name="rentHistoryService") private RentHistoryService rentHistoryService;
+	@Resource(name = "stationGroupMgmtService") protected StationGroupMgmtService stationGroupMgmtService;
 	
 	@RequestMapping("/getRentHistoryList.do")
 	@RequestName("getRentHistory")
@@ -144,5 +148,46 @@ public class RentHistoryController extends BaseController {
 
 		return JSONVIEW;
 		
+	}
+	
+	@RequestMapping("/getRequestReturn.do")
+	@RequestName("getRequestReturn")
+	public String getRequestReturn(@ModelAttribute ReturnReqVO returnReqVo, ModelMap model, HttpServletRequest request) {
+		
+		String bizName = "원격반납요청 화면";
+		HttpUtil.printServiceLogStart(bizName, log, request);	// 서비스로그 시작 출력
+		String targetView = RETURN_URL.concat("pre_req_state");
+		boolean result = false;
+		
+		log.debug("##### getRequestReturn ==> " + returnReqVo.toString());
+		try {
+			//TODO : 로그인한 사용자의 locale정보로 설정.user정보에 같이
+			returnReqVo.setPagingYn("Y"); //페이징 처리 여부
+			
+			int totCnt = rentHistoryService.getReturnReqListCnt(returnReqVo);
+			PaginationInfo paginationInfo = getPagingInfo(returnReqVo.getCurrentPageNo(), totCnt);
+			PaginationInfo paginationMobileInfo = getPagingMobileInfo(returnReqVo.getCurrentPageNo(), totCnt);
+			returnReqVo.setFirstRecordIndex(paginationInfo.getFirstRecordIndex());
+			returnReqVo.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
+			
+			List<ReturnReqVO> resultList = rentHistoryService.getReturnReqList(returnReqVo);
+			
+			//
+			List<StationGroupMgmtVO> group = null;
+			StationGroupMgmtVO vo = new StationGroupMgmtVO();
+			vo.setLang(request.getLocale().getLanguage());
+			group = stationGroupMgmtService.getStationGroupNameList(vo);
+			
+			model.put("group", group);			
+			model.addAttribute("searchCondition",returnReqVo );
+			model.addAttribute("resultList", resultList);
+			model.addAttribute("paginationInfo", paginationInfo);
+			model.addAttribute("paginationMobileInfo", paginationMobileInfo);
+			result = true;
+		} catch(CfoodException e) {
+			throw new CfoodException(getMessage("fail.common.msg"));
+		}
+		
+		return result ? targetView : ERROR_PAGE;
 	}
 }

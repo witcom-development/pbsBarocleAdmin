@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.dkitec.barocle.admin.status.rentHistory.service.RentHistoryMapper;
 import com.dkitec.barocle.admin.status.rentHistory.service.RentHistoryService;
 import com.dkitec.barocle.admin.status.rentHistory.vo.PenaltyVO;
+import com.dkitec.barocle.admin.status.rentHistory.vo.ReturnReqVO;
 import com.dkitec.barocle.admin.status.rentStatus.vo.BikeRentalVO;
 import com.dkitec.barocle.admin.system.commonCodeMgmt.vo.CommonCodeVO;
 import com.dkitec.barocle.datasource.DataSource;
@@ -98,6 +99,20 @@ public class RentalHistoryServiceImpl extends EgovAbstractServiceImpl implements
 	public List<PenaltyVO> getPenaltyList(BikeRentalVO rentalVo) {
 		// TODO Auto-generated method stub
 		return rentHistoryMapper.getPenaltyList(rentalVo);
+	}
+	
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.SLAVE01)
+	public List<ReturnReqVO> getReturnReqList(ReturnReqVO returnReqVo){
+		return rentHistoryMapper.getReturnReqList(returnReqVo);
+	}
+	
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.SLAVE01)
+	public int getReturnReqListCnt(ReturnReqVO returnReqVo){
+		return rentHistoryMapper.getReturnReqListCnt(returnReqVo);
 	}
 
 }

@@ -9,49 +9,49 @@
 	spbdb1234!@#$
 	
 	※ 상용 정보
-	49.247.195.87:3306/spb
-	spb
-	spbdb1234!@#$
+	172.16.3.6:3306/barocle
+	barocle_db
+	brcdb1234!@#$
 	 -->
 
 	<entry key="driverClassName">org.mariadb.jdbc.Driver</entry>
-	<entry key="url">jdbc:mariadb://49.247.195.87:3306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="username">spb</entry>
-	<entry key="password">spbdb1234!@#$</entry>
+	<entry key="url">jdbc:mariadb://172.16.3.6:3306/barocle?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+	<entry key="username">barocle_db</entry>
+	<entry key="password">brcdb1234!@#$</entry>
 
 	<entry key="db2DriverClassName">org.mariadb.jdbc.Driver</entry>
-	<entry key="db2Url">jdbc:mariadb://49.247.195.87:3306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="db2Username">spb</entry>
-	<entry key="db2Password">spbdb1234!@#$</entry>
+	<entry key="db2Url">jdbc:mariadb://172.16.3.6:3306/barocle?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+	<entry key="db2Username">barocle_db</entry>
+	<entry key="db2Password">brcdb1234!@#$</entry>
 
 
 	<entry key="db3DriverClassName">org.mariadb.jdbc.Driver</entry>
-	<entry key="db3Url">jdbc:mariadb://49.247.195.87:3306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="db3Username">spb</entry>
-	<entry key="db3Password">spbdb1234!@#$</entry>
+	<entry key="db3Url">jdbc:mariadb://172.16.3.6:3306/barocle?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+	<entry key="db3Username">barocle_db</entry>
+	<entry key="db3Password">brcdb1234!@#$</entry>
 
 
 	<entry key="dbPushDriverClassName">org.mariadb.jdbc.Driver</entry>
 	<entry key="dbPushUrl">jdbc:mariadb://14.63.180.206:6900/push?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="dbPushUsername">spb</entry>
-	<entry key="dbPushPassword">spbdb1234!@#$</entry>
+	<entry key="dbPushUsername">barocle_db</entry>
+	<entry key="dbPushPassword">brcdb1234!@#$</entry>
  	<!--  통계 DB 추가 -->
 	<entry key="dbStaticsDriverClassName">org.mariadb.jdbc.Driver</entry> 
-	<entry key="dbStaticsUrl">jdbc:mariadb://49.247.195.87:3306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="dbStaticsUsername">spb</entry>
-	<entry key="dbStaticsPassword">spbdb1234!@#$</entry>
+	<entry key="dbStaticsUrl">jdbc:mariadb://172.16.3.6:3306/barocle?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+	<entry key="dbStaticsUsername">barocle_db</entry>
+	<entry key="dbStaticsPassword">brcdb1234!@#$</entry>
  
  	<!--  문자 DB 추가 -->
 	<entry key="dbMMSDriverClassName">org.mariadb.jdbc.Driver</entry> 
-	<entry key="dbMMSUrl">jdbc:mariadb://49.247.195.87:3309/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="dbMMSUsername">spb</entry>
-	<entry key="dbMMSPassword">spbdb1234!@#$</entry>
+	<entry key="dbMMSUrl">jdbc:mariadb://172.16.3.6:3309/barocle?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+	<entry key="dbMMSUsername">barocle_db</entry>
+	<entry key="dbMMSPassword">brcdb1234!@#$</entry>
 
 	<!--  개발 DB 추가 -->
 	<entry key="dbDEVDriverClassName">org.mariadb.jdbc.Driver</entry> 
-	<entry key="dbDEVUrl">jdbc:mariadb://49.247.195.87:3306/spb?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
-	<entry key="dbDEVUsername">spb</entry>
-	<entry key="dbDEVPassword">spbdb1234!@#$</entry>
+	<entry key="dbDEVUrl">jdbc:mariadb://172.16.3.6:3306/barocle?interactiveClient=true&amp;autoReconnect=true&amp;autoReconnectForPools=true</entry>
+	<entry key="dbDEVUsername">barocle_db</entry>
+	<entry key="dbDEVPassword">brcdb1234!@#$</entry>
 	
 </properties>
   

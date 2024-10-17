@@ -34,6 +34,10 @@
 	<definition name="/admin/status/rentHistory/pre_rent_detail" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentHistory/pre_rent_detail.jsp">
 		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
 	</definition>
+	<!-- 반납요청내역 -->
+	<definition name="/admin/status/rentHistory/pre_req_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/rentHistory/pre_req_state.jsp">
+		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />
+	</definition>
 	<!-- 재배치 차량 현황 -->
 	<definition name="/admin/status/relocationBikeStatus/pre_loc_state" extends="statusTemplate" template="/WEB-INF/views/admin/status/relocationBikeStatus/pre_loc_state.jsp">
 		<put-attribute name="title" value="관리자 페이지 - 아파트 자전거 바로클" />

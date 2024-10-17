@@ -115,7 +115,7 @@
 													<option value="NAME">대여소명</option>
 												</select> -->
 												<span class="input-text12"><input type="text" class="" id="searchWord" value="${condition.paramSearchWord}"/></span>
-												<button type="button" name="reSet" id="reSetBtn" class="btn-srh03 btncase1" style="color:white"></button>
+												<!-- <button type="button" name="reSet" id="reSetBtn" class="btn-srh03 btncase1" style="color:white"></button> -->
 											</div>
 											<!-- <div class="section pright etccase3">
 												
@@ -141,7 +141,7 @@
 								</div>
 							<!--검색조건 E-->
 							
-							<div id="filterDiv" class="staBox mapguide">
+							<!-- <div id="filterDiv" class="staBox mapguide">
 								<div id="filterImage">
 									<div style="display: inline-block; width:14%;"><span class="filterLstBike" style="cursor:pointer;"><em><img src="/images/icon_bike_b4.png" alt="분실" style="width: auto;height: auto;max-width: 100%;"/></em></span></div>
 									<div style="display: inline-block; width:14%;"><span class="filterRtnBike" style="cursor:pointer;"><em><img src="/images/icon_bike_b3.png" alt="강반" style="width: auto;height: auto;max-width: 100%;"/></em></span></div>
@@ -160,7 +160,7 @@
 									<div style="display: inline-block; width:14%;"><span class="filterBat" style="cursor:pointer; font-weight: bold;">부족</span></div>
 									<div style="display: inline-block;"></div>
 								</div>
-							</div>
+							</div> -->
 							<div id="mapDiv" class="mt20" ></div>
 							<div class="listalign mt20" style="margin-bottom : 5px;">
 								<label><input name="lsalign" type="radio" value="ASC" class="vm" >오름차순</label>
@@ -181,39 +181,26 @@
 							</div>
 							<table class="tb_type01" id="list">
 								<colgroup>
-									<col style="width:35%;" class="station_col1"/>
-									<col style="width:20%" class="station_col2"/>
-									<%-- <col style="width:15%"/> --%>
-									<col style="width:10%" class="station_col3"/>
- 									<col style="width:*"   class="station_col4"/> 
-									<col style="width:10%" class="station_col5"/>
-									<col style="width:10%" class="station_col6"/>
+									<col style="width:80%;" class="station_col1"/>
+									<col style="width:auto;" class="station_col2"/>
 								</colgroup>
 								<thead>
 									<tr>
 										<th>대여소</th>
 										<!-- <th title="[ LCD/QR/새싹]">자전거<br/> (점검)</th> -->
 										<!-- <th title="연결반납 자전거 수/전체 자전거 수(점검수)">자전거 (점검)</th> -->
-										<th>거치율<br/>(%)</th>
-										<th>팀명</th>
-										<th>요청<br/>(7일)</th>
-										<th>요청<br/>(1일)</th>
+										<th>거치댓수</th>
 									</tr>
 								</thead>
 								<tbody> 
 								<c:forEach var="info" items="${stationList}" varStatus="status" end="100" >
 									<tr>
 										<td class="title tl"><a href="#" id="${ info.stationId }" >${ info.stationName }</a></td>
-										<%-- <td class="title tr pr10" title="자전거 거치중 수/QR자전거 수/새싹 자전거 수">${info.parkingBike}</td> --%>
-										<%-- <td class="title tr pr10" title="연결반납 자전거 수/QR자전거 수/전체 자전거 수(점검수)">${info.systemWarning})</td> --%>
-										<td class="title tr pr10">${ info.shared }</td>
-										<td class="title tl">${info.bikeStatusName}</td>
-										<td class="title tr pr10">${info.criticalFlg}</td>
-										<td class="title tr pr10">${info.closeFlg}</td>
+										<td class="title tr pr10">${ info.parkingBikeTotCnt }</td>
 									</tr> 
 								</c:forEach>
 								<c:if test="${fn:length(stationList) == 0 }">
-									<tr><td colspan="4" style="text-align: center;"><spring:message code="search.nodata.msg" /></td></tr>
+									<tr><td colspan="2" style="text-align: center;"><spring:message code="search.nodata.msg" /></td></tr>
 								</c:if>
 								</tbody>
 							</table>

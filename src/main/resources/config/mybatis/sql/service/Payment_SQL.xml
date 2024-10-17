@@ -642,4 +642,48 @@
 	WHERE 1=1
 	AND PAYMENT_SEQ = #{paymentSeq}
 	</select>
+	
+	<insert id="addPaymentInfo" parameterType="paymentVO" useGeneratedKeys="true" keyProperty="paymentSeq">
+	  	INSERT INTO TB_SVC_PAYMENT
+	  		(PAYMENT_DTTM
+	  			,USR_SEQ
+				,PAYMENT_CLS_CD
+				,PAYMENT_METHOD_CD
+				,PAYMENT_STUS_CD
+				,PAYMENT_CONFM_NO
+				,TOT_AMT
+				,MILEAGE_PAYMENT_AMT
+				,RENT_OVER_FEE_SUM
+				,MB_SERIAL_NO
+				,PAYMENT_CONFM_PAYTYPE
+				,PAYMENT_CONFM_DTTM
+		)
+		VALUES
+			(now()
+				,#{usrSeq}
+				,'BIL_009'
+				,#{paymentMethodCd}
+				,'BIS_001'
+				,#{paymentConfmNo}
+				,#{totAmt}
+				,0
+				,0
+				,#{mbSerialNo}
+				,#{paymentConfmPaytype}
+				,#{paymentConfmDttm}
+       ) 
+	</insert>
+	
+	<update id="setOverFeePayComplete" parameterType="paymentVO">
+		UPDATE TB_SVC_RENT_OVER_FEE
+		SET PAYMENT_SEQ = #{paymentSeq}
+		<if test='resultCD == "0000"' >
+			, OVER_FEE_PROCESS_CLS_CD = 'OPD_004'
+			, OVER_FEE_PAYMENT_YN = 'Y'
+			, PAYMENT_DTTM = (SELECT PAYMENT_DTTM FROM TB_SVC_PAYMENT WHERE PAYMENT_SEQ = #{paymentSeq})
+		</if>
+		, PAYMENT_ATT_CNT = PAYMENT_ATT_CNT+1
+		, PROCESS_REASON_DESC = #{processReasonDesc}
+		WHERE RENT_HIST_SEQ = #{rentHistSeq}
+	</update>
  </mapper>

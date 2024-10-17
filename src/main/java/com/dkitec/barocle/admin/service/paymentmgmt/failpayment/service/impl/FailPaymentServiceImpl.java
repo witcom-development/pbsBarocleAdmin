@@ -6,12 +6,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.dkitec.cfood.core.CfoodException;
 import com.dkitec.barocle.admin.service.paymentmgmt.failpayment.service.FailPaymentMapper;
 import com.dkitec.barocle.admin.service.paymentmgmt.failpayment.service.FailPaymentService;
 import com.dkitec.barocle.admin.service.paymentmgmt.failpayment.vo.FailPaymentVO;
+import com.dkitec.barocle.admin.service.paymentmgmt.mileage.vo.MileageVO;
 import com.dkitec.barocle.datasource.DataSource;
 import com.dkitec.barocle.datasource.DataSourceType;
+import com.dkitec.cfood.core.CfoodException;
 
 @Service("failPaymentService")
 public class FailPaymentServiceImpl implements FailPaymentService {
@@ -30,5 +31,12 @@ public class FailPaymentServiceImpl implements FailPaymentService {
 	@DataSource(DataSourceType.SLAVE01)
 	public int getFailPaymentListCount(FailPaymentVO failPaymentVO) throws CfoodException {
 		return failPaymentMapper.getFailPaymentListCount(failPaymentVO);
+	}
+	
+	@Override
+	@Transactional(readOnly=false)
+	@DataSource(DataSourceType.MASTER)
+	public int addTicketPaymentFail(FailPaymentVO failPaymentVO) throws CfoodException {
+		return failPaymentMapper.addTicketPaymentFail(failPaymentVO);
 	}
 }

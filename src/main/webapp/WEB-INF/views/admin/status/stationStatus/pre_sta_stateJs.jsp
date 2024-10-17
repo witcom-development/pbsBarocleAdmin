@@ -12,7 +12,7 @@
 	function draw(){
 		
 		var trafficLayer = new naver.maps.TrafficLayer({
-			interval: 2000 // 2초마다 새로고침
+			interval: 2000 // 2ì´ë§ë¤ ìë¡ê³ ì¹¨
 		});
 		
 		var img = {icon: {}};
@@ -44,7 +44,7 @@
 			markerOptions.position = new naver.maps.LatLng("${bks.xPos}",  "${bks.yPos}");
 			markerOptions.map = nMap.map;
 		//markerOptions.icon.url = "/images/ico_01.png";
-			// 2021.05.25 배터리 비율 표시
+			// 2021.05.25 ë°°í°ë¦¬ ë¹ì¨ íì
 			var addBatt = "";
 			if( parseInt( "${bks.devBatt}" ) < 50 ) {
 				addBatt= "<span style='color:red; background:white;border:1px solid grey'>" + "${bks.devBatt}" + "%</span><br/>"
@@ -77,19 +77,19 @@
 			<c:choose>
 			 <c:when test="${info.stationSeCd == 'RAK_001'}"> 
 		   		 totalCount = Number("${info.parkingBikeTotCnt}") + Number("${info.parkingQRBikeCnt}") ;
-		   		 stationName ="(기존)"+ "${info.stationName}";
+		   		 stationName = "${info.stationName}";
 			 </c:when>
 			 <c:when test="${info.stationSeCd == 'RAK_002'}"> 
 		   		 totalCount = Number("${info.parkingQRBikeCnt}") + Number("${info.parkingELECBikeCnt}");
-		   		 stationName ="(신규)"+ "${info.stationName}";
+		   		 stationName = "${info.stationName}";
 			 </c:when>
 			 <c:when test="${info.stationSeCd == 'RAK_003'}"> 
 		   		 totalCount = Number("${info.parkingBikeTotCnt}") + Number("${info.parkingQRBikeCnt}") ;
-		   		 stationName ="(기존)"+ "${info.stationName}";
+		   		 stationName = "${info.stationName}";
 			 </c:when>
 			 <c:when test="${info.stationSeCd == 'RAK_004'}"> 
 				 totalCount = Number("${info.parkingQRBikeCnt}") + Number("${info.parkingELECBikeCnt}");
-				 stationName ="(신규)"+ "${info.stationName}";
+				 stationName = "${info.stationName}";
 		 	</c:when>
 		 	</c:choose>
 		 	
@@ -112,7 +112,7 @@
 		
 		reDrawIndex++;
 		
-		//2020-11-13 : 마커 필터 작업
+		//2020-11-13 : ë§ì»¤ íí° ìì
 		currentStatus.orgMarkersN = markersN;
 		currentStatus.orgMarkersS = markersS;
 		
@@ -166,7 +166,7 @@
 	
 	function batdraw(data){
 		
-		//마커 삭제 : 다 지운 후 다시 마커 삽입
+		//ë§ì»¤ ì­ì  : ë¤ ì§ì´ í ë¤ì ë§ì»¤ ì½ì
 		markerRemoveAll();
 		
 		
@@ -186,7 +186,7 @@
 			markerOptions.position = new naver.maps.LatLng(bikeBatLow.stationLatitude,  bikeBatLow.stationLongitude);
 			markerOptions.map = nMap.map;
 			
-			//배터리부족한 자전거 총 개수 표시를 위해 저장
+			//ë°°í°ë¦¬ë¶ì¡±í ìì ê±° ì´ ê°ì íìë¥¼ ìí´ ì ì¥
 			currentStatus.batLowBikeCnt += Number(bikeBatLow.parkingBikeTotCnt);
 			
 			var bikeCnt = bikeBatLow.parkingBikeTotCnt+"";
@@ -255,8 +255,8 @@
 			
 		}
 		
-		//배터리부족한 자전거 총 개수 표시
-		$(".listalign").append('<span class="batLowBike" style="float: right; position: relative; top: 6px;">배터리부족 건수 : '+currentStatus.batLowBikeCnt+'</span>');
+		//ë°°í°ë¦¬ë¶ì¡±í ìì ê±° ì´ ê°ì íì
+		$(".listalign").append('<span class="batLowBike" style="float: right; position: relative; top: 6px;">ë°°í°ë¦¬ë¶ì¡± ê±´ì : '+currentStatus.batLowBikeCnt+'</span>');
 		
 	}
 	
@@ -279,7 +279,7 @@
 	
 	linkStation = function(stationId) {
 		$("[name='stationId']").val(stationId);
-		// 2018-11-25 새창열기로 변경
+		// 2018-11-25 ìì°½ì´ê¸°ë¡ ë³ê²½
 		$("#searchFrm").attr({action : "<c:out value='/moveCurrentStationDetail.do'/>", method : "post" }).submit();
 	};
 	
@@ -292,18 +292,18 @@
 			
 			var cont = '<DIV  id="infoBox" style="border:2px solid #555; background:#fff; font-family:dotum; width:230px; text-align:left;line-height:150%;" >';
 			cont += '	   <p style="border-bottom:1px solid #c9c9c9; font-size:14px;color:#333; position:relative; text-decoration:underline">';
-			cont += '		   <a href="#" style="position:absolute; top:3px; right:10px" class="mpclose"><img  name="close" src="/images/stationClose.gif" alt="대여소 정보닫기" /></a>';
+			cont += '		   <a href="#" style="position:absolute; top:3px; right:10px" class="mpclose"><img  name="close" src="/images/stationClose.gif" alt="ëì¬ì ì ë³´ë«ê¸°" /></a>';
 			cont += '	   </p>';
 			cont += '	   <ul style="display:inline-block; vertical-align:middle; font-size:14px;margin:5px;">';
-			cont += '		   <li>자전거 번호  : <span style="color:#000099;">'+rentBikeNo+'</span></li>';
-			cont += '		   <li>최종신호	 : <span style="color:#000099;">'+ modDttm+'</span></li>';
-			cont += '		   <li>갱신 시간	: <span style="color:#000099;">'+regDttm+'</span></li>';
-			cont += '		   <li><p class="cacao" style="background:blue;color:white;">카카오지도로 길찾기</p></li>';
+			cont += '		   <li>ìì ê±° ë²í¸  : <span style="color:#000099;">'+rentBikeNo+'</span></li>';
+			cont += '		   <li>ìµì¢ì í¸	 : <span style="color:#000099;">'+ modDttm+'</span></li>';
+			cont += '		   <li>ê°±ì  ìê°	: <span style="color:#000099;">'+regDttm+'</span></li>';
+			cont += '		   <li><p class="cacao" style="background:blue;color:white;">ì¹´ì¹´ì¤ì§ëë¡ ê¸¸ì°¾ê¸°</p></li>';
 
 
 			cont += '		   <li><p class="naver" style="background:green;color:white;"><a target="_blank()"  href="';
 			cont += href;
-			cont += '"> 네이버지도로 길찾기(앱전용)</a></p></li>';		
+			cont += '"> ë¤ì´ë²ì§ëë¡ ê¸¸ì°¾ê¸°(ì±ì ì©)</a></p></li>';		
 			
 			cont += '	   </ul>';
 			cont += '   </DIV>';
@@ -312,7 +312,7 @@
 				content: cont
 			});
 			
-			///////////////////2020-11-10 모바일 최적화 작업 (줌 레벨에 따라 동젹변경) - start/////////////////
+			///////////////////2020-11-10 ëª¨ë°ì¼ ìµì í ìì (ì¤ ë ë²¨ì ë°ë¼ ëì ¹ë³ê²½) - start/////////////////
 			var zlvl = nMap.map.getZoom()- 15;
 			var zlat, zlng;
 			
@@ -354,8 +354,8 @@
 	   		var center = new naver.maps.LatLng(zlat, zlng);
 	   		infoWindow.open(nMap.map,e.coord);
 	   		
-	   		nMap.map.setCenter(center); //2020-11-04 : 마커를 중앙으로 이동
-			///////////////////2020-11-10 모바일 최적화 작업(줌 레벨에 따라 동젹변경) - end/////////////////
+	   		nMap.map.setCenter(center); //2020-11-04 : ë§ì»¤ë¥¼ ì¤ìì¼ë¡ ì´ë
+			///////////////////2020-11-10 ëª¨ë°ì¼ ìµì í ìì(ì¤ ë ë²¨ì ë°ë¼ ëì ¹ë³ê²½) - end/////////////////
 	   		
    			$("#infoBox a img").on("click", function(e){
 			   	e.preventDefault();
@@ -379,12 +379,12 @@
 			
 			var cont = '<DIV  id="infoBox" style="border:2px solid #555; background:#fff; font-family:dotum; width:230px; text-align:left;line-height:150%;" >';
 			cont += '	   <p style="border-bottom:1px solid #c9c9c9; font-size:14px;color:#333; position:relative; text-decoration:underline">';
-			cont += '		   <a href="#" style="position:absolute; top:3px; right:10px" class="mpclose"><img  name="close" src="/images/stationClose.gif" alt="대여소 정보닫기" /></a>';
+			cont += '		   <a href="#" style="position:absolute; top:3px; right:10px" class="mpclose"><img  name="close" src="/images/stationClose.gif" alt="ëì¬ì ì ë³´ë«ê¸°" /></a>';
 			cont += '	   </p>';
 			cont += '	   <ul style="display:inline-block; vertical-align:middle; font-size:14px;margin:5px;">';
-			cont += '		   <li>자전거 번호  : <span style="color:#000099;">'+rentBikeNo+'</span></li>';
-			cont += '		   <li>위치 상세보기  : <span class="detail" style="color:#000099;">'+'<a href="#"> 상세보기</a>'+'</span></li>';
-			cont += '		   <li>강반 상세보기  : <span class="exeImpul" style="color:#000099;">'+'<a href="#"> 상세보기</a>'+'</span></li>';
+			cont += '		   <li>ìì ê±° ë²í¸  : <span style="color:#000099;">'+rentBikeNo+'</span></li>';
+			cont += '		   <li>ìì¹ ìì¸ë³´ê¸°  : <span class="detail" style="color:#000099;">'+'<a href="#"> ìì¸ë³´ê¸°</a>'+'</span></li>';
+			cont += '		   <li>ê°ë° ìì¸ë³´ê¸°  : <span class="exeImpul" style="color:#000099;">'+'<a href="#"> ìì¸ë³´ê¸°</a>'+'</span></li>';
 			cont += '	   </ul>';
 			cont += '   </DIV>';
 			
@@ -394,7 +394,7 @@
 
 			var center = new naver.maps.LatLng(e.coord);
 			
-	   		nMap.map.setCenter(e.coord); //2020-11-04 : 마커를 중앙으로 이동
+	   		nMap.map.setCenter(e.coord); //2020-11-04 : ë§ì»¤ë¥¼ ì¤ìì¼ë¡ ì´ë
 	   		
 	   		infoWindow.open(nMap.map,e.coord);
 				
@@ -451,18 +451,18 @@
 		var cont = '<DIV  id="infoBox" style="border:2px solid #555; background:#fff; font-family:dotum; width:230px; text-align:left;line-height:150%;" >';
 		cont += '	   <p style="border-bottom:1px solid #c9c9c9; font-size:14px;color:#333; position:relative; text-decoration:underline">';
 		cont += '		   <span style="margin:10px 0 10px 10px; font-weight:bold; display:block;">'+stationName+'</span>';
-		cont += '		   <div style="position:absolute; top:3px; right:3px; width: 40px; height: 40px;" class="mpclose"><a href="#"><img  name="close" style="width: auto; position: relative; top: 8px; left: 8px;" src="/images/stationClose.gif" alt="대여소 정보닫기" /></a></div>';
+		cont += '		   <div style="position:absolute; top:3px; right:3px; width: 40px; height: 40px;" class="mpclose"><a href="#"><img  name="close" style="width: auto; position: relative; top: 8px; left: 8px;" src="/images/stationClose.gif" alt="ëì¬ì ì ë³´ë«ê¸°" /></a></div>';
 		cont += '	   </p>';
 		cont += '	   <ul style="display:inline-block; vertical-align:middle; font-size:14px;margin:5px;">';
-		cont += '		   <li>LCD/QR/새싹 : <span style="color:#000099;">'+rackInfo+'</span></li>';
-//		cont += '		   <li>자전거  : <span style="color:#000099;">'+bikeInfo+'</span></li>';
-		cont += '		   <li>거치율(%)  : <span style="color:#000099;">'+shared+'%</span></li>';
+		cont += '		   <li>자전거 갯수 : <span style="color:#000099;">'+rackInfo+'</span></li>';
+//		cont += '		   <li>ìì ê±°  : <span style="color:#000099;">'+bikeInfo+'</span></li>';
+//		cont += '		   <li>ê±°ì¹ì¨(%)  : <span style="color:#000099;">'+shared+'%</span></li>';
 		cont += '		   <li><p class="cacao" style="background:blue;color:white;">카카오지도로 길찾기</p></li>';
 
 
 		cont += '		   <li><p class="naver" style="background:green;color:white;"><a target="_blank()" href="';
 		cont += href;
-		cont += '"> 네이버지도로 길찾기(앱전용)</a></p></li>';		
+		cont += '">네이버지도로 길찾기(앱전용)</a></p></li>';		
 		
 		cont += '	   </ul>';
 		cont += '	   <p style="text-align:center; margin-bottom:-16px;"><img src="/images/stationPos.png" style="display:block; margin:0 auto;width:21px;height:16px;" alt="" /></p>';
@@ -472,7 +472,7 @@
 				content: cont
 			});	
 		
-		///////////////////2020-11-10 모바일 최적화 작업 (줌 레벨에 따라 동젹변경) - start/////////////////
+		///////////////////2020-11-10 ëª¨ë°ì¼ ìµì í ìì (ì¤ ë ë²¨ì ë°ë¼ ëì ¹ë³ê²½) - start/////////////////
 		var zlvl = nMap.map.getZoom()- 15;
 		var zlat, zlng;
 		
@@ -513,10 +513,10 @@
 		 
    		var center = new naver.maps.LatLng(zlat, zlng);
    		
-   		nMap.map.setCenter(center); //2020-11-04 : 마커를 중앙으로 이동
+   		nMap.map.setCenter(center); //2020-11-04 : ë§ì»¤ë¥¼ ì¤ìì¼ë¡ ì´ë
    		
    		infoWindow.open(nMap.map,e.coord);
-   		///////////////////2020-11-10 모바일 최적화 작업 (줌 레벨에 따라 동젹변경) - end/////////////////
+   		///////////////////2020-11-10 ëª¨ë°ì¼ ìµì í ìì (ì¤ ë ë²¨ì ë°ë¼ ëì ¹ë³ê²½) - end/////////////////
    		
 				$("#infoBox .mpclose").on("click", function(e){
 				   	e.preventDefault();
@@ -559,18 +559,18 @@
 		var cont = '<DIV  id="infoBox" style="border:2px solid #555; background:#fff; font-family:dotum; width:230px; text-align:left;line-height:150%;" >';
 		cont += '	   <p style="border-bottom:1px solid #c9c9c9; font-size:14px;color:#333; position:relative; text-decoration:underline">';
 		cont += '		   <span style="margin:10px 0 10px 10px; font-weight:bold; display:block;">'+stationName+'</span>';
-		cont += '		   <div style="position:absolute; top:3px; right:3px; width: 40px; height: 40px;" class="mpclose"><a href="#"><img  name="close" style="width: auto; position: relative; top: 8px; left: 8px;" src="/images/stationClose.gif" alt="대여소 정보닫기" /></a></div>';
+		cont += '		   <div style="position:absolute; top:3px; right:3px; width: 40px; height: 40px;" class="mpclose"><a href="#"><img  name="close" style="width: auto; position: relative; top: 8px; left: 8px;" src="/images/stationClose.gif" alt="ëì¬ì ì ë³´ë«ê¸°" /></a></div>';
 		cont += '	   </p>';
 		cont += '	   <ul style="display:inline-block; vertical-align:middle; font-size:14px;margin:5px;">';
 						for(var i = 0; i < bikeNo.length; i++){
 							
-		cont += '		   <li>자전거  : <span style="color:#000099;">'+bikeNo[i]+'</span></li>';
+		cont += '		   <li>ìì ê±°  : <span style="color:#000099;">'+bikeNo[i]+'</span></li>';
 		
 						}
-		cont += '		   <li><p class="cacao" style="background:blue;color:white;">카카오지도로 길찾기</p></li>';
+		cont += '		   <li><p class="cacao" style="background:blue;color:white;">ì¹´ì¹´ì¤ì§ëë¡ ê¸¸ì°¾ê¸°</p></li>';
 		cont += '		   <li><p class="naver" style="background:green;color:white;"><a target="_blank()" href="';
 		cont += 					href;
-		cont += '				"> 네이버지도로 길찾기(앱전용)</a></p></li>';  
+		cont += '				"> ë¤ì´ë²ì§ëë¡ ê¸¸ì°¾ê¸°(ì±ì ì©)</a></p></li>';  
 		cont += '	   </ul>';
 		cont += '	   <p style="text-align:center; margin-bottom:-16px;"><img src="/images/stationPos.png" style="display:block; margin:0 auto;width:21px;height:16px;" alt="" /></p>';
 		cont += '   </DIV>';	
@@ -579,7 +579,7 @@
 				content: cont
 			});	
 		
-		///////////////////2020-11-10 모바일 최적화 작업 (줌 레벨에 따라 동젹변경) - start/////////////////
+		///////////////////2020-11-10 ëª¨ë°ì¼ ìµì í ìì (ì¤ ë ë²¨ì ë°ë¼ ëì ¹ë³ê²½) - start/////////////////
 		var zlvl = nMap.map.getZoom()- 15;
 		var zlat, zlng;
 		
@@ -620,10 +620,10 @@
 		 
 			var center = new naver.maps.LatLng(zlat, zlng);
 			
-			nMap.map.setCenter(center); //2020-11-04 : 마커를 중앙으로 이동
+			nMap.map.setCenter(center); //2020-11-04 : ë§ì»¤ë¥¼ ì¤ìì¼ë¡ ì´ë
 			
 			infoWindow.open(nMap.map,e.coord);
-			///////////////////2020-11-10 모바일 최적화 작업 (줌 레벨에 따라 동젹변경) - end/////////////////
+			///////////////////2020-11-10 ëª¨ë°ì¼ ìµì í ìì (ì¤ ë ë²¨ì ë°ë¼ ëì ¹ë³ê²½) - end/////////////////
 			
 				$("#infoBox .mpclose").on("click", function(e){
 				   	e.preventDefault();
@@ -731,7 +731,7 @@
 			var currentPageNo = Number($('[name="currentPageNo"]').val());
 			var regExp = /^[1-9]?[0-9]/;
 			if(!regExp.test(currentPageNo) ||(totalPageCount < currentPageNo)){
-				alert('현재 페이지 값이 정상적이지 않습니다.');
+				alert('íì¬ íì´ì§ ê°ì´ ì ìì ì´ì§ ììµëë¤.');
 			}else{
 				currentStatus.pageSelect(currentPageNo);
 			}
@@ -747,7 +747,7 @@
 			find_team(false);
 		});
 
-			// 20210422 필터링 추가
+			// 20210422 íí°ë§ ì¶ê°
 			setTableGrid("ASC");
 	   }
    
@@ -760,7 +760,7 @@
    
    function setTableGrid(sortType){
 
-		// 모든 table 헤더에 클릭 이벤트를 설정한다.  list
+		// ëª¨ë  table í¤ëì í´ë¦­ ì´ë²¤í¸ë¥¼ ì¤ì íë¤.  list
 	var tables = document.getElementsByTagName("table");
 
 	for( var i = 0; i < tables.length; ++i )
@@ -768,7 +768,7 @@
 		var headers = tables[i].getElementsByTagName("th");
 		for( var j = 0; j < headers.length; ++j )
 		{
-			// 지역 유효범위에 생성할 중첩 함수
+			// ì§ì­ ì í¨ë²ìì ìì±í  ì¤ì²© í¨ì
 			(function(table,n)	{
 					headers[j].onclick = function() { SortTable( table, n , sortType )	};
 				}( tables[i], j ) 
@@ -779,10 +779,10 @@
    
 function SortTable( table, n, sortType )
 {
-	// table 에 tbody tag 가 반드시 존재한다고 가정한다.
+	// table ì tbody tag ê° ë°ëì ì¡´ì¬íë¤ê³  ê°ì íë¤.
 	var tbody = table.tBodies[0];
 	var rows = tbody.getElementsByTagName( "tr" );
-	// 배열로 생성한 후, 배열로 정렬한다.
+	// ë°°ì´ë¡ ìì±í í, ë°°ì´ë¡ ì ë ¬íë¤.
 	rows = Array.prototype.slice.call( rows, 0 );
 	
 	var upValue = 1;
@@ -803,13 +803,13 @@ function SortTable( table, n, sortType )
 		var cell2 = row2.getElementsByTagName("td")[n];
 		var value1 = cell1.textContent || cell1.innerText;
 		var value2 = cell2.textContent || cell2.innerText;
-		// 대여소 , 팀명
+		// ëì¬ì , íëª
 		if (n == 0 || n == 3 ) {
 		
 			if( value1 < value2 ) return upValue;
 			if( value1 > value2 ) return downValue;
 		
-		// 자전거, 거치율	
+		// ìì ê±°, ê±°ì¹ì¨	
 		} else {
 			
 			if( parseInt(value1) < parseInt(value2) ) return upValue;
@@ -821,7 +821,7 @@ function SortTable( table, n, sortType )
 	);
   
 
-	// 정렬된 배열로 row 를 다시 저장한다. 문서에 이미 존재하는 node 는 삽입하면 해당 node 는 자동으로 제거되고 새 위치에 저장된다.
+	// ì ë ¬ë ë°°ì´ë¡ row ë¥¼ ë¤ì ì ì¥íë¤. ë¬¸ìì ì´ë¯¸ ì¡´ì¬íë node ë ì½ìíë©´ í´ë¹ node ë ìëì¼ë¡ ì ê±°ëê³  ì ìì¹ì ì ì¥ëë¤.
 	for( var i = 0; i < rows.length; ++i )
 	{
 		tbody.appendChild( rows[i] );
@@ -865,7 +865,7 @@ function SortTable( table, n, sortType )
    };
    
    currentStatus.initCommbo = function() {
-   	//스테이션 
+   	//ì¤íì´ì 
 	   commonAjax.getStationCode( 
 		   function(data) {
 			   if(data != null && data.stationList != null) {
@@ -876,7 +876,7 @@ function SortTable( table, n, sortType )
 		   }
 	   );
 
-	   // 20190512 팀구분 추가
+	   // 20190512 íêµ¬ë¶ ì¶ê°
 	   commonAjax.getCommonCode("DEC", 
 		   function(data) {
 			 if(data !== null && data.codeList !== null) {
@@ -888,7 +888,7 @@ function SortTable( table, n, sortType )
 			 }
 	});
 
-	   // 20190514 팀구분 존재할 경우 처리
+	   // 20190514 íêµ¬ë¶ ì¡´ì¬í  ê²½ì° ì²ë¦¬
 	   if ( "${condition.batteryStusCd}" != "") {
 		   $("#batteryStusCd").val("${condition.batteryStusCd}");
 		   find_team( true )
@@ -921,9 +921,9 @@ function SortTable( table, n, sortType )
    currentStatus.moveStationDetail = function(e) {
    	e.preventDefault();
    	$("[name='stationId']").val(e.target.id);
-   	// 2018-11-25 새창열기로 변경
+   	// 2018-11-25 ìì°½ì´ê¸°ë¡ ë³ê²½
    	//$("#searchFrm").attr({action : "<c:out value='/moveCurrentStationDetail.do'/>", method : "post", target:"_blank"}).submit();
-   	//2020-02-21 앱 사용으로 페이지 이동으로 변경
+   	//2020-02-21 ì± ì¬ì©ì¼ë¡ íì´ì§ ì´ëì¼ë¡ ë³ê²½
    	$("#searchFrm").attr({action : "<c:out value='/moveCurrentStationDetail.do'/>", method : "post"}).submit();
    };
    
@@ -978,14 +978,14 @@ function SortTable( table, n, sortType )
    			postAjaxLoading("end");
    		},
    		error : function(data){
-   			alert("조회에 실패했습니다.");
+   			alert("ì¡°íì ì¤í¨íìµëë¤.");
    			postAjaxLoading("end");
    		}
    	});
    	
    }
    
-   //2020-11-17 : 필터 이벤트 추가
+   //2020-11-17 : íí° ì´ë²¤í¸ ì¶ê°
    currentStatus.filterEventFnc = function(filter){
    	
    	var filterclass = $(filter).attr('class');
@@ -1017,7 +1017,7 @@ function SortTable( table, n, sortType )
    	
    }
    
-   //2020-11-13 : 맵 마커 필터추가 작업
+   //2020-11-13 : ë§µ ë§ì»¤ íí°ì¶ê° ìì
    currentStatus.lastFilter = null;
    currentStatus.initMapMarkerFilter = function(){
    	
@@ -1034,17 +1034,17 @@ function SortTable( table, n, sortType )
    	
    	$(".filterLstBike").on("click",function(){
    		
-   		if(currentStatus.lastFilter != "Lst"){// 필터사용 - 분실
+   		if(currentStatus.lastFilter != "Lst"){// íí°ì¬ì© - ë¶ì¤
    			
    			currentStatus.filterEventFnc(this);
    			
-   			//마커 삭제
+   			//ë§ì»¤ ì­ì 
 			markerRemoveAll();
    			
 			markersN = currentStatus.orgMarkersN;
 			markersS = currentStatus.orgMarkersS;
 			
-   			//마커 생성
+   			//ë§ì»¤ ìì±
    			for(var i =0; i <markersN.length; i++){
    				
    				if(markersN[i]._beforeBoxedIcon.content.indexOf("icon_bike_big4") > -1){
@@ -1059,17 +1059,17 @@ function SortTable( table, n, sortType )
    	
    	$(".filterRtnBike").on("click",function(){
    		
-   		if(currentStatus.lastFilter != "Rtn"){// 필터사용 - 강반
+   		if(currentStatus.lastFilter != "Rtn"){// íí°ì¬ì© - ê°ë°
    			
    			currentStatus.filterEventFnc(this);
    			
-   			//마커 삭제
+   			//ë§ì»¤ ì­ì 
 			markerRemoveAll();
    			
 			markersN = currentStatus.orgMarkersN;
 			markersS = currentStatus.orgMarkersS;
 			
-   			//마커 생성
+   			//ë§ì»¤ ìì±
    			for(var i =0; i <markersN.length; i++){
    				
    				if(markersN[i]._beforeBoxedIcon.content.indexOf("icon_bike_big3") > -1 ){
@@ -1084,17 +1084,17 @@ function SortTable( table, n, sortType )
    	
    	$(".filterExcess").on("click",function(){
    		
-   		if(currentStatus.lastFilter != "Excess"){// 필터사용 - 거치초과
+   		if(currentStatus.lastFilter != "Excess"){// íí°ì¬ì© - ê±°ì¹ì´ê³¼
    			
    			currentStatus.filterEventFnc(this);
    			
-   			//마커 삭제
+   			//ë§ì»¤ ì­ì 
 			markerRemoveAll();
    			
 			markersN = currentStatus.orgMarkersN;
 			markersS = currentStatus.orgMarkersS;
 			
-   			//마커 생성
+   			//ë§ì»¤ ìì±
    			for(var i =0; i <markersS.length; i++){
    				
    				if(markersS[i]._beforeBoxedIcon.content.indexOf("staStop_ss150p.png") > -1){
@@ -1109,17 +1109,17 @@ function SortTable( table, n, sortType )
    	
    	$(".filterErr").on("click",function(){
    		
-   		if(currentStatus.lastFilter != "Err"){// 필터사용 - 고장대여소
+   		if(currentStatus.lastFilter != "Err"){// íí°ì¬ì© - ê³ ì¥ëì¬ì
    			
    			currentStatus.filterEventFnc(this);
    			
-   			//마커 삭제
+   			//ë§ì»¤ ì­ì 
 			markerRemoveAll();
    			
 			markersN = currentStatus.orgMarkersN;
 			markersS = currentStatus.orgMarkersS;
 			
-   			//마커 생성
+   			//ë§ì»¤ ìì±
    			for(var i =0; i <markersS.length; i++){
    				
    				if(markersS[i]._beforeBoxedIcon.content.indexOf("mapIcon/E/") > -1){
@@ -1134,17 +1134,17 @@ function SortTable( table, n, sortType )
    	
    	$(".filterTeamp").on("click",function(){
    		
-   		if(currentStatus.lastFilter != "Teamp"){// 필터사용 - 거치초과
+   		if(currentStatus.lastFilter != "Teamp"){// íí°ì¬ì© - ê±°ì¹ì´ê³¼
    			
    			currentStatus.filterEventFnc(this);
    			
-   			//마커 삭제
+   			//ë§ì»¤ ì­ì 
 			markerRemoveAll();
    			
 			markersN = currentStatus.orgMarkersN;
 			markersS = currentStatus.orgMarkersS;
 			
-   			//마커 생성
+   			//ë§ì»¤ ìì±
    			for(var i =0; i <markersS.length; i++){
    				
    				if(markersS[i]._beforeBoxedIcon.content.indexOf("mapIcon/T/") > -1){
@@ -1161,27 +1161,27 @@ function SortTable( table, n, sortType )
    		
   			currentStatus.filterEventFnc(this);
   			
-  			//마커 삭제
+  			//ë§ì»¤ ì­ì 
   			markerRemoveAll();
   			
-  			//마커 생성
+  			//ë§ì»¤ ìì±
   			currentStatus.getBikeBatLowStationList(e);
    		
    	});
    	
-   	$(".filterExit").on("click",function(){// 필터사용 - 초기화
+   	$(".filterExit").on("click",function(){// íí°ì¬ì© - ì´ê¸°í
    		
    		if(currentStatus.lastFilter != null){
    			
    			currentStatus.filterEventFnc(this);
    			
-   			//마커 삭제
+   			//ë§ì»¤ ì­ì 
 			markerRemoveAll();
 			
 			markersN = currentStatus.orgMarkersN;
 			markersS = currentStatus.orgMarkersS;
 			
-			//마커 생성
+			//ë§ì»¤ ìì±
 			for(var i =0; i <markersN.length; i++){
 				markersN[i].setMap(nMap.map);
    			}
@@ -1199,7 +1199,7 @@ function SortTable( table, n, sortType )
 
    function find_team( flag ){
 	   
-	   var select = "<option value=\"\">선택</option>"
+	   var select = "<option value=\"\">ì í</option>"
 	   var center = $("#batteryStusCd").val();
 	   if($("#batteryStusCd").val() == ''){
 		   $("#searchType").find("option").remove().end();
@@ -1214,13 +1214,13 @@ function SortTable( table, n, sortType )
 				   $("#searchType").append("<option value='"+data.teamList[i].teamSeq+"'>"+ data.teamList[i].teamNm +"</option>");
 			   }						
 
-			   // 초기 조회일 경우
+			   // ì´ê¸° ì¡°íì¼ ê²½ì°
 			   if ( flag ) {
 				   if("${condition.paramSearchType}" != ""){
 					$("#searchType").val("${condition.paramSearchType}");
 				} else {
 					
-					// 본인의 팀정보가 있을 경우
+					// ë³¸ì¸ì íì ë³´ê° ìì ê²½ì°
 					 $("#searchType").val("${teamSeq}");
 				}
 				   

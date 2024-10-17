@@ -80,4 +80,28 @@
 		</if>
 	</select>
 	
+	
+	
+	<insert id="addTicketPaymentFail" parameterType="failPaymentVO">
+		INSERT INTO TB_SVC_PAYMENT_FAIL_HIST (
+                 USR_SEQ
+                ,PAYMENT_DTTM
+                ,PAYMENT_METHOD_CD
+                ,PAYMENT_CLS_CD
+                ,PAYMENT_AMT
+                ,RENT_HIST_SEQ
+                ,ERR_CD
+                ,ERR_MSG
+        ) VALUES (
+                #{usrSeq}
+               ,now()
+               ,#{paymentMethodCd}
+               ,'BIL_009'
+               ,#{totAmt}
+               ,(SELECT MAX(RENT_HIST_SEQ) FROM TB_SVC_RENT_HIST WHERE USR_SEQ = #{usrSeq})
+               ,#{errCd}
+               ,#{errMsg}
+        )
+	</insert>
+	
 </mapper>

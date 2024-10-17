@@ -257,6 +257,10 @@
 			  	END														  AS baseRentTime
 			  <!-- ,dg_decrypt('TB_SVC_USR', 'USR_MPN_NO', U.USR_MPN_NO) AS usrMpnNo -->
 			  ,CAST(AES_DECRYPT(UNHEX(U.USR_MPN_NO),'BRC') as CHAR) AS usrMpnNo
+			  <if test='enfrcReturnStationId != null and enfrcReturnStationId != ""'>
+			  , (SELECT RACK_ID FROM TB_OPR_RACK WHERE NOW_LOCATE_ID = #{enfrcReturnStationId} AND RACK_STUS_CD = 'RAS_003' AND NOW_STATION_EQUIP_ORD = '0') AS returnRackId
+			  , (SELECT STATION_NAME FROM TB_OPR_MLANG_STATION WHERE STATION_ID = #{enfrcReturnStationId} AND LANG_CLS_CD = 'LAG_001') AS returnStationName
+			  </if>
 		  FROM TB_SVC_RENT R INNER JOIN  TB_SVC_VOUCHER V ON R.VOUCHER_SEQ = V.VOUCHER_SEQ
 			   INNER JOIN TB_SVC_USR U ON R.USR_SEQ = U.USR_SEQ,
 			   TB_SYS_COM_CD CD
@@ -362,7 +366,7 @@
 		)
 		VALUES
 		(
-			#{rentHistSeq}, #{rentDttm}, #{overMi}, CASE WHEN CAST(#{overFee} AS SIGNED) > '30000' THEN '30000' ELSE #{overFee} END, 'N', 'OPD_002'
+			#{rentHistSeq}, #{rentDttm}, #{overMi}, CASE WHEN CAST(#{overFee} AS SIGNED) > '35000' THEN '35000' ELSE #{overFee} END, 'N', 'OPD_002'
 		)
 	</insert> 
 	<select id="getOverFeePolicy"   parameterType="java.util.HashMap"   resultType="java.util.HashMap"> 
@@ -371,10 +375,11 @@
 		WHERE ADD_FEE_CLS = #{ADD_FEE_CLS}
 		<choose>
 		<when test='POLICY_TYPE == "Max"'>
-		  AND OVER_END_MI = 0
+		  AND OVER_END_MI = 999999999
 		</when>
 		<otherwise>
 		<![CDATA[
+			AND #{USE_MIN} BETWEEN OVER_STR_MI AND OVER_END_MI
 			AND OVER_END_MI <> 0
 		]]>
 		</otherwise>	
@@ -396,7 +401,6 @@
 			, EMRGNCY_YN, SMS_YN, RENT_BIKE_ID, AGENT_ID, PARKING_LOCATION_YN
 			, LATITUDE, LONGITUDE, NEAR_STATION_ID, PARKING_LOCATION_REASON, PARKING_LOCATION_DESC
 			, ENFRC_RETURN_DESC, ADDR, ENFRC_GUBUN_CD
-			, TEAM_SEQ
 		<if test='lostBikeYn =="Y"'>
 			, COMPT_CD
 			, REG_ID
@@ -425,24 +429,6 @@
 			 </choose>
 			 , #{parkingLocationReason}, #{parkingLocationDesc}
 			 , #{enfrcReturnDesc}, #{addr}, #{enfrcGubunCd}
-			 <choose>
-			 	<when test='enfrcReturnStationId != null and enfrcReturnStationId !=""'>
-			 , ( SELECT TEAM_SEQ FROM TB_OPR_STATION 
-				 WHERE STATION_ID = #{enfrcReturnStationId})	
-			 	</when>
-			 	<otherwise>
-			 , ( SELECT TEAM_SEQ FROM TB_OPR_STATION 
-				 WHERE STATION_ID = ( SELECT NEAR.STATION_ID 
-										FROM ( SELECT STATION_ID,distance_between(#{latitude}, #{longitude}, STATION_LATITUDE, STATION_LONGITUDE) AS DIS 
-										   	   FROM TB_OPR_STATION 
-											   WHERE STATION_USE_YN  IN ('Y','T','S')
-											   ORDER BY DIS LIMIT 1		
-											  )NEAR 
-									)
-			 
-			 	)	
-			 	</otherwise>
-			 </choose>
 			 <if test='lostBikeYn =="Y"'>
 			 , '5'
 			 , #{adminId}
@@ -958,6 +944,21 @@
 		(
 			'45800999900000'  
 		  , ( SELECT RENT_BIKE_ID FROM TB_SVC_ENFRC_RETURN_HIST  WHERE ENFRC_RETURN_HIST_SEQ = #{enfrcReturnHistSeq} )
+		  , 'N'
+		  , ''
+		  , SYSDATE()
+		)
+	</insert>
+	
+	<insert id="insertParkingInfo2" parameterType="bikeRentalVo">
+		INSERT INTO TB_OPR_BIKE_PARKING
+		(
+			RACK_ID, BIKE_ID, CASCADE_YN, CASCADE_BIKE_ID, REG_DTTM 
+		)
+		VALUES
+		(
+			#{returnRackId}
+		  , #{rentBikeId}
 		  , 'N'
 		  , ''
 		  , SYSDATE()

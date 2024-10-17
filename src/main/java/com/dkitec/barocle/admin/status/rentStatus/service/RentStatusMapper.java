@@ -176,5 +176,7 @@ public interface RentStatusMapper {
 	// 20200617 
 	int insertParkingInfo(BikeRentalVO rentalVo);
 	
+	int insertParkingInfo2(BikeRentalVO rentalVo);
+	
 	int updateBikeStatus(BikeRentalVO rentalVo);
 }

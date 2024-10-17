@@ -23,6 +23,7 @@ public class FailPaymentVO extends PagingVO implements Serializable {
 	private String viewFlg = IConstants.MODE_LIST;
 	
 	private BigInteger paymentFailHistSeq;
+	private BigInteger usrSeq;
 	private String rentDttm;
 	private BigInteger rentHistSeq;
 	private String paymentDttm;
@@ -57,6 +58,12 @@ public class FailPaymentVO extends PagingVO implements Serializable {
 	private String startPaymentDttm;
 	private String endPaymentDttm;
 	
+	public BigInteger getUsrSeq() {
+		return usrSeq;
+	}
+	public void setUsrSeq(BigInteger usrSeq) {
+		this.usrSeq = usrSeq;
+	}
 	public String getLang() {
 		return lang;
 	}

@@ -19,19 +19,26 @@ import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.security.KeyStore;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Controller;
@@ -43,9 +50,6 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import com.dkitec.cfood.core.CfoodException;
-import com.dkitec.cfood.core.web.annotation.RequestCategory;
-import com.dkitec.cfood.core.web.annotation.RequestName;
 import com.dkitec.barocle.admin.common.service.CommonPopupService;
 import com.dkitec.barocle.admin.common.vo.FindOutDeviceVO;
 import com.dkitec.barocle.admin.common.vo.LocationVo;
@@ -58,11 +62,13 @@ import com.dkitec.barocle.admin.manage.deviceMgmt.ap.vo.ApVO;
 import com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeService;
 import com.dkitec.barocle.admin.manage.deviceMgmt.bike.vo.BikeVO;
 import com.dkitec.barocle.admin.service.membermgmt.service.MemberMgmtService;
-import com.dkitec.barocle.admin.service.membermgmt.vo.BlackListMgmtVO;
 import com.dkitec.barocle.admin.service.membermgmt.vo.MemberMgmtVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.failpayment.service.FailPaymentService;
 import com.dkitec.barocle.admin.service.paymentmgmt.failpayment.vo.FailPaymentVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.mileage.vo.MileageVO;
+import com.dkitec.barocle.admin.service.paymentmgmt.payment.ToSHA256Hex;
+import com.dkitec.barocle.admin.service.paymentmgmt.payment.service.PaymentService;
+import com.dkitec.barocle.admin.service.paymentmgmt.payment.vo.PaymentVO;
 import com.dkitec.barocle.admin.status.rentHistory.vo.PenaltyVO;
 import com.dkitec.barocle.admin.status.rentStatus.service.RentStatusService;
 import com.dkitec.barocle.admin.status.rentStatus.vo.BikeRentalVO;
@@ -75,11 +81,15 @@ import com.dkitec.barocle.admin.system.teammgmt.vo.TeamMgmtVO;
 import com.dkitec.barocle.admin.system.usermgmt.vo.UserMgmtVO;
 import com.dkitec.barocle.base.BaseController;
 import com.dkitec.barocle.base.IConstants;
-import com.dkitec.barocle.util.common.OverFeeCalcUtil;
 import com.dkitec.barocle.util.sms.SendType;
 import com.dkitec.barocle.util.sms.SmsSender;
 import com.dkitec.barocle.util.sms.vo.SmsMessageVO;
 import com.dkitec.barocle.util.webutil.HttpUtil;
+import com.dkitec.cfood.core.CfoodException;
+import com.dkitec.cfood.core.web.annotation.RequestCategory;
+import com.dkitec.cfood.core.web.annotation.RequestName;
+import com.mainpay.sdk.utils.MakeID;
+import com.mainpay.sdk.utils.ParseUtils;
 
 
 /**
@@ -106,6 +116,8 @@ public class CommonPopupController extends BaseController {
 	@Resource(name = "failPaymentService") private FailPaymentService failPaymentService;
 	@Resource(name="commonCodeService") private CommonCodeService commonCodeService;
 	@Resource(name="stationStatusService") private StationStatusService stationStatusService;
+	@Resource(name="paymentService") private PaymentService paymentService;
+	
 	
 	private static final String RETURN_URL = "/admin/common/popup/";
 	
@@ -660,6 +672,7 @@ public class CommonPopupController extends BaseController {
 	}*/
 	
 	
+	@SuppressWarnings("unchecked")
 	@RequestMapping(value="/exeImpulseBikeReturn.do")
 	@RequestName("exeImpulseBikeReturn")
 	public String exeImpulseBikeReturn(@ModelAttribute @Valid BikeRentalVO rentalVo, BindingResult bindingResult, ModelMap model, HttpServletRequest request) {
@@ -683,8 +696,9 @@ public class CommonPopupController extends BaseController {
 					currentInfo.setOverFeeYn("Y");
 					currentInfo.setOverMi(String.valueOf(Integer.parseInt(rentalVo.getUseMi()) - Integer.parseInt(currentInfo.getBaseRentTime())));
 				}
-				
+					
 				//강제 반납 추가정보 입력
+				currentInfo.setReturnStationId(rentalVo.getEnfrcReturnStationId());
 				currentInfo.setEnfrcReturnStationId(rentalVo.getEnfrcReturnStationId());
 				currentInfo.setDeviceCnncCd(rentalVo.getDeviceCnncCd());
 				currentInfo.setEnfrcReturnCd(rentalVo.getEnfrcReturnCd());
@@ -696,14 +710,14 @@ public class CommonPopupController extends BaseController {
 				currentInfo.setLatitude(rentalVo.getLatitude());
 				currentInfo.setLongitude(rentalVo.getLongitude());
 				currentInfo.setLostBikeYn(rentalVo.getLostBikeYn());
-				
+					
 				// 상용에 올릴때 변경 하고 업로드 해야함
 				//currentInfo.setEnfrcReturnDesc(new String(rentalVo.getEnfrcReturnDesc().getBytes("ISO-8859-1"), "UTF-8"));
 				currentInfo.setEnfrcReturnDesc(rentalVo.getEnfrcReturnDesc());
 				//currentInfo.setAddr(new String(rentalVo.getAddr().getBytes("ISO-8859-1"), "UTF-8"));
 				currentInfo.setAddr(rentalVo.getAddr());
 				currentInfo.setEnfrcGubunCd(rentalVo.getEnfrcGubunCd());
-				
+					
 				if(currentInfo.getLatitude().equals("")){
 					currentInfo.setLatitude(null);
 					currentInfo.setLongitude(null);
@@ -713,16 +727,90 @@ public class CommonPopupController extends BaseController {
 				currentInfo.setEnfrcFileNoList(rentalVo.getEnfrcFileNoList());
 				currentInfo.setEnfrcFileStateList(rentalVo.getEnfrcFileStateList());
 				
+				// 해당 변수에 값이 있으면 rentHistSeq를 반환한다.
+				currentInfo.setViewFlg("enf");
+				
 				result = rentStatusService.exeImpulseBikeReturn(currentInfo);
-				log.debug("강제 반납 결과 :::::"+result);
+
+				//result = 1;
+				log.debug("강제 반납 결과 rentHistSeq :::::"+result);
 				if(result > 0) {
+					
+					// 결제 할 금액이 있다면 결제 진행
+					if("Y".equals(currentInfo.getOverFeeYn())){
+					
+						// 대여완료 처리 되었으니 빌링키 조회 후 이용금액 결제 진행
+						PaymentVO addPayMethodVO = new PaymentVO();
+						FailPaymentVO failPaymentVO = new FailPaymentVO();
+						BigInteger myBigIntegerValue = new BigInteger( rentalVo.getUsrSeq() );
+						System.out.println("myBigIntegerValue========>"+myBigIntegerValue);
+						addPayMethodVO.setUsrSeq(myBigIntegerValue);
+			        	PaymentVO AddPayMethod = paymentService.getAddPayMethod(addPayMethodVO);
+			        	
+			        	// 빌링키 없으므로 결제 실패 처리
+			        	if( AddPayMethod.getBillingKey() == null && "".equals(AddPayMethod.getBillingKey()) ){
+			        		// 결제 실패 hist 등록
+			        		failPaymentVO.setUsrSeq(myBigIntegerValue);
+			        		failPaymentVO.setPaymentMethodCd("BIM_008");
+			        		failPaymentVO.setPaymentAmt(Integer.parseInt(currentInfo.getOverFee()));
+			        		failPaymentVO.setErrCd("enfErr");
+			        		failPaymentVO.setErrMsg("cannot find BillingKey");
+			        		
+			        		result = failPaymentService.addTicketPaymentFail(failPaymentVO);
+			        		
+			        		resultMessage = "반납처리는 성공하였으나, 빌링키조회가 되지 않아 결제 실패하였습니다.";
+			        		
+			        		model.addAttribute(RESULT_MESSAGE, resultMessage);
+			        		return RETURN_URL.concat("pop_re_pro");
+			        	}
+			        	
+						HashMap<String, String> info_param = new HashMap<String, String>();
+						info_param.put("totAmt", currentInfo.getOverFee());
+						info_param.put("billingKey", AddPayMethod.getBillingKey());
+						
+						HashMap<String, String> chargeResult = new HashMap<String, String>();
+						chargeResult = mainPayChargeAPI(info_param);
+						
+						if("200".equals(chargeResult.get("resultCode"))){
+							// 결제 성공 데이터 넣기
+							chargeResult.put("usrSeq", rentalVo.getUsrSeq());
+							chargeResult.put("paymentMethodCd", "BIM_001");
+							chargeResult.put("processReasonDesc", "정상처리");
+							chargeResult.put("rentHistSeq", Integer.toString(result));
+							
+							// insert payment update overFee table
+							result = paymentService.addChargeInfo(chargeResult);
+													
+							resultMessage = "강제반납 처리 및 이용결제가 완료되었습니다.";
+						}else{
+							// 결제 실패 데이터 넣기
+							failPaymentVO.setUsrSeq(myBigIntegerValue);
+			        		failPaymentVO.setPaymentMethodCd("BIM_008");
+			        		failPaymentVO.setPaymentAmt(Integer.parseInt(currentInfo.getOverFee()));
+			        		failPaymentVO.setErrCd(chargeResult.get("resultCode"));
+			        		failPaymentVO.setErrMsg(chargeResult.get("resultMessage"));
+			        		
+			        		result = failPaymentService.addTicketPaymentFail(failPaymentVO);
+							resultMessage = "강제반납 처리는 완료되었으나 결제가 실패하였습니다.";
+						}
+					}else{
+						// 이용관련 결제 금액 없음
+					}
+					// 문자에 보낼 날짜 구하기
+					Date now = new Date();
+					SimpleDateFormat formatter = new SimpleDateFormat("MM월dd일 HH시 mm분 ss초");
+					String formatedNow = formatter.format(now);
+					
 					if(currentInfo.getUsrMpnNo() != null && !currentInfo.getUsrMpnNo().equals("")) {
 						SmsMessageVO smsVo = new SmsMessageVO();
 						smsVo.setDestno(currentInfo.getUsrMpnNo());
-						smsVo.setMsg(SendType.SMS_008, currentInfo.getRentBikeNo());
+						smsVo.setMsg(SendType.SMS_090, currentInfo.getRentBikeNo(), formatedNow, currentInfo.getReturnStationName());
 						SmsSender.sender(smsVo);
 					}
+				}else{
+					resultMessage = "강제반납처리에 실패했습니다.\n반넙처리 도중 오류가 발생했습니다.";
 				}
+				
 			} else {
 				resultMessage = "대여 이력이 없습니다.";
 			}
@@ -739,6 +827,7 @@ public class CommonPopupController extends BaseController {
 		model.addAttribute(RESULT_MESSAGE, resultMessage);
 		return RETURN_URL.concat("pop_re_pro");
 	}
+	
 	/*@RequestMapping(value="/exeBikeParkingLocation.do")
 	@RequestName("exeBikeParkingLocation")
 	public String exeBikeParkingLocation(@ModelAttribute @Valid BikeRentalVO rentalVo, BindingResult bindingResult, ModelMap model, HttpServletRequest request) {
@@ -819,13 +908,18 @@ public class CommonPopupController extends BaseController {
 	 */ 
 	private int getOverFee(String paymentClsCd  ,int useMin) {
 		Map<String, Object> fee = new HashMap<String, Object>();
-		fee.put("ADD_FEE_CLS", this.getAddFeeClsCd(paymentClsCd));
+		//fee.put("ADD_FEE_CLS", this.getAddFeeClsCd(paymentClsCd));
+		fee.put("ADD_FEE_CLS", "H");
 		fee.put("POLICY_TYPE", "Min");
+		fee.put("USE_MIN", useMin);
 		Map<String, Object> minPolicy = rentStatusService.getOverFeePolicy(fee);
 		fee.put("POLICY_TYPE", "Max");
 		Map<String, Object> maxPolicy = rentStatusService.getOverFeePolicy(fee);
 		
-		int overPay = new OverFeeCalcUtil().getPay(minPolicy, maxPolicy, useMin);
+		//int overPay = new OverFeeCalcUtil().getPay(minPolicy, maxPolicy, useMin);
+		fee.put("POLICY_TYPE", "");
+		Map<String, Object> policy = rentStatusService.getOverFeePolicy(fee);
+		int overPay = Integer.parseInt(policy.get("ADD_FEE").toString());
 		
 		return overPay;
 	}
@@ -1210,6 +1304,23 @@ public class CommonPopupController extends BaseController {
 		return  RETURN_URL.concat("pop_re_list");
 	}
 	
+	@RequestMapping(value="/entrcReutnListPop.do")
+	@RequestName("entrcReutnListPop")
+	public String entrcReutnListPop(@ModelAttribute BikeRentalVO rentVo, BindingResult bResult, ModelMap model,HttpServletRequest request) throws SQLException {
+		String bizName = "강제반납목록화면 팝업";
+		HttpUtil.printServiceLogStart(bizName, log, request);	// 서비스로그 시작 출력
+		
+		
+		BikeRentalVO resultVo = null;
+		
+		//rentStatusService.getCompulsionInfo
+		resultVo = rentStatusService.getExeImpulseCntInfo(rentVo);
+	
+		
+		model.addAttribute("resultVo", resultVo);
+		
+		return  RETURN_URL.concat("pop_re_list");
+	}
 	@RequestMapping(value="/updLocationMapPop.do")
 	@RequestName("updLocationMapPop")
 	public String updLocationMapPop(@ModelAttribute @Valid LocationVo locationVo, ModelMap model, HttpServletRequest request){
@@ -1638,5 +1749,120 @@ public class CommonPopupController extends BaseController {
 		return RETURN_URL.concat("pop_massMoveAdmin_sch");
 	}
 	
+	@SuppressWarnings("rawtypes")
+	public HashMap mainPayChargeAPI (Map<String, String> parmaMap) {
+		
+		HashMap<String, String> resultMap = new HashMap<String, String>();
+		
+		try {		
+			
+			//String API_BASE = "https://test-relay.mainpay.co.kr";				// TEST API URL
+			//String mbrNo = "100011"; // 테스트 가맹점 번호
+			//String apiKey = "U1FVQVJFLTEwMDAxMTIwMTgwNDA2MDkyNTMyMTA1MjM0"; // 테스트 apiKey
+			
+			String API_BASE = "https://relay.mainpay.co.kr";                               // REAL API URL
+			String mbrNo = "114549";                                                       // REAL 가맹점번호
+			String apiKey = "LovY3SkcSKoB9m3aihyaqw404jgrfsXWedHoUlPOOWlJ";                // REAL apiKey
+			
+			String apiUrl = API_BASE + "/v1/api/payments/payment/card-auto/trans";			// 신용카드 정기결제 결제 승인 요청 API
+			
+			Map<String, String> parameters = new HashMap<String, String>();
+			
+			java.text.SimpleDateFormat format = new java.text.SimpleDateFormat ( "yyyyMMddHHmmss");
+			java.text.SimpleDateFormat format2 = new java.text.SimpleDateFormat ( "yyMMddHHmmss");
+			Date date = new Date();
+			String TODAY = format.format(date);
+			
+			parameters.put("mbrNo", mbrNo);							// SPC Networks에서 부여한 가맹점번호 (상점 ID)
+			parameters.put("paymethod", "CARD");					// 지불수단 (고정값, CARD)
+			parameters.put("billkey", parmaMap.get("billingKey"));							// 신용카드 빌키 (approvlUrl에서 저장한 값)
+			//parameters.put("billkey", "0O90003090104015S202");	// 정기결제 인증 키
+			String mbRefNo = MakeID.orderNo("BRC_"+TODAY, 20);
+			parameters.put("mbrRefNo", mbRefNo);	// 가맹점에서 나름대로 정한 중복되지 않는 주문번호
+			parameters.put("amount", parmaMap.get("totAmt"));						// 총결제금액
+			parameters.put("goodsName", "추가과금");					// 생년월일 6자리 (YYMMDD) 또는 사업자번호 10자리
+			parameters.put("timestamp", TODAY);	// 가맹점 시스템 시각 (yyyyMMddHHmmssSSS)
+			String key = mbrNo+"|"+mbRefNo+"|"+parmaMap.get("totAmt")+"|"+apiKey+"|"+TODAY;
+			String signature = ToSHA256Hex.toSHA256Hex(key);
+			parameters.put("signature",signature);
+			
+			SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
+			TrustManagerFactory trustManagerFactory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+			
+			trustManagerFactory.init((KeyStore) null);
+            sslContext.init(null, (TrustManager[]) trustManagerFactory.getTrustManagers(), null);
+            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+            
+            HashMap<String, Object> params = new HashMap<String, Object>();
+
+            StringBuilder postData = new StringBuilder();
+            for(Map.Entry<String,String> param : parameters.entrySet())
+            {
+            	if(postData.length() != 0)
+            		postData.append('&');
+            	postData.append(param.getKey());
+            	postData.append('=');
+            	postData.append(String.valueOf(param.getValue()));
+            }
+
+ 			System.out.println("Send Data " + postData.toString());
+            
+ 			byte[] postDataBytes = postData.toString().getBytes();
+ 			
+ 			URL obj = new URL(apiUrl); // 호출할 URL
+            HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+            con.setConnectTimeout(10000); //10초
+            con.setReadTimeout(10000); //10초
+            con.setSSLSocketFactory(sslSocketFactory);
+            con.setRequestMethod("POST");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded; charset=utf-8");
+            con.setDoOutput(true);
+            con.getOutputStream().write(postDataBytes); // POST 호출
+
+ 			
+ 			//httpPost.setEntity(new UrlEncodedFormEntity(nvps, "UTF-8"));
+ 			
+            BufferedReader in = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            String line;
+            String returnStr = "";
+            while ((line = in.readLine()) != null) {
+            	returnStr = line;
+                System.out.println("LINE : " + line);
+            }
+            System.out.println("returnStr : " + returnStr);
+            
+            //makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청] " +"[callUrl :" + apiUrl +" ] " + parameters.toString() , "Y");
+    		//makeServiceCheckApiLogFile("[" +TODAY + "][결제취소요청 결과] " + returnStr , "Y");
+            
+            System.out.printf("[" +TODAY + "][결제요청] " +"[callUrl :" + apiUrl +" ] " + parameters.toString() , "Y");
+            System.out.printf("[" +TODAY + "][결제요청 결과] " + returnStr , "Y");
+			
+			Map responseMap = ParseUtils.fromJson(returnStr, Map.class);
+			String resultCode = (String) responseMap.get("resultCode");
+			String resultMessage = (String) responseMap.get("resultMessage");
+	
+			if( ! "200".equals(resultCode)) {	// API 호출 실패		
+				System.out.println(returnStr);
+				resultMap.put("resultCode", resultCode);
+				resultMap.put("resultMessage", resultMessage);
+			} else {
+				 Map<String,String> data = (Map<String,String>)responseMap.get("data");
+				resultMap.put("resultCode", resultCode);
+				resultMap.put("resultMessage", resultMessage);				
+				resultMap.put("mbrRefNo", (String)data.get("mbrRefNo"));
+				resultMap.put("refNo", (String)data.get("refNo"));
+				resultMap.put("tranDate", (String)data.get("tranDate"));
+				resultMap.put("payType", (String)data.get("payType"));
+				resultMap.put("totAmt", parmaMap.get("totAmt"));
+			}
+			
+			//responseJson = HttpSendTemplate.post(apiUrl, parameters, apiKey);
+			
+		} catch (Exception e) {
+			// TODO: handle exception
+		}
+		
+		return resultMap;
+	}
 	
 }

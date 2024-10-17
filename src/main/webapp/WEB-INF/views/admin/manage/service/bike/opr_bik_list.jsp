@@ -271,20 +271,6 @@
 											<th>경과일자</th>
 										</c:when>		
 
-										<%-- 도난추정 --%>
-									   <%--  <c:when test="${ searchCondition.bikeStatusCd eq 'BKS_016'}">
-											<th>자전거</br>번호</th>
-											<th>지역구</th>
-											<th>반납정거장명</th>
-											<th>반납일시</th>
-											
-											<th>강반</th>
-
-											<th>최종신호</th>
-											<th>상태정보</br>미전송일시</th>
-											<th>등록일자</th>
-											<th>경과</br>일자</th>
-										</c:when>	--%>
 
 										<c:otherwise>	 
 											<th>자전거번호</th>
