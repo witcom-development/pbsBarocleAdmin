@@ -70,11 +70,11 @@
 											<label class="laType02">구분</label>
 											<span>
 												<span class="input-rd01"><input data-chn="daymth1" type="radio" id="daily" name="dType" value="daily" checked><label for="daily"> 일</label></span>
-												<span class="input-rd01"><input data-chn="daymth2" type="radio" id="monthly" name="dType" value="monthly"><label for="monthly"> 월</label></span>
+												<!-- <span class="input-rd01"><input data-chn="daymth2" type="radio" id="monthly" name="dType" value="monthly"><label for="monthly"> 월</label></span> -->
 											</span>
 										</div>
 										<div class="section pright">
-											<label class="laType02">일/월</label>
+											<label class="laType02">날짜</label>
 											<p class="daymth1">
 												<span class="selectDate input-datepick04"><input type="text" class="datepicker input-datepick04" title="선택 날짜" name="searchBgnDe" readonly/></span>
 												<span class="dash">~</span>
@@ -129,136 +129,47 @@
 													<option value="12">12</option>
 												</select>
 											</p>
-										</div>
-										<div class="section radbox2">
-											<label class="laType02">대여횟수</label>
-											<span>
-												<span class="input-rd01"><input type="radio" id="asc" name="sType"><label for="asc">오름차순</label></span>
-												<span class="input-rd01"><input type="radio" id="desc" name="sType"><label for="desc">내림차순</label></span>
-											</span>
-										</div>
-										<div class="section pright">
 											<button type="button" id="searchBtn" class="btn-srh03 btncase1"><img src="/images/searchIcon.gif" alt="검색" /></button>
 										</div>
 									</div>
 								</fieldset>
 							</div>
-						<!--검색조건 E-->
-						<div class="posrela mt30">
-							<div class="widpos">
-								<p class="whead">총 합계</p>
-								<table class="tb_type01 mt20">
-								<colgroup>
-									<col style="width:20%"/>
-									<col span="4" style="width:20%" />
-								</colgroup>
-									<tr>
-										<th rowspan="2">대여<p>구분</p></th>
-										<th>정기</th>
-										<th>일일<br />(회원)</th>
-										<th>일일<br />(비회원)</th>
-										<th>단체</th>
-									</tr>
-									<tr>
-										<td><fmt:formatNumber value="${rentTypeDataList[0].useCntSum}" pattern="#,###" /></td>
-										<td><fmt:formatNumber value="${rentTypeDataList[1].useCntSum}" pattern="#,###" /></td>
-										<td><fmt:formatNumber value="${rentTypeDataList[2].useCntSum}" pattern="#,###" /></td>
-										<td><fmt:formatNumber value="${rentTypeDataList[3].useCntSum}" pattern="#,###" /></td>
-									</tr>
-								</table>
-								<table class="tb_type01 mt10">
-								<colgroup>
-									<col style="width:15%"/>
-									<col span="3" style="width:20%" />
-								</colgroup>
-									<tr>
-										<th rowspan="2">이용<p>합계</p></th>
-<!-- 										<th>성별</th> -->
-										<th>이용건수</th>
-										<th>이동거리<br />(Km)</th>
-										<th>이용시간<br />(분)</th>
-									</tr> 
-									<tr>
-										<td><fmt:formatNumber value="${genderDataList[0].useCntSum}" pattern="#,###" /></td>										
-										<td><fmt:formatNumber value="${genderDataList[0].moveDistSum/1000}" pattern="#,###.00" /></td>										
-										<td><fmt:formatNumber value="${genderDataList[0].useMinuteSum}" pattern="#,###" /></td>										
-									</tr>
-								</table>
-							</div>
-							<div class="widpos posright">
-								<p class="whead">일/월 평균</p>
-								<table class="tb_type01 mt20">
-								<colgroup>
-									<col style="width:20%"/>
-									<col span="4" style="width:20%" />
-								</colgroup>
-									<tr>
-										<th rowspan="2">대여<p>구분</p></th>
-										<th>정기</th>
-										<th>일일<br />(회원)</th>
-										<th>일일<br />(비회원)</th>
-										<th>단체</th>
-									</tr>
-									<tr>
-										<td><fmt:formatNumber value="${rentTypeDataList[0].useCntAvg}" pattern="#,###" /></td>
-										<td><fmt:formatNumber value="${rentTypeDataList[1].useCntAvg}" pattern="#,###" /></td>
-										<td><fmt:formatNumber value="${rentTypeDataList[2].useCntAvg}" pattern="#,###" /></td>
-										<td><fmt:formatNumber value="${rentTypeDataList[3].useCntAvg}" pattern="#,###" /></td>
-									</tr>
-								</table>
-								<table class="tb_type01 mt10">
-								<colgroup>
-									<col style="width:15%"/>
-									<col span="3" style="width:20%" />
-								</colgroup>
-									<tr>
-										<th rowspan="2">이용<p>합계</p></th>
-										<th>이용건수</th>
-										<th>이동거리<br />(Km)</th>
-										<th>이용시간<br />(분)</th>
-									</tr>
- 
-									<tr>
-										<td><fmt:formatNumber value="${genderDataList[0].useCntAvg}" pattern="#,###" /></td>	
-										<td><fmt:formatNumber value="${genderDataList[0].moveDistAvg/1000}" pattern="#,###.00" /></td>	
-										<td><fmt:formatNumber value="${genderDataList[0].useCntAvg}" pattern="#,###" /></td>	
-									</tr>
-								</table>
-							</div>
-						</div>
-						 
-						<p class="head2"><em>공공자전거 사용 현황(17:00 기준)</em><span>총 ${fn:length(dataList)} 건</span></p>
-						<div class="widscr mt5">
-						<table class="tb_type01" style="min-width:700px">
-							<colgroup>
-								<col style="width:12%"/>
-								<col style="width:12%"/>
-								<col style="width:12%"/> 
-							</colgroup>
-							<thead> 
-								<tr>
-									<th>일자</th>
-									<th>자전거 이용 시민</th>
-									<th>대여건수</th> 
-								</tr>
-							</thead>
-							<tbody>
-							<c:forEach var="result" items="${dataList}" varStatus="status">
-                                <tr>
-                                    <td align="center">${result.comCd}</td>
-                                    <td align="right"><fmt:formatNumber value="${result.useCntSum}" pattern="#,###"/></td>
-                                    <td align="right"><fmt:formatNumber value="${result.useCntAvg}" pattern="#,###" /></td>
-                                </tr>
-                            </c:forEach>    
-                            <c:if test="${fn:length(dataList) eq 0 }">
-								<table class="tb_type01 nbt0">
-									<tr><td style="text-align:center"><spring:message code="search.nodata.msg" /></td></tr>
-								</table>
-							</c:if>
-							</tbody>
-						</table>
-						</div>
+							
+							<div class="lralign mt20">
+	                           <p><span>총 ${fn:length(dataList)} 건</span></p>
+	                        </div>	
 						
+							<table class="tb_type01">
+								<colgroup>
+									<col style="width:13%"/>
+									<col style="width:15%"/>
+									<col style="width:15%"/> 
+									<col style="width:14%"/> 
+								</colgroup>
+								<thead> 
+									<tr>
+										<th>일자</th>
+										<th>대여건수</th>
+										<th>이동거리(m)</th> 
+										<th>이용시간(분)</th> 
+									</tr>
+								</thead>
+								<tbody>
+								<c:forEach var="result" items="${dataList}" varStatus="status">
+	                                <tr>
+	                                    <td style="text-align: center">${result.getUseMember_date}</td>
+	                                    <td style="text-align: right; background-color: #e6ffee"><fmt:formatNumber value="${result.getUseMember_1}" pattern="#,###" /></td>
+	                                    <td style="text-align: right;"><fmt:formatNumber value="${result.getUseMember_2}" pattern="#,###" /></td>
+	                                    <td style="text-align: right;"><fmt:formatNumber value="${result.getUseMember_3}" pattern="#,###" /></td>
+	                                </tr>
+	                            </c:forEach>    
+	                            <c:if test="${fn:length(dataList) eq 0 }">
+									<table class="tb_type01 nbt0">
+										<tr><td style="text-align:center">noData</td></tr>
+									</table>
+								</c:if>
+								</tbody>
+							</table>
 						<div class="btnArea">
 							<span class="right"><button type="button" id="excelBtn" class="btnType01">엑셀다운로드</button></span>
 						</div>
@@ -275,15 +186,15 @@
 	<script type="text/javascript" src="/js/common_barocle.js"></script>
     <script type="text/javascript">
    	$(function() {
+   		
    		$('[name="searchBgnDe"]').val('${searchCondition.searchBgnDe}');
 		$('[name="searchEndDe"]').val('${searchCondition.searchEndDe}');
 		
 		var dateType = '${searchCondition.dateType == null ? "D" : searchCondition.dateType}';
    		$('[name="dateType"]').val(dateType);
-   		var sortType = '${searchCondition.sortType == null ? "A" : searchCondition.sortType}';
-   		$('[name="sortType"]').val(sortType);
    		
    		if(dateType == "M"){
+   			
    			var searchBgnMt = '${searchCondition.searchBgnMt}';
    			var searchEndMt = '${searchCondition.searchEndMt}';
    			$('[name="searchBgnMt"]').val(searchBgnMt);
@@ -292,7 +203,9 @@
    	   		$('[name="searchBgnMonth"]').val(searchBgnMt.substring(4,6));
    	   		$('[name="searchEndYear"]').val(searchEndMt.substring(0,4));
    	   		$('[name="searchEndMonth"]').val(searchEndMt.substring(4,6));
+   	   		
    		}else{
+   			
    			$('[name="searchBgnYear"]').val('<%=nowYear%>');
    	   		$('[name="searchBgnMonth"]').val('<%=nowMonth%>');
    	   		$('[name="searchEndYear"]').val('<%=nowYear%>');
@@ -311,13 +224,6 @@
    			$('#monthly').attr("checked", true);
    		}
    		
-   		if($('[name="sortType"]').val() == 'D'){
-   			$('#desc').attr("checked", true);
-   		}
-
-   		if($('[name="sortType"]').val() == 'A'){
-   			$('#asc').attr("checked", true);
-   		}
    		
    		$('[name="dType"]').on("click", function(){
    			if($(this).attr("id") == 'daily'){
@@ -334,13 +240,8 @@
    				$('[name="dateType"]').val('M');
    			}
    		});
-   		$('[name="sType"]').on("click", function(){
-   			if($(this).attr("id") == 'asc'){
-   				$('[name="sortType"]').val('A');
-   			}else if($(this).attr("id") == 'desc'){
-   				$('[name="sortType"]').val('D');
-   			}
-   		});
+
+   		
    		$('[name="searchBgnYear"]').on('change', function(){
    			$('[name="searchBgnMt"]').val($('[name="searchBgnYear"]').val()+$('[name="searchBgnMonth"]').val());
    		});
@@ -369,23 +270,18 @@
    	            return false;
    	        }
 
-/*    			if($('[name="dateType"]').val() == 'D'){
-   				if(DateUtil.diffDays( $("[name='searchBgnDe']").val(),  $("[name='searchEndDe']").val(), '-') > 32){
+  			if($('[name="dateType"]').val() == 'D'){
+   				if(DateUtil.diffDays( $("[name='searchBgnDe']").val(),  $("[name='searchEndDe']").val(), '-') > 31){
    		    		alert("일별 조회기간은 한달 이내로 설정해주세요.");
    		    		return false;
    		    	}	
    			}
    			if($('[name="dateType"]').val() == 'M'){
-   				if(DateUtil.diffMonths( $("[name='searchBgnMt']").val(),  $("[name='searchEndMt']").val(), '') > 3){
-   		    		alert("월별 조회기간은 3개월 이내로 설정해주세요.");
+   				if(DateUtil.diffMonths( $("[name='searchBgnMt']").val(),  $("[name='searchEndMt']").val(), '') > 24){
+   		    		alert("월별 조회기간은 2년 이내로 설정해주세요.");
    		    		return false;
    		    	}	
-   			} */
-   			
-   			if(DateUtil.diffDays( $("[name='searchBgnDe']").val(),  $("[name='searchEndDe']").val(), '-') > 32){
-		    	alert("조회기간은 한달 이내로 설정해주세요.");
-		    	return false;
-		    }
+   			} 
    			
    			$('#searchFrm').attr({method : 'post', action : '/use/userStatistics.do'}).submit();
    			
@@ -403,20 +299,21 @@
    	            return false;
    	        }
    			if($('[name="dateType"]').val() == 'D'){
-   				if(DateUtil.diffDays( $("[name='searchBgnDe']").val(),  $("[name='searchEndDe']").val(), '-') > 32){
-   		    		alert("일별 조회기간은 한달 이내로 설정해주세요.");
+   				if(DateUtil.diffDays( $("[name='searchBgnDe']").val(),  $("[name='searchEndDe']").val(), '-') > 31){
+   		    		alert("조회기간은 한달 이내로 설정해주세요.");
    		    		return false;
    		    	}	
    			}
    			if($('[name="dateType"]').val() == 'M'){
-   				if(DateUtil.diffMonths( $("[name='searchBgnMt']").val(),  $("[name='searchEndMt']").val(), '') > 3){
-   		    		alert("월별 조회기간은 3개월 이내로 설정해주세요.");
+   				if(DateUtil.diffMonths( $("[name='searchBgnMt']").val(),  $("[name='searchEndMt']").val(), '') > 24){
+   		    		alert("월별 조회기간은 2년 이내로 설정해주세요.");
    		    		return false;
    		    	}	
-   			}
+   			} 
    			
     		$('#searchFrm').attr({method : 'post', action : '/use/userStatisticsExcel.do'}).submit();
    		});
+   		
    		
    		var totalPageCount = '${paginationInfo.totalPageCount}' == '' ? 1 : Number('${paginationInfo.totalPageCount}');
    		$('#prevPage').on("click",function(){
@@ -436,6 +333,8 @@
 				userStatistics.pageSelect(currentPageNo);
 			}
 		});
+		
+		
    	});
    	
    	var userStatistics = {};

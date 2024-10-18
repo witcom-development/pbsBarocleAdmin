@@ -60,9 +60,11 @@ public class UseStatisticsController extends BaseController {
 		
 		try{
 			Calendar cal = Calendar.getInstance();
-			cal.add(Calendar.DAY_OF_MONTH, -2);
+			//cal.add(Calendar.DAY_OF_MONTH, -2);			
 			SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 			String nowDay = sdf.format(cal.getTime());
+			cal.add(Calendar.DATE, -7);
+			String beforeDay = sdf.format(cal.getTime());
 
 			if(useStatisticsVo.getDateType() == null){
 				useStatisticsVo.setDateType("D");
@@ -81,32 +83,6 @@ public class UseStatisticsController extends BaseController {
 			useStatisticsVo.setFirstRecordIndex(paginationInfo.getFirstRecordIndex());
 			useStatisticsVo.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
 
-			int period = 0;
-			if(useStatisticsVo.getDateType() == null){
-				period = useStatisticsService.getUseMemberMaxPeriod();
-			}else{
-				if(useStatisticsVo.getDateType().equals("M") && useStatisticsVo.getSearchBgnMt() != null){
-					period = useStatisticsService.getMonthPeriod(useStatisticsVo);
-				}else if(useStatisticsVo.getDateType().equals("D") && useStatisticsVo.getSearchBgnDe() != null){
-					period = useStatisticsService.getDayPeriod(useStatisticsVo);
-				}
-			}
-			
-			List<UseStatisticsVO> rentTypeData = useStatisticsService.getUseMemberRentTypeSumData(useStatisticsVo);
-			for(int i = 0; i < rentTypeData.size(); i++){
-				double useCntAvg = Math.round((Double.valueOf(rentTypeData.get(i).getUseCntSum()) / Double.valueOf(period)) * 10)/10.0;
-				rentTypeData.get(i).setUseCntAvg(String.valueOf(useCntAvg));
-			}
-			List<UseStatisticsVO> genderData = useStatisticsService.getUseMemberGenderSumData(useStatisticsVo);
-			for(int i = 0; i < genderData.size(); i++){
-				double useMinuteAvg = Math.round((Double.valueOf(genderData.get(i).getUseMinuteSum()) / Double.valueOf(period) * 10))/10.0;
-				double moveDistAvg = Math.round((Double.valueOf(genderData.get(i).getMoveDistSum()) / Double.valueOf(period) * 10))/10.0;
-				double useCntAvg = Math.round((Double.valueOf(genderData.get(i).getUseCntSum()) / Double.valueOf(period) * 10))/10.0;
-				genderData.get(i).setUseMinuteAvg(String.valueOf(useMinuteAvg));
-				genderData.get(i).setMoveDistAvg(String.valueOf(moveDistAvg));
-				genderData.get(i).setUseCntAvg(String.valueOf(useCntAvg));
-			}
-
 			useStatisticsVo.setPagingYn("Y");
 			//2018-10-05 주석처리
 			// 코로나 관련 내용으로 변경
@@ -115,8 +91,6 @@ public class UseStatisticsController extends BaseController {
 			model.addAttribute("searchCondition", useStatisticsVo);
 			model.addAttribute("paginationInfo", paginationInfo);
 			model.addAttribute("paginationMobileInfo", paginationMobileInfo);
-			model.addAttribute("rentTypeDataList", rentTypeData);
-			model.addAttribute("genderDataList", genderData);
 			model.addAttribute("dataList", resultList);
 			
 			bResult = true;		// 정상
@@ -158,41 +132,13 @@ public class UseStatisticsController extends BaseController {
 			useStatisticsVo.setFirstRecordIndex(paginationInfo.getFirstRecordIndex());
 			useStatisticsVo.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
 
-			int period = 0;
-			if(useStatisticsVo.getDateType() == null){
-				period = useStatisticsService.getUseMemberMaxPeriod();
-			}else{
-				if(useStatisticsVo.getDateType().equals("M") && useStatisticsVo.getSearchBgnMt() != null){
-					period = useStatisticsService.getMonthPeriod(useStatisticsVo);
-				}else if(useStatisticsVo.getDateType().equals("D") && useStatisticsVo.getSearchBgnDe() != null){
-					period = useStatisticsService.getDayPeriod(useStatisticsVo);
-				}
-			}
-			
-			List<UseStatisticsVO> rentTypeData = useStatisticsService.getUseMemberRentTypeSumData(useStatisticsVo);
-			for(int i = 0; i < rentTypeData.size(); i++){
-				double useCntAvg = Math.round((Double.valueOf(rentTypeData.get(i).getUseCntSum()) / Double.valueOf(period)) * 10)/10.0;
-				rentTypeData.get(i).setUseCntAvg(String.valueOf(useCntAvg));
-			}
-			List<UseStatisticsVO> genderData = useStatisticsService.getUseMemberGenderSumData(useStatisticsVo);
-			for(int i = 0; i < genderData.size(); i++){
-				double useMinuteAvg = Math.round((Double.valueOf(genderData.get(i).getUseMinuteSum()) / Double.valueOf(period) * 10))/10.0;
-				double moveDistAvg = Math.round((Double.valueOf(genderData.get(i).getMoveDistSum()) / Double.valueOf(period) * 10))/10.0;
-				double useCntAvg = Math.round((Double.valueOf(genderData.get(i).getUseCntSum()) / Double.valueOf(period) * 10))/10.0;
-				genderData.get(i).setUseMinuteAvg(String.valueOf(useMinuteAvg));
-				genderData.get(i).setMoveDistAvg(String.valueOf(moveDistAvg));
-				genderData.get(i).setUseCntAvg(String.valueOf(useCntAvg));
-			}
-
 			useStatisticsVo.setPagingYn("N");
 			//2018-10-05 주석처리
-			List<UseStatisticsVO> resultList = null; // useStatisticsService.getUseMemberList(useStatisticsVo);
+			List<UseStatisticsVO> resultList = useStatisticsService.getUseMemberList(useStatisticsVo);
 			
 			model.addAttribute("searchCondition", useStatisticsVo);
 			model.addAttribute("paginationInfo", paginationInfo);
 			model.addAttribute("paginationMobileInfo", paginationMobileInfo);
-			model.addAttribute("rentTypeDataList", rentTypeData);
-			model.addAttribute("genderDataList", genderData);
 			model.addAttribute("dataList", resultList);
 			
 			bResult = true;		// 정상

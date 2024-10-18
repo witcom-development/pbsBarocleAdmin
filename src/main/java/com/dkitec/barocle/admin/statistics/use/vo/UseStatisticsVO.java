@@ -684,4 +684,38 @@ public class UseStatisticsVO extends CommonVo implements Serializable {
 	public void setRentTypeArray(ArrayList<String> rentTypeArray) {
 		this.rentTypeArray = rentTypeArray;
 	}
+	
+	// 이용자별 통계변수
+	private String getUseMember_date;
+	private String getUseMember_1;
+	private String getUseMember_2;
+	private String getUseMember_3;
+
+
+	public String getGetUseMember_date() {
+		return getUseMember_date;
+	}
+	public void setGetUseMember_date(String getUseMember_date) {
+		this.getUseMember_date = getUseMember_date;
+	}
+	public String getGetUseMember_1() {
+		return getUseMember_1;
+	}
+	public void setGetUseMember_1(String getUseMember_1) {
+		this.getUseMember_1 = getUseMember_1;
+	}
+	public String getGetUseMember_2() {
+		return getUseMember_2;
+	}
+	public void setGetUseMember_2(String getUseMember_2) {
+		this.getUseMember_2 = getUseMember_2;
+	}
+	public String getGetUseMember_3() {
+		return getUseMember_3;
+	}
+	public void setGetUseMember_3(String getUseMember_3) {
+		this.getUseMember_3 = getUseMember_3;
+	}
+	
+	
 }

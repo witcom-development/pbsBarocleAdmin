@@ -39,7 +39,7 @@
                     <c:if test='${searchCondition.dateType == "D"}'>일</c:if>
                     <c:if test='${searchCondition.dateType == "M"}'>월</c:if>
                     </td>
-                    <td style="width:200px;" class="condition" ><label class="laType02">일/월</label></td>
+                    <td style="width:200px;" class="condition" ><label class="laType02">날짜</label></td>
                     <td style="width:400px;">
                     <c:if test='${searchCondition.dateType == "D"}'>${searchCondition.searchBgnDe} ~ ${searchCondition.searchEndDe}</c:if>
                     <c:if test='${searchCondition.dateType == "M"}'>${searchCondition.searchBgnMt} ~ ${searchCondition.searchEndMt}</c:if>

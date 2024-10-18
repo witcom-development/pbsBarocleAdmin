@@ -60,13 +60,14 @@
 											</span>
 										</div>
 										<div class="section pright radbox2">
-											<label class="laType02">대여구분</label>
+											<!-- <label class="laType02">대여구분</label>
 											<span>
 												<span class="input-rd01"><input type="checkbox" id="RCC_001" name="type" value="RCC_001"><label for="RCC_001"> 정기</label></span>
 												<span class="input-rd01"><input type="checkbox" id="RCC_002" name="type" value="RCC_002"><label for="RCC_002"> 회원</label></span>
 												<span class="input-rd01"><input type="checkbox" id="RCC_003" name="type" value="RCC_003"><label for="RCC_003"> 비회원</label></span>
 												<span class="input-rd01"><input type="checkbox" id="RCC_004" name="type" value="RCC_004"><label for="RCC_004"> 단체</label></span>
-											</span>
+											</span> -->
+											<button type="button" id="searchBtn" class="btn-srh03 btncase1"><img src="/images/searchIcon.gif" alt="검색" /></button>
 										</div>
 										<div class="section">
 											<label for="stationGrpSlt" class="laType02">아파트</label>
@@ -79,7 +80,6 @@
 											<select class="select-category03" name="stationId" id="stationIdSlt">
 												<option value="">선택</option>
 											</select>
-											<button type="button" id="searchBtn" class="btn-srh03 btncase1"><img src="/images/searchIcon.gif" alt="검색" /></button>
 										</div>
 									</div>
 								</fieldset>
@@ -199,6 +199,20 @@
 	<script type="text/javascript" src="/js/common_barocle.js"></script>
     <script type="text/javascript">
 	   	$(function() {
+	   		
+	   		$("#stationGrpSlt").on('change', function(e){
+	        	var tId = e.target.id;
+	        	var idx = $("#"+tId+" option:selected").index();
+	        	var subList =$("#"+tId).data().sub_data;
+	        	$("#stationIdSlt option").not(':eq(0)').remove();
+	        	var sltsubData = subList[(idx-1)];
+	        	if(sltsubData !== undefined) {
+		        	if(sltsubData.length > 0) {
+			        	commCdBox.makeComboBox("S",_this.stationId,sltsubData, "stationIdSlt");
+		        	}
+	        	}
+	        });
+	   		
 	   		var _this = timeStatistics;
 	   		timeStatistics.initCombo();
 			timeStatistics.initBtn();
@@ -214,18 +228,7 @@
 				$('#'+rentType[i]).attr('checked', true);
 			}
 			
-			$("#stationGrpSlt").on('change', function(e){
-	        	var tId = e.target.id;
-	        	var idx = $("#"+tId+" option:selected").index();
-	        	var subList =$("#"+tId).data().sub_data;
-	        	$("#stationIdSlt option").not(':eq(0)').remove();
-	        	var sltsubData = subList[(idx-1)];
-	        	if(sltsubData !== undefined) {
-		        	if(sltsubData.length > 0) {
-			        	commCdBox.makeComboBox("S",_this.stationId,sltsubData, "stationIdSlt");
-		        	}
-	        	}
-	        });
+			
 			
 			var totalPageCount = '${paginationInfo.totalPageCount}' == '' ? 1 : Number('${paginationInfo.totalPageCount}');
 			$('#prevPage').on("click",function(){

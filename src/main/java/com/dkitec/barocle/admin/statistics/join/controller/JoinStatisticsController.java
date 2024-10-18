@@ -57,11 +57,11 @@ public class JoinStatisticsController extends BaseController {
 			
 			List<JoinStatisticsVO> resultList = joinStatisticsService.getMemJoinList(joinStatisticsVo);
 			
-			List<JoinStatisticsVO> miniBikeList = joinStatisticsService.getUseMiniBikeList(joinStatisticsVo);
+			//List<JoinStatisticsVO> miniBikeList = joinStatisticsService.getUseMiniBikeList(joinStatisticsVo);
 			
 			model.addAttribute("searchCondition", joinStatisticsVo);
 			model.addAttribute("memjoinList", resultList);
-			model.addAttribute("miniBikeList", miniBikeList);
+			//model.addAttribute("miniBikeList", miniBikeList);
 			
 			bResult = true;		// 정상
 		} catch (CfoodException ce) {
@@ -101,11 +101,11 @@ public class JoinStatisticsController extends BaseController {
 			
 			List<JoinStatisticsVO> resultList = joinStatisticsService.getMemJoinList(joinStatisticsVo);
 			
-			List<JoinStatisticsVO> miniBikeList = joinStatisticsService.getUseMiniBikeList(joinStatisticsVo);
+			//List<JoinStatisticsVO> miniBikeList = joinStatisticsService.getUseMiniBikeList(joinStatisticsVo);
 			
 			model.addAttribute("searchCondition", joinStatisticsVo);
 			model.addAttribute("memjoinList", resultList);
-			model.addAttribute("miniBikeList", miniBikeList);
+			//model.addAttribute("miniBikeList", miniBikeList);
 			
 			bResult = true;		// 정상
 		} catch (CfoodException ce) {

@@ -37,31 +37,12 @@
                 <tr>
                     <td style="width:200px;" class="condition" colspan="3"><label class="laType02">대여일</label></td>
                     <td style="width:400px;" colspan="6">${searchCondition.searchBgnDe} ~ ${searchCondition.searchEndDe}</td>
-                    <td style="width:200px;" class="condition" colspan="3"><label class="laType02">대여구분</label></td>
-                    <td style="width:400px;" colspan="7">
-                    	<c:if test='${searchCondition.rentType != ""}'>
-                    	<c:set var="rentTypeArr" value="${fn:split(searchCondition.rentType,',')}"/>
-						<c:forEach var="x" items="${rentTypeArr}" varStatus="status"> 
-							<c:if test='${status.index != 0}'>, </c:if>
-						    <c:if test='${x == "RCC_001"}'>정기</c:if>
-						    <c:if test='${x == "RCC_002"}'>회원</c:if>
-						    <c:if test='${x == "RCC_003"}'>비회원</c:if>
-						    <c:if test='${x == "RCC_004"}'>단체</c:if>
-						</c:forEach>
-                    </c:if>
-                    </td>
                 </tr>
                 <tr>
                     <td style="width:200px;" class="condition" colspan="3"><label class="laType02">아파트</label></td>
                     <td style="width:400px;" colspan="6">
                     <c:if test='${searchCondition.stationGrp != ""}'>
                     ${dataList[0].stationGrpName}
-                    </c:if>
-                    </td>
-                    <td style="width:200px;" class="condition" colspan="3"><label class="laType02">대여소</label></td>
-                    <td style="width:400px;" colspan="7">
-                    <c:if test='${searchCondition.stationId != ""}'>
-                    ${dataList[0].stationName}
                     </c:if>
                     </td>
                 </tr>

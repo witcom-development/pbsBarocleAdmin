@@ -11,6 +11,7 @@
 <html lang="ko">
 <head>
 <meta content="text/html; charset=KSC5601" http-equiv="content-type" />
+<META HTTP-EQUIVE="CONTENT-TYPE" CONTENT="TEXT/HTML; CHARSET=KSC5601">
 <title></title>
 <style>
 .tb_type01 th {text-align:center;padding:5% 0;}
@@ -36,22 +37,15 @@
         <table class="tb_condition">
             <tbody>
                 <tr>
-                    <td style="width:200px;" class="condition" colspan="2"><label class="laType02">구분</label></td>
-                    <td style="width:400px;" colspan="3">
+                    <td style="width:200px;" class="condition"><label class="laType02">구분</label></td>
+                    <td style="width:400px;">
                     <c:if test='${searchCondition.dateType == "D"}'>일</c:if>
                     <c:if test='${searchCondition.dateType == "M"}'>월</c:if>
                     </td>
-                    <td style="width:200px;" class="condition" colspan="2"><label class="laType02">일/월</label></td>
+                    <td style="width:200px;" class="condition"><label class="laType02">날짜</label></td>
                     <td style="width:400px;" colspan="3">
                     <c:if test='${searchCondition.dateType == "D"}'>${searchCondition.searchBgnDe} ~ ${searchCondition.searchEndDe}</c:if>
                     <c:if test='${searchCondition.dateType == "M"}'>${searchCondition.searchBgnMt} ~ ${searchCondition.searchEndMt}</c:if>
-                    </td>
-                </tr>
-                <tr>
-                    <td style="width:200px;" class="condition" colspan="2"><label class="laType02">대여횟수</label></td>
-                    <td style="width:400px;" colspan="3">
-                    <c:if test='${searchCondition.sortType == "A"}'>오름차순</c:if>
-                    <c:if test='${searchCondition.sortType == "D"}'>내림차순</c:if>
                     </td>
                 </tr>
             </tbody>
@@ -67,92 +61,40 @@
 			    	<label class="laType02"><b>총 합계</b></label>
 			    </div>
     			<table class="tb_type01" style="width : 1200px;">
-					<tr>
-						<th rowspan="2">대여<p>구분</p></th>
-						<th>정기</th>
-						<th>일일<br />(회원)</th>
-						<th>일일<br />(비회원)</th>
-						<th>단체</th>
-					</tr>
-					<tr>
-						<td>${rentTypeDataList[0].useCntSum}</td>
-						<td>${rentTypeDataList[1].useCntSum}</td>
-						<td>${rentTypeDataList[2].useCntSum}</td>
-						<td>${rentTypeDataList[3].useCntSum}</td>
-					</tr>
+					<colgroup>
+						<col style="width:13%"/>
+						<col style="width:15%"/>
+						<col style="width:15%"/> 
+						<col style="width:14%"/> 
+					</colgroup>
+					<thead> 
+						<tr>
+							<th>일자</th>
+							<th>대여건수</th> 
+							<th>이동거리(Km)</th> 
+							<th>이용시간(분)</th>  
+						</tr>
+					</thead>
+					<tbody>
+						<c:forEach var="result" items="${dataList}" varStatus="status">
+                            <tr>
+                                <td style='mso-number-format:"\@";'>${result.getUseMember_date}</td>
+                                <td style="text-align: right;"><fmt:formatNumber value="${result.getUseMember_1}" pattern="#,###" /></td>
+                                <td style="text-align: right;"><fmt:formatNumber value="${result.getUseMember_2}" pattern="#,###" /></td>
+                                <td style="text-align: right;"><fmt:formatNumber value="${result.getUseMember_3}" pattern="#,###" /></td>
+                            </tr>
+	                     </c:forEach>    
+                         <c:if test="${fn:length(dataList) eq 0 }">
+							<table class="tb_type01 nbt0">
+								<tr>
+									<td style="text-align:center">noData</td>
+								</tr>
+							</table>
+						</c:if>
+					</tbody>
 				</table>
 			</td>
-    		<td>
-    			<div style="width:1200px;text-align:left;margin:10px;">
-			    	<label class="laType02"><b>일/월 평균</b></label>
-			    </div>
-			    <table class="tb_type01" style="width : 1200px;">
-			    	<tr>
-						<th rowspan="2">대여<p>구분</p></th>
-						<th>정기</th>
-						<th>일일<br />(회원)</th>
-						<th>일일<br />(비회원)</th>
-						<th>단체</th>
-					</tr>
-					<tr>
-						<td><fmt:formatNumber value="${rentTypeDataList[0].useCntAvg}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${rentTypeDataList[1].useCntAvg}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${rentTypeDataList[2].useCntAvg}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${rentTypeDataList[3].useCntAvg}" pattern="0.00"></fmt:formatNumber></td>
-					</tr>
-			    </table>
-    		</td>
     	</tr>
-    	<tr></tr>
-    	<tr>
-    		<td>
-    			<table class="tb_type01" style="width : 1200px;">
-					<tr>
-						<th rowspan="2">이용<p>합계</p></th>
-<!-- 						<th colspan="2">성별</th> -->
-						<th>이용건수</th>
-						<th>이동거리<br />(Km)</th>
-						<th>이용시간<br />(분)</th>
-					</tr>
-					<%-- <tr>
-						<td class="tc" colspan="2">${genderDataList[1].mLangComCd}</td>
-						<td>${genderDataList[1].useCntSum}</td>
-						<td><fmt:formatNumber value="${genderDataList[1].moveDistSum/1000}" pattern="0.00"></fmt:formatNumber></td>
-						<td>${genderDataList[1].useMinuteSum}</td>
-					</tr> --%>
-					<tr>
-<%-- 						<td class="tc" colspan="2">${genderDataList[0].mLangComCd}</td> --%>
-						<td>${genderDataList[0].useCntSum}</td>
-						<td><fmt:formatNumber value="${genderDataList[0].moveDistSum/1000}" pattern="0.00"></fmt:formatNumber></td>
-						<td>${genderDataList[0].useMinuteSum}</td>
-					</tr>
-				</table>
-    		</td>
-    		<td>
-    			<table class="tb_type01" style="width : 1200px;">
-			    	<tr>
-			    		<th rowspan="2">이용<p>합계</p></th>
-<!-- 						<th>성별</th> -->
-						<th>이용건수</th>
-						<th>이동거리<br />(Km)</th>
-						<th>이용시간<br />(분)</th>
-					</tr>
-					<%-- <tr>
-						<td class="tc">${genderDataList[1].mLangComCd}</td>
-						<td><fmt:formatNumber value="${genderDataList[1].useCntAvg}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${genderDataList[1].moveDistAvg/1000}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${genderDataList[1].useMinuteAvg}" pattern="0.00"></fmt:formatNumber></td>
-					</tr> --%>
-					<tr>
-<%-- 						<td class="tc">${genderDataList[0].mLangComCd}</td> --%>
-						<td><fmt:formatNumber value="${genderDataList[0].useCntAvg}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${genderDataList[0].moveDistAvg/1000}" pattern="0.00"></fmt:formatNumber></td>
-						<td><fmt:formatNumber value="${genderDataList[0].useMinuteAvg}" pattern="0.00"></fmt:formatNumber></td>
-					</tr>
-				</table>
-    		</td>
-    	</tr>
-    	<tr></tr>
     </table>
     
 </body>

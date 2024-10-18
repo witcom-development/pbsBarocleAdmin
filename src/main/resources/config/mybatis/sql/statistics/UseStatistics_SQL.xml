@@ -48,23 +48,6 @@
 	</select>
 	
 	<select id="getUseMemberList" parameterType="useStatisticsVo" resultType="useStatisticsVo">
-		
-		SELECT REG_YMD AS comCd
-			 , MEMBER_CNT  AS useCntSum
-			 , BICYCLE_CNT  AS useCntAvg
-		  FROM TB_SVC_CORONA
-		 WHERE 1 = 1
-		 <choose>
-		 	<when test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
-		 		AND REG_YMD BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
-		 	</when>
-		 	<when test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
-		 		AND REG_YMD BETWEEN (STR_TO_DATE(CONCAT(SUBSTR(#{searchBgnMt},1,4),'-',SUBSTR(#{searchBgnMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(CONCAT(SUBSTR(#{searchEndMt},1,4),'-',SUBSTR(#{searchEndMt},5,6),'-01'), '%Y-%m-%d') + INTERVAL 1 MONTH - INTERVAL 1 SECOND)
-		 	</when>
-		  	<otherwise>
-		   		AND REG_YMD BETWEEN ( CURDATE() - 5) AND CURDATE()
-		   	</otherwise>	
-		 </choose>
 		<!-- SELECT 
 			C.MLANG_COM_CD_NAME AS paymentType,
 			U.USR_CLS_CD AS userType,
@@ -100,7 +83,26 @@
 		<if test='pagingYn == "Y"'>
 			LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 		</if> -->
-		
+		<if test='dateType == "D" and dateType != null and searchBgnDe != "" and searchEndDe != ""'>
+		   SELECT /*UseStatistics_SQL.getUseMemberList_D */ 
+		   		   STAT_DATE 																			AS getUseMember_date
+			     , SUM( USE_CNT ) 																		AS getUseMember_1
+			     , SUM( MOVE_DIST ) 																	AS getUseMember_2
+			     , SUM( USE_MI ) 																		AS getUseMember_3		
+			FROM TB_STA_BIKE_USE_DD
+		   WHERE STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
+		GROUP BY STAT_DATE DESC
+		</if> 
+		<if test='dateType == "M" and dateType != null and searchBgnMt != "" and searchEndMt != ""'>
+		   SELECT /*UseStatistics_SQL.getUseMemberList_M */ 
+		           CONCAT( SUBSTR( STAT_MM , 1, 4 ) , '-' , SUBSTR( STAT_MM , 5 , 2 ) )					AS getUseMember_date
+			     , SUM( USE_CNT ) 																		AS getUseMember_1
+			     , SUM( MOVE_DIST ) 																	AS getUseMember_2
+			     , SUM( USE_MI ) 																		AS getUseMember_3		
+			FROM TB_STA_BIKE_USE_MM
+		   WHERE STAT_MM BETWEEN #{searchBgnMt} AND #{searchEndMt}
+		GROUP BY STAT_MM DESC
+		</if>
 		
 	</select>
 	
@@ -228,7 +230,7 @@
 						STAT_HH,
 						STATION_ID,
 						USE_CNT
-					FROM TB_STA_BIKE_USE_HH_RE
+					FROM TB_STA_BIKE_USE_HH
 					WHERE 1 = 1
 				<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
 					AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)
@@ -312,7 +314,7 @@
 					STAT_HH,
 					STATION_ID,
 					USE_CNT
-				FROM TB_STA_BIKE_USE_HH_RE
+				FROM TB_STA_BIKE_USE_HH
 				WHERE 1 = 1
 			<if test='searchBgnDe != "" and searchEndDe != "" and searchBgnDe != null and searchEndDe != null'>
 				AND STAT_DATE BETWEEN (STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') + INTERVAL 0 DAY - INTERVAL 0 SECOND) AND (STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND)

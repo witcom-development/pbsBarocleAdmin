@@ -66,11 +66,11 @@
 											<label class="laType02">구분</label>
 											<span>
 												<span class="input-rd01"><input data-chn="daymth1" type="radio" id="day" name="dType" value="D"><label for="day"> 일</label></span>
-												<span class="input-rd01"><input data-chn="daymth2" type="radio" id="month" name="dType" value="M"><label for="month"> 월</label></span>
+												<!-- <span class="input-rd01"><input data-chn="daymth2" type="radio" id="month" name="dType" value="M"><label for="month"> 월</label></span> -->
 											</span>
 										</div>
 										<div class="section pright">
-											<label for="bb22" class="laType02">일/월</label>
+											<label for="bb22" class="laType02">날짜</label>
 											<p class="daymth1">
 												<span class="selectDate input-datepick04"><input type="text" class="datepicker input-datepick04" title="선택 날짜" name="searchBgnDe" readonly/></span>
 												<span class="dash">~</span>
@@ -213,6 +213,20 @@
 	<script type="text/javascript" src="/js/common_barocle.js"></script>
     <script type="text/javascript">
    	$(function() {
+
+		$("#stationGrpSlt").on('change', function(e){
+        	var tId = e.target.id;
+        	var idx = $("#"+tId+" option:selected").index();
+        	var subList =$("#"+tId).data().sub_data;
+        	$("#stationIdSlt option").not(':eq(0)').remove();
+        	var sltsubData = subList[(idx-1)];
+        	if(sltsubData !== undefined) {
+	        	if(sltsubData.length > 0) {
+		        	commCdBox.makeComboBox("S",_this.stationId,sltsubData, "stationIdSlt");
+	        	}
+        	}
+        });
+		
    		var _this = rentStatistics;
    		rentStatistics.initCombo();
    		rentStatistics.initBtn();
@@ -285,19 +299,6 @@
    				$('[name="dateType"]').val('M');
    			}
    		});
-		
-		$("#stationGrpSlt").on('change', function(e){
-        	var tId = e.target.id;
-        	var idx = $("#"+tId+" option:selected").index();
-        	var subList =$("#"+tId).data().sub_data;
-        	$("#stationIdSlt option").not(':eq(0)').remove();
-        	var sltsubData = subList[(idx-1)];
-        	if(sltsubData !== undefined) {
-	        	if(sltsubData.length > 0) {
-		        	commCdBox.makeComboBox("S",_this.stationId,sltsubData, "stationIdSlt");
-	        	}
-        	}
-        });
 		
    		var totalPageCount = '${paginationInfo.totalPageCount}' == '' ? 1 : Number('${paginationInfo.totalPageCount}');
    		$('#prevPage').on("click",function(){

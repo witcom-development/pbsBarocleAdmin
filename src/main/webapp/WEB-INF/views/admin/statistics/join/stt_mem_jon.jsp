@@ -63,15 +63,6 @@
 												<span class="selectDate input-datepick04"><input type="text" class="datepicker input-datepick04" title="선택 날짜" id="searchEndDe" name="searchEndDe" readonly/></span>
 											</span>
 										</div>
-										<div class="section pright">
-											<label for="userType" class="laType02">사용자구분</label>
-											<select class="select-category02" id="userType" name="userType">
-												<option value="">선택</option>
-												<option value="USR_001">내국인</option>
-												<!-- <option value="USR_002">회원-외국인</option> -->
-											</select>
-											<button type="button" id="searchBtn" class="btn-srh03 btncase1"><img src="/images/searchIcon.gif" alt="검색" /></button>
-										</div>
 									</div>
 								</fieldset>
 							</form>
@@ -85,81 +76,13 @@
 							<thead> 
 								<tr>
 									<th>구분</th>
-									<th>~10대</th>
-									<th>20대</th>
-									<th>30대</th>
-									<th>40대</th>
-									<th>50대</th>
-									<th>60대</th>
-									<th>70대~</th>
-									<th>연령정보<br/>없      음</th>
 									<th>합계</th>
 								</tr>
 							</thead>
-							<tbody>
+							<tbody>								
 								<tr>
-									<td class="tc">
-									<c:choose>
-										<c:when test="${memjoinList[0].userType eq ''}">남여정보<br/>없   음</c:when>
-										<c:otherwise>${memjoinList[0].userType}</c:otherwise>
-									</c:choose>
-									</td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge10}" pattern="#,###" />		</td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge20}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge30}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge40}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge50}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge60}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge70}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totEtc}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].totAge10+memjoinList[0].totAge20+memjoinList[0].totAge30+memjoinList[0].totAge40+memjoinList[0].totAge50+memjoinList[0].totAge60+memjoinList[0].totAge70+memjoinList[0].totEtc}" pattern="#,###" />     </td>
-								</tr>
-								<tr>
-									<td class="tc">
-									<c:choose>
-										<c:when test="${memjoinList[1].userType eq ''}">남여정보<br/>없   음</c:when>
-										<c:otherwise>${memjoinList[1].userType}</c:otherwise>
-									</c:choose>
-									</td> 
-									<td><fmt:formatNumber value="${memjoinList[1].totAge10}" pattern="#,###" />		</td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge20}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge30}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge40}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge50}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge60}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge70}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totEtc}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].totAge10+memjoinList[1].totAge20+memjoinList[1].totAge30+memjoinList[1].totAge40+memjoinList[1].totAge50+memjoinList[1].totAge60+memjoinList[1].totAge70+memjoinList[1].totEtc}" pattern="#,###" />     </td>
-								</tr>
-								<tr>
-									<td class="tc">
-									<c:choose>
-										<c:when test="${memjoinList[2].userType eq ''}">남여정보<br/>없   음</c:when>
-										<c:otherwise>${memjoinList[2].userType}</c:otherwise>
-									</c:choose>
-									</td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge10}" pattern="#,###" />		</td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge20}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge30}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge40}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge50}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge60}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge70}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totEtc}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].totAge10+memjoinList[2].totAge20+memjoinList[2].totAge30+memjoinList[2].totAge40+memjoinList[2].totAge50+memjoinList[2].totAge60+memjoinList[2].totAge70+memjoinList[2].totEtc}" pattern="#,###" />     </td>
-								</tr>
-								
-								<tr>
-									<td style="background:gray;color:white;text-align: center">합계</td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge10+memjoinList[1].totAge10+memjoinList[2].totAge10}" pattern="#,###" />		</td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge20+memjoinList[1].totAge20+memjoinList[2].totAge20}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge30+memjoinList[1].totAge30+memjoinList[2].totAge30}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge40+memjoinList[1].totAge40+memjoinList[2].totAge40}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge50+memjoinList[1].totAge50+memjoinList[2].totAge50}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge60+memjoinList[1].totAge60+memjoinList[2].totAge60}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge70+memjoinList[1].totAge70+memjoinList[2].totAge70}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totEtc+memjoinList[1].totEtc+memjoinList[2].totEtc}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].totAge10+memjoinList[0].totAge20+memjoinList[0].totAge30+memjoinList[0].totAge40+memjoinList[0].totAge50+memjoinList[0].totAge60+memjoinList[0].totAge70+memjoinList[1].totAge10+memjoinList[1].totAge20+memjoinList[1].totAge30+memjoinList[1].totAge40+memjoinList[1].totAge50+memjoinList[1].totAge60+memjoinList[1].totAge70+memjoinList[2].totAge10+memjoinList[2].totAge20+memjoinList[2].totAge30+memjoinList[2].totAge40+memjoinList[2].totAge50+memjoinList[2].totAge60+memjoinList[2].totAge70+memjoinList[0].totEtc+memjoinList[1].totEtc+memjoinList[2].totEtc}" pattern="#,###" />     </td>
+									<td style="text-align: center">합계</td>
+									<td style=""><fmt:formatNumber value="${memjoinList[0].totAgeTotal}" pattern="#,###" />		</td>
 								</tr>
 								
 							</tbody>
@@ -170,150 +93,19 @@
 							<thead> 
 								<tr>
 									<th>구분</th>
-									<th>~10대</th>
-									<th>20대</th>
-									<th>30대</th>
-									<th>40대</th>
-									<th>50대</th>
-									<th>60대</th>
-									<th>70대~</th>
-									<th>연령정보<br/>없      음</th>
 									<th>합계</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr>
-									<td class="tc">
-									<c:choose>
-										<c:when test="${memjoinList[0].userType eq ''}">남여정보<br/>없   음</c:when>
-										<c:otherwise>${memjoinList[0].userType}</c:otherwise>
-									</c:choose>
-									</td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge10}" pattern="#,###" />		</td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge20}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge30}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge40}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge50}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge60}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge70}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchEtc}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[0].searchAge10+memjoinList[0].searchAge20+memjoinList[0].searchAge30+memjoinList[0].searchAge40+memjoinList[0].searchAge50+memjoinList[0].searchAge60+memjoinList[0].searchAge70+memjoinList[0].totEtc}" pattern="#,###" />     </td>
-								</tr>
-								<tr>
-									<td class="tc">
-									<c:choose>
-										<c:when test="${memjoinList[1].userType eq ''}">남여정보<br/>없   음</c:when>
-										<c:otherwise>${memjoinList[1].userType}</c:otherwise>
-									</c:choose>
-									</td> 
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge10}" pattern="#,###" />		</td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge20}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge30}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge40}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge50}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge60}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge70}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchEtc}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[1].searchAge10+memjoinList[1].searchAge20+memjoinList[1].searchAge30+memjoinList[1].searchAge40+memjoinList[1].searchAge50+memjoinList[1].searchAge60+memjoinList[1].searchAge70+memjoinList[1].totEtc}" pattern="#,###" />     </td>
-								</tr>
-								<tr>
-									<td class="tc">
-									<c:choose>
-										<c:when test="${memjoinList[2].userType eq ''}">남여정보<br/>없   음</c:when>
-										<c:otherwise>${memjoinList[2].userType}</c:otherwise>
-									</c:choose>
-									</td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge10}" pattern="#,###" />		</td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge20}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge30}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge40}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge50}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge60}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge70}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchEtc}" pattern="#,###" />     </td>
-									<td><fmt:formatNumber value="${memjoinList[2].searchAge10+memjoinList[2].searchAge20+memjoinList[2].searchAge30+memjoinList[2].searchAge40+memjoinList[2].searchAge50+memjoinList[2].searchAge60+memjoinList[2].searchAge70+memjoinList[2].totEtc}" pattern="#,###" />     </td>
-								</tr>
 								
 								<tr>
-									<td style="background:gray;color:white;text-align: center">합계</td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge10+memjoinList[1].searchAge10+memjoinList[2].searchAge10}" pattern="#,###" />		</td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge20+memjoinList[1].searchAge20+memjoinList[2].searchAge20}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge30+memjoinList[1].searchAge30+memjoinList[2].searchAge30}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge40+memjoinList[1].searchAge40+memjoinList[2].searchAge40}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge50+memjoinList[1].searchAge50+memjoinList[2].searchAge50}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge60+memjoinList[1].searchAge60+memjoinList[2].searchAge60}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge70+memjoinList[1].searchAge70+memjoinList[2].searchAge70}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchEtc+memjoinList[1].searchEtc+memjoinList[2].searchEtc}" pattern="#,###" />     </td>
-									<td style="background:gray;color:white;"><fmt:formatNumber value="${memjoinList[0].searchAge10+memjoinList[0].searchAge20+memjoinList[0].searchAge30+memjoinList[0].searchAge40+memjoinList[0].searchAge50+memjoinList[0].searchAge60+memjoinList[0].searchAge70+memjoinList[1].searchAge10+memjoinList[1].searchAge20+memjoinList[1].searchAge30+memjoinList[1].searchAge40+memjoinList[1].searchAge50+memjoinList[1].searchAge60+memjoinList[1].searchAge70+memjoinList[2].searchAge10+memjoinList[2].searchAge20+memjoinList[2].searchAge30+memjoinList[2].searchAge40+memjoinList[2].searchAge50+memjoinList[2].searchAge60+memjoinList[2].searchAge70+memjoinList[0].searchEtc+memjoinList[1].searchEtc+memjoinList[2].searchEtc}" pattern="#,###" />     </td>
+									<td style="text-align: center">합계</td>
+									<td style=""><fmt:formatNumber value="${memjoinList[0].searchAgeTotal}" pattern="#,###" />     </td>
 								</tr>
 								
 							</tbody>
 						</table>
 						</div>
-					<%-- 	
-						<p class="head2"><em>새싹 오픈 현황</em></p>
-						<div class="widscr mt5">
-						<table class="tb_type01" style="min-width:700px">
-							<colgroup>
-								<col style="width:12%"/>
-								<col style="width:12%"/>
-								<col style="width:12%"/> 
-								<col style="width:12%"/> 
-								<col style="width:12%"/> 
-							</colgroup>
-							<thead> 
-								<tr>
-									<th rowspan="2" style="vertical-align: middle;">일자</th>
-									<th colspan="3">회원가입</th>
-									<th rowspan="2" style="vertical-align: middle;">대여</th> 
-								</tr>
-								<tr>
-									<th>13세</th>
-									<th>14세</th>
-									<th>15세</th>
-								</tr>
-							</thead>
-							<tbody>
-							<c:set var="sum13" value="0"></c:set>
-							<c:set var="sum14" value="0"></c:set>
-							<c:set var="sum15" value="0"></c:set>
-							<c:set var="cntSum" value="0"></c:set>
-							<c:forEach var="result" items="${miniBikeList}" varStatus="status">
-
-								<c:set var="sum13" value="${result.totAge30+sum13}"></c:set>
-								<c:set var="sum14" value="${result.totAge40+sum14}"></c:set>
-								<c:set var="sum15" value="${result.totAge50+sum15}"></c:set>
-								<c:set var="cntSum" value="${result.totAgeTotal+cntSum}"></c:set>
-							
-                                <tr>
-                                    <td align="center">${result.userType}</td>
-                                    <td align="right"><fmt:formatNumber value="${result.totAge30}" pattern="#,###"/></td>
-                                    <td align="right"><fmt:formatNumber value="${result.totAge40}" pattern="#,###"/></td>
-                                    <td align="right"><fmt:formatNumber value="${result.totAge50}" pattern="#,###"/></td>
-                                    <td align="right"><fmt:formatNumber value="${result.totAgeTotal}" pattern="#,###"/></td>
-                                </tr>
-                                
-                            	<c:if test="${status.last }">
-                            	
-                            		<tr>
-	                                    <td align="center">누적</td>
-	                                    <td align="right"><fmt:formatNumber value="${sum13}" pattern="#,###"/></td>
-	                                    <td align="right"><fmt:formatNumber value="${sum14}" pattern="#,###"/></td>
-	                                    <td align="right"><fmt:formatNumber value="${sum15}" pattern="#,###"/></td>
-	                                    <td align="right"><fmt:formatNumber value="${cntSum}" pattern="#,###"/></td>
-                                	</tr>
-                                	
-                            	</c:if>
-                            	    
-                            </c:forEach>
-                                
-                            <c:if test="${fn:length(miniBikeList) eq 0 }">
-								<table class="tb_type01 nbt0">
-									<tr><td style="text-align:center"><spring:message code="search.nodata.msg" /></tr>
-								</table>
-							</c:if>							
-							</tbody>
-						</table> --%>
 						</div>						
 						
 						<div class="btnArea">
@@ -330,7 +122,7 @@
 		<!--footer E-->
 	</div>
 	
-	<script type="text/javascript" src="/js/common_barocle.js"></script>
+	<script type="text/javascript" src="/js/common_spb.js"></script>
     <script type="text/javascript">
    	$(function() {
 		$('[name="searchBgnDe"]').val('${searchCondition.searchBgnDe}');
@@ -339,6 +131,7 @@
 		
 		$("#searchBtn").on("click", function(){
 			$("#searchFrm").attr({method : 'post', action : '/join/joinStatistics.do'}).submit();
+			fn_loading();
 		});
 		$("#excelBtn").on("click", function(){
 			$("#searchFrm").attr({method : 'post', action : '/join/joinStatisticsExcel.do'}).submit();
