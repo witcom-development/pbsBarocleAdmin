@@ -754,6 +754,10 @@ commonAjax.getCommonCode = function(comUpCd , pCb) {
 commonAjax.getStationCode = function( pCb) {
 	this.ajax("post", "/commonCode/getStation.do", "json", {}, pCb);
 };
+/**원격반납 스테이션*/
+commonAjax.getRemoteStationCode = function( pCb) {
+	this.ajax("post", "/commonCode/getRemoteStation.do", "json", {}, pCb);
+};
 /**센터*/
 commonAjax.getCenterCode = function( pCb) {
 	this.ajax("post", "/commonCode/getCenterInfo.do", "json", {}, pCb);

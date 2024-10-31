@@ -55,19 +55,29 @@
                                             <label for="a1" class="laType03">아파트 구분</label>
                                             <select class="select-category04" id="stationGrpSeq" name="stationGrpSeq">
 												<option value="">선택</option>
-												<c:forEach items="${group }" var="group">
+												<%-- <c:forEach items="${group }" var="group">
 													<option value="${group.station_grp_seq }" <c:if test="${searchCondition.stationGrpSeq == group.station_grp_seq }">selected</c:if>>${group.station_grp_name }</option>
-												</c:forEach>
+												</c:forEach> --%>
 											</select>
                                         </div>
                                         <div class="section pright etccase3">
-                                        	<label for="a2" class="laType03">자전거번호</label>
-                                        	<span class="input-text12"><input type="text" class="" id="bikeNo" name="bikeNo" value="${searchCondition.bikeNo }" placeholder="숫자만 입력"/></span>
-                                            <button type="button" name="searchBtn" onclick="fn_search(); return false;" id="searchBtn" class="btn-srh03 btncase1" ><img src="/images/searchIcon.gif" alt="검색"/></button>
+                                        	<div class="section">
+	                                            <label for="a1" class="laType03">정거장 구분</label>
+	                                            <select class="select-category04" id="stationId" name="stationId">
+													<option value="">선택</option>
+												</select>
+	                                        </div>
                                         </div>
                                         
 		                                <input type="hidden" name="bikeId"	id="bikeId">
 		                                <input type="hidden" name="tabNum"	id="tabNum">
+                                    </div>
+                                    <div class="shBoxSection">
+                                    	<div class="section pright etccase3">
+                                        	<label for="a2" class="laType03">자전거번호</label>
+                                        	<span class="input-text12"><input type="text" class="" id="bikeNo" name="bikeNo" value="${searchCondition.bikeNo }" placeholder="숫자만 입력" onKeypress="checkEnter(event);"/></span>
+                                            <button type="button" name="searchBtn" onclick="fn_search(); return false;" id="searchBtn" class="btn-srh03 btncase1" ><img src="/images/searchIcon.gif" alt="검색"/></button>
+                                        </div>
                                     </div>
                                 </fieldset>
                         	</div>
@@ -80,7 +90,8 @@
                                 <col style="width:20%"/>
                                 <col style="width:20%"/>
                                 <col style="width:20%"/>
-                                <col style="width:35%"/>
+                                <col style="width:30%"/> 
+                                <col style="width:35%"/> 
                                 <col style="width:15%"/>
                             </colgroup>
                             <thead>
@@ -89,6 +100,7 @@
                                     <th>x좌표</th>
                                     <th>y좌표</th>
                                     <th>요청 아파트</th>
+                                    <th>원격 반납 정거장</th>
                                     <th>위치보기</th>
                                 </tr>
                             </thead>
@@ -100,6 +112,7 @@
 					                <td class="title tr pr10">${info.xpos}</td>
 					                <td class="title tr pr10">${info.ypos}</td>
 					                <td class="title tc pr10">${ info.stationGrpName }</td>
+					                <td class="title tc pr10">${ info.remoteStationName }</td>
 					                <td class="tc"><a href="javascript:goMapAddr(${info.xpos}, ${info.ypos});" style="font-weight: bolder; color: #6478FF;">[지도]</a></td>
 					            </tr> 
 					        </c:forEach>
@@ -145,15 +158,55 @@
         <!--footer E-->
     </div>
 
-    <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=c2yclia2l7&callback=draw"></script>
+    <!-- <script type="text/javascript" src="https://openapi.map.naver.com/openapi/v3/maps.js?ncpClientId=c2yclia2l7&callback=draw"></script> -->
     
-    <script type="text/javascript" src="/js/stationCommonMapv.js"></script>
+    <!-- <script type="text/javascript" src="/js/stationCommonMapv.js"></script> -->
     <script type="text/javascript" src="/js/common_barocle.js"></script>
 
 	<script type="text/javascript">
+
+	var stationGrpSeq = '${searchCondition.stationGrpSeq}';
+	var stationId = '${searchCondition.stationId}';
+	
 	$(function(){
 		/* $(".tb_type01 > tbody > tr").on("click", "a", this.moveexeImpulseDetail); */
+		initBtn();
+		initCombo();
+		
 	});
+	
+	function initBtn(){
+		$("#stationGrpSeq").on('change', function(e){
+			var tId = e.target.id;
+			var idx = $("#"+tId+" option:selected").index();
+			var subList =$("#"+tId).data().sub_data;
+			$("#stationId option").not(':eq(0)').remove();
+			var sltsubData = subList[(idx-1)];
+			if(sltsubData !== undefined) {
+				if(sltsubData.length > 0) {
+					commCdBox.makeComboBox("S", stationId, sltsubData, "stationId");
+				}
+			}
+		});
+	}
+	
+	function initCombo(){
+		// 원격정거장
+		commonAjax.getRemoteStationCode( 
+				function(data) {
+					if(data != null && data.stationList != null) {
+						$("#stationId option").not(':eq(0)').remove();
+						commCdBox.makeComboBox('S', stationGrpSeq, data.stationList, "stationGrpSeq");
+						$("#stationGrpSeq").trigger("change");
+					}
+				}
+		);
+	}
+	
+	function checkEnter(e){
+		if(e.keyCode == 13)
+			linkPage(1);
+	}
 	
 	function fn_search(){
 		linkPage(1);

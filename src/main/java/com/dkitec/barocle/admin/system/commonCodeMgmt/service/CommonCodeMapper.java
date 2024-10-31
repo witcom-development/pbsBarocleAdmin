@@ -182,6 +182,8 @@ public interface CommonCodeMapper {
 	 *    2015. 4. 20.   |   ymshin   |  최초작성
 	 */ 
 	List<CommonStationVO> getStation(CommonStationVO vo);
+	
+	List<CommonStationVO> getRemoteStation(CommonStationVO vo);
 
 	List<CommonCenterVO> getCenterInfo();
 	

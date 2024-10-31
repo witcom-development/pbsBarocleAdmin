@@ -47,6 +47,8 @@ public class ReturnReqVO extends CommonVo implements Serializable {
     private String bikeStusCd;
     private String stationId;
     private String stationGrpSeq;
+    private String remoteReturnSeq;
+    private String remoteStationName;
     
 	public String getRegDttm() {
 		return regDttm;
@@ -97,11 +99,24 @@ public class ReturnReqVO extends CommonVo implements Serializable {
 	public void setStationGrpSeq(String stationGrpSeq) {
 		this.stationGrpSeq = stationGrpSeq;
 	}
+	public String getRemoteStationName() {
+		return remoteStationName;
+	}
+	public void setRemoteStationName(String remoteStationName) {
+		this.remoteStationName = remoteStationName;
+	}
+	public String getRemoteReturnSeq() {
+		return remoteReturnSeq;
+	}
+	public void setRemoteReturnSeq(String remoteReturnSeq) {
+		this.remoteReturnSeq = remoteReturnSeq;
+	}
 	@Override
 	public String toString() {
 		return "ReturnReqVO [regDttm=" + regDttm + ", bikeId=" + bikeId + ", bikeNo=" + bikeNo
 				+ ", xpos=" + xpos + ", ypos=" + ypos + ", bikeStusCd=" + bikeStusCd
 				 + ", stationId=" + stationId + ", stationGrpSeq=" + stationGrpSeq
+				 + ", remoteStationName=" + remoteStationName + ", remoteReturnSeq=" + remoteReturnSeq
 				+ "]";
 	}
 	

@@ -263,6 +263,24 @@ public class CommonCodeController extends CommonCodeValidator {
 		
 		return JSONVIEW;
 	}
+	@RequestMapping(value="/commonCode/getRemoteStation.do", method = RequestMethod.POST)
+	@RequestName("getRemoteStation")
+	public String getRemoteStation (HttpServletRequest request,ModelMap model) throws Exception {
+		
+		String bizName = "select박스용 원격대여소 코드 취득 ";
+		HttpUtil.printServiceLogStart(bizName, log, request);	// 서비스로그 시작 출력
+		try {
+			CommonStationVO codeVO = new CommonStationVO();
+			List<CommonStationVO> stationList = commonCodeService.getComRemoteStation(codeVO);
+			model.addAttribute("stationList", stationList);
+		
+		} catch(Exception e) {
+			throw new CfoodException("fail.common.msg", e.getMessage());
+		}
+		
+		
+		return JSONVIEW;
+	}	
 	@RequestMapping(value="/commonCode/getCenterInfo.do", method = RequestMethod.POST)
 	@RequestName("getCenterInfo")
 	public String getCenterInfo (HttpServletRequest request,ModelMap model) throws Exception {

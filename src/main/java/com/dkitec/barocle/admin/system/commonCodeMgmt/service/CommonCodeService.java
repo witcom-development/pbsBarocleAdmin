@@ -155,6 +155,17 @@ public interface CommonCodeService {
 	 */ 
 	List<CommonStationVO> getComStation(CommonStationVO codeVO);
 	/**
+	 * @location : com.dkitec.barocle.admin.system.commonCodeMgmt.service.CommonCodeService.getComRemoteStation
+	 * @writeDay : 2015. 4. 20. 오후 5:08:44
+	 * @return   : CommonStationVO
+	 * @Todo     : 공통 아파트 원격 대여소 정보 취득.
+	 * -------------------------------------------------------------
+	 *      수정일      |      수정자      |              수정내용
+	 * -------------------------------------------------------------
+	 *    2015. 4. 20.   |   ymshin   |  최초작성
+	 */ 
+	List<CommonStationVO> getComRemoteStation(CommonStationVO codeVO);
+	/**
 	 * @location : com.dkitec.barocle.admin.system.commonCodeMgmt.service.CommonCodeService.getCenterInfo
 	 * @writeDay : 2015. 4. 20. 오후 5:08:44
 	 * @return   : CommonStationVO

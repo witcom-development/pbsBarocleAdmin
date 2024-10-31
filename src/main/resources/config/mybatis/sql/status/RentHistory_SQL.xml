@@ -215,24 +215,26 @@
 			, B.BIKE_NO		AS bikeNo
 			, B.XPOS			AS xpos
 			, B.YPOS			AS ypos
-			, B.STATION_ID	AS staionId
-			, S.STATION_GRP_SEQ	AS stationGrpSeq
+			, SG.STATION_GRP_SEQ	AS stationGrpSeq
 			, SG.STATION_GRP_NAME AS stationGrpName
+			, SGRR.REMOTE_RETURN_SEQ AS remoteReturnSeq
+			, SGRR.REMOTE_STATION_NAME AS remoteStationName
 		FROM TB_OPR_BIKE B
-		LEFT JOIN TB_OPR_STATION S ON B.STATION_ID = S.STATION_ID
-		LEFT JOIN TB_OPR_MLANG_STATION_GRP SG ON S.STATION_GRP_SEQ = SG.STATION_GRP_SEQ
+		INNER JOIN TB_SVC_REMOTE_RETURN_INFO RR ON B.BIKE_NO = RR.BIKE_NO
+		LEFT JOIN TB_OPR_STATION_GRP_REMOTE_RETURN SGRR ON RR.REMOTE_RETURN_SEQ = SGRR.REMOTE_RETURN_SEQ
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP SG ON SGRR.STATION_GRP_SEQ = SG.STATION_GRP_SEQ
 		WHERE B.BIKE_STUS_CD = 'BKS_019'
 		AND SG.LANG_CLS_CD = 'LAG_001'
 		<if test='bikeNo != null and bikeNo != ""'>
 			AND B.BIKE_NO = #{bikeNo}
 		</if>
 		<if test='stationGrpSeq != null and stationGrpSeq != ""'>
-			AND S.STATION_GRP_SEQ = #{stationGrpSeq}
+			AND SG.STATION_GRP_SEQ = #{stationGrpSeq}
 		</if>
 		<if test='stationId != null and stationId != ""'>
-			AND B.STATION_ID = #{stationId}
+			AND SGRR.REMOTE_RETURN_SEQ = #{stationId}
 		</if>
-		ORDER BY S.STATION_GRP_SEQ, S.STATION_ID
+		ORDER BY SG.STATION_GRP_SEQ, SGRR.REMOTE_RETURN_SEQ
 		<if test='pagingYn != null and pagingYn == "Y"'>
 		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 		</if>	
@@ -241,18 +243,19 @@
 	<select id="getReturnReqListCnt" parameterType="returnReqVO" resultType="int">
 		SELECT COUNT(1)
 		FROM TB_OPR_BIKE B
-		LEFT JOIN TB_OPR_STATION S ON B.STATION_ID = S.STATION_ID
-		LEFT JOIN TB_OPR_MLANG_STATION_GRP SG ON S.STATION_GRP_SEQ = SG.STATION_GRP_SEQ
+		INNER JOIN TB_SVC_REMOTE_RETURN_INFO RR ON B.BIKE_NO = RR.BIKE_NO
+		LEFT JOIN TB_OPR_STATION_GRP_REMOTE_RETURN SGRR ON RR.REMOTE_RETURN_SEQ = SGRR.REMOTE_RETURN_SEQ
+		LEFT JOIN TB_OPR_MLANG_STATION_GRP SG ON SGRR.STATION_GRP_SEQ = SG.STATION_GRP_SEQ
 		WHERE B.BIKE_STUS_CD = 'BKS_019'
 		AND SG.LANG_CLS_CD = 'LAG_001'
 		<if test='bikeNo != null and bikeNo != ""'>
 			AND B.BIKE_NO = #{bikeNo}
 		</if>
 		<if test='stationGrpSeq != null and stationGrpSeq != ""'>
-			AND S.STATION_GRP_SEQ = #{stationGrpSeq}
+			AND SG.STATION_GRP_SEQ = #{stationGrpSeq}
 		</if>
 		<if test='stationId != null and stationId != ""'>
-			AND B.STATION_ID = #{stationId}
+			AND SGRR.REMOTE_RETURN_SEQ = #{stationId}
 		</if>
 	</select>
 	

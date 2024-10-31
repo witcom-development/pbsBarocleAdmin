@@ -308,6 +308,37 @@ public class CommonCodeServiceImpl extends EgovAbstractServiceImpl implements Co
 		
 		return resultList;
 	}
+	
+	/**
+	 * @location   : com.dkitec.barocle.admin.system.commonCodeMgmt.service.Impl.CommonCodeService.getComStation
+	 * @writeDay   : 2015. 4. 20. 오후 5:14:44
+	 * @overridden : @see com.dkitec.barocle.admin.system.commonCodeMgmt.service.CommonCodeService#getComStation()
+	 * @Todo       : 스테이션 그룹 그에 해당하는 스테이션을 취득.
+	 */ 
+	@Override
+	@Transactional(readOnly=true)
+	@DataSource(DataSourceType.SLAVE01)
+	public List<CommonStationVO> getComRemoteStation(CommonStationVO pVo) {
+		// TODO Auto-generated method stub
+		
+		CommonStationVO stationVo = null;
+		
+		List<CommonStationVO> pStation =  commonCodeMapper.getStationGrp(pVo);
+		
+		List<CommonStationVO> resultList = new ArrayList<CommonStationVO>();
+		
+		for(CommonStationVO vo : pStation ) {
+			stationVo = new CommonStationVO();
+			vo.setLang(pVo.getLang());
+			stationVo.setStationId(vo.getStationId());
+			stationVo.setStationName(vo.getStationName());
+			
+			stationVo.setStationList(commonCodeMapper.getRemoteStation(vo));
+			resultList.add(stationVo);
+		}
+		
+		return resultList;
+	}
 
 	@Override
 	@Transactional(readOnly=true)

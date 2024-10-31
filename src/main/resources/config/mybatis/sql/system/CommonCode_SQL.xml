@@ -270,6 +270,13 @@
 			AND B.LANG_CLS_CD = #{lang}
 		  ORDER BY B.STATION_NAME  
 	</select>
+	<select id="getRemoteStation" parameterType="commonStationVO" resultType= "commonStationVO">
+		SELECT REMOTE_RETURN_SEQ		 AS stationId
+			,REMOTE_STATION_NAME	   AS stationName
+		FROM TB_OPR_STATION_GRP_REMOTE_RETURN
+		WHERE STATION_GRP_SEQ = #{stationId}
+		ORDER BY REMOTE_STATION_NAME
+	</select>
 	<select id="getCenterInfo" resultType="commonCenterVo">
 		SELECT CENTER_ID   AS centerId
 			  ,CENTER_NAME AS centerName
