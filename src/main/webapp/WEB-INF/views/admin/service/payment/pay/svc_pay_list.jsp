@@ -113,7 +113,15 @@
 										<span class="input-text08"><input type="text" class="" name="paymentConfmNoSeacrhKey"></span>
 										<button class="btn-srh03 btncase1" id="searchBtn"><img src="/images/searchIcon.gif" alt="검색"></button>
 									</div>
-									
+									<div class="section">
+										<label for="a1" class="laType03">아파트 구분</label>
+										<select class="select-category04" id="stationGrpSeq" name="stationGrpSeq">
+										<option value="">선택</option>
+												<c:forEach items="${group }" var="group">
+													<option value="${group.station_grp_seq }" <c:if test="${searchCondition.stationGrpSeq == group.station_grp_seq }">selected</c:if>>${group.station_grp_name }</option>
+												</c:forEach>
+										</select>
+									</div>
 									<!-- 20180914 -->
 									<!-- <div class="section">
 										<label for="usrClsCd" class="laType02">회원구분</label>

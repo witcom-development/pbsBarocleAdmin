@@ -84,7 +84,22 @@ public class PaymentVO extends PagingVO implements Serializable {
 	private int rentHistSeq;
 	private String processReasonDesc;
 	
+	private String stationGrpName;
+	private String stationGrpSeq;
 	
+	
+	public String getStationGrpName() {
+		return stationGrpName;
+	}
+	public void setStationGrpName(String stationGrpName) {
+		this.stationGrpName = stationGrpName;
+	}
+	public String getStationGrpSeq() {
+		return stationGrpSeq;
+	}
+	public void setStationGrpSeq(String stationGrpSeq) {
+		this.stationGrpSeq = stationGrpSeq;
+	}
 	public String getProcessReasonDesc() {
 		return processReasonDesc;
 	}

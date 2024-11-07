@@ -45,6 +45,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.dkitec.barocle.admin.login.security.filter.EgovSessionCookieUtil;
 import com.dkitec.barocle.admin.login.vo.UserSessionVO;
+import com.dkitec.barocle.admin.manage.stationgroup.service.StationGroupMgmtService;
+import com.dkitec.barocle.admin.manage.stationgroup.vo.StationGroupMgmtVO;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.ToSHA256Hex;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.service.PaymentService;
 import com.dkitec.barocle.admin.service.paymentmgmt.payment.vo.PaymentStatVO;
@@ -79,6 +81,7 @@ public class PaymentController extends BaseController {
 	protected static Logger log = LoggerFactory.getLogger(PaymentController.class);
 	
 	@Resource(name = "paymentService") private PaymentService paymentService;
+	@Resource(name = "stationGroupMgmtService") protected StationGroupMgmtService stationGroupMgmtService;
 	
 	private static final String RETUR_URL = "/admin/service/payment/pay/";
 	private static final String POP_URL = "/admin/common/popup/";
@@ -121,6 +124,13 @@ public class PaymentController extends BaseController {
 			
 			// 조회구분 초기화
 			paymentVO.setIsSearchGb(""); 
+			
+			List<StationGroupMgmtVO> group = null;
+			StationGroupMgmtVO vo = new StationGroupMgmtVO();
+			vo.setLang(request.getLocale().getLanguage());
+			group = stationGroupMgmtService.getStationGroupNameList(vo);
+			
+			model.put("group", group);
 			
 			model.addAttribute("searchCondition", paymentVO);
 //			model.addAttribute("paymentCancelStatCol", resultCancelStatCol);

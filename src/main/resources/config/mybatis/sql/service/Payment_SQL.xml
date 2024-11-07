@@ -16,147 +16,80 @@
 		VALUES (#{usrSeq}, #{acnutBank}, #{acnutNo}, NOW(),#{acnutNm})
 	</insert>
  
- 
-	<!-- 변경_20170517_JHN : 비회원 대여 이용 개선의 따른 비회원 조회 방법 추가 (대여일련번호) -->
 	<select id="getPaymentList" parameterType="paymentVO" resultType="paymentVO">
-		SELECT /* Payment_SQL.getPaymentList */
-				A.PAYMENT_SEQ AS paymentSeq,
-			  (
-				CASE
-			  	 WHEN TRIM(C.MB_ID) IS NOT NULL 
-				 THEN C.MB_ID
-				 ELSE  
-				  <!-- DG_DECRYPT('TB_SVC_USR', 'USR_MPN_NO', B.USR_MPN_NO) --><!-- 20170517 대여일련번호 -->
-				 		( IFNULL((   SELECT  SERIALNO.SERIAL_NO FROM TB_SVC_SERIAL_NO_HIST SERIALNO 
-									  WHERE A.USR_SEQ = SERIALNO.USR_SEQ 
-										AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ 
-										AND B.USR_CLS_CD IN ( 'USR_002',  'USR_003' )
-								  )
-							, CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR)
-								)
-						) 
-			   END
-			   ) AS usrMainId
-			 , C.MB_ID AS mbId
-			 , A.USR_SEQ AS usrSeq
-			 , A.PAYMENT_CLS_CD AS paymentClsCd
-			 , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
-			 , A.PAYMENT_STUS_CD AS paymentStusCd
-			 , A.PAYMENT_SEQ AS paymentSeq
-			 , A.PAYMENT_DTTM AS paymentDttm
-			 , (SELECT MLANG_COM_CD_NAME	FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_STUS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentStusCdName
-			 , A.TOT_AMT AS totAmt
-			 /* 페이코 자동결게 취소 관련 화면 조회 표출 */
-			 , CASE WHEN A.PAYMENT_METHOD_CD = 'BIM_007' THEN A.MB_SERIAL_NO ELSE A.PAYMENT_CONFM_NO END AS paymentConfmNo
-			 , A.PAYMENT_METHOD_CD AS paymentMethodCd<!-- 2017.06.09_계좌이체 결제 취소 방지를 위해_JHN -->
-			 , (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = A.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001') AS paymentMethodCdName
-			 <!-- , ( SELECT  dg_decrypt('TB_SVC_PAYMENT_METHOD', 'CARD_NO', CARD_NO )  -->
-			 , ( SELECT  CARD_NO 
-				   FROM TB_SVC_PAYMENT_METHOD D WHERE  A.USR_SEQ = D.USR_SEQ  AND PAYMENT_METHOD_CD ='BIM_008' 
-				 )  AS   mbCardNo
-	   FROM TB_SVC_PAYMENT A 	
-	  <if test='usrSearchType == null and usrSearchType == ""'> 			
-	   			/*! USE INDEX (PRIMARY) */  
-	  </if> 			
-	  INNER JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
-	  <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO" and usrSearchKey!= null and usrSearchKey != ""'>
-			 	<!-- AND B.USR_MPN_NO = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
-			 	AND B.USR_MPN_NO = HEX(AES_ENCRYPT(#{usrSearchKey},'BRC'))
-	  </if>
-	  <if test='usrClsCd != null and usrClsCd != "" '><!-- 20180914 -->
-				AND B.USR_CLS_CD = #{usrClsCd}
-	   </if>
-	   LEFT JOIN TB_SVC_MB C ON A.USR_SEQ = C.USR_SEQ
-	  <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="MB_ID"'>
-	  INNER JOIN TB_SVC_MB Z ON A.USR_SEQ = Z.USR_SEQ
-		AND Z.MB_ID LIKE CONCAT(#{usrSearchKey}, '%')
-	  </if>
-	  
-	   <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="EMAIL"'> <!-- 2021-07-02 이메일 선택시에만 조회 -->
-			  INNER JOIN TB_SVC_USR_NONMB_EMAIL EMAIL ON ( A.USR_SEQ = EMAIL.USR_SEQ AND EMAIL.NONMB_EMAIL_NAME = #{usrSearchKey} )
-		</if>
-	  
-		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="SERIAL_NO"'><!-- 20170517 대여일련번호 -->
-	   INNER JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON A.USR_SEQ = SERIALNO.USR_SEQ 
-										AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ 
-										AND B.USR_CLS_CD IN ( 'USR_002',  'USR_003' )
-										AND SERIALNO.SERIAL_NO = #{usrSearchKey}
-		</if>
-	  WHERE 1=1
+		SELECT FEE.PAYMENT_SEQ AS paymentSeq,CAST(AES_DECRYPT(UNHEX(USR_MPN_NO),'BRC') as CHAR) AS usrMainId, HIST.USR_SEQ AS usrSeq 
+			, PAY.PAYMENT_CLS_CD AS paymentClsCd
+			, (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = PAY.PAYMENT_CLS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentClsCdName
+			, PAY.PAYMENT_STUS_CD AS paymentStusCd
+			, PAY.PAYMENT_DTTM AS paymentDttm
+			, (SELECT MLANG_COM_CD_NAME   FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = PAY.PAYMENT_STUS_CD AND LANG_CLS_CD = 'LAG_001') AS paymentStusCdName
+			, PAY.TOT_AMT AS totAmt
+			, PAY.PAYMENT_CONFM_NO AS paymentConfmNo
+			, PAY.PAYMENT_METHOD_CD AS paymentMethodCd
+			, (SELECT MLANG_COM_CD_NAME FROM TB_SYS_MLANG_COM_CD WHERE COM_CD = PAY.PAYMENT_METHOD_CD AND LANG_CLS_CD = 'LAG_001') AS paymentMethodCdName
+			, ( SELECT  CARD_NO  FROM TB_SVC_PAYMENT_METHOD D WHERE  PAY.USR_SEQ = D.USR_SEQ  AND PAYMENT_METHOD_CD ='BIM_008' )  AS   mbCardNo
+			, APT.STATION_GRP_NAME
+			, APT.STATION_GRP_SEQ
+		FROM TB_SVC_RENT_HIST HIST, TB_SVC_RENT_OVER_FEE FEE,TB_SVC_PAYMENT PAY,
+		TB_SVC_USR USR, TB_OPR_STATION STA, TB_OPR_MLANG_STATION_GRP APT
+		WHERE HIST.OVER_FEE_YN = 'Y'
+		AND HIST.RENT_HIST_SEQ = FEE.RENT_HIST_SEQ
+		AND FEE.OVER_FEE_PAYMENT_YN ='Y'
+		AND HIST.USR_SEQ = USR.USR_SEQ
+		AND FEE.PAYMENT_SEQ = PAY.PAYMENT_SEQ
+		AND FEE.PAYMENT_SEQ IS NOT NULL
+		AND HIST.RENT_STATION_ID = STA.STATION_ID
+		AND STA.STATION_GRP_SEQ = APT.STATION_GRP_SEQ
+		AND APT.LANG_CLS_CD = 'LAG_001'
 		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
-		AND A.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00') AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
+		AND FEE.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00') AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
 		</if>
 		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
-		AND A.PAYMENT_DTTM BETWEEN CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 00:00:00') AND CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
+		AND FEE.PAYMENT_DTTM BETWEEN CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 00:00:00') AND CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
 		</if>
-		<if test='paymentClsCd != null and paymentClsCd != ""'>
-		AND A.PAYMENT_CLS_CD = #{paymentClsCd}
-		</if>
-		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
-		AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO" and usrSearchKey!= null and usrSearchKey != ""'>
+		AND USR.USR_MPN_NO = HEX(AES_ENCRYPT(#{usrSearchKey},'BRC'))
 		</if>
 		<if test='paymentStusCd != null and paymentStusCd != ""'>
-		AND A.PAYMENT_STUS_CD = #{paymentStusCd}
+		AND PAY.PAYMENT_STUS_CD = #{paymentStusCd}
 		</if>
-		
-		<if test='paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != "" and @com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) != 10 '>
-				AND A.PAYMENT_CONFM_NO = #{paymentConfmNoSeacrhKey}
-		</if>	   
-				
-	   	ORDER BY A.PAYMENT_SEQ DESC 
+		<if test='stationGrpSeq != null and stationGrpSeq != ""'>
+		AND APT.STATION_GRP_SEQ = #{stationGrpSeq}
+		</if>
+		ORDER BY PAY.PAYMENT_SEQ DESC
 		<if test='pagingYn == "Y"'>
 		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 		</if>
 	</select>
 
 	<select id="getPaymentListCount" parameterType="paymentVO" resultType="int">
-		   SELECT /* Payment_SQL.getPaymentListCount */
-				  COUNT(*)
-			 FROM TB_SVC_PAYMENT A 
-		<if test='( usrSearchType != null and usrSearchType != "" ) or (paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != "") or ( usrClsCd != null and usrClsCd != "" )'>   
-			INNER JOIN TB_SVC_USR B ON A.USR_SEQ = B.USR_SEQ
-		 </if>   
-		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO"'>
-			 	<!-- AND B.USR_MPN_NO  = dg_encrypt('TB_SVC_USR', 'USR_MPN_NO', #{usrSearchKey}) -->
-			 	AND B.USR_MPN_NO  = HEX(AES_ENCRYPT(#{usrSearchKey},'BRC'))
-	 	</if>
-	 	<if test='usrClsCd != null and usrClsCd != "" '><!-- 20180914 -->
-			   AND B.USR_CLS_CD = #{usrClsCd}
-	   	</if>   
-			 <if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="MB_ID"'>
-				  INNER JOIN TB_SVC_MB C ON B.USR_SEQ = C.USR_SEQ  AND C.MB_ID = #{usrSearchKey}
-	   	</if>
-		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="SERIAL_NO"'> <!-- 2020-03-07 대여일련번호가 존재할 때에만 조회 -->
-				  INNER JOIN TB_SVC_SERIAL_NO_HIST SERIALNO ON A.USR_SEQ = SERIALNO.USR_SEQ AND A.PAYMENT_SEQ = SERIALNO.PAYMENT_SEQ
-			   AND SERIALNO.SERIAL_NO = #{usrSearchKey}
-		</if>
-		
-		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="EMAIL"'> <!-- 2021-07-02 이메일 선택시에만 조회 -->
-			  INNER JOIN TB_SVC_USR_NONMB_EMAIL EMAIL ON ( A.USR_SEQ = EMAIL.USR_SEQ AND EMAIL.NONMB_EMAIL_NAME = #{usrSearchKey} )
-		</if>
-	 	
-				WHERE 1=1
+		SELECT COUNT(*)
+		FROM TB_SVC_RENT_HIST HIST, TB_SVC_RENT_OVER_FEE FEE,TB_SVC_PAYMENT PAY,
+		TB_SVC_USR USR, TB_OPR_STATION STA, TB_OPR_MLANG_STATION_GRP APT
+		WHERE HIST.OVER_FEE_YN = 'Y'
+		AND HIST.RENT_HIST_SEQ = FEE.RENT_HIST_SEQ
+		AND FEE.OVER_FEE_PAYMENT_YN ='Y'
+		AND HIST.USR_SEQ = USR.USR_SEQ
+		AND FEE.PAYMENT_SEQ = PAY.PAYMENT_SEQ
+		AND FEE.PAYMENT_SEQ IS NOT NULL
+		AND HIST.RENT_STATION_ID = STA.STATION_ID
+		AND STA.STATION_GRP_SEQ = APT.STATION_GRP_SEQ
+		AND APT.LANG_CLS_CD = 'LAG_001'
 		<if test='startPaymentDttm != null and startPaymentDttm != "" and endPaymentDttm != null and endPaymentDttm != ""'>
-				AND A.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00')
-									   AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
+		AND FEE.PAYMENT_DTTM BETWEEN CONCAT(#{startPaymentDttm}, ' 00:00:00') AND CONCAT(#{endPaymentDttm}, ' 23:59:59')
 		</if>
 		<if test='startPaymentDttm == null or startPaymentDttm == ""'>
-				AND A.PAYMENT_DTTM BETWEEN CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 00:00:00')
-									   AND CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
+		AND FEE.PAYMENT_DTTM BETWEEN CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 00:00:00') AND CONCAT(DATE_FORMAT(NOW(), '%Y-%m-%d'), ' 23:59:59')
 		</if>
-		<if test='paymentClsCd != null and paymentClsCd != ""'>
-				AND A.PAYMENT_CLS_CD = #{paymentClsCd}
-		</if>
-		<if test='paymentMethodCd != null and paymentMethodCd != ""'>
-				AND A.PAYMENT_METHOD_CD = #{paymentMethodCd}
+		<if test='usrSearchType != null and usrSearchType != "" and usrSearchType =="USR_MPN_NO" and usrSearchKey!= null and usrSearchKey != ""'>
+		AND USR.USR_MPN_NO = HEX(AES_ENCRYPT(#{usrSearchKey},'BRC'))
 		</if>
 		<if test='paymentStusCd != null and paymentStusCd != ""'>
-				AND A.PAYMENT_STUS_CD = #{paymentStusCd}
+		AND PAY.PAYMENT_STUS_CD = #{paymentStusCd}
 		</if>
-	 
-		<if test='paymentConfmNoSeacrhKey != null and paymentConfmNoSeacrhKey != "" and @com.dkitec.barocle.util.webutil.StringUtil@getStringCardSize(paymentConfmNoSeacrhKey) != 10 '>
-				AND A.PAYMENT_CONFM_NO = #{paymentConfmNoSeacrhKey}
-		</if>   
+		<if test='stationGrpSeq != null and stationGrpSeq != ""'>
+		AND APT.STATION_GRP_SEQ = #{stationGrpSeq}
+		</if>
 	</select>
 	  
 	<select id="getLatestSms" parameterType="paymentVO" resultType="String">
