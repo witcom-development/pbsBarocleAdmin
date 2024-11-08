@@ -93,6 +93,7 @@
                                 <col style="width:30%"/> 
                                 <col style="width:35%"/> 
                                 <col style="width:15%"/>
+                                <col style="width:15%"/>
                             </colgroup>
                             <thead>
                                 <tr>
@@ -102,18 +103,20 @@
                                     <th>요청 아파트</th>
                                     <th>원격 반납 정거장</th>
                                     <th>위치보기</th>
+                                    <th>알람</th>
                                 </tr>
                             </thead>
                             <tbody> 
                             
                              <c:forEach var="info" items="${resultList}" varStatus="status" >
                                 <tr>
-					                <td class="title tl"><a href="javascript:bikeLog('${ info.bikeId }', '${ info.bikeNo }');">${ info.bikeNo }</a></td>
+					                <td class="title tl"><a href="javascript:bikeLog('${ info.bikeId }', '${ info.bikeNo }');" style="white-space: normal !important">${ info.bikeNo }</a></td>
 					                <td class="title tr pr10">${info.xpos}</td>
 					                <td class="title tr pr10">${info.ypos}</td>
 					                <td class="title tc pr10">${ info.stationGrpName }</td>
 					                <td class="title tc pr10">${ info.remoteStationName }</td>
 					                <td class="tc"><a href="javascript:goMapAddr(${info.xpos}, ${info.ypos});" style="font-weight: bolder; color: #6478FF;">[지도]</a></td>
+					                <td class="tc"><a href="javascript:goFindBike('${ info.bikeNo }');" style="font-weight: bolder; color: #6478FF;">[알람]</a></td>
 					            </tr> 
 					        </c:forEach>
 					        <c:if test="${fn:length(resultList) == 0 }">
@@ -255,6 +258,58 @@
 		
 		window.open("/common/pop/showLocationMapPop.do?outptt=%uC704%uCE58%uC9C0%uB3C4%uCC3E%uAE30&latitude="+ lat +"&longitude=" + lon , "winpop", "width=600, height=680, top="+winT+", left="+winL , "scrollbars=yes");
 
+	}
+	
+	function goFindBike(bikeNo){
+		var adminSeq = 1;
+		
+		if (adminSeq != null && adminSeq > 0 ) {
+			window.osType = 'android';
+			// test
+			var loginId = '${UserSessionVO.usrId}';
+			
+			if (loginId.indexOf('witcom') === 0) {
+				app.isTest = true;
+			}
+			
+			var usrSeq = '${UserSessionVO.adminSeq}';
+			
+			if (usrSeq != null && usrSeq != '' && usrSeq > 0) {
+				var tempSeq = '';
+				for (var i = usrSeq.length; i < 10; i++) {
+					tempSeq += '0';
+				}
+				usrSeq = tempSeq + usrSeq;	
+			} else {
+				usrSeq = '0000000000';
+			
+			}
+			
+			var jsonTestData = {"userseq" : usrSeq, "isuser" : false, "call" : "setUser"};
+			var loginTestInfo = JSON.stringify(jsonTestData);
+			window.android_admin.setUser(loginTestInfo);
+		
+		} else {
+			
+			alert(" 로그인이 안되어 있습니다. 앱 종료 후, 재 접속 부탁드립니다. ");
+			return false;
+		}
+		
+		var sendBikeNo = bikeNo;
+		
+		// bikeNo 형식 변경 5자리 -> 8자리
+		var tmpBikeNo = bikeNo.split("-");
+		if(tmpBikeNo[1].length < 8){
+			var setNum = tmpBikeNo[1];
+			for(var i=tmpBikeNo[1].length; i<8; i++){
+				setNum = "0"+setNum;
+			}
+			sendBikeNo = "BRC-"+setNum;
+		}
+		
+		//alert(sendBikeNo);
+		
+		window.android_admin.lockSound(sendBikeNo);
 	}
 	
 	</script>
