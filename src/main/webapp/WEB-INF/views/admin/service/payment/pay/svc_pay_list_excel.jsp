@@ -42,12 +42,14 @@
                     <td >${searchCondition.paymentConfmNoSeacrhKey}</td>
                 </tr>
                 <tr>
-                    <td class="condition" ><label class="laType02">결제구분</label></td>
-                    <td >${searchCondition.paymentClsCdName}</td>
-                    <td class="condition" ><label class="laType02">결제수단</label></td>
-                    <td >${searchCondition.paymentMethodCdName}</td>
                     <td class="condition" ><label class="laType02">결제상태</label></td>
                     <td >${searchCondition.paymentStusCdName}</td>
+                    <td class="condition" ><label class="laType02">아파트 구분</label></td>
+                    <td colspan="3">
+                    	<c:forEach items="${group }" var="group">
+							<c:if test="${searchCondition.stationGrpSeq == group.station_grp_seq }">${group.station_grp_name }</c:if>
+						</c:forEach>
+                    </td>
                 </tr>
             </tbody>
         </table>
@@ -60,28 +62,23 @@
             <tr>
                	<th>아이디</th>
 				<th>결제구분</th>
-				<th>결제방법</th>
+				<th>결제상태</th>
 				<th>결제일시</th>
 				<th>승인번호</th>
 				<th>전체금액</th>
-				<th>마일리지</th>
-				<th>초과요금</th>
 				<th>정산금액</th>
 				<th>취소금액</th>
-				<th>취소자</th>
             </tr>
         </thead>
         <tbody>
         <c:forEach var="result" items="${paymentList}" varStatus="status">
             <tr>
-                <td>${result.mb_id_excel}</td>
+                <td>${result.usrMainId}</td>
                 <td>${result.paymentClsCdName}</td>
-                <td>${result.paymentMethodCdName}</td>
+                <td>${result.paymentStusCdName}</td>
                 <td>${result.paymentDttm}</td>
                 <td>${result.paymentConfmNo}</td>
                 <td class="txRight" style="mso-number-format:\#\,0\">${result.totAmt}</td>
-                <td style="mso-number-format:\#\,0\">${result.mileagePaymentAmt}</td>
-                <td style="mso-number-format:\#\,0\">${result.rentOverFeeSum}</td>
                 <td style="mso-number-format:\#\,0\">${ result.totAmt - result.mileagePaymentAmt}</td>
                 <c:choose>
                 <c:when test="${result.paymentStusCd=='BIS_003'}">
@@ -91,12 +88,11 @@
 				<td class="txRight" style="mso-number-format:\#\,0\">0</td>
 				</c:otherwise>
                 </c:choose>
-                <td>${result.cancelAdminName}</td>
             </tr>
         </c:forEach>    
         <c:if test='${fn:length(paymentList) == 0}'>
             <tr>
-                <td style="text-align:center" colspan="11"><spring:message code="search.nodata.msg" /></td>
+                <td style="text-align:center" colspan="7"><spring:message code="search.nodata.msg" /></td>
             </tr>
         </c:if>
         </tbody>

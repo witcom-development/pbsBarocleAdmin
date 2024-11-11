@@ -309,7 +309,7 @@
 							
 							<button class="btnType01" id="cancelPorcePopBtn">강제취소</button> -->
 							
-							<!--[if gt IE 8]><!--><!-- <button class="btnType01 mhid" id="excelViewBtn">엑셀</button> --><!--<![endif]-->
+							<!--[if gt IE 8]><!--><button class="btnType01 mhid" id="excelViewBtn">엑셀</button><!--<![endif]-->
 						</div>
                     </div>
                 </div>
@@ -330,7 +330,7 @@
         var dayOfMonth = calDay.getDate();
         calDay.setDate(dayOfMonth - 1);
         //calDay.setDate(dayOfMonth);
-        var startDay = DateUtil.dateFmt(calDay);
+        var startDay = DateUtil.dateFmt(new Date());
         var endDay = DateUtil.dateFmt(new Date());
         
         var sDate = '${searchCondition.startPaymentDttm}' !== '' ? '${searchCondition.startPaymentDttm}' : startDay;
