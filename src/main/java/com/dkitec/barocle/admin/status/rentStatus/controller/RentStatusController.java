@@ -40,6 +40,8 @@ import com.dkitec.barocle.admin.login.vo.UserSessionVO;
 import com.dkitec.barocle.admin.maintenance.check.bike.vo.CheckBikeVO;
 import com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeService;
 import com.dkitec.barocle.admin.manage.deviceMgmt.bike.vo.BikeVO;
+import com.dkitec.barocle.admin.manage.stationgroup.service.StationGroupMgmtService;
+import com.dkitec.barocle.admin.manage.stationgroup.vo.StationGroupMgmtVO;
 import com.dkitec.barocle.admin.status.rentHistory.service.RentHistoryService;
 import com.dkitec.barocle.admin.status.rentHistory.vo.PenaltyVO;
 import com.dkitec.barocle.admin.status.rentStatus.service.RentStatusService;
@@ -79,6 +81,7 @@ public class RentStatusController extends BaseController {
 	@Resource(name="rentHistoryService") private RentHistoryService rentHistoryService;
 	@Resource(name = "commonCodeService") private CommonCodeService codeService;
 	@Resource(name = "userMgmtService") private UserMgmtService usrService;
+	@Resource(name = "stationGroupMgmtService") protected StationGroupMgmtService stationGroupMgmtService;
 	 
 	@Resource(name="bikeService") private BikeService bikeService;
 	
@@ -99,6 +102,12 @@ public class RentStatusController extends BaseController {
 			rentalVo.setRecordCountPerPage(paginationInfo.getRecordCountPerPage());
 			
 			List<CommonCodeVO> resultList = rentStatusService.getRentStatusList(rentalVo);
+			
+			List<StationGroupMgmtVO> group = null;
+			StationGroupMgmtVO vo = new StationGroupMgmtVO();
+			vo.setLang(request.getLocale().getLanguage());
+			group = stationGroupMgmtService.getStationGroupNameList(vo);
+			model.put("group", group);
 			
 			model.addAttribute("searchCondition",rentalVo );
 			model.addAttribute("rentList", resultList);

@@ -38,6 +38,7 @@
 				  END	 
 						  AS usrMpnNo	
 				, TIMESTAMPDIFF(MINUTE,RENT_DTTM, now())				  AS elapseTime  
+				, S.STATION_GRP_SEQ AS rentStationGrpSeq
 			FROM TB_SVC_RENT H 
 		   INNER JOIN TB_SVC_USR U 	ON H.USR_SEQ = U.USR_SEQ
 		 <if test='usrMpnNo != null and usrMpnNo !=""'>   		
@@ -64,6 +65,7 @@
 						  ) 
 		 		AND H.RENT_BIKE_ID = I.BIKE_ID
 		 </if>
+		 LEFT JOIN TB_OPR_STATION S ON H.RENT_STATION_ID = S.STATION_ID
 		 WHERE H.RENT_YN = 'Y' 
 		  <if test='searchWord != null and searchWord !=""'> 
 		   AND U.USR_SEQ = (SELECT USR_SEQ 
@@ -76,8 +78,12 @@
 		  </if> 
 		   <if test='longTermChk != null and longTermChk !="" and longTermChk =="Y"'>
 		   <![CDATA[AND TIME_TO_SEC(timediff(now(),RENT_DTTM)) >= CAST((SELECT ADD_VAL1 FROM TB_SYS_COM_CD WHERE COM_CD ='MSI_012') AS UNSIGNED)* 60]]>
-		   </if>	  
-		   ORDER BY H.RENT_DTTM DESC
+		   </if>
+		   <if test='rentStationGrpSeq != null and rentStationGrpSeq !=""'>
+		   AND S.STATION_GRP_SEQ = #{rentStationGrpSeq}
+		   </if>
+		   
+		   ORDER BY S.STATION_GRP_SEQ, H.RENT_STATION_ID
 		   <if test='pageYn =="Y"'>
 		   LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 		   </if>	

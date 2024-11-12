@@ -336,12 +336,12 @@
 			}
 		}
 		
-		if ( rentHist.nullCheck(  $("[name='searchWord']").val()) ) {
+	/*	if ( rentHist.nullCheck(  $("[name='searchWord']").val()) ) {
 			alert(  $("[name='searchParameter']").val() + "값이 미입력 되었습니다. ");
 			$("[name='searchWord']").focus();
 			return false;
 		}
-		
+	*/	
 		$("[name='currentPageNo']").val(pPageNo);
 		$("[name='viewFlg']").val(pVtype);
 		if(pVtype === "excel") {
