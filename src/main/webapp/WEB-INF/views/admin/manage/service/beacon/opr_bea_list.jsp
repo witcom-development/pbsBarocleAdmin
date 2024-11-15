@@ -55,6 +55,7 @@
 								<input type="hidden" name="stationGrpName" value="" />
 								<input type="hidden" name="stationName" value="" />
 								<input type="hidden" name="chkType" value="" />
+								<input type="hidden" name="orderTerm" value="${searchCondition.orderTerm}">
 								<fieldset>
 									<legend>검색 옵션</legend>
 									<div class="shBoxSection">
@@ -102,7 +103,13 @@
 								</fieldset>
 					   		</div>
 						<!--검색조건 E-->
-						<p class="tb_numlist">총 ${paginationInfo.getTotalRecordCount()} 건</p>
+						<div class="listalign mt20" style="margin-bottom : 15px;">
+							<label><input name="lsalign" type="radio" value="ASC" class="vm" <c:if test="${searchCondition.orderTerm eq 'ASC'}"> checked="checked" </c:if>>오름차순</label>
+							<label><input name="lsalign" type="radio" value="DESC" class="vm ml10" <c:if test="${searchCondition.orderTerm ne 'ASC'}"> checked="checked" </c:if>>내림차순</label>
+							
+							<label class="tb_numlist" style="float:right;margin:0;">총 ${ paginationInfo.getTotalRecordCount()} 건</label>
+						</div>
+						<%-- <p class="tb_numlist">총 ${paginationInfo.getTotalRecordCount()} 건</p> --%>
 						<table class="tb_type01">
 							<colgroup>
 								 <col style="width:20%"/>
@@ -272,6 +279,8 @@
 			});
 			$("#aa12").val(_this.searchType);
 			$("[name='searchWord']").val(_this.searchWord);
+			
+			$("[name='lsalign']").on("change", this.searchDataFnc);
 		};
 		
 		beacon.searchDataFnc = function(e) {
@@ -283,6 +292,11 @@
 				$( "[name='searchEndDe']").val('');
 				alert("검색 조건의 시작 날이 종료 날보다 큽니다.");
 				return false;
+			}
+			
+			var ordRadio = $('input[name=lsalign]:checked').val();
+			if(ordRadio != null && ordRadio != ''){
+				$("[name='orderTerm']").val(ordRadio);
 			}
 			
 			$("input:hidden[name='viewFlg']").val('list');

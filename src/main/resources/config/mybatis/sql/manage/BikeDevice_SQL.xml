@@ -260,7 +260,14 @@
 																			END
 
 					AND BIKE.MOD_DTTM BETWEEN STR_TO_DATE(#{searchBgnDe}, '%Y-%m-%d') AND  ( STR_TO_DATE(#{searchEndDe}, '%Y-%m-%d') + INTERVAL 1 DAY - INTERVAL 1 SECOND )
-				ORDER BY BIKE.MOD_DTTM DESC 
+				<!-- ORDER BY BIKE.MOD_DTTM DESC  -->
+				ORDER BY 
+					   <if test='orderTerm == null or orderTerm == "" or orderTerm == "DESC"'>
+					   BIKE.BIKE_NO DESC, BIKE.BIKE_ID DESC
+					   </if>
+					   <if test='orderTerm=="ASC"'>
+					   BIKE.BIKE_NO, BIKE.BIKE_ID
+					   </if>
 				<if test='pagingYn == "Y"'>
 						LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 				</if>  
@@ -351,7 +358,14 @@
 										  </if>
 					) A
 				LEFT JOIN TB_SVC_RENT_HIST B ON A.MAX_RENT_HIST_SEQ = B.RENT_HIST_SEQ
-				ORDER BY lostDate DESC, modDttm DESC
+				<!-- ORDER BY lostDate DESC, modDttm DESC -->
+				ORDER BY 
+					   <if test='orderTerm == null or orderTerm == "" or orderTerm == "DESC"'>
+					   bikeNo DESC, bikeId DESC
+					   </if>
+					   <if test='orderTerm=="ASC"'>
+					   bikeNo, bikeId
+					   </if>
 					<if test='pagingYn == "Y"'>
 						LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 					</if>
@@ -528,7 +542,13 @@
 						</if>
 					</trim>	  
 					   ) A
-					   ORDER BY MOD_DTTM DESC, BIKE_ID DESC
+					   ORDER BY 
+					   <if test='orderTerm == null or orderTerm == "" or orderTerm == "DESC"'>
+					   BIKE_NO DESC, BIKE_ID DESC
+					   </if>
+					   <if test='orderTerm=="ASC"'>
+					   BIKE_NO, BIKE_ID
+					   </if>
 					   <if test='pagingYn == "Y"'>
 					  <![CDATA[
 					  LIMIT #{firstRecordIndex}, #{recordCountPerPage}
@@ -1504,5 +1524,15 @@
 			AND ADMIN_GRP_SEQ   IN ( '5', '11', '12')	-- TODO 향후 12 관리자는 삭제 필요 
 	</insert>
 	
+	<select id="getbikeStusCd" parameterType="bikeVo" resultType="bikeVo">
+		SELECT BIKE_NO AS bikeNo
+			,BIKE_STUS_CD  AS bikeStusCd
+		FROM TB_OPR_BIKE
+		WHERE BIKE_ID = #{bikeId}
+	</select>
+	
+	<delete id="delRemoteReturn" parameterType="bikeVo">
+		DELETE FROM TB_SVC_REMOTE_RETURN_INFO WHERE BIKE_NO = #{bikeNo}
+	</delete>
 	
 </mapper>

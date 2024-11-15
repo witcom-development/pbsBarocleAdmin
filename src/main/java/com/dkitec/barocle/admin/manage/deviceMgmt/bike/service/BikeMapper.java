@@ -272,5 +272,9 @@ public interface BikeMapper {
 	BikeVO selectRelocateStationId(BikeVO bikeVo);
 	List<BikeVO> selectRelocateSeq(BikeVO bikeVo); 
 	int updateBikeRelocateSeq(BikeVO bikeVo);
+	
+	// 원격반납현황 관련 추가
+	BikeVO getbikeStusCd(BikeVO bikeVo);	// 자전거 상태값 조회
+	int delRemoteReturn(BikeVO bikeVo);	// 자전거원격반납 현황 제거
 
 }

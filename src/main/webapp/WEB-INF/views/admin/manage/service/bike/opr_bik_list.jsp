@@ -57,6 +57,7 @@
 								<input type="hidden" name="searchTypeName" value="" />
 								<input type="hidden" name="bikeStatusName" value="" />
 								<input type="hidden" name="rentSeq" value="" />
+								<input type="hidden" name="orderTerm" value="${searchCondition.orderTerm}">
 								
 								<fieldset>
 									<legend>검색 옵션</legend>
@@ -120,8 +121,14 @@
 									</div>
 								</fieldset>
 						</div>
+						<div class="listalign mt20" style="margin-bottom : 15px;">
+							<label><input name="lsalign" type="radio" value="ASC" class="vm" <c:if test="${searchCondition.orderTerm eq 'ASC'}"> checked="checked" </c:if>>오름차순</label>
+							<label><input name="lsalign" type="radio" value="DESC" class="vm ml10" <c:if test="${searchCondition.orderTerm ne 'ASC'}"> checked="checked" </c:if>>내림차순</label>
+							
+							<label class="tb_numlist" style="float:right;margin:0;">총 ${ paginationInfo.getTotalRecordCount()} 건</label>
+						</div>
 						<!--검색조건 E-->
-						<p class="tb_numlist">총 ${ paginationInfo.getTotalRecordCount()} 건</p>
+						<%-- <p class="tb_numlist">총 ${ paginationInfo.getTotalRecordCount()} 건</p> --%>
 						<table class="tb_type01">
 							<colgroup>
 								
@@ -492,6 +499,7 @@
 			}
 		});
 		
+		
 	});
 
 	
@@ -514,8 +522,8 @@
 		commonAjax.getCommonCode("BKS", function(data) {
 			 if(data !== null && data.codeList !== null) {
 				// 2019-10-16 출고를 강제로 강제반납관리 상태조회로 변경
-					data.codeList[12].comCdName ="자전거 이력조회";
-					data.codeList[13].comCdName ="분실후속조치";
+					//data.codeList[12].comCdName ="자전거 이력조회";
+					//data.codeList[13].comCdName ="분실후속조치";
 					//data.codeList[14].comCdName ="강제반납관리 상태";
 
 				commCdBox.makeComboBox('CC',_this.bikeStatusCd, data.codeList, "a1");
@@ -579,6 +587,7 @@
 		$("#excelViewBtn").on("click",{listType : "excel"},this.exeListFnc);
 		$("#searchBtn").on("click",{listType: "list"},this.exeListFnc);
 
+		$("[name='lsalign']").on("change",{listType: "list"}, this.exeListFnc);
 		
 	};
 	
@@ -620,6 +629,13 @@
 			alert("선택한 항목의 키워드를 입력해 주세요.");
 			return false;
 		}
+		
+		var ordRadio = $('input[name=lsalign]:checked').val();
+		if(ordRadio != null && ordRadio != ''){
+			$("[name='orderTerm']").val(ordRadio);
+		}
+		
+		
 		$("[name='currentPageNo']").val(1);
 		if(listType === 'excel') {
 			$("[name='bikeStatusName']").val($("#a1 option:selected").text());
@@ -656,7 +672,6 @@
 		$("[name='viewFlg']").val(pViewFlg);
 		$("#searchFrm").attr({method : 'post', action : '/moveBikeEditForm.do'}).submit();
 	};
-	 
 	</script>
 </body>
 </html>

@@ -103,7 +103,7 @@
 												<tr>
 													<th>정거장명/거치대</th>
 													<td>
-														<select class="select-category03"  name="stationId" id="stationSlt" disabled="disabled">
+														<select class="select-category04"  name="stationId" id="stationSlt" disabled="disabled">
 															<option value="">선택</option>
 														</select>
 														<span class="input-text08">
@@ -160,9 +160,9 @@
 										<div class="btnArea">
 											<span class="left"><button class="btnType01 bc_gray" id="moveListPage1">목록</button></span>
 											<span class="right">
-												<a href="/common/pop/showBikeRetrievalPop.do" 		class="winNewPop btnType01" title="회수" data-width="450" data-height="600" data-pmt="&rentBikeId=${bikeVo.bikeId }&rentBikeNo=${bikeVo.bikeNo }">회수</a>
+												<%-- <a href="/common/pop/showBikeRetrievalPop.do" 		class="winNewPop btnType01" title="회수" data-width="450" data-height="600" data-pmt="&rentBikeId=${bikeVo.bikeId }&rentBikeNo=${bikeVo.bikeNo }">회수</a>
 												<a href="/common/pop/showBikeRobbedPop.do" 		class="winNewPop btnType01" title="도난추정" data-width="450" data-height="689" data-pmt="&rentBikeId=${bikeVo.bikeId }&rentBikeNo=${bikeVo.bikeNo }">도난추정</a>
-												<a href="/common/pop/showBikeParkingLocation.do" class="winNewPop btnType01" title="방치신고" data-width="450" data-height="689" data-pmt="&rentBikeId=${bikeVo.bikeId }&rentBikeNo=${bikeVo.bikeNo }" >방치신고</a>
+												<a href="/common/pop/showBikeParkingLocation.do" class="winNewPop btnType01" title="방치신고" data-width="450" data-height="689" data-pmt="&rentBikeId=${bikeVo.bikeId }&rentBikeNo=${bikeVo.bikeNo }" >방치신고</a> --%>
 												
 <!--											   
 												<c:if test="${ bikeVo.bikeStatusCd ne 'BKS_007'}">
@@ -173,7 +173,7 @@
 													<!-- 분실해제 팝업 -->
 													<a href="/common/pop/showBikeMissingPop.do"  class="winNewPop btnType01" title="분실해제" data-width="450" data-height="315" data-pmt="&bikeId=${bikeVo.bikeId}&bikeNo=${bikeVo.bikeNo}&terminalId=${bikeVo.terminalId}&chkType=U">분실해제</a>
 												</c:if>
-												<c:if test="${ bikeVo.bikeSeCd ne NULL && bikeVo.bikeSeCd ne '' && bikeVo.bikeSeCd ne 'BIK_001' }">
+												<c:if test="${ bikeVo.bikeSeCd ne NULL && bikeVo.bikeSeCd ne ''}">
 													<a href="/common/pop/showBikeMap.do" class="winNewPop btnType01" title="위치찾기" data-width="450" data-height="689" data-pmt="&rentBikeId=${bikeVo.bikeId }&rentBikeNo=${bikeVo.bikeNo }" >위치찾기</a>
 												</c:if>
 												<button class="btnType01 bc_green" id="exeBikeEdit">저장</button>
@@ -507,6 +507,11 @@
 										</tbody>
 								</table>
 							</fieldset>
+							<c:if test="${ logInfo.bikeNo ne NULL && logInfo.bikeNo ne ''}">
+							<div class="btnArea">
+								<a href="/common/pop/showBikeMap.do" class="winNewPop btnType01" title="위치찾기" data-width="450" data-height="689" data-pmt="&rentBikeId=${logInfo.deviceId }&rentBikeNo=${logInfo.bikeNo }" >위치찾기</a>
+							</div>
+							</c:if>
 						  </div>
 						   <!-- 로그정보 끝 -->
 						</div>
@@ -612,7 +617,7 @@
 			$("#stationGrpSlt").prop('disabled', true);
 			$("#stationSlt").prop('disabled', true);
 			$("#centerSlt").prop('disabled', true);
-			$("#statusSlt").prop('disabled', true);
+			//$("#statusSlt").prop('disabled', true);
 			$("#entrpsSlt").prop('disabled', true);
 			$("#bikeSlt").prop('disabled', true);
 		}
@@ -634,10 +639,10 @@
 		$("#searchBtn").on("click",{listType: "list"}, this.searchListPage);
 		//moveListpage
 		$("#stationGrpSlt").on('change', function(e) {
-			if($("#centerSlt").val() !== '') {
+			/*if($("#centerSlt").val() !== '') {
 				$("#centerSlt").val('');
 				$("#statusSlt").val('');
-			}
+			}*/
 			var tId = e.target.id;
 			var idx = $("#"+tId+" option:selected").index();
 			var subList =$("#"+tId).data().sub_data;
@@ -649,6 +654,7 @@
 				}
 			}
 		});
+		$("#stationGrpSlt").trigger("change");
 		$("#stationSlt").on("change", function(e){
 			$("#statusSlt").val('BKS_003');
 		});
@@ -751,6 +757,7 @@
 				}
 			}
 		);
+		
 		// 납품처 
 		commonAjax.getCommonCode("ENT", function(data) {
 			if(data !== null && data.codeList !== null) {

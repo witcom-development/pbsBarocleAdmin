@@ -60,7 +60,14 @@
 				
 			</choose>
 		</if>
-		ORDER BY QR.BEACON_BATTERY_STUS_CD
+		<!-- ORDER BY QR.BEACON_BATTERY_STUS_CD -->
+		ORDER BY 
+					   <if test='orderTerm == null or orderTerm == "" or orderTerm == "DESC"'>
+					   QR.NOW_LOCATE_ID DESC
+					   </if>
+					   <if test='orderTerm=="ASC"'>
+					   QR.NOW_LOCATE_ID
+					   </if>
 		<if test='pagingYn == "Y"'>
 		LIMIT #{firstRecordIndex}, #{recordCountPerPage}
 		</if>			  

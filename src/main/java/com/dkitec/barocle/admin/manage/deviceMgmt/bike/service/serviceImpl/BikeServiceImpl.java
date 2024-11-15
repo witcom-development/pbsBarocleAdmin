@@ -26,6 +26,7 @@ import com.dkitec.barocle.admin.manage.deviceMgmt.bike.service.BikeService;
 import com.dkitec.barocle.admin.manage.deviceMgmt.bike.vo.BikeVO;
 import com.dkitec.barocle.admin.manage.deviceMgmt.terminal.service.TerminalMapper;
 import com.dkitec.barocle.admin.manage.deviceMgmt.terminal.vo.TerminalVO;
+import com.dkitec.barocle.admin.status.rentHistory.vo.ReturnReqVO;
 import com.dkitec.barocle.admin.status.rentStatus.vo.BikeRentalVO;
 import com.dkitec.barocle.base.IConstants;
 import com.dkitec.barocle.datasource.DataSource;
@@ -282,6 +283,13 @@ public class BikeServiceImpl extends EgovAbstractServiceImpl implements BikeServ
 	@DataSource(DataSourceType.MASTER)
 	public int exeQrMoveProc(BikeVO bikeVo) {
 		int result = 0;
+		
+		// 대리반납 상태 자전거라면 대리반납 현황테이블에서 삭제
+		BikeVO checkBike = bikeMapper.getbikeStusCd(bikeVo);
+		if("BKS_019".equals(checkBike.getBikeStatusCd())){
+			result = bikeMapper.delRemoteReturn(checkBike);
+		}
+		
 		// 자전거 상태 업데이트
 		result = bikeMapper.setBikeStatus(bikeVo);
 		
